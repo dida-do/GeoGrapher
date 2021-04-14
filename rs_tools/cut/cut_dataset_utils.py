@@ -2,6 +2,7 @@
 Utils for/code shared by cut_imgs_iter_over_polygons and cut_imgs_iter_over_imgs.
 """
 
+import logging
 import random
 import rasterio as rio
 from pathlib import Path
@@ -9,7 +10,7 @@ from shapely.geometry import box
 
 from rs_tools.utils.utils import transform_shapely_geometry
 
-
+logger = logging.getLogger(__name__)
 
 def have_no_img_for_polygon(polygon_name, new_polygons_df, source_assoc):
     """
@@ -119,7 +120,7 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                             row_off = random.randint(max(0, min_row - (img_size // 3)), min(src.height, max_row + (img_size // 3)))
 
                             # .... and log a warning. 
-                            log.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has width {max_col - min_col} which is greater than img_size {img_size}.")
+                            logger.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has width {max_col - min_col} which is greater than img_size {img_size}.")
 
                         # Do the same for the columns:
                         # If the width of the polygon is less than img_size ...
@@ -135,7 +136,7 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                             col_off = random.randint(max(0, min_col - (img_size // 3)), min(src.height, max_col + (img_size // 3)))
 
                             # .... and log a warning. 
-                            log.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has height {max_row - min_row} which is greater than img_size {img_size}.")
+                            logger.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has height {max_row - min_row} which is greater than img_size {img_size}.")
 
                     # In the centered case ...
                     else: 
@@ -156,13 +157,13 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                         if max_row - min_row > img_size:
 
                             # ... log a warning. 
-                            log.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has height {max_row - min_row} which is greater than img_size {img_size}.")
+                            logger.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has height {max_row - min_row} which is greater than img_size {img_size}.")
                             
                         # If the polygon is too wide ...
                         if max_col - min_col > img_size:
 
                             # ... log a warning.
-                            log.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has width {max_col - min_col} which is greater than img_size {img_size}.")
+                            logger.warning(f"small_imgs_centered_around_polygons_cutter: {polygon_name} has width {max_col - min_col} which is greater than img_size {img_size}.")
                                             
                     # Define the square window with the calculated offsets.
                     window = rio.windows.Window(col_off=col_off, 
