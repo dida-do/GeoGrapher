@@ -14,10 +14,10 @@ def test_graph_vertices(assoc):
     Tests whether the set of vertices of the graph corresponds with the images and polygons in the associator.
     """
 
-    img_vertices_not_in_imgs_df = set(assoc.__graph__.vertices('imgs')) - set(assoc.imgs_df.index)
-    imgs_in_imgs_df_not_in_graph = set(assoc.imgs_df.index) - set(assoc.__graph__.vertices('imgs'))
-    polygon_vertices_not_in_polygons_df = set(assoc.__graph__.vertices('polygons')) - set(assoc.polygons_df.index)
-    polygons_in_polygons_df_not_in_graph = set(assoc.polygons_df.index) - set(assoc.__graph__.vertices('polygons')) 
+    img_vertices_not_in_imgs_df = set(assoc._graph.vertices('imgs')) - set(assoc.imgs_df.index)
+    imgs_in_imgs_df_not_in_graph = set(assoc.imgs_df.index) - set(assoc._graph.vertices('imgs'))
+    polygon_vertices_not_in_polygons_df = set(assoc._graph.vertices('polygons')) - set(assoc.polygons_df.index)
+    polygons_in_polygons_df_not_in_graph = set(assoc.polygons_df.index) - set(assoc._graph.vertices('polygons')) 
     
     set_descriptions_and_differences = \
         zip(
