@@ -258,7 +258,7 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                 imgs_from_cut_dict[key].append(single_new_img_info_dict[key])
 
             # On  the first pass of for subdir in ["images", "labels"] (i.e. when subdir = "images") add connections to new_graph for the new image and modify new_polygons_df.
-            source_assoc.__add_img_to_graph_modify_polygons_df__(new_img_name, 
+            source_assoc._add_img_to_graph_modify_polygons_df(new_img_name, 
                                                                 img_bounding_rectangle=img_bounding_rectangle_in_std_crs, 
                                                                 polygons_df=new_polygons_df, 
                                                                 graph=new_graph)

@@ -218,7 +218,7 @@ def create_or_update_dataset_from_iter_over_polygons(source_data_dir, target_dat
                                                             polygon_filter_predicate=lambda p, df, assoc: p == polygon_name, 
 
                                                             new_polygons_df=target_assoc.polygons_df, 
-                                                            new_graph=target_assoc.__graph__, 
+                                                            new_graph=target_assoc._graph, 
                                                             target_data_dir=target_data_dir, 
                                                             img_bands=img_bands, 
                                                             label_bands=label_bands,
