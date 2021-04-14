@@ -1,0 +1,19 @@
+name: rs_tools
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - geopandas
+  - jupyter
+  - xlrd
+  - openpyxl
+  - rasterio
+  - sentinelsat
+  - joblib
+  - contextily
+  - scikit-learn
+  - opencv
+  - python=3.8
+  - dvc
+  - pylint
+

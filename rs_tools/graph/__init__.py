@@ -1,0 +1,5 @@
+""" 
+Code for bipartite graphs used by the associator
+"""
+
+from rs_tools.graph.bipartite_graph import BipartiteGraph, empty_bipartite_graph
