@@ -7,7 +7,7 @@ from pathlib import Path
 
 from rs_tools.utils.utils import transform_shapely_geometry
 
-def __make_geotif_label_soft_categorical__(assoc, img_name, log):
+def _make_geotif_label_soft_categorical(assoc, img_name, log):
     """
     Create a soft categorical (i.e. probabilistic) GeoTiff pixel label for an image.
 
