@@ -1,11 +1,14 @@
 """
 Label maker for categorical labels.
 """
+import logging
 import numpy as np 
 import rasterio as rio
 from pathlib import Path
 
 from rs_tools.utils.utils import transform_shapely_geometry
+
+log = logging.getLogger(__name__)
 
 def _make_geotif_label_categorical(assoc, img_name, log):
     """
@@ -29,13 +32,13 @@ def _make_geotif_label_categorical(assoc, img_name, log):
     if not img_path.is_file():
 
         # ... log error to file.
-        log.error(f"__make_geotif_label__: input image {img_path} does not exist!")
+        log.error(f"_make_geotif_label_categorical: input image {img_path} does not exist!")
 
     # Else, if the label already exists ...
     elif label_path.is_file():
 
         # ... log error to file.
-        log.error(f"__make_geotif_label__: label {label_path} already exists!")
+        log.error(f"_make_geotif_label_categorical: label {label_path} already exists!")
     
     # Else, ...
     else:
@@ -57,7 +60,7 @@ def _make_geotif_label_categorical(assoc, img_name, log):
                 label = np.zeros((src.height, src.width), dtype=np.uint8)
 
                 # ... and fill in values for each segmentation class.
-                for count, seg_class in enumerate(assoc.__params_dict__['segmentation_classes'], start=1):
+                for count, seg_class in enumerate(assoc._params_dict['segmentation_classes'], start=1):
                     
                     # To do that, first find (the df of) the polygons intersecting the image ...
                     polygons_intersecting_img_df = assoc.polygons_df.loc[assoc.polygons_intersecting_img(img_name)]
