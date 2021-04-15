@@ -1,11 +1,14 @@
 """
 Label maker for onehot encoded labels.
 """
+import logging
 import numpy as np 
 import rasterio as rio
 from pathlib import Path
 
 from rs_tools.utils.utils import transform_shapely_geometry
+
+log = logging.getLogger(__name__)
 
 def _make_geotif_label_onehot(assoc, img_name, log):
     """
@@ -25,19 +28,19 @@ def _make_geotif_label_onehot(assoc, img_name, log):
 
     label_path = Path(assoc.data_dir) / Path("labels") / Path(img_name)
 
-    segmentation_classes = assoc.__params_dict__['segmentation_classes']
+    segmentation_classes = assoc._params_dict['segmentation_classes']
 
     # If the image does not exist ...
     if not img_path.is_file():
 
         # ... log error to file.
-        log.error(f"__make_geotif_label__: input image {img_path} does not exist!")
+        log.error(f"_make_geotif_label_onehot: input image {img_path} does not exist!")
 
     # Else, if the label already exists ...
     elif label_path.is_file():
 
         # ... log error to file.
-        log.error(f"__make_geotif_label__: label {label_path} already exists!")
+        log.error(f"_make_geotif_label_onehot: label {label_path} already exists!")
     
     # Else, ...
     else:
@@ -46,13 +49,13 @@ def _make_geotif_label_onehot(assoc, img_name, log):
 
             # ... determine how many bands the label should have. 
             # If the background is not included in the segmentation classes (default) ...
-            if assoc.__params_dict__['add_background_band_in_labels'] == True:
+            if assoc._params_dict['add_background_band_in_labels'] == True:
                 
                 # ... add a band for the implicit background segmentation class, ...
                 label_bands_count = 1 + len(segmentation_classes) 
             
             # ... if the background *is* included, ...
-            elif assoc.__params_dict__['background_in_seg_classes'] == False:
+            elif assoc._params_dict['background_in_seg_classes'] == False:
 
                 # ... don't. 
                 label_bands_count = len(segmentation_classes)
@@ -61,7 +64,7 @@ def _make_geotif_label_onehot(assoc, img_name, log):
             else: 
 
                 # ... then it is nonsensical, so log an error. 
-                log.error(f"Unknown background_in_seg_classes value: {assoc.__params_dict__['background_in_seg_classes']}.")
+                log.error(f"Unknown background_in_seg_classes value: {assoc._params_dict['background_in_seg_classes']}.")
 
             # Create profile for the label.            
             profile = src.profile
@@ -75,7 +78,7 @@ def _make_geotif_label_onehot(assoc, img_name, log):
                             **profile) as dst:
             
                 # ... and create one band in the label for each segmentation class.
-                for count, seg_class in enumerate(assoc.__params_dict__['segmentation_classes'], start=1):
+                for count, seg_class in enumerate(assoc._params_dict['segmentation_classes'], start=1):
                     
                     # To do that, first find (the df of) the polygons intersecting the image ...
                     polygons_intersecting_img_df = assoc.polygons_df.loc[assoc.polygons_intersecting_img(img_name)]
@@ -107,7 +110,7 @@ def _make_geotif_label_onehot(assoc, img_name, log):
                     dst.write(mask, count)
 
                 # If the background is not included in the segmentation classes ...
-                if assoc.__params_dict__['add_background_band_in_labels'] == True:
+                if assoc._params_dict['add_background_band_in_labels'] == True:
 
                     # ... add background band. 
 
@@ -115,3 +118,6 @@ def _make_geotif_label_onehot(assoc, img_name, log):
 
                     # The probability of a pixel belonging to the background is the complement of it belonging to some segmentation class.
                     background_band = 1 - np.add.reduce([dst.read(band_index) for band_index in non_background_band_indices])
+
+                    dst.write(background_band, 1 + len(segmentation_classes))
+
