@@ -7,7 +7,7 @@ The ImgPolygonAssociator class organizes and handles remote sensing datasets.
 """
 
 
-from rs_tools.label_makers import _make_geotif_label_categorical, _make_geotif_label_onehot, _make_geotif_label_onehot
+from rs_tools.label_makers import _make_geotif_label_categorical, _make_geotif_label_onehot, _make_geotif_label_soft_categorical
 from json.decoder import JSONDecodeError
 import os
 import copy
@@ -74,8 +74,8 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                     imgs_df=None, # should be either given or will be loaded from file
                     polygons_df=None, # should be either given or will be loaded from file
                     segmentation_classes=None,# should be either given or will be inferred for a saved associator from param_dict.json file
-                    label_type='categorical', # should be either given or will be inferred for a saved associator from param_dict.json file
-                    add_background_band_in_labels=True,
+                    label_type=None, # should be either given or will be inferred for a saved associator from param_dict.json file
+                    add_background_band_in_labels=None, # should be either given or will be inferred for a saved associator from param_dict.json file
                     crs_epsg_code=STANDARD_CRS_EPSG_CODE, 
                     polygons_df_index_name=POLYGONS_DF_INDEX_NAME, 
                     imgs_df_index_name=IMGS_DF_INDEX_NAME,
@@ -93,11 +93,11 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         :param segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
         :type segmentation_classes: list of str, optional
 
-        :param label_type: The type of label to be created, one of 'categorical', 'onehot', or 'soft-categorical'. Defaults to 'categorical'.
-        :type label_type: str, optional
+        :param label_type: The type of label to be created, one of 'categorical', 'onehot', or 'soft-categorical'. 
+        :type label_type: str
 
-        :param add_background_band_in_labels: Only relevant if the label_type is 'one-hot' or 'soft-categorical'. If True, will add a background segmentation class band when creating one-hot or soft-categorical labels. If False, will not. Defaults to True. 
-        :type add_background_band_in_labels: bool, optional
+        :param add_background_band_in_labels: Only relevant if the label_type is 'one-hot' or 'soft-categorical'. If True, will add a background segmentation class band when creating one-hot or soft-categorical labels. If False, will not. 
+        :type add_background_band_in_labels: bool
 
         :param crs_epsg_code: The EPSG code of the coordinate reference system (crs) the associator is in, by which we mean the crs used to store the geometries in the imgs_df and polygons_df GeoDataFrames. Defaults to 4326 (i.e. WGS84). If not given, will attempt to load from file (param_dict.json in data_dir).
         :type crs_epsg_code: int, optional
@@ -143,21 +143,31 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         for param_name, param_val in zip(
                                         ['polygons_df_index_name', 
                                         'imgs_df_index_name',
+                                        'segmentation_classes',
                                         'label_type',
                                         'add_background_band_in_labels',
                                         'crs_epsg_code'],
                                         [polygons_df_index_name, 
                                         imgs_df_index_name,
+                                        segmentation_classes,
                                         label_type,
                                         add_background_band_in_labels,
                                         crs_epsg_code]):
             # ... add them to param dict if they don't yet exist in the dict ...
             if param_name not in self._params_dict:
-                self._params_dict[param_name] = param_val 
+
+                if param_val is not None:
+
+                    self._params_dict[param_name] = param_val 
+            
+                else:
+
+                    raise Exception(f"Need value not equal to None for {param_name} argument.")
+
             # ... else, ...
             else:
                 # ... if they conflict with the values in the dict ...
-                if self._params_dict[param_name] != param_val:
+                if param_val is not None and self._params_dict[param_name] != param_val:
                     
                     # ... log a warning ...
                     log.warning(f"param {param_name} value {param_val} differs from value {self._params_dict[param_name]}in associator's params_dict file.")
@@ -165,6 +175,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                     # ... and then update the dict.
                     self._params_dict[param_name] = param_val
 
+        """
         # If segmentation classes arg not given, ... 
         if segmentation_classes is None:
             # ... check it exists in the _params_dict ...
@@ -178,6 +189,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         # Set the segmentation_classes value in the _params_dict.
         else:
             self._params_dict['segmentation_classes'] = segmentation_classes
+        """
 
         # Choose appropriate label maker according to label type.
         # (categorical case)
@@ -193,7 +205,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         # (soft-categorical case)
         elif self._params_dict['label_type'] == 'soft-categorical':
         
-            self._make_geotif_label = _make_geotif_label_onehot
+            self._make_geotif_label = _make_geotif_label_soft_categorical
 
         else:
 
