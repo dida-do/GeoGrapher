@@ -1161,15 +1161,15 @@ def empty_assoc_same_format_as(target_data_dir, source_data_dir=None, source_ass
         source_assoc = ImgPolygonAssociator(source_data_dir)
 
     # new empty polygons_df
-    new_empty_polygons_df = empty_polygons_df_same_format_as(source_rs_tools.polygons_df)                                        
+    new_empty_polygons_df = empty_polygons_df_same_format_as(source_assoc.polygons_df)                                        
     
     # new empty imgs_df
-    new_empty_imgs_df = empty_imgs_df_same_format_as(source_rs_tools.imgs_df) 
+    new_empty_imgs_df = empty_imgs_df_same_format_as(source_assoc.imgs_df) 
 
     new_empty_assoc = ImgPolygonAssociator(data_dir=Path(target_data_dir), 
                         imgs_df=new_empty_imgs_df, 
                         polygons_df=new_empty_polygons_df, 
-                        **source_rs_tools._params_dict)
+                        **source_assoc._params_dict)
 
     return new_empty_assoc
     

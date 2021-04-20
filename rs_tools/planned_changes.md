@@ -1,6 +1,9 @@
 
 planned design changes:
 
+* test whether the dataset contains GeoTiffs or npys. (generic dispatch of e.g. visualization functions)
+* disembodied associators?
+
 associator:
 * I only defined errors for the download method of the associator and generally I think the error handling could be improved. 
 * make the associator remember not just the containment relation ('contains' or 'intersects') between images and polygons, but also which images were downloaded for which polygons. this tells us which images to stitch together if we've downloaded several images for a polygon that need stitching together. could be easily done by changing the edge_data in the graph, probably to a dict, and then modifying the functions/methods in the class that deal with the edge_data appropriately. it's probably best to just add parameters to the methods that return information about the graph structure (polygons_intersecting_img etc.) to allow us to query the associator about this information, but I'm not sure. we might also want to just change the interface in this case. we'll definitely want a imgs_intersecting_polygon method we can use when stitching together images.
