@@ -85,21 +85,21 @@ def convert_assoc_dataset_tif2npy(source_data_dir, target_data_dir=None, img_ban
     # build new .npy empty associator
     new_npy_assoc = ipa.empty_assoc_same_format_as(target_data_dir=target_data_dir, source_assoc=tif_assoc)
     # add polygons to empty assoc
-    new_npy_rs_tools.integrate_new_polygons_df(tif_rs_tools.polygons_df)
+    new_npy_assoc.integrate_new_polygons_df(tif_assoc.polygons_df)
 
     # add imgs to new .npy assoc
-    new_npy_imgs_df = tif_rs_tools.imgs_df
-    tif_assoc_imgs_df_index_name = tif_rs_tools.imgs_df.index.name # the next line destroys the index name of tif_rs_tools.imgs_df, so we remember it ...
+    new_npy_imgs_df = tif_assoc.imgs_df
+    tif_assoc_imgs_df_index_name = tif_assoc.imgs_df.index.name # the next line destroys the index name of tif_assoc.imgs_df, so we remember it ...
     tif_img_name_list = new_npy_imgs_df.index.tolist().copy() # (it's either the .tolist() or .copy() operation, don't understand why)
     new_npy_imgs_df.index = list(map(filename_tif2npy, tif_img_name_list))
     new_npy_imgs_df.index.name = tif_assoc_imgs_df_index_name # ... and then set it by hand like this.
 
-    new_npy_rs_tools.integrate_new_imgs_df(new_npy_imgs_df)
+    new_npy_assoc.integrate_new_imgs_df(new_npy_imgs_df)
 
     # convert all images:
     for subdir in ipa.DATA_DIR_SUBDIRS:
         for tif_img_name in tqdm(tif_img_name_list, desc=f"Converting {subdir}"):
-            with rio.open(Path(tif_rs_tools.data_dir) / subdir / tif_img_name) as src:
+            with rio.open(Path(tif_assoc.data_dir) / subdir / tif_img_name) as src:
                 
                 # set bands
                 if str(subdir) == "images":
@@ -140,10 +140,10 @@ def convert_assoc_dataset_tif2npy(source_data_dir, target_data_dir=None, img_ban
 
             if inplace==True:
                 # delete tif
-                (Path(tif_rs_tools.data_dir) / subdir / tif_img_name).unlink()
+                (Path(tif_assoc.data_dir) / subdir / tif_img_name).unlink()
 
     # save associator
-    new_npy_rs_tools.save()
+    new_npy_assoc.save()
 
     log.info(f"convert_assoc_dataset_tif2numpy: done!")
 
