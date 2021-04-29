@@ -72,6 +72,7 @@ def small_imgs_centered_around_polygons_cutter(img_name:str,
     """
 
     random.seed(random_seed)
+    target_data_dir = Path(target_data_dir)
 
     imgs_from_cut_dict = {index_or_col_name: [] for index_or_col_name in [source_assoc.imgs_df.index.name] + list(source_assoc.imgs_df.columns)}
 
@@ -188,36 +189,17 @@ def small_imgs_centered_around_polygons_cutter(img_name:str,
                     # Set the bands.
                     # If we are considering the images ...
                     if subdir == "images":
-                        
-                    # ... then if the img_bands arg was given ...
-                    if img_bands is not None:
-
-                        # ...set band variable to that. 
-                        bands = img_bands 
-                    
-                    # If img_bands was not given (i.e. img_bands is None) ...
-                    else:
-
-                        # ... default to all img bands
-                        bands = list(range(1, src.count + 1)) # or src.count???
+                        # Use img_bands if arg was given, else default to all img bands
+                        bands = img_bands if img_bands is not None else list(range(1, src.count + 1))
                     
                     # Similarly, when considering the labels ...
                     else: 
+                        # Use label_bands if arg was given, else default to all label bands
+                        bands = label_bands if label_bands is not None else list(range(1, src.count + 1))
 
-                        # ... then if the label_bands arg was given ...
-                        if label_bands is not None:
-                            
-                            # ...set band variable to that. 
-                            bands = label_bands 
-                            
-                        # If label_bands was not given (i.e. label_bands is None) ...
-                        else:
-                            
-                            # ... default to all label bands. 
-                            bands = list(range(1, src.count + 1)) # or src.count???
 
                     # To create new img or label with filename new_img_name and transform window_transform, open the target file with rasterio ...
-                    with rio.open(target_data_dir / subdir / Path(new_img_name),
+                    with rio.open(target_data_dir / subdir / new_img_name,
                                         'w',
                                         driver='GTiff',
                                         height=img_size,
