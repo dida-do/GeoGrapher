@@ -445,7 +445,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         Add (or overwrite) polygons in new_polygons_df to the associator (i.e. append to the associator's polygons_df) keeping track of which polygons are contained in which images.
 
         Args:
-            ew_polygons_df (gdf.GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
+            new_polygons_df (gdf.GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
             force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
