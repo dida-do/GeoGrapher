@@ -3,7 +3,7 @@ Functions to cut datasets of GeoTiffs by iterating over polygons.
 
 Customizable general function create_or_update_dataset_from_iter_over_polygons to create or update a new remote sensing imagery dataset (images, labels, and associator) from an existing one by iterating over (a subset of) the polygons and cutting (a subset of) the images containing the polygons, as well as a specialization to functions new_dataset_one_small_img_for_each_polygon and update_dataset_one_small_img_for_each_polygon that create and update exactly one new small image for each polygon in the old dataset.
 """
-
+from typing import Union, Callable
 import copy
 from pathlib import Path
 import random
@@ -16,8 +16,10 @@ import rs_tools.img_polygon_associator as ipa
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.cut.cut_dataset_utils import small_imgs_centered_around_polygons_cutter, have_no_img_for_polygon, alwaystrue
 
+# Type alias for the filter predicate functions
+Filter = Callable[[str, gpd.GeoDataFrame, ipa.ImgPolygonAssociator], bool]
 
-def new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=256, centered=False):
+def new_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_size: int = 256, centered: bool = False) -> ipa.ImgPolygonAssociator:
     """
     Create a new dataset (images, labels, and associator) in target_data_dir from a dataset in source_data_dir by cutting out a small square window around each polygon in the source dataset.
 
@@ -36,7 +38,7 @@ def new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir,
 
     # Create new target_data_dir and subdirectories if necessary.
     for subdir in ipa.DATA_DIR_SUBDIRS:
-        Path(target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
+        (target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
 
     # Update new empty associator/dataset from source dataset/associator, return associator of target dataset.
     return create_or_update_dataset_from_iter_over_polygons(source_data_dir=source_data_dir, 
@@ -47,8 +49,7 @@ def new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir,
                                         img_size=img_size, 
                                         centered=centered)
 
-
-def update_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=256, centered=False):
+def update_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_size: int = 256, centered: bool = False) -> ipa.ImgPolygonAssociator:
     """
     Update a dataset (images, labels, and associator) in target_data_dir that was created using new_dataset_one_small_img_for_each_polygon from an updated version of the dataset in source_data_dir by adding the new polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
 
@@ -74,16 +75,16 @@ def update_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_d
                                         img_size=img_size, 
                                         centered=centered)
 
-
-def random_img_selector(img_names_list, new_polygons_df, source_assoc):
+def random_img_selector(img_names_list: list, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> list:
     """
     Randomly selects an image from a list of images if it is non-empty.
     """
 
     return [random.choice(img_names_list)] if img_names_list != [] else []
 
-
-def create_or_update_dataset_from_iter_over_polygons(source_data_dir, target_data_dir, img_cutter, img_selector, polygon_filter_predicate=alwaystrue, img_bands=None, label_bands=None, **kwargs):
+# TODO: is it good to have the arguments for the img_cutter here?
+def create_or_update_dataset_from_iter_over_polygons(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_cutter:Callable, img_selector:Callable,
+polygon_filter_predicate: Filter = alwaystrue, img_bands: list = None, label_bands: list = None, **kwargs) -> ipa.ImgPolygonAssociator:
     """
     Create or update a data set (images, labels, and associator) in target_data_dir from the data set in source_data_dir by iterating over the polygons in the source dataset/associator, selecting a subset of the images in the source dataset containing the polygon (using img_selector) and cutting each selected img using an img_cutter which could could depend e.g. on information in the source associator. We can restrict to a subset of the polygons in the source data_dir by filtering using the polygon_filter_predicate, which can depend on information in the source associator.
 
@@ -192,7 +193,7 @@ def create_or_update_dataset_from_iter_over_polygons(source_data_dir, target_dat
         # print(f"new_assoc_from_iter_over_polygons: considering {polygon_name} ")
         
         # If filter condition is satisfied, (if not, don't do anything) ...
-        if polygon_filter_predicate(polygon_name, target_assoc.polygons_df, source_assoc) == True:
+        if polygon_filter_predicate(polygon_name, target_assoc.polygons_df, source_assoc):
 
             # ... then from the images in the source dataset containing the polygon ...
             source_imgs_containing_polygon = source_assoc.imgs_containing_polygon(polygon_name)

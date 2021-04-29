@@ -1,18 +1,23 @@
 """
 Utils for/code shared by cut_imgs_iter_over_polygons and cut_imgs_iter_over_imgs.
 """
-
+from typing import Callable
 import logging
 import random
 import rasterio as rio
 from pathlib import Path
 from shapely.geometry import box
+import geopandas as gpd
 
 from rs_tools.utils.utils import transform_shapely_geometry
+from rs_tools.graph import BipartiteGraph
 
 logger = logging.getLogger(__name__)
 
-def have_no_img_for_polygon(polygon_name, new_polygons_df, source_assoc):
+# Type alias for the filter predicate functions
+Filter = Callable[[str, gpd.GeoDataFrame, ipa.ImgPolygonAssociator], bool]
+
+def have_no_img_for_polygon(polygon_name: str, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
     """
     Polygon filter predicate that tests whether an image has already been created for the polygon. Returns True if the polygon's 'have_img? ' value is False, returns False otherwise. 
 
@@ -21,17 +26,17 @@ def have_no_img_for_polygon(polygon_name, new_polygons_df, source_assoc):
 
     return new_polygons_df.loc[polygon_name, 'have_img?'] == False
 
-
-def small_imgs_centered_around_polygons_cutter(img_name, 
-                                        source_assoc,
-                                        target_data_dir,
-                                        polygon_filter_predicate,
-                                        new_polygons_df, 
-                                        new_graph,  
-                                        img_size=256, 
-                                        img_bands=None, 
-                                        label_bands=None, 
-                                        centered=False):
+def small_imgs_centered_around_polygons_cutter(img_name:str, 
+                                        source_assoc:ipa.ImgPolygonAssociator,
+                                        target_data_dir:Union[str, Path],
+                                        polygon_filter_predicate:Filter,
+                                        new_polygons_df:gpd.GeoDataFrame, 
+                                        new_graph:BipartiteGraph,  
+                                        img_size: int = 256, 
+                                        img_bands: list = None, 
+                                        label_bands: list = None, 
+                                        centered: bool = False,
+                                        random_seed: int = 42) -> dict:
     """
     img_cutter that cuts an img (and its label) into small imgs surrounding (a subset of the) polygons fully contained in the img. 
     
@@ -66,6 +71,8 @@ def small_imgs_centered_around_polygons_cutter(img_name,
     TODO: numpy vs GeoTiff? which bands?
     """
 
+    random.seed(random_seed)
+
     imgs_from_cut_dict = {index_or_col_name: [] for index_or_col_name in [source_assoc.imgs_df.index.name] + list(source_assoc.imgs_df.columns)}
 
     polygons_contained_in_img = source_assoc.polygons_contained_in_img(img_name)
@@ -73,7 +80,7 @@ def small_imgs_centered_around_polygons_cutter(img_name,
     # for all polygons in the source_assoc contained in the img
     for polygon_name, polygon_geometry in (source_assoc.polygons_df.loc[polygons_contained_in_img, ['geometry']]).itertuples():
 
-        if polygon_filter_predicate(polygon_name, new_polygons_df, source_assoc) == False:
+        if not polygon_filter_predicate(polygon_name, new_polygons_df, source_assoc):
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # for cut_imgs_iter_over_imgs should drop polygon form new_polygons_df?
@@ -105,7 +112,7 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                     min_col = min(*tuple_of_cols_of_rectangle_corners)
                     max_col = max(*tuple_of_cols_of_rectangle_corners)
 
-                    if centered == False:
+                    if not centered:
 
                         # If the height of the polygon is less than img_size ...
                         if max_row - min_row <= img_size:
@@ -182,17 +189,17 @@ def small_imgs_centered_around_polygons_cutter(img_name,
                     # If we are considering the images ...
                     if subdir == "images":
                         
-                        # ... then if the img_bands arg was given ...
-                        if img_bands is not None:
+                    # ... then if the img_bands arg was given ...
+                    if img_bands is not None:
 
-                            # ...set band variable to that. 
-                            bands = img_bands 
-                        
-                        # If img_bands was not given (i.e. img_bands is None) ...
-                        else:
+                        # ...set band variable to that. 
+                        bands = img_bands 
+                    
+                    # If img_bands was not given (i.e. img_bands is None) ...
+                    else:
 
-                            # ... default to all img bands
-                            bands = list(range(1, src.count + 1)) # or src.count???
+                        # ... default to all img bands
+                        bands = list(range(1, src.count + 1)) # or src.count???
                     
                     # Similarly, when considering the labels ...
                     else: 
@@ -268,7 +275,8 @@ def small_imgs_centered_around_polygons_cutter(img_name,
     return imgs_from_cut_dict
 
 
-def alwaystrue(polygon_or_img_name, new_polygons_df, source_assoc):
+# TODO: should inherit from callable ABC
+def alwaystrue(polygon_or_img_name: str, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
     """polygon_filter_predicate or img_filter predicate that always returns True."""
     return True  
 
