@@ -24,8 +24,11 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
     class containing the probability of that polygon belonging to the segmentation
     class.
 
-    :param assoc: calling ImgPolygonAssociator.
-    :param img_name: Name of image for which a label should be created.
+    Args:
+        - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
+        - img_name (str): Name of image for which a label should be created.
+    Returns:
+        - None:
     """
 
     img_path = Path(assoc.data_dir) / Path("images") / Path(img_name)

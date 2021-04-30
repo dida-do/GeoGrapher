@@ -19,8 +19,11 @@ def _make_geotif_label_onehot(assoc: ImgPolygonAssociator,
     one channel has a non-zero entry) GeoTiff raster label in the data directory's
     labels subdirectory for a GeoTiff image with image name img_name.
 
-    :param assoc: calling ImgPolygonAssociator.
-    :param img_name (img_name): Name of image for which a label should be created.
+    Args:
+        - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
+        - img_name (str): Name of image for which a label should be created.
+    Returns:
+        - None:
     """
 
     img_path = Path(assoc.data_dir) / Path("images") / Path(img_name)
