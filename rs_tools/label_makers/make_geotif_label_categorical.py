@@ -21,8 +21,11 @@ def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
     parameter of the associator) in the data directory's labels subdirectory
     for the GeoTiff image img_name in the images subdirectory.
 
-    :param assoc: calling ImgPolygonAssociator.
-    :param img_name: The filename of the image in the dataset's images subdirectory.
+    Args:
+        - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
+        - img_name (str): Name of image for which a label should be created.
+    Returns:
+        - None:
     """
 
     img_path = Path(assoc.data_dir) / Path("images") / Path(img_name)
