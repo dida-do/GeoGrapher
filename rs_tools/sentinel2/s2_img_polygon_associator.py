@@ -13,7 +13,8 @@ from zipfile import ZipFile
 from sentinelsat import SentinelAPI
 import random
 from dotenv import load_dotenv
-
+from geopandas import GeoDataFrame, GeoSeries
+from typing import Union, List
 
 import rs_tools.img_polygon_associator as ipa 
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
@@ -42,54 +43,62 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns. 
     """
 
-    def __init__(self, data_dir,
-                        imgs_df=None, 
-                        polygons_df=None, 
-                        segmentation_classes=None,
-                        crs_epsg_code=STANDARD_CRS_EPSG_CODE,
-                        producttype=PRODUCTTYPE, 
-                        resolution=RESOLUTION,
-                        max_percent_cloud_coverage=MAX_PERCENT_CLOUD_COVERAGE,
-                        label_type=LABEL_TYPE
-                        ):
+    def __init__(self, data_dir: Union[str, pathlib.Path],
+                       polygons_df: GeoDataFrame = None,
+                       segmentation_classes: List[str] = None,
+                       crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
+                       producttype: str = PRODUCTTYPE,
+                       resolution: int = RESOLUTION,
+                       max_percent_cloud_coverage: int = MAX_PERCENT_CLOUD_COVERAGE,
+                       label_type: str = LABEL_TYPE
+                       ):
         """
-        - data_dir: The data directory of the associator. 
+        :param data_dir: The data directory of the associator. This is the only non-optional argument.
+        :type data_dir: str or pathlib.Path
 
-        - imgs_df: optional imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir.
+        :param polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
+        :type polygons_df: geopandas.GeoDataFrame, optional
 
-        - polygons_df: polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir.
+        :param segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
+        :type segmentation_classes: list of str, optional
 
-        - segmentation_classes: list of segmentation classes, i.e. tailing types for the AuBeSa project.
+        :param standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
+        :type standard_crs_epsg_code: int, optional
 
-        - standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
-            
-        - producttype (str): Sentinel-2 product type, "L2A" or "L1C".
-        
-        - resolution (int): resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
+        :param producttype: Sentinel-2 product type, "L2A" or "L1C".
+        :type producttype: str
 
-        - max_percent_cloud_coverage (int): maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
+        :param resolution: resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
+        :type resolution: int
 
-        - label_type:
+        :param max_percent_cloud_coverage: maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
+        :type  max_percent_cloud_coverage: int
+
+        :param label_type: #TODO
+        :type label_type: str
         """
 
         super().__init__(data_dir=data_dir,
-                                                    imgs_df=imgs_df, 
-                                                    polygons_df=polygons_df, 
-                                                    crs_epsg_code=crs_epsg_code, 
-                                                    segmentation_classes=segmentation_classes,
-                                                    label_type=label_type, 
-                                                    producttype=producttype, 
-                                                    resolution=resolution, 
-                                                    max_percent_cloud_coverage=max_percent_cloud_coverage)
+                         imgs_df=imgs_df,
+                         polygons_df=polygons_df,
+                         crs_epsg_code=crs_epsg_code,
+                         segmentation_classes=segmentation_classes,
+                         label_type=label_type,
+                         producttype=producttype,
+                         resolution=resolution,
+                         max_percent_cloud_coverage=max_percent_cloud_coverage)
 
 
-    def _download_imgs_for_polygon(self, polygon_name,
-                                polygon_geometry, 
-                                download_dir,
-                                previously_downloaded_imgs_set,
-                                **kwargs):
+    def _download_imgs_for_polygon(self,
+                                   polygon_name: str,
+                                   polygon_geometry: GeoSeries,
+                                   download_dir: Union[str, Path],
+                                   previously_downloaded_imgs_set: List[str],
+                                   **kwargs) -> dict:
         """
         Downloads a sentinel-2 image fully containing the polygon, returns a dict in the format needed by the associator.
+
+        :param
 
         :raises NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
         :raises ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator. 
@@ -137,11 +146,11 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             try:
 
                 # Query, remember results
-                products = api.query(area=rectangle_wkt, 
-                                        date=date, 
-                                        area_relation=area_relation,
-                                        producttype=producttype, 
-                                        cloudcoverpercentage=(0,cloud_coverage_counter))
+                products = api.query(area=rectangle_wkt,
+                                     date=date,
+                                     area_relation=area_relation,
+                                     producttype=producttype,
+                                     cloudcoverpercentage=(0,cloud_coverage_counter))
 
             # The sentinelsat API can throw an exception if there are no results for a query instead of returning an empty dict ...
             except:
@@ -201,7 +210,12 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         return {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
 
 
-    def _process_downloaded_img_file(self, img_name, in_dir, out_dir, convert_to_crs_epsg, **kwargs) -> dict:
+    def _process_downloaded_img_file(self,
+                                     img_name: str,
+                                     in_dir: Union[str, Path],
+                                     out_dir: Union[str, Path],
+                                     convert_to_crs_epsg: int,
+                                     **kwargs) -> dict:
         """        
         Extracts downloaded sentinel-2 zip file to a .SAFE directory, then processes/converts to a GeoTiff image, deletes the zip file, puts the GeoTiff image in the right directory, and returns information about the img in a dict.
         """
