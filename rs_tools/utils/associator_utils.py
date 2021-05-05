@@ -66,6 +66,28 @@ def empty_polygons_df(polygons_df_index_name: str,
     return empty_gdf(polygons_df_index_name, polygons_df_cols_and_index_types, crs_epsg_code=crs_epsg_code)
 
 
+def empty_gdf_same_format(source_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Creates an empty geodataframe of the same format (index name, columns, column types) as the source_df argument.
+
+    :param polygons_df: Example polygon dataframe
+
+    :return: New empty dataframe
+    """
+    df_index_name = source_df.index.name
+
+    df_cols_and_index_types = {source_df.index.name: source_df.index.dtype, 
+                               **source_df.dtypes.to_dict()}
+
+    crs_epsg_code = source_df.crs.to_epsg()
+
+    new_empty_df = empty_gdf(df_index_name,
+                             df_cols_and_index_types, 
+                             crs_epsg_code=crs_epsg_code)
+
+    return new_empty_df
+
+
 def empty_polygons_df_same_format_as(polygons_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
     Creates an empty polygons_df of the same format (index name, columns, column types) as the polygons_df argument.
@@ -74,18 +96,8 @@ def empty_polygons_df_same_format_as(polygons_df: gpd.GeoDataFrame) -> gpd.GeoDa
 
     :return: New empty dataframe
     """
-    polygons_df_index_name = polygons_df.index.name
 
-    polygons_df_cols_and_index_types = {polygons_df.index.name: polygons_df.index.dtype, 
-                                        **polygons_df.dtypes.to_dict()}
-
-    crs_epsg_code = polygons_df.crs.to_epsg()
-
-    new_empty_polygons_df = empty_polygons_df(polygons_df_index_name, 
-                                                polygons_df_cols_and_index_types, 
-                                                crs_epsg_code=crs_epsg_code)
-
-    return new_empty_polygons_df
+    return empty_gdf_same_format(polygons_df)
 
 
 def empty_imgs_df_same_format_as(imgs_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -96,18 +108,8 @@ def empty_imgs_df_same_format_as(imgs_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     :return: New empty images datagrame
     """
-    imgs_df_index_name = imgs_df.index.name
 
-    imgs_df_cols_and_index_types = {imgs_df.index.name: imgs_df.index.dtype, 
-                                        **imgs_df.dtypes.to_dict()}
-
-    crs_epsg_code = imgs_df.crs.to_epsg()
-
-    new_empty_imgs_df = empty_imgs_df(imgs_df_index_name, 
-                                                imgs_df_cols_and_index_types, 
-                                                crs_epsg_code=crs_epsg_code)
-
-    return new_empty_imgs_df
+    return empty_gdf_same_format(imgs_df)
 
 
 def empty_assoc_same_format_as(target_data_dir: Union[str, Path],
