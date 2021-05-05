@@ -102,9 +102,9 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict})
 
         Raises:
-            Exception: Raised if an unkknown product type is given.
+            LookupError: Raised if an unkknown product type is given.
             NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
-            Exception: Raised if the product name could not be extracted correctly.
+            KeyError: Raised if the product name could not be extracted correctly.
             ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator.
             ImgDownloadError: Raised if an error occurred while trying to download a product.
 
@@ -137,7 +137,7 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         elif kwargs['producttype'] in {'L1C', 'S2MSI1C'}:
             producttype = 'S2MSI1C'
         else:
-            raise Exception(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
+            raise LookupError(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
     
         # (One less than) the allowable cloud coverage we'll start querying with. We'll increment this until we find products or reach max allowable.
         cloud_coverage_counter = -1 
@@ -181,7 +181,7 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             try:
                 img_name =  product_metadata['title'] + ".tif"
             except:
-                raise Exception(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
+                raise KeyError(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
 
             # If the file has been downloaded before (really, this should not happen, since EXPLAIN!), throw an error ...
             if img_name in previously_downloaded_imgs_set:
