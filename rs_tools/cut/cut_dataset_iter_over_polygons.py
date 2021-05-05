@@ -3,33 +3,32 @@ Functions to cut datasets of GeoTiffs by iterating over polygons.
 
 Customizable general function create_or_update_dataset_from_iter_over_polygons to create or update a new remote sensing imagery dataset (images, labels, and associator) from an existing one by iterating over (a subset of) the polygons and cutting (a subset of) the images containing the polygons, as well as a specialization to functions new_dataset_one_small_img_for_each_polygon and update_dataset_one_small_img_for_each_polygon that create and update exactly one new small image for each polygon in the old dataset.
 """
-from typing import Union, Callable
+from typing import Union, Callable, List
 import copy
 from pathlib import Path
 import random
 from tqdm import tqdm
 import rasterio as rio
 import pandas as pd 
-import geopandas as gpd
+from geopandas import GeoDataFrame
 
 import rs_tools.img_polygon_associator as ipa
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.cut.cut_dataset_utils import small_imgs_centered_around_polygons_cutter, have_no_img_for_polygon, alwaystrue
-
-# Type alias for the filter predicate functions
-Filter = Callable[[str, gpd.GeoDataFrame, ipa.ImgPolygonAssociator], bool]
+from rs_tools.cut.cut_dataset_utils import small_imgs_centered_around_polygons_cutter, have_no_img_for_polygon, alwaystrue, Filter, ImgCutter
+          
 
 def new_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_size: int = 256, centered: bool = False) -> ipa.ImgPolygonAssociator:
-    """
-    Create a new dataset (images, labels, and associator) in target_data_dir from a dataset in source_data_dir by cutting out a small square window around each polygon in the source dataset.
+    """Create a new dataset (images, labels, and associator) in target_data_dir from a dataset in source_data_dir by cutting out a small square window around each polygon in the source dataset.
 
     Args:
-        - source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
-        - target_data_dir: directory where the new dataset will be created. Will be created if it doesn't exist already.
-        - img_size: size in pixels of the new square images to be created (length in pixels).
-        - centered (bool, default: False): whether to center the polygon around which a small image is cut or select random window fully containing the polygon. 
+        source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
+        target_data_dir: directory where the new dataset will be created. Will be created if it doesn't exist already.
+        img_size: size in pixels of the new square images to be created (length in pixels).
+        centered: whether to center the polygon around which a small image is cut or select random window fully containing the polygon. 
+
     Returns:
-        - target_assoc: the updated associator of the target dataset.
+        target_assoc: the updated associator of the target dataset.
+
     """
 
     # make sure dir args are Path objects
@@ -50,16 +49,17 @@ def new_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Path]
                                         centered=centered)
 
 def update_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_size: int = 256, centered: bool = False) -> ipa.ImgPolygonAssociator:
-    """
-    Update a dataset (images, labels, and associator) in target_data_dir that was created using new_dataset_one_small_img_for_each_polygon from an updated version of the dataset in source_data_dir by adding the new polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
+    """Update a dataset (images, labels, and associator) in target_data_dir that was created using new_dataset_one_small_img_for_each_polygon from an updated version of the dataset in source_data_dir by adding the new polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
 
     Args:
-        - source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
-        - target_data_dir: data_dir of dataset to be updated.
-        - img_size: size in pixels of the new square images to be created (length in pixels)
-        - centered (bool, default: False): whether to center the polygon around which a small image is cut or select random window fully containing the polygon.
+        source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
+        target_data_dir: data_dir of dataset to be updated.
+        img_size: size in pixels of the new square images to be created (length in pixels)
+        centered: whether to center the polygon around which a small image is cut or select random window fully containing the polygon.
+
     Returns:
-        - target_assoc: the updated associator of the target dataset.
+        target_assoc: the updated associator of the target dataset
+
     """
 
     # make sure dir args are Path objects
@@ -75,75 +75,51 @@ def update_dataset_one_small_img_for_each_polygon(source_data_dir: Union[str, Pa
                                         img_size=img_size, 
                                         centered=centered)
 
-def random_img_selector(img_names_list: list, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> list:
-    """
-    Randomly selects an image from a list of images if it is non-empty.
+ImgSelector = Callable[[List[str], GeoDataFrame, ipa.ImgPolygonAssociator], List[str]]
+"""Type alias for the image selector functions. Will be made obsolete when we refactor these functions to inherit from an ABC.
+Selects an image from a list of images. An example is given by random_img_selector. 
+            
+    Args:
+        img_names_list: list of imags containing a polygon
+        new_polygons_df: 
+        source_assoc:
+    Returns:
+        a sublist of img_names_list. If img_names_list is empty should return the empty list. 
+"""
+
+def random_img_selector(img_names_list: List[str], new_polygons_df: GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> List[str]:
+    """Randomly selects an image from a list of images if it is non-empty.
+
+    Args:
+        img_names_list: list of image names
+        new_polygons_df: not used
+        source_assoc: not used
+
+    Returns:
+        A list with one image name or an empty list if the original list was empty.
     """
 
     return [random.choice(img_names_list)] if img_names_list != [] else []
 
-# TODO: is it good to have the arguments for the img_cutter here?
-def create_or_update_dataset_from_iter_over_polygons(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_cutter:Callable, img_selector:Callable,
-polygon_filter_predicate: Filter = alwaystrue, img_bands: list = None, label_bands: list = None, **kwargs) -> ipa.ImgPolygonAssociator:
-    """
-    Create or update a data set (images, labels, and associator) in target_data_dir from the data set in source_data_dir by iterating over the polygons in the source dataset/associator, selecting a subset of the images in the source dataset containing the polygon (using img_selector) and cutting each selected img using an img_cutter which could could depend e.g. on information in the source associator. We can restrict to a subset of the polygons in the source data_dir by filtering using the polygon_filter_predicate, which can depend on information in the source associator.
+def create_or_update_dataset_from_iter_over_polygons(source_data_dir: Union[str, Path], target_data_dir: Union[str, Path], img_cutter:ImgCutter, img_selector:ImgSelector,
+polygon_filter_predicate: Filter = alwaystrue, img_bands: List[int] = None, label_bands: List[int] = None, **kwargs) -> ipa.ImgPolygonAssociator:
+    """Create or update a data set (images, labels, and associator) in target_data_dir from the data set in source_data_dir by iterating over the polygons in the
+    source dataset/associator, selecting a subset of the images in the source dataset containing the polygon (using img_selector) and cutting each selected img
+    using an img_cutter which could could depend e.g. on information in the source associator. We can restrict to a subset of the polygons in the source data_dir
+    by filtering using the polygon_filter_predicate, which can depend on information in the source associator.
 
     Args:
-        - source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
-        - target_data_dir: data directory of target dataset to be created or updated. 
-        - img_cutter: Function that cuts a single image (e.g. small_imgs_centered_around_polygons_cutter in cut.cut_dataset_utils)
-        
-            Args: 
-                - img_name: name of the img to be cut
-                - source_data_dir: source data directory
-                - target_data_dir: target data directory to be created or updated
-                - polygon_filter_predicate: predicate to filter polygons. 
-
-                    Args:
-                        - polygon_name
-                        - new_polygons_df
-                        - source_assoc
-                        
-                    Returns:
-                        - True or False, whether to filter polygon or not
-
-                - new_polygons_df: will be polygons_df of new associator
-                - new_graph: will be graph of new associator
-                - img_size: the img size (just one number)
-                - img_bands: list of bands to extract from the images, the img_cutter should default this to all possible bands
-                - label_bands: list of bands to extract from the labels, the img_cutter should default this to all possible bands
-                - drop: bool, defaults to True. whether to drop/not include polygons which fail the polygon_filter_predicate from/in the new associator.
-                - kwargs: additional keyword arguments that might be needed by an img_cutter.
-
-            Returns:
-                imgs_from_single_cut_dict: dict with keys the names of the index and columns of the new_imgs_df 
-                for the new associator being created. The values are lists of entries corresponding to 
-                the rows for the newly created imgs.
-
-            Given an img in the associator with name img_name, the img_cutter cuts the img 
-            and the corresponding label in the images and labels subdirs of source_data_dir
-            into subimages in some meaningful way, given the information in the components of the current associator 
-            old_polygons_df and old_graph, saves them to the images and labels subdirs of the target_data_dir, 
-            and modifies new_polygons_df and new_graph appropriately so that they can form the 
-            components of a new associator in target_data_dir together with the new_imgs_df accumulating 
-            the information in the imgs_from_single_cut_dicts from the various calls
-            on all the old imgs to be cut.
-
-        - img_selector: selects an image from a list of images. An example is given by random_img_selector. 
-            
-            Args:
-                - img_names_list: list of imags containing a polygon
-                - new_polygons_df: 
-                - source_assoc:
-            Returns:
-                - a sublist of img_names_list. If img_names_list is empty should return the empty list. 
-
-        - target_assoc, the target associator. This is optional and we only allow it as an argument so that we can 
-        - polygon_filter_predicate: predicate to filter polygons. See above in args for img_cutter.
-        - kwargs: additional keyword arguments that might be needed by an img_cutter.
+        source_data_dir: a data directory, i.e. a directory conforming to the conventions of an ImgPolygonAssociator. 
+        target_data_dir: data directory of target dataset to be created or updated. 
+        img_cutter: Function that cuts a single image (e.g. small_imgs_centered_around_polygons_cutter in cut.cut_dataset_utils)
+        img_selector: selects an image from a list of images. An example is given by random_img_selector. 
+        target_assoc: the target associator. This is optional and we only allow it as an argument so that we can [TODO: do what?]
+        polygon_filter_predicate: predicate to filter polygons. See above in args for img_cutter.
+        kwargs: additional keyword arguments that might be needed by an img_cutter.
     
     Returns:
-        - target_assoc: the updated associator of the target dataset.
+        target_assoc: the updated associator of the target dataset.
+
     """
 
     # Make sure dir args are Path objects.
@@ -165,7 +141,7 @@ polygon_filter_predicate: Filter = alwaystrue, img_bands: list = None, label_ban
     mask_polygons_not_in_target_polygons_df = ~source_assoc.polygons_df.index.isin(target_assoc.polygons_df.index)
     polygons_not_in_target_polygons_df = source_assoc.polygons_df.loc[mask_polygons_not_in_target_polygons_df]
     # (deepcopy, just to be safe)
-    polygons_not_in_target_polygons_df = gpd.GeoDataFrame(columns=source_assoc.polygons_df.columns, 
+    polygons_not_in_target_polygons_df = GeoDataFrame(columns=source_assoc.polygons_df.columns, 
                                         data=copy.deepcopy(polygons_not_in_target_polygons_df.values), 
                                         crs=source_assoc.polygons_df.crs)
     # (make sure types are set correctly)
@@ -239,13 +215,13 @@ polygon_filter_predicate: Filter = alwaystrue, img_bands: list = None, label_ban
                 # print(f"new_imgs_dict after considering {polygon_name}: \n{new_imgs_dict}")
 
     # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe...
-    new_imgs_df = gpd.GeoDataFrame(new_imgs_dict)
+    new_imgs_df = GeoDataFrame(new_imgs_dict)
     new_imgs_df.set_crs(epsg=target_assoc.imgs_df.crs.to_epsg(), inplace=True) # copy crs
     new_imgs_df.set_index(target_assoc.imgs_df.index.name, inplace=True)
 
     # ... and append it to self.imgs_df.
     data_frames_list = [target_assoc.imgs_df, new_imgs_df]  
-    target_assoc.imgs_df = gpd.GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+    target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
     # Save associator to disk.
     target_assoc.save()
