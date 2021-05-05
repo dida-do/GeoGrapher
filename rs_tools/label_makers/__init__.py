@@ -1,5 +1,4 @@
-"""
-Label makers for different types of labels.
+"""Label makers for different types of labels.
 
 __make_geotif_label_categorical__: make categorical label.
 __make_geotif_label_onehot__: make one-hot encoded categorical label.
