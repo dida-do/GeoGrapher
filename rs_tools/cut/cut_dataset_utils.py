@@ -1,74 +1,122 @@
 """
 Utils for/code shared by cut_imgs_iter_over_polygons and cut_imgs_iter_over_imgs.
 """
-from typing import Callable
+from typing import Callable, Union, List
 import logging
 import random
 import rasterio as rio
 from pathlib import Path
 from shapely.geometry import box
-import geopandas as gpd
+from geopandas import GeoDataFrame
 
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.graph import BipartiteGraph
 
 logger = logging.getLogger(__name__)
 
-# Type alias for the filter predicate functions
-Filter = Callable[[str, gpd.GeoDataFrame, ipa.ImgPolygonAssociator], bool]
+Filter = Callable[[str, GeoDataFrame, ipa.ImgPolygonAssociator], bool]
+"""Type alias for the filter predicate functions. Will be made obsolete when we refactor the filter functions to inherit from an ABC.
 
-def have_no_img_for_polygon(polygon_name: str, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
-    """
-    Polygon filter predicate that tests whether an image has already been created for the polygon. Returns True if the polygon's 'have_img? ' value is False, returns False otherwise. 
+Args:
+    polygon_name
+    new_polygons_df
+    source_assoc
+    
+Returns:
+    True or False, whether to filter polygon or not
+"""     
 
-    Using this polygon filter predicate in new_assoc_from_iter_over_imgs together with e.g. small_imgs_centered_around_polygons_cutter assures that the new associator contains exactly one new small image per polygon (and not more, as might happen if some polygons in the the source associator/data set are contained in multiple images.)
+def have_no_img_for_polygon(polygon_name: str, new_polygons_df: GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
+    """Polygon filter predicate that tests whether an image has already been created for the polygon.
+
+    Using this polygon filter predicate in `new_assoc_from_iter_over_imgs` together with e.g. `small_imgs_centered_around_polygons_cutter` assures
+    that the new associator contains exactly one new small image per polygon (and not more, as might happen if some polygons in the the source
+    associator/data set are contained in multiple images.)
+
+    Args:
+        polygon_name
+        new_polygons_df
+        source_assoc
+    
+    Returns:
+        True if the polygon's `have_img?` value is False, returns False otherwise. 
+
     """
 
     return new_polygons_df.loc[polygon_name, 'have_img?'] == False
 
-def small_imgs_centered_around_polygons_cutter(img_name:str, 
-                                        source_assoc:ipa.ImgPolygonAssociator,
-                                        target_data_dir:Union[str, Path],
-                                        polygon_filter_predicate:Filter,
-                                        new_polygons_df:gpd.GeoDataFrame, 
-                                        new_graph:BipartiteGraph,  
-                                        img_size: int = 256, 
-                                        img_bands: list = None, 
-                                        label_bands: list = None, 
-                                        centered: bool = False,
-                                        random_seed: int = 42) -> dict:
-    """
-    img_cutter that cuts an img (and its label) into small imgs surrounding (a subset of the) polygons fully contained in the img. 
-    
+def alwaystrue(polygon_or_img_name: str, new_polygons_df: GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
+    """polygon_filter_predicate or img_filter predicate that always returns True."""
+    return True     
+
+ImgCutter = [[str, ipa.ImgPolygonAssociator, Union[str, Path], Filter, GeoDataFrame, BipartiteGraph, int, List[int], List[int], bool, int], dict]
+"""Type alias for the image cutter functions. Will be made obsolete when we refactor these functions to inherit from an ABC.
+Function that cuts a single image (e.g. small_imgs_centered_around_polygons_cutter in cut.cut_dataset_utils)
+
     Args: 
-        - img_name: name of the img to be cut
-        - source_assoc: source associator
-        - target_data_dir: target data directory
-        - polygon_filter_predicate: predicate to filter polygons. 
-
-            Args:
-                - polygon_name
-                - new_polygons_df
-                - source_assoc
-                
-            Returns:
-                - True or False, whether to filter polygon or not
-
-        - new_polygons_df: will be polygons_df of new associator
-        - new_graph: will be graph of new associator
-        - img_size: the img size (just one number)
-        - bands: list of bands to extract
-        - centered: bool. If True, will choose the image bounds of the new small cut image so that the polygon under is centered in it. If False, will choose the img bounds randomly subject to the constraint that the polygon under consideration is fully contained in it.
+        img_name: name of the img to be cut
+        source_data_dir: source data directory
+        target_data_dir: target data directory to be created or updated
+        polygon_filter_predicate: predicate to filter polygons. 
+        new_polygons_df: will be polygons_df of new associator
+        new_graph: will be graph of new associator
+        img_size: the img size (just one number)
+        img_bands: list of bands to extract from the images, the img_cutter should default this to all possible bands
+        label_bands: list of bands to extract from the labels, the img_cutter should default this to all possible bands
+        drop: bool, defaults to True. whether to drop/not include polygons which fail the polygon_filter_predicate from/in the new associator.
+        kwargs: additional keyword arguments that might be needed by an img_cutter.
 
     Returns:
         imgs_from_single_cut_dict: dict with keys the names of the index and columns of the new_imgs_df 
         for the new associator being created. The values are lists of entries corresponding to 
         the rows for the newly created imgs.
 
-    Given an img in the source associator with name img_name, small_imgs_centered_around_polygons_cutter creates an image
-    and corresponding label in the target_data_dir for each polygon satisfying the polygon_filter_predicate condition, updates the new_graph and new_polygons_df as necessary, and returns a dict containing information about the created imgs that can be put into an associator's imgs_df (see explanation of return value above, and docstring for new_assoc_from_iter_over_imgs).
+    Given an img in the associator with name img_name, the img_cutter cuts the img 
+    and the corresponding label in the images and labels subdirs of source_data_dir
+    into subimages in some meaningful way, given the information in the components of the current associator 
+    old_polygons_df and old_graph, saves them to the images and labels subdirs of the target_data_dir, 
+    and modifies new_polygons_df and new_graph appropriately so that they can form the 
+    components of a new associator in target_data_dir together with the new_imgs_df accumulating 
+    the information in the imgs_from_single_cut_dicts from the various calls
+    on all the old imgs to be cut.
+"""   
 
-    TODO: numpy vs GeoTiff? which bands?
+def small_imgs_centered_around_polygons_cutter(img_name:str, 
+                                        source_assoc:ipa.ImgPolygonAssociator,
+                                        target_data_dir:Union[str, Path],
+                                        polygon_filter_predicate:Filter,
+                                        new_polygons_df:GeoDataFrame, 
+                                        new_graph:BipartiteGraph,  
+                                        img_size: int = 256, 
+                                        img_bands: List[int] = None, 
+                                        label_bands: List[int] = None, 
+                                        centered: bool = False,
+                                        random_seed: int = 42) -> dict:
+    """img_cutter that cuts an img (and its label) into small imgs surrounding (a subset of the) polygons fully contained in the img. 
+
+    Given an img in the source associator with name img_name, small_imgs_centered_around_polygons_cutter creates an image
+    and corresponding label in the target_data_dir for each polygon satisfying the polygon_filter_predicate condition, updates the new_graph and
+    new_polygons_df as necessary, and returns a dict containing information about the created imgs that can be put into an associator's imgs_df
+    (see explanation of return value above, and docstring for new_assoc_from_iter_over_imgs).
+    
+    Args: 
+        img_name: name of the img to be cut
+        source_assoc: source associator
+        target_data_dir: target data directory
+        polygon_filter_predicate: predicate to filter polygons. 
+        new_polygons_df: will be polygons_df of new associator
+        new_graph: will be graph of new associator
+        img_size: the img size (just one number)
+        bands: list of bands to extract
+        centered: If True, will choose the image bounds of the new small cut image so that the polygon under is centered in it. If False, will choose the img bounds randomly subject to the constraint that the polygon under consideration is fully contained in it.
+
+    Returns:
+        imgs_from_single_cut_dict: dict with keys the names of the index and columns of the new_imgs_df 
+        for the new associator being created. The values are lists of entries corresponding to 
+        the rows for the newly created imgs.
+
+    Todo:
+        TODO: numpy vs GeoTiff? which bands?
     """
 
     random.seed(random_seed)
@@ -255,10 +303,4 @@ def small_imgs_centered_around_polygons_cutter(img_name:str,
 
     # Return that dict, so we can build a geodataframe from the information.
     return imgs_from_cut_dict
-
-
-# TODO: should inherit from callable ABC
-def alwaystrue(polygon_or_img_name: str, new_polygons_df: gpd.GeoDataFrame, source_assoc: ipa.ImgPolygonAssociator) -> bool:
-    """polygon_filter_predicate or img_filter predicate that always returns True."""
-    return True  
 
