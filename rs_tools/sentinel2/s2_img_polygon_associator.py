@@ -42,17 +42,20 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     """
 
     def __init__(self, data_dir: Union[str, pathlib.Path],
-                       polygons_df: GeoDataFrame = None,
-                       segmentation_classes: List[str] = None,
-                       crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
-                       producttype: str = PRODUCTTYPE,
-                       resolution: int = RESOLUTION,
-                       max_percent_cloud_coverage: int = MAX_PERCENT_CLOUD_COVERAGE,
-                       label_type: str = LABEL_TYPE
-                       ):
+                 imgs_df: GeoDataFrame = None,
+                 polygons_df: GeoDataFrame = None,
+                 segmentation_classes: List[str] = None,
+                 crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
+                 producttype: str = PRODUCTTYPE,
+                 resolution: int = RESOLUTION,
+                 max_percent_cloud_coverage: int = MAX_PERCENT_CLOUD_COVERAGE,
+                 label_type: str = LABEL_TYPE
+                 ):
         """
         Args:
             data_dir: The data directory of the associator. This is the only non-optional argument.
+
+            imgs_df (optional): Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load.
 
             polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
 
