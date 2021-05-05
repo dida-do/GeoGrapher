@@ -6,9 +6,7 @@ import os
 from pathlib import Path
 import pathlib
 import logging
-from tqdm import tqdm
 from shapely import wkt
-import shapely
 from zipfile import ZipFile
 from sentinelsat import SentinelAPI
 import random
@@ -53,29 +51,22 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
                        label_type: str = LABEL_TYPE
                        ):
         """
-        :param data_dir: The data directory of the associator. This is the only non-optional argument.
-        :type data_dir: str or pathlib.Path
+        Args:
+            data_dir: The data directory of the associator. This is the only non-optional argument.
 
-        :param polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
-        :type polygons_df: geopandas.GeoDataFrame, optional
+            polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
 
-        :param segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
-        :type segmentation_classes: list of str, optional
+            segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
 
-        :param standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
-        :type standard_crs_epsg_code: int, optional
+            standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
 
-        :param producttype: Sentinel-2 product type, "L2A" or "L1C".
-        :type producttype: str
+            producttype: Sentinel-2 product type, "L2A" or "L1C".
 
-        :param resolution: resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
-        :type resolution: int
+            resolution: resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
 
-        :param max_percent_cloud_coverage: maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
-        :type  max_percent_cloud_coverage: int
+            max_percent_cloud_coverage: maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
 
-        :param label_type: #TODO
-        :type label_type: str
+            label_type: #TODO
         """
 
         super().__init__(data_dir=data_dir,
@@ -98,10 +89,22 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         """
         Downloads a sentinel-2 image fully containing the polygon, returns a dict in the format needed by the associator.
 
-        :param
+        Args:
+            polygon_name: The name of the polygon, only relevant for print statements and errors.  #TODO: I'd make that one optional
+            polygon_geometry: The areas the images shall be downloaded for.
+            download_dir: Directory to save the downloaded Sentinel-2 products.
+            previously_downloaded_imgs_set: A list of already downloaded products, will be used prevent double downloads.
 
-        :raises NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
-        :raises ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator. 
+        Returns:
+            info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict})
+
+        Raises:
+            Exception: Raised if an unkknown product type is given.
+            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
+            Exception: Raised if the product name could not be extracted correctly.
+            ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator.
+            ImgDownloadError: Raised if an error occurred while trying to download a product.
+
         """
 
         # To set up sentinel API, ...
@@ -207,7 +210,8 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
                     img_info_dict['img_processed?'] = False
                     img_info_dict['timestamp'] = product_metadata['Date'].strftime("%Y-%m-%d-%H:%M:%S")
 
-        return {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
+        info_dicts = {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
+        return info_dicts
 
 
     def _process_downloaded_img_file(self,
@@ -216,8 +220,18 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
                                      out_dir: Union[str, Path],
                                      convert_to_crs_epsg: int,
                                      **kwargs) -> dict:
-        """        
+        """
         Extracts downloaded sentinel-2 zip file to a .SAFE directory, then processes/converts to a GeoTiff image, deletes the zip file, puts the GeoTiff image in the right directory, and returns information about the img in a dict.
+
+        Args:
+            img_name: The name of the image.
+            in_dir: The directory containing the zip file.
+            out_dir: The directory to save the
+            convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
+
+        Returns:
+            return_dict: Contains information about the downloaded product.
+
         """
 
         # file names and paths
