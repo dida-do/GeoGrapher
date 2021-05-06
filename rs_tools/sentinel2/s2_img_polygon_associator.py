@@ -6,14 +6,13 @@ import os
 from pathlib import Path
 import pathlib
 import logging
-from tqdm import tqdm
 from shapely import wkt
-import shapely
 from zipfile import ZipFile
 from sentinelsat import SentinelAPI
 import random
 from dotenv import load_dotenv
-
+from geopandas import GeoDataFrame, GeoSeries
+from typing import Union, List
 
 import rs_tools.img_polygon_associator as ipa 
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
@@ -42,57 +41,73 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns. 
     """
 
-    def __init__(self, data_dir,
-                        imgs_df=None, 
-                        polygons_df=None, 
-                        segmentation_classes=None,
-                        crs_epsg_code=STANDARD_CRS_EPSG_CODE,
-                        producttype=PRODUCTTYPE, 
-                        resolution=RESOLUTION,
-                        max_percent_cloud_coverage=MAX_PERCENT_CLOUD_COVERAGE,
-                        label_type=LABEL_TYPE
-                        ):
+    def __init__(self, data_dir: Union[str, Path],
+                 imgs_df: GeoDataFrame = None,
+                 polygons_df: GeoDataFrame = None,
+                 segmentation_classes: List[str] = None,
+                 crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
+                 producttype: str = PRODUCTTYPE,
+                 resolution: int = RESOLUTION,
+                 max_percent_cloud_coverage: int = MAX_PERCENT_CLOUD_COVERAGE,
+                 label_type: str = LABEL_TYPE
+                 ):
         """
-        - data_dir: The data directory of the associator. 
+        Args:
+            data_dir: The data directory of the associator. This is the only non-optional argument.
 
-        - imgs_df: optional imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir.
+            imgs_df (optional): Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load.
 
-        - polygons_df: polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir.
+            polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
 
-        - segmentation_classes: list of segmentation classes, i.e. tailing types for the AuBeSa project.
+            segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
 
-        - standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
-            
-        - producttype (str): Sentinel-2 product type, "L2A" or "L1C".
-        
-        - resolution (int): resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
+            standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
 
-        - max_percent_cloud_coverage (int): maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
+            producttype: Sentinel-2 product type, "L2A" or "L1C".
 
-        - label_type:
+            resolution: resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
+
+            max_percent_cloud_coverage: maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
+
+            label_type: #TODO
         """
 
         super().__init__(data_dir=data_dir,
-                                                    imgs_df=imgs_df, 
-                                                    polygons_df=polygons_df, 
-                                                    crs_epsg_code=crs_epsg_code, 
-                                                    segmentation_classes=segmentation_classes,
-                                                    label_type=label_type, 
-                                                    producttype=producttype, 
-                                                    resolution=resolution, 
-                                                    max_percent_cloud_coverage=max_percent_cloud_coverage)
+                         imgs_df=imgs_df,
+                         polygons_df=polygons_df,
+                         crs_epsg_code=crs_epsg_code,
+                         segmentation_classes=segmentation_classes,
+                         label_type=label_type,
+                         producttype=producttype,
+                         resolution=resolution,
+                         max_percent_cloud_coverage=max_percent_cloud_coverage)
 
 
-    def _download_imgs_for_polygon(self, polygon_name,
-                                polygon_geometry, 
-                                download_dir,
-                                previously_downloaded_imgs_set,
-                                **kwargs):
+    def _download_imgs_for_polygon(self,
+                                   polygon_name: str,
+                                   polygon_geometry: GeoSeries,
+                                   download_dir: Union[str, Path],
+                                   previously_downloaded_imgs_set: List[str],
+                                   **kwargs) -> dict:
         """
         Downloads a sentinel-2 image fully containing the polygon, returns a dict in the format needed by the associator.
 
-        :raises NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
-        :raises ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator. 
+        Args:
+            polygon_name: The name of the polygon, only relevant for print statements and errors.  #TODO: I'd make that one optional
+            polygon_geometry: The areas the images shall be downloaded for.
+            download_dir: Directory to save the downloaded Sentinel-2 products.
+            previously_downloaded_imgs_set: A list of already downloaded products, will be used prevent double downloads.
+
+        Returns:
+            info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict})
+
+        Raises:
+            LookupError: Raised if an unkknown product type is given.
+            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
+            KeyError: Raised if the product name could not be extracted correctly.
+            ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator.
+            ImgDownloadError: Raised if an error occurred while trying to download a product.
+
         """
 
         # To set up sentinel API, ...
@@ -122,7 +137,7 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         elif kwargs['producttype'] in {'L1C', 'S2MSI1C'}:
             producttype = 'S2MSI1C'
         else:
-            raise Exception(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
+            raise LookupError(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
     
         # (One less than) the allowable cloud coverage we'll start querying with. We'll increment this until we find products or reach max allowable.
         cloud_coverage_counter = -1 
@@ -137,11 +152,11 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             try:
 
                 # Query, remember results
-                products = api.query(area=rectangle_wkt, 
-                                        date=date, 
-                                        area_relation=area_relation,
-                                        producttype=producttype, 
-                                        cloudcoverpercentage=(0,cloud_coverage_counter))
+                products = api.query(area=rectangle_wkt,
+                                     date=date,
+                                     area_relation=area_relation,
+                                     producttype=producttype,
+                                     cloudcoverpercentage=(0,cloud_coverage_counter))
 
             # The sentinelsat API can throw an exception if there are no results for a query instead of returning an empty dict ...
             except:
@@ -166,7 +181,7 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             try:
                 img_name =  product_metadata['title'] + ".tif"
             except:
-                raise Exception(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
+                raise KeyError(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
 
             # If the file has been downloaded before (really, this should not happen, since EXPLAIN!), throw an error ...
             if img_name in previously_downloaded_imgs_set:
@@ -198,12 +213,28 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
                     img_info_dict['img_processed?'] = False
                     img_info_dict['timestamp'] = product_metadata['Date'].strftime("%Y-%m-%d-%H:%M:%S")
 
-        return {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
+        info_dicts = {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
+        return info_dicts
 
 
-    def _process_downloaded_img_file(self, img_name, in_dir, out_dir, convert_to_crs_epsg, **kwargs) -> dict:
-        """        
+    def _process_downloaded_img_file(self,
+                                     img_name: str,
+                                     in_dir: Union[str, Path],
+                                     out_dir: Union[str, Path],
+                                     convert_to_crs_epsg: int,
+                                     **kwargs) -> dict:
+        """
         Extracts downloaded sentinel-2 zip file to a .SAFE directory, then processes/converts to a GeoTiff image, deletes the zip file, puts the GeoTiff image in the right directory, and returns information about the img in a dict.
+
+        Args:
+            img_name: The name of the image.
+            in_dir: The directory containing the zip file.
+            out_dir: The directory to save the
+            convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
+
+        Returns:
+            return_dict: Contains information about the downloaded product.
+
         """
 
         # file names and paths
