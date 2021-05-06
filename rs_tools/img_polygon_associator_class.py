@@ -10,9 +10,6 @@ class ImgPolygonAssociatorClass:
     def have_img_for_polygon(self, polygon_name):
         raise NotImplementedError
 
-    def have_img_for_polygon(self, polygon_name):
-        raise NotImplementedError
-
     def polygons_intersecting_img(self, img_name):
         raise NotImplementedError
 
