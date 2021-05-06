@@ -1,4 +1,6 @@
 """
+TODO: Split into two files?
+
 TODO: remove source_assoc, target_data_dir args from SingleImgCutter?????
 
 TODO: EXPLAIN 'CONTRACT' THAT SingleImgCutter should satisfy. (format of dice to be returned ...)
