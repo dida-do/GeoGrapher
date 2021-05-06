@@ -20,14 +20,18 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.ops import transform, unary_union
+from shapely.geometry import Polygon
 import rasterio as rio
 from collections import Counter
+
+from typing import Union, Optional, Sequence, List
+
 
 from rs_tools.img_polygon_associator_class import ImgPolygonAssociatorClass
 from rs_tools.graph import BipartiteGraph, empty_bipartite_graph
 from rs_tools.utils.utils import transform_shapely_geometry
+from rs_tools.utils.associator_utils import empty_polygons_df_same_format_as, empty_imgs_df_same_format_as, empty_graph
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
-
 
 
 
@@ -70,52 +74,44 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
     """
 
     def __init__(self,
-                    data_dir, 
-                    imgs_df=None, # should be either given or will be loaded from file
-                    polygons_df=None, # should be either given or will be loaded from file
-                    segmentation_classes=None,# should be either given or will be inferred for a saved associator from param_dict.json file
-                    label_type=None, # should be either given or will be inferred for a saved associator from param_dict.json file
-                    add_background_band_in_labels=None, # should be either given or will be inferred for a saved associator from param_dict.json file
-                    crs_epsg_code=STANDARD_CRS_EPSG_CODE, 
-                    polygons_df_index_name=POLYGONS_DF_INDEX_NAME, 
-                    imgs_df_index_name=IMGS_DF_INDEX_NAME,
-                    **kwargs):
+                 data_dir: Union[str, Path], 
+                 imgs_df: Optional[gpd.GeoDataFrame]=None, # should be either given or will be loaded from file
+                 polygons_df: Optional[gpd.GeoDataFrame]=None, # should be either given or will be loaded from file
+                 segmentation_classes: Optional[Sequence[str]]=None,# should be either given or will be inferred for a saved associator from param_dict.json file
+                 label_type: Optional[str]=None, # should be either given or will be inferred for a saved associator from param_dict.json file
+                 add_background_band_in_labels: bool=False, # should be either given or will be inferred for a saved associator from param_dict.json file
+                 crs_epsg_code: int=STANDARD_CRS_EPSG_CODE,
+                 polygons_df_index_name: str=POLYGONS_DF_INDEX_NAME,
+                 imgs_df_index_name: str=IMGS_DF_INDEX_NAME,
+                 **kwargs):
         """
-        :param data_dir: The data directory of the associator. This is the only non-optional argument. 
-        :type data_dir: str or pathlib.Path
+        Args:
+            data_dir (str or pathlib.Path): The data directory of the associator. This is the only non-optional argument. 
 
-        :param imgs_df: Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load. 
-        :type imgs_df: geopandas.GeoDataFrame, optional 
+            imgs_df (geopandas.GeoDataFrame, optional): Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load. 
 
-        :param polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load. 
-        :type polygons_df: geopandas.GeoDataFrame, optional
+            polygons_df (geopandas.GeoDataFrame, optional): Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
 
-        :param segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
-        :type segmentation_classes: list of str, optional
+            segmentation_classes (list of str, optional): List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
 
-        :param label_type: The type of label to be created, one of 'categorical', 'onehot', or 'soft-categorical'. 
-        :type label_type: str
+            label_type (str): The type of label to be created, one of 'categorical', 'onehot', or 'soft-categorical'. 
 
-        :param add_background_band_in_labels: Only relevant if the label_type is 'one-hot' or 'soft-categorical'. If True, will add a background segmentation class band when creating one-hot or soft-categorical labels. If False, will not. 
-        :type add_background_band_in_labels: bool
+            add_background_band_in_labels (bool): Only relevant if the label_type is 'one-hot' or 'soft-categorical'. If True, will add a background segmentation class band when creating one-hot or soft-categorical labels. If False, will not. 
 
-        :param crs_epsg_code: The EPSG code of the coordinate reference system (crs) the associator is in, by which we mean the crs used to store the geometries in the imgs_df and polygons_df GeoDataFrames. Defaults to 4326 (i.e. WGS84). If not given, will attempt to load from file (param_dict.json in data_dir).
-        :type crs_epsg_code: int, optional
+            crs_epsg_code (int, optional) The EPSG code of the coordinate reference system (crs) the associator is in, by which we mean the crs used to store the geometries in the imgs_df and polygons_df GeoDataFrames. Defaults to 4326 (i.e. WGS84). If not given, will attempt to load from file (param_dict.json in data_dir).
 
-        :param imgs_df_index_name: Name of index of imgs_df. If not given, will attempt to infer or use default. 
-        :type imgs_df_index_name: str, optional
-    
-        :param polygons_df_index_name: Name of index of polygons_df. If not given, will attempt to infer or use default.
-        :type polygons_df_index_name: str, optional
+            imgs_df_index_name (str, optional): Name of index of imgs_df. If not given, will attempt to infer or use default. 
 
-        :param \**kwargs: optional keyword arguments depending on the application, to be passed to e.g. _download_imgs_for_polygon and _process_downloaded_img_file. 
+            polygons_df_index_name (str, optional): Name of index of polygons_df. If not given, will attempt to infer or use default.
+
+            **kwargs: optional keyword arguments depending on the application, to be passed to e.g. _download_imgs_for_polygon and _process_downloaded_img_file. 
         """
 
         # Note to reviewer: Sorry, this is a bit messy!
 
         super().__init__()
 
-        self._data_dir = data_dir
+        self._data_dir = Path(data_dir)
         
         # file paths
         self._imgs_df_path = data_dir / Path("imgs_df.geojson")
@@ -127,10 +123,10 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         try:
             with open(self._params_dict_path, "r") as read_file:
                 self._params_dict = json.load(read_file)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             log.info(f"__init__: No params_dict.json found.")
             self._params_dict = {}
-        except JSONDecodeError as e:
+        except JSONDecodeError:
             log.exception(f"{data_dir}/params_dict.json corrupted.")
 
         # ... then update the dict with the args/params from initialization, 
@@ -140,19 +136,18 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self._params_dict.update(kwargs)
 
         # For the required parameter args whose default value is not None ... 
-        for param_name, param_val in zip(
-                                        ['polygons_df_index_name', 
-                                        'imgs_df_index_name',
-                                        'segmentation_classes',
-                                        'label_type',
-                                        'add_background_band_in_labels',
-                                        'crs_epsg_code'],
-                                        [polygons_df_index_name, 
-                                        imgs_df_index_name,
-                                        segmentation_classes,
-                                        label_type,
-                                        add_background_band_in_labels,
-                                        crs_epsg_code]):
+        for param_name, param_val in zip(['polygons_df_index_name',
+                                          'imgs_df_index_name',
+                                          'segmentation_classes',
+                                          'label_type',
+                                          'add_background_band_in_labels',
+                                          'crs_epsg_code'],
+                                         [polygons_df_index_name,
+                                         imgs_df_index_name,
+                                         segmentation_classes,
+                                         label_type,
+                                         add_background_band_in_labels,
+                                         crs_epsg_code]):
             # ... add them to param dict if they don't yet exist in the dict ...
             if param_name not in self._params_dict:
 
@@ -162,7 +157,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             
                 else:
 
-                    raise Exception(f"Need value not equal to None for {param_name} argument.")
+                    raise ValueError(f"Need value not equal to None for {param_name} argument.")
 
             # ... else, ...
             else:
@@ -174,22 +169,6 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                     
                     # ... and then update the dict.
                     self._params_dict[param_name] = param_val
-
-        """
-        # If segmentation classes arg not given, ... 
-        if segmentation_classes is None:
-            # ... check it exists in the _params_dict ...
-            if 'segmentation_classes' not in self._params_dict:
-                raise Exception(f"Necessary segmentation class param/arg neither on file (probably there is no params_dict file) nor given as argument!")
-        # ... else if it exists in the _params_dict but the values don't match. ...
-        elif 'segmentation_classes' in self._params_dict and self._params_dict['segmentation_classes'] != segmentation_classes:
-
-                # ... raise an exception.
-                raise Exception(f"param segmentation_classes value {segmentation_classes} differs from value {self._params_dict['segmentation_classes']}in associator's params_dict file.")
-        # Set the segmentation_classes value in the _params_dict.
-        else:
-            self._params_dict['segmentation_classes'] = segmentation_classes
-        """
 
         # Choose appropriate label maker according to label type.
         # (categorical case)
@@ -210,7 +189,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         else:
 
             log.error(f"Unknown label_type: {self._params_dict['label_type']}")
-            raise Exception(f"Unknown label_type: {self._params_dict['label_type']}")
+            raise TypeError(f"Unknown label_type: {self._params_dict['label_type']}")
 
         # Check that either ...
         if not ( \
@@ -221,7 +200,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                 ((imgs_df is not None) and (polygons_df is not None))):
             
             # If not, then alert the user.
-            raise Exception(f"ImgPolygonAssociator: __init__: Need either existing associator files in data_dir (imgs_df, polygons_df etc.), or both imgs_df and polygons_df arguments and a data_dir without associator files.")
+            raise ValueError(f"ImgPolygonAssociator: __init__: Need either existing associator files in data_dir (imgs_df, polygons_df etc.), or both imgs_df and polygons_df arguments and a data_dir without associator files.")
 
         # If the associator files exist, load them from file:
         if self._imgs_df_path.is_file() and self._polygons_df_path.is_file() and self._graph_path.is_file():
@@ -268,14 +247,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
 
     @property
-    def crs_epsg_code(self):
-        """EPSG code of associator's crs. Setting will set associator's imgs_df and polygons_df crs automatically. """
+    def crs_epsg_code(self) -> int:
+        """int: EPSG code of associator's crs. Setting will set associator's imgs_df and polygons_df crs automatically.
+        """
         return self._params_dict['crs_epsg_code']
 
 
     @crs_epsg_code.setter
-    def crs_epsg_code(self, epsg_code):
-        
+    def crs_epsg_code(self, epsg_code: int):
         # set value in params dict
         self._params_dict['crs_epsg_code'] = epsg_code
         
@@ -285,15 +264,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
 
     @property
-    def data_dir(self):
-        """data directory"""
+    def data_dir(self) -> Path:
+        """Path: data directory"""
         return self._data_dir
 
     
     @data_dir.setter
-    def data_dir(self, data_dir):
-
-        self._data_dir = data_dir
+    def data_dir(self, data_dir: Union[str, Path]):
+        self._data_dir = Path(data_dir)
         
         # file paths
         self._imgs_df_path = data_dir / Path("imgs_df.geojson")
@@ -307,8 +285,6 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         Save associator to disk.
 
         Saves associator to disk in the data_dir: imgs_df to imgs_df.geojson, polygons_df to polygons_df.geojson, the internal graph to graph.json, and the params_dict to params.json). 
-            - Args: None
-            - Returns: None
         """
 
         log.info(f"Saving associator to disk...")
@@ -321,142 +297,156 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         with open(self._params_dict_path, "w") as write_file:
-                json.dump(self._params_dict, write_file)
+            json.dump(self._params_dict, write_file)
 
 
-    def have_img_for_polygon(self, polygon_name):
+    def have_img_for_polygon(self, polygon_name: str) -> bool:
         """
-        Return whether there is an image in the dataset fully containing the polygon. 
+        Return whether there is an image in the dataset fully containing the polygon.
 
-        :param polygon_name: 
-        :returns: `True` if there is an image in the dataset fully containing the polygon, False otherwise.
-        :rtype: bool
+        Args:
+            polygon_name (str): Name of polygon
+
+        Returns:
+            bool: `True` if there is an image in the dataset fully containing the polygon, False otherwise.
         """
 
         return self.polygons_df.loc[polygon_name, 'have_img?']
 
 
-    def rectangle_bounding_img(self, img_name):
+    def rectangle_bounding_img(self, img_name: str) -> Polygon:
         """
         Return the shapely polygon of the rectangle bounding the image in coordinates in the associator's (standard) crs.
 
-        :param img_name: the img_name/identifier of the image
-        :returns: shapely polygon giving the bounds of the image in the standard crs of the associator
+        Args:
+            img_name (str): the img_name/identifier of the image
+
+        Returns:
+            Polygon: shapely polygon giving the bounds of the image in the standard crs of the associator
         """
         
         return self.imgs_df.loc[img_name, 'geometry']
 
 
-    def polygons_intersecting_img(self, img_name):
+    def polygons_intersecting_img(self, img_name: str) -> List[str]:
         """
         Given an image, return an iterator of the names of all polygons 
         which have non-empty intersection with it.
 
         Args:
-            - img_name, the img_name/identifier of the image
+            img_name (str): the img_name/identifier of the image
+
         Returns:
-            - list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image
+            list of str: list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image
         """
         
         return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs')
 
 
-    def imgs_intersecting_polygon(self, polygon_name):
+    def imgs_intersecting_polygon(self, polygon_name: str) -> List[str]:
         """
         Given a polygon, return an iterator of the names of all images 
         which have non-empty intersection with it.
 
         Args:
-            - polygon_name, the img_name/identifier of the polygon
+            polygon_name (str): the img_name/identifier of the polygon
+
         Returns:
-            - list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image
+            list of str: list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image.
         """
         
         return self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons')        
 
 
-    def polygons_contained_in_img(self, img_name):
+    def polygons_contained_in_img(self, img_name: str) -> List[str]:
         """
         Given an image, return an iterator of the names of all polygons 
         which it fully contains.
 
         Args:
-            - img_name, the img_name/identifier of the image
+            img_name (str): the img_name/identifier of the image
+
         Returns:
-            - list of the polygon_names/identifiers of all polygons in associator contained in the image
+            list of str: list of the polygon_names/identifiers of all polygons in associator contained in the image.
         """
         
         return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs', edge_data='contains')
 
 
-    def imgs_containing_polygon(self, polygon_name):
+    def imgs_containing_polygon(self, polygon_name: str) -> List[str]:
         """
         Given a ploygon, return an iterator of the names of all images 
         in which it us fully contained.
 
         Args:
-            - polygon_name, the img_name/identifier of the polygon
+            polygon_name (str): the img_name/identifier of the polygon
+
         Returns:
-            - list of the img_names/identifiers of all images in associator containing the polygon
+            list of str: list of the img_names/identifiers of all images in associator containing the polygon
         """
         
         return self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons', edge_data='contains')
 
 
-    def does_img_contain_polygon(self, img_name, polygon_name):
+    def does_img_contain_polygon(self, img_name: str, polygon_name: str) -> bool:
         """
         Args:
-            - img_name/identifier, polygon_name/identifier 
+            img_name (str): Name of image
+            polygon_name (str): name of polygon
+        
         Returns:
-            - True or False depending on whether the image contains the polygon or not
+            bool: True or False depending on whether the image contains the polygon or not
         """
         
         return polygon_name in self.polygons_contained_in_img(img_name)
 
     
-    def is_polygon_contained_in_img(self, polygon_name, img_name):
+    def is_polygon_contained_in_img(self, polygon_name: str, img_name: str) -> bool:
         """
         Args:
-            - polygon_name/identifier, img_name/identifier
+            img_name (str): Name of image
+            polygon_name (str): name of polygon
+
         Returns:
-            - True or False depending on whether the image contains the polygon or not
+            bool: True or False depending on whether the polygon contains the image or not
         """
         
         return self.does_img_contain_polygon(img_name, polygon_name)
 
 
-    def does_img_intersect_polygon(self, img_name, polygon_name):
+    def does_img_intersect_polygon(self, img_name: str, polygon_name: str) -> bool:
         """
         Args:
-            - img_name/identifier, polygon_name/identifier 
+            img_name (str): Name of image
+            polygon_name (str): name of polygon
+
         Returns:
-            - True or False depending on whether the image and the polygon intersect or not
+            bool: True or False depending on whether the image intersects the polygon or not
         """
 
         return (polygon_name in self.polygons_intersecting_img(img_name))
 
 
-    def does_polygon_intersect_img(self, polygon_name, img_name):
+    def does_polygon_intersect_img(self, polygon_name: str, img_name: str) -> bool:
         """
         Args:
-            - polygon_name/identifier, img_name/identifier
+            img_name (str): Name of image
+            polygon_name (str): name of polygon
+
         Returns:
-            - True or False depending on whether the image and the polygon intersect or not
+            bool: True or False depending on whether the polygon intersects the image or not
         """
 
         return self.does_img_intersect_polygon(img_name, polygon_name)
 
 
-    def integrate_new_polygons_df(self, new_polygons_df, force_overwrite=False):
+    def integrate_new_polygons_df(self, new_polygons_df: gpd.GeoDataFrame, force_overwrite: bool=False):
         """
-        Add (or overwrite) polygons in new_polygons_df to the associator (i.e. append to the associator's polygons_df) keeping track of which polygons are contained in which images. 
+        Add (or overwrite) polygons in new_polygons_df to the associator (i.e. append to the associator's polygons_df) keeping track of which polygons are contained in which images.
 
         Args:
-            - new_polygons_df: GeoDataFrame of polygons conforming to the associator's polygons_df format
-            - force_overwrite (default value: False): whether to overwrite existing rows for polygons 
-                in new_polygons_df whose polygon_name/identifier already is exists in the associator's polygons_df. If False will drop rows for which the polygon_name/identifier is already in the associator's polygons_df
-        Returns:
-            - None
+            new_polygons_df (gdf.GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
+            force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
         # First, make sure that the coordinate reference systems agree, ...
@@ -464,7 +454,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             
             log.error(f"integrate_new_polygons_df: crs of new_polygons_df arg doesn't agree with crs of self.polygons_df.")
             
-            raise Exception(f"integrate_new_polygons_df: crs of new_polygons_df arg doesn't agree with crs of self.polygons_df.")
+            raise ValueError(f"integrate_new_polygons_df: crs of new_polygons_df arg doesn't agree with crs of self.polygons_df.")
 
         # ...that the columns agree, ...
         if set(new_polygons_df.columns) != set(self.polygons_df.columns):
@@ -481,14 +471,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             if self_cols_not_in_new_polygons_df != {}:
                 log.error(f"columns that are in self.polygons_df but not in new_polygons_df: {self_cols_not_in_new_polygons_df}")
 
-            raise Exception(f"integrate_new_polygons_df: columns of new_polygons_df arg and self.polygons_df don't agree.")
+            raise ValueError(f"integrate_new_polygons_df: columns of new_polygons_df arg and self.polygons_df don't agree.")
 
         # ...and that the index names agree. 
         if new_polygons_df.index.name != self.polygons_df.index.name:
             
             log.error(f"integrate_new_polygons_df: index name {new_polygons_df.index.name} of new_polygons_df=new_polygons_df does not agree with index name {new_polygons_df.index.name} of self.polygons_df.index.name.")
 
-            raise Exception(f"integrate_new_polygons_df: index name {new_polygons_df.index.name} of new_polygons_df=new_polygons_df does not agree with index name {new_polygons_df.index.name} of self.polygons_df.index.name.")
+            raise ValueError(f"integrate_new_polygons_df: index name {new_polygons_df.index.name} of new_polygons_df=new_polygons_df does not agree with index name {new_polygons_df.index.name} of self.polygons_df.index.name.")
 
         # For each new polygon...
         for polygon_name in new_polygons_df.index:
@@ -528,14 +518,12 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self.polygons_df = gpd.GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
 
-    def integrate_new_imgs_df(self, new_imgs_df):
+    def integrate_new_imgs_df(self, new_imgs_df: gpd.GeoDataFrame):
         """
         Add image data in new_imgs_df to the associator keeping track of which polygons are contained in which images.
 
         Args:
-            - new_imgs_df: GeoDataFrame of image information conforming to the associator's imgs_df format
-        Returns:
-            - None
+            new_imgs_df (gdf.GeoDataFrame): GeoDataFrame of image information conforming to the associator's imgs_df format
         """        
 
         # First, make sure that the coordinate reference systems agree, ...
@@ -543,7 +531,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             
             log.error(f"integrate_new_imgs_df: crs of new_imgs_df arg doesn't agree with crs of self.imgs_df.")
             
-            raise Exception(f"integrate_new_imgs_df: crs of new_imgs_df arg doesn't agree with crs of self.imgs_df.")
+            raise ValueError(f"integrate_new_imgs_df: crs of new_imgs_df arg doesn't agree with crs of self.imgs_df.")
 
         # ...that the columns agree, ...
         if set(new_imgs_df.columns) != set(self.imgs_df.columns):
@@ -560,14 +548,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             if self_cols_not_in_new_imgs_df != {}:
                 log.error(f"columns that are in self.imgs_df but not in new_imgs_df: {self_cols_not_in_new_imgs_df}")
             
-            raise Exception(f"integrate_new_imgs_df: columns of new_imgs_df arg self.imgs_df don't agree.")
+            raise ValueError(f"integrate_new_imgs_df: columns of new_imgs_df arg self.imgs_df don't agree.")
 
         # ...and that the index names agree. 
         if new_imgs_df.index.name != self.imgs_df.index.name:
             
             log.error(f"integrate_new_imgs_df: index name {new_imgs_df.index.name} of new_imgs_df={new_imgs_df} does not agree with index name {new_imgs_df.index.name} of self.imgs_df.index.name.")
             
-            raise Exception(f"integrate_new_imgs_df: index name {new_imgs_df.index.name} of new_imgs_df={new_imgs_df} does not agree with index name {new_imgs_df.index.name} of self.imgs_df.index.name.")
+            raise ValueError(f"integrate_new_imgs_df: index name {new_imgs_df.index.name} of new_imgs_df={new_imgs_df} does not agree with index name {new_imgs_df.index.name} of self.imgs_df.index.name.")
 
         # go through all new imgs...
         for img_name in new_imgs_df.index:
@@ -591,14 +579,12 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self.imgs_df = gpd.GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
 
-    def drop_polygons(self, polygon_names):
+    def drop_polygons(self, polygon_names: Sequence[str]):
         """
         Drop polygons from associator (i.e. remove rows from the associator's polygons_df)
-        
+
         Args:
-            - polygon_names: list or list-like. polygon_names/identifiers of polygons to be dropped.
-        Returns:
-            - None
+            polygon_names (list of str): list or list-like. polygon_names/identifiers of polygons to be dropped.
         """
 
         # make sure we don't interpret a string as a list of characters in the iteration below:
@@ -614,15 +600,13 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self.polygons_df.drop(polygon_names, inplace=True)
 
 
-    def drop_imgs(self, img_names, remove_imgs_from_disk=True):
+    def drop_imgs(self, img_names: Sequence[str], remove_imgs_from_disk: bool=True):
         """
         Drop images from associator and dataset, i.e. remove rows from the associator's imgs_df, delete the corresponding vertices in the graph, and delete the image from disk (unless remove_imgs_from_disk is set to False).
-        
+
         Args:
-            - img_names: list or list-like. img_names/identifiers of images to be dropped.
-            - remove_imgs_from_disk: bool. If true, delete images and labels from disk (if they exist).
-        Returns:
-            - None
+            img_names (list of str): list or list-like. img_names/identifiers of images to be dropped.
+            remove_imgs_from_disk (bool): If true, delete images and labels from disk (if they exist).
         """
 
         # make sure we don't interpret a string as a list of characters in the iteration below:
@@ -645,18 +629,16 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
 
     def download_missing_imgs_for_polygons_df(self, 
-                            polygons_df=None,
-                            add_labels=True,
-                            **kwargs):
+                                              polygons_df: Optional[gpd.GeoDataFrame]=None,
+                                              add_labels: bool=True,
+                                              **kwargs):
         """ 
         Sequentially considers the polygons not contained in any image in the 
         associator's internal polygons_df or the optional polygons_df argument (if given), for each such polygon downloads either one image fully containing the polygon or several images jointly containing the polygon, creates the associated label(s) for the image(s) (assuming the default value True of add_labels is not changed), and integrates the new image(s) into the dataset/associator. If the optional polygons_df argument is provided will append polygons_df to the associator's internal polygons_df. Integrates images downloaded for a polygon into the dataset/associator immediately after downloading them and before downloading images for the next polygon. In particular, connects the newly downloaded image(s) to all polygons in the associator (and in polygons_df, if given), so that if a newly downloaded image contains a polygon (distinct from the one it was downloaded for) that has yet to be considered no attempt will be made to download images for that polygon. 
 
         Args:
-            - polygons_df (optional, probably just best ignore this): GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. self.polygons_df). If provided and not equal to self.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded. 
-            - add_labels (optional, default: True): bool. Whether to add labels for the downloaded images. 
-        Returns:
-            - None
+            polygons_df (optional): GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. self.polygons_df). If provided and not equal to self.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded. 
+            add_labels (optional, bool): Whether to add labels for the downloaded images.
         """
 
         # Make sure images subdir exists in data_dir
@@ -666,7 +648,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         if polygons_df is not None and polygons_df is not self.polygons_df:
             if (polygons_df.index.isin(self.polygons_df.index)).any() == True:
                 log.error(f"download_missing_imgs_for_polygons_df: polygons_df contains polygons already in associator!")
-                raise Exception(f"polygons_df contains polygons already in associator!")
+                raise ValueError(f"polygons_df contains polygons already in associator!")
         
         # Default polygons_df to self.polygons_df.
         if polygons_df is None:
@@ -760,7 +742,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
                             log.error(f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}")
 
-                            raise Exception(f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}")
+                            raise ImgDownloadError(f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}")
                         
                         # Make sure we haven't downloaded an image that's already in the dataset.
                         # (the _download_imgs_for_polygon method should have thrown an ImgAlreadyExistsError exception in this case, but we're checking again ourselves that this hasn't happened. )
@@ -768,10 +750,10 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
                             log.error(f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}")
 
-                            raise Exception(f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}")
+                            raise ImgDownloadError(f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}")
 
                         # For each download ...
-                        for count, img_info_dict in enumerate(list_img_info_dicts):
+                        for _, img_info_dict in enumerate(list_img_info_dicts):
                             
                             # ... process it to an image ...
                             img_name = img_info_dict[self.imgs_df.index.name]
@@ -845,11 +827,6 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
     def make_missing_geotif_labels(self):
         """
         Creates categorical GeoTiff pixel labels (i.e. one channel images where each pixel is an integer corresponding to either the background or a segmentation class, 0 indicating the background class, and k=1,2, ... indicating the k-th entry (starting from 1) of the segmentation_classes parameter of the associator) in the data directory's labels subdirectory for all GeoTiff images in the image subdirectory without a label. 
-        
-        Args:
-            - None
-        Returns: 
-            - None:
         """
         log.info("\nCreating missing labels.\n")
 
@@ -872,7 +849,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             log.error(f"make_missing_geotif_labels: there are images in the dataset's images subdirectory that are not in self.imgs_df.")
             
             # ...and raise an exception.
-            raise Exception(f"make_missing_geotif_labels: there are images in the dataset's images subdirectory that are not in self.imgs_df.")
+            raise ValueError(f"make_missing_geotif_labels: there are images in the dataset's images subdirectory that are not in self.imgs_df.")
 
         # Find the set of existing labels. 
         existing_labels = set(os.listdir(Path(self._data_dir) / Path("labels")))
@@ -891,10 +868,24 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         print(self._graph)
 
 
-    def _connect_img_to_polygon(self, img_name, polygon_name, contains_or_intersects=None, polygons_df=None, img_bounding_rectangle=None, graph=None):
+    def _connect_img_to_polygon(self,
+                                img_name: str,
+                                polygon_name: str,
+                                contains_or_intersects: Optional[str]=None,
+                                polygons_df: Optional[gpd.GeoDataFrame]=None,
+                                img_bounding_rectangle: Optional[Polygon]=None,
+                                graph: Optional[BipartiteGraph]=None):
         """
         Connect an image to a polygon, i.e. remember whether the image fully contains or just has
         non-empty intersection with the polygon, i.e. add an edge of the approriate type between the image and the polygon.
+
+        Args:
+            img_name (str): Name of image to connect
+            polygon_name (str): Name of polygon to connect
+            contains_or_intersects (optional, str): Optional connection criteria
+            polygons_df (optional, gdf.GeoDataFrame): Optional polygon dataframe
+            img_bounding_rectangle (optional, Polygon): polygon decribing image footprint
+            graph (optional, BipartiteGraph): optional bipartied graph
         """ 
 
         # default polygons_df
@@ -932,9 +923,15 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                 polygons_df.loc[polygon_name, 'have_img_downloaded?'] = True
 
 
-    def _add_polygon_to_graph(self, polygon_name, polygons_df=None):
+    def _add_polygon_to_graph(self,
+                              polygon_name: str,
+                            polygons_df: Optional[gpd.GeoDataFrame]=None):
         """
         Connects a polygon to those images in self.imgs_df with which it has non-empty intersection.
+
+        Args:
+            polygon_name (str): Name of polygon to add
+            polygons_df (optional, gdf.GeoDataFrame): Optional polygons dataframe
         """
 
         # default polygons_df
@@ -957,9 +954,19 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                 self._connect_img_to_polygon(img_name, polygon_name, contains_or_intersects, polygons_df=polygons_df)
 
 
-    def _add_img_to_graph_modify_polygons_df(self, img_name, img_bounding_rectangle=None, polygons_df=None, graph=None):
+    def _add_img_to_graph_modify_polygons_df(self,
+                                             img_name: str,
+                                             img_bounding_rectangle: Optional[Polygon]=None,
+                                             polygons_df: Optional[gpd.GeoDataFrame]=None,
+                                             graph: Optional[BipartiteGraph]=None):
         """ 
         Connects an image to all polygons in polygons_df, creating the vertex if necessary. The default value for polygons_df is None, which we take to mean self.polygons_df. If img_bounding_rectangle is None, we assume we can get it from self. If the image already exists and already has connections a warning will be logged. imgs_df.
+        
+        Args:
+            img_name (str): Name of image to add
+            img_bounding_rectangle (optional, Polygon): polygon decribing image footprint
+            polygons_df (optional, gdf.GeoDataFrame): Optional polygons dataframe
+            graph (optional, BipartiteGraph): optional bipartied graph
         """
 
         # default polygons_df
@@ -989,11 +996,17 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                 self._connect_img_to_polygon(img_name, polygon_name, contains_or_intersects, polygons_df=polygons_df, img_bounding_rectangle=img_bounding_rectangle, graph=graph)
 
 
-    def _remove_polygon_from_graph_modify_polygons_df(self, polygon_name, forget_have_img_downloaded=True):
+    def _remove_polygon_from_graph_modify_polygons_df(self,
+                                                      polygon_name: str,
+                                                      forget_have_img_downloaded: bool=True):
         """
         Removes a polygon from the graph (i.e. removes the vertex and all incident edges) 
         and (if forget_have_img_downloaded == True) modifies the polygons_df fields 'have_img?' and 
-        'have_img_downloaded?' for those polygons for which the image removed was the only image containing them. 
+        'have_img_downloaded?' for those polygons for which the image removed was the only image containing them.
+
+        Args:
+            polygon_name (str): polygon to remove
+            forget_have_img_downloaded (optional, bool): Remove references to downloaded image if no longer relevent
         """
 
         self._graph.delete_vertex(polygon_name, 'polygons', force_delete_with_edges=True)
@@ -1003,11 +1016,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             self.polygons_df.loc[polygon_name, 'have_img_downloaded?'] = False
 
 
-    def _remove_img_from_graph_modify_polygons_df(self, img_name):
+    def _remove_img_from_graph_modify_polygons_df(self, img_name: str):
         """
         Removes an img from the graph (i.e. removes the vertex and all incident edges) 
         and modifies the polygons_df fields 'have_img?' and 'have_img_downloaded?' for those 
-        polygons for which the image removed was the only image containing them. 
+        polygons for which the image removed was the only image containing them.
+
+        Args:
+            img_name (str): Image to remove
         """
 
         # set 'have_img?' and 'have_img_downloaded?' values in self.polygons_df that are affected by disconnecting img:
@@ -1022,174 +1038,49 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self._graph.delete_vertex(img_name, 'imgs', force_delete_with_edges=True)
 
 
-    def _download_imgs_for_polygon(self, polygon_name, polygon_geometry, download_dir, previously_downloaded_imgs_set, **kwargs):
+    def _download_imgs_for_polygon(self,
+                                   polygon_name: str,
+                                   polygon_geometry: Polygon,
+                                   download_dir: Union[str, Path],
+                                   previously_downloaded_imgs_set: Sequence[str],
+                                   **kwargs):
         """
         Not implemented, overwrite/implement in a subclass. Should download an image fully containing a vector polygon or several images jointly containing it and return a dict with information to be updated in the associator, see below for details.
-            
-            Args:
-                -polygon_name: the name of the vector polygon. 
-                -polygon_geometry: shapely geometry of polygon.
-                -download_dir: directory that the image file should be downloaded to.
-                -previously_downloaded_imgs_set: Set of previously downloaded img_names. In some use cases when it can't be guaranteed that an image can be downloaded that fully contains the polygon it can happen that attempts will be made to download an image that is already in the associator. Passing this argument allows the download function to make sure it doesn't try downloading an image that is already in the dataset.
-                -**kwargs: optional keyword arguments depending on the application.
-            Returns:
-                - A dict with keys and values:
-                    -'list_img_info_dicts': a list of dicts containing the information to be included in each row in the imgs_df of the calling associator, one for each newly downloaded image. The keys should be the index and column names of the imgs_df and the values the indices or entries of those columns in row that will correspond to the new image.
-                    -'polygon_info_dict': a dict containing information (in particular values for the 'have_img_downloaded?' and 'download_exception' of the associators polygons_df) to be updated in polygons_df of the calling associator. The keys and values should be given by the column names and entries of polygons_df that should be updated for polygon polygon_name. 
+
+        Args:
+            polygon_name (str): the name of the vector polygon.
+            polygon_geometry (Polygon): shapely geometry of polygon.
+            download_dir (str or Path): directory that the image file should be downloaded to.
+            previously_downloaded_imgs_set (sequence of str): Set of previously downloaded img_names. In some use cases when it can't be guaranteed that an image can be downloaded that fully contains the polygon it can happen that attempts will be made to download an image that is already in the associator. Passing this argument allows the download function to make sure it doesn't try downloading an image that is already in the dataset.
+            **kwargs: optional keyword arguments depending on the application.
+
+        Returns:
+            A dict with keys and values:
+                -'list_img_info_dicts': a list of dicts containing the information to be included in each row in the imgs_df of the calling associator, one for each newly downloaded image. The keys should be the index and column names of the imgs_df and the values the indices or entries of those columns in row that will correspond to the new image.
+                -'polygon_info_dict': a dict containing information (in particular values for the 'have_img_downloaded?' and 'download_exception' of the associators polygons_df) to be updated in polygons_df of the calling associator. The keys and values should be given by the column names and entries of polygons_df that should be updated for polygon polygon_name. 
         """
 
         raise NotImplementedError
     
 
-    def _process_downloaded_img_file(self, img_name, in_dir, out_dir, convert_to_crs_epsg, **kwargs):
+    def _process_downloaded_img_file(self,
+                                     img_name: str,
+                                     in_dir: Union[str, Path],
+                                     out_dir: Union[str, Path],
+                                     convert_to_crs_epsg: int,
+                                     **kwargs):
         """
         Not implemented, overwrite/implement in a subclass. Processes an image file downloaded by _download_imgs_for_polygon. Needs to return a dict with information to be updated in the associator, see below for details.
-        
-            Args:
-                -img_name: the image name (index identifiying the corresponding row in imgs_df) 
-                -in_dir: the directory the image file was downloaded to
-                -out_dir: the directory the processed image file should be in (usually data_dir/images)
-                -convert_to_crs_epsg: EPSG code of the crs the image (if georeferenced, e.g. as a GeoTiff) 
-                    should be converted to.
-                -**kwargs: optional keyword arguments depending on the application
-            Returns:
-                -img_info_dict: a dict containing the information to be updated in the imgs_df of the calling associator. The keys should be the index and column names of the imgs_df and the values lists of indices or entries of those columns.
+
+        Args:
+            img_name (str) the image name (index identifiying the corresponding row in imgs_df)
+            in_dir (str or Path): the directory the image file was downloaded to
+            out_dir (str or Path): the directory the processed image file should be in (usually data_dir/images)
+            convert_to_crs_epsg (int) EPSG code of the crs the image (if georeferenced, e.g. as a GeoTiff) should be converted to.
+            **kwargs: optional keyword arguments depending on the application
+
+        Returns:
+            dict: a dict containing the information to be updated in the imgs_df of the calling associator. The keys should be the index and column names of the imgs_df and the values lists of indices or entries of those columns.
         """
 
         raise NotImplementedError
-
-
-###################### End of ImgPolygonAssociator class definition ######################################
-
-
-def empty_gdf(df_index_name, df_cols_and_index_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE):
-    """Return a empty GeoDataFrame with specified index and column names and types and crs.
-
-    Args:
-        - df_index_name: name of the index of the new empty GeoDataFrame
-        - df_cols_and_index_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
-        - crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
-    Returns:
-        - new_empty_df: the empty polygons_df GeoDataFrame.
-    """
-
-    new_empty_gdf_dict = {'geometry': gpd.GeoSeries([]),
-                                **{index_or_col_name: pd.Series([], dtype=index_or_col_type) 
-                                    for index_or_col_name, index_or_col_type in df_cols_and_index_types.items()
-                                        if index_or_col_name != 'geometry'}}
-    new_empty_gdf = gpd.GeoDataFrame(new_empty_gdf_dict, crs=f"EPSG:{crs_epsg_code}")
-    new_empty_gdf.set_index(df_index_name, inplace=True)
-    return new_empty_gdf
-
-
-def empty_imgs_df(imgs_df_index_name, imgs_df_cols_and_index_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE):
-    """
-    Return a generic empty imgs_df GeoDataFrame conforming to the ImgPolygonAssociator format.
-    
-    Args:
-        - imgs_df_index_name: index name of the new empty imgs_df
-        - imgs_df_cols_and_index_types: dict with keys the names of the index and columns of the new empty imgs_df and values the types of the index/column entries.
-        - crs_epsg_code: EPSG code of the crs the empty imgs_df should have.
-    Returns:
-        - new_imgs_df: the empty imgs_df GeoDataFrame.
-    """
-
-    return empty_gdf(imgs_df_index_name, imgs_df_cols_and_index_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE)
-
-
-def empty_polygons_df(polygons_df_index_name, polygons_df_cols_and_index_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE):
-    """Return a generic empty polygons_df GeoDataFrame conforming to the ImgPolygonAssociator format.
-
-    Return a generic empty polygons_df GeoDataFrame conforming to the ImgPolygonAssociator format.
-    
-    Args:
-        - polygons_df_index_name_and_type: name of the index of the new empty polygons_df
-        - polygons_df_cols_and_index_types: dict with keys the names of the index and columns of the new empty polygons_df and values the types of the indices/column entries.
-        - crs_epsg_code: EPSG code of the crs the empty polygons_df should have.
-    Returns:
-        - new_polygons_df: the empty polygons_df GeoDataFrame.
-    """
-
-    return empty_gdf(polygons_df_index_name, polygons_df_cols_and_index_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE)
-
-
-def empty_polygons_df_same_format_as(polygons_df):
-    """
-    Creates an empty polygons_df of the same format (index name, columns, column types) as the polygons_df argument.
-    """
-    polygons_df_index_name = polygons_df.index.name
-
-    polygons_df_cols_and_index_types = {polygons_df.index.name: polygons_df.index.dtype, 
-                                        **polygons_df.dtypes.to_dict()}
-
-    crs_epsg_code = polygons_df.crs.to_epsg()
-
-    new_empty_polygons_df = empty_polygons_df(polygons_df_index_name, 
-                                                polygons_df_cols_and_index_types, 
-                                                crs_epsg_code=crs_epsg_code)
-
-    return new_empty_polygons_df
-
-
-def empty_imgs_df_same_format_as(imgs_df):
-    """
-    Creates an empty imgs_df of the same format (index name, columns, column types) as the imgs_df argument.
-    """
-    imgs_df_index_name = imgs_df.index.name
-
-    imgs_df_cols_and_index_types = {imgs_df.index.name: imgs_df.index.dtype, 
-                                        **imgs_df.dtypes.to_dict()}
-
-    crs_epsg_code = imgs_df.crs.to_epsg()
-
-    new_empty_imgs_df = empty_imgs_df(imgs_df_index_name, 
-                                                imgs_df_cols_and_index_types, 
-                                                crs_epsg_code=crs_epsg_code)
-
-    return new_empty_imgs_df
-
-
-def empty_assoc_same_format_as(target_data_dir, source_data_dir=None, source_assoc=None):
-    """
-    Creates an empty associator with data_dir target_data_dir of the same format as an existing one in source_data_dir or one given as source_assoc (same polygons_df and imgs_df columns and index names and paramaters).
-    """
-
-    # exactly one of source_data_dir or source_assoc should be given
-    assert (source_data_dir != None) ^ (source_assoc != None)
-
-    if source_assoc == None:
-        source_assoc = ImgPolygonAssociator(source_data_dir)
-
-    # new empty polygons_df
-    new_empty_polygons_df = empty_polygons_df_same_format_as(source_assoc.polygons_df)                                        
-    
-    # new empty imgs_df
-    new_empty_imgs_df = empty_imgs_df_same_format_as(source_assoc.imgs_df) 
-
-    new_empty_assoc = ImgPolygonAssociator(data_dir=Path(target_data_dir), 
-                        imgs_df=new_empty_imgs_df, 
-                        polygons_df=new_empty_polygons_df, 
-                        **source_assoc._params_dict)
-
-    return new_empty_assoc
-    
-
-def empty_graph():
-    """Return an empty bipartite graph to be used by ImgPolygonAssociator."""
-    return empty_bipartite_graph(red='polygons', black='imgs')
-
-    
-
-
-
-
-
-
-                
-
-
-
-
-
-
-
