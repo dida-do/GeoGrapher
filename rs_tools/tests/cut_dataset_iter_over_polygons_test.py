@@ -51,7 +51,7 @@ def test_new_dataset_one_small_img_for_each_polygon():
     source_rs_tools.make_missing_geotif_labels()
 
     # create new dataset in target_dir by cutting source dataset
-    cut.new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=True)
+    cut.new_tif_dataset_small_imgs_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=True)
 
     target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
     
@@ -96,7 +96,7 @@ def update_dataset_from_iter_over_polygons_test():
     source_rs_tools.make_missing_geotif_labels()
 
     # udpate dataset in target_dir by cutting source dataset
-    cut.create_or_update_dataset_from_iter_over_polygons(source_data_dir, target_data_dir, img_size=1024, centered=True)
+    cut.create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir, target_data_dir, img_size=1024, centered=True)
 
     target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
     
@@ -135,7 +135,7 @@ def test_not_centered_cutting():
         if target_data_dir.exists():
             shutil.rmtree(target_data_dir) 
         # create new dataset in target_dir by cutting source dataset
-        cut.new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=False)        
+        cut.new_tif_dataset_small_imgs_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=False)        
 
         # bincount to check generated image fully contains polygon
         with rio.open(target_data_dir / Path('labels') / Path('S2A_MSIL2A_20200403T143721_N0214_R096_T19KES_20200403T184818_730.tif')) as src: 
