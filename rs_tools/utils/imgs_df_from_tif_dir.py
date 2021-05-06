@@ -1,6 +1,9 @@
+from typing import Optional, Union
 import os
+import pathlib
 from pathlib import Path
-from shapely.geometry import box
+from shapely.geometry import box, Point, Polygon, MultiPoint, MultiPolygon, MultiLineString, LinearRing, LineString, GeometryCollection
+import geopandas
 import geopandas as gpd
 import rasterio as rio 
 
@@ -8,18 +11,19 @@ import rasterio as rio
 from rs_tools.utils.utils import transform_shapely_geometry
 
 
-
-def imgs_df_from_tif_dir(imgs_dir_path, imgs_df_crs_epsg_code=None, imgs_df_index_name=None):
+def imgs_df_from_tif_dir(imgs_dir_path: Union[pathlib.Path, str], 
+                        imgs_df_crs_epsg_code: Optional[int] = None, 
+                        imgs_df_index_name: Optional[str] = None) -> geopandas.GeoDataFrame:
     """
-    Builds and returns an associator imgs_df from a directory of GeoTiff images (or from a data directory). Only the index (imgs_df_index_name, defaults to img_name), geometry column (coordinates of the img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the GeoTiff image is in) columns will be populated, custom columns will have to be populated by a custom written function.
+    Build and return an associator imgs_df from a directory of GeoTiff images (or from a data directory). Only the index (imgs_df_index_name, defaults to img_name), geometry column (coordinates of the img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the GeoTiff image is in) columns will be populated, custom columns will have to be populated by a custom written function.
 
     Args:
-        - imgs_path (pathlib.Path or str): path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.
-        - imgs_df_crs_epsg_code (int): epsg code of imgs_df crs to be returned. 
-        - imgs_df_index_name (str): index name of imgs_df GeoDataFrame.
-    
+        imgs_dir_path (Union[pathlib.Path, str]): path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.
+        imgs_df_crs_epsg_code (int, optional): EPSG code of imgs_df crs to be returned. If None, will use standard crs. Defaults to None.
+        imgs_df_index_name (str, optional): index name of imgs_df GeoDataFrame. Defaults to None.
+
     Returns:
-        - imgs_df with index imgs_df_index_name and columns geometry and orig_crs_epsg_code 
+        GeoDataFrame: imgs_df conforming to the associator imgs_df format with index imgs_df_index_name and columns geometry and orig_crs_epsg_code .
     """
 
     # stupid hack to avoid (not really) circular importing python can't deal with.
