@@ -41,7 +41,7 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns. 
     """
 
-    def __init__(self, data_dir: Union[str, pathlib.Path],
+    def __init__(self, data_dir: Union[str, Path],
                  imgs_df: GeoDataFrame = None,
                  polygons_df: GeoDataFrame = None,
                  segmentation_classes: List[str] = None,
