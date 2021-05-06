@@ -62,7 +62,7 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
 
     small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(source_assoc=source_assoc, 
                                                                         target_data_dir=target_data_dir, 
-                                                                        does_polygon_not_have_img,
+                                                                        polygon_filter_predicate=does_polygon_not_have_img,
                                                                         new_img_size=new_img_size, 
                                                                         img_bands=img_bands, 
                                                                         labels_bands=label_bands, 
@@ -71,7 +71,7 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
 
     target_assoc = create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir=source_data_dir, 
                                                             target_data_dir=target_data_dir, 
-                                                            polygon_filter_predicate=have_no_img_for_polygon,
+                                                            polygon_filter_predicate=does_polygon_not_have_img,
                                                             img_cutter=small_imgs_around_polygons_cutter, 
                                                             img_selector=random_img_selector, 
                                                             new_img_size=new_img_size, 
