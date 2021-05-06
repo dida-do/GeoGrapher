@@ -1,20 +1,12 @@
 """
-TODO: remove source_assoc, target_data_dir args from SingleImgCutter. 
-TODO SingleImgCutter -> SingleImgCutterIterPolygonsInImg -> SmallImgsAroundPolygonsCutter
-
-TODO: for singleimgcutter base class _get_windows_transforms_img_names shouldnt depend on sngle polygon
-
-In SingleImgCutter dont neesssrrily want to iterate over polygons in image, just want to get list windows, transforms, names....
+TODO: remove source_assoc, target_data_dir args from SingleImgCutter?????
 
 TODO: EXPLAIN 'CONTRACT' THAT SingleImgCutter should satisfy. (format of dice to be returned ...)
-
-TODO: Assumes particular format (columns) of associator imgs_df. single_new_img_info_dict should copy entries for most cols from source imgs_df. 
-
-TODO: add random seed argument
 """
 
 from typing import Union, List, Tuple, Optional, Any
 from pathlib import Path
+import os
 from abc import ABC, abstractmethod
 
 import math
@@ -46,7 +38,7 @@ class SingleImgCutter(ABC):
         """
         Abstract base class for single image cutters. 
 
-        To define an image cutter, override __call__ method. 
+        To define an image cutter, override _get_windows_transforms_img_names method. 
 
         Args:
             source_assoc (ImgPolygonAssociator): source associator.
@@ -64,24 +56,31 @@ class SingleImgCutter(ABC):
         self.source_assoc = source_assoc
         self.target_data_dir = target_data_dir
         
-        self.img_bands = img_bands
-        self.label_bands = label_bands
+        if img_bands is None:
+            self.img_bands = self._get_all_band_indices('images')
+        else:
+            self.img_bands = img_bands
+
+        if self.label_bands is None:
+            self.label_bands = self._get_all_band_indices('labels')
+        else:
+            self.label_bands = label_bands
+
+        self.polygons_df_crs_epsg = self.source_assoc.polygons_df.crs.to_epsg()
+
 
     @abstractmethod
     def _get_windows_transforms_img_names(self, 
-                                        polygon_name: str, 
-                                        polygon_geometry: Polygon,
-                                        #polygon_crs_epsg_code: int, # infer
-                                        img_path: Union[Path, str], 
-                                        window_size: Tuple[int, int]) -> List[Tuple[Window, Affine, str]]:
+                source_img_name: str, 
+                new_polygons_df: GeoDataFrame, 
+                new_graph: BipartiteGraph) -> List[Tuple[Window, Affine, str]]:
         """
         Override to define subclass. 
 
         Args:
-            polygon_name (str): polygon identifier
-            polygon_geometry (Polygon): polygon geometry
-            img_path (Union[Path, str]): path to img from which windows are to be selected
-            window_size (Tuple[int, int]): window size (rows, cols)
+            source_img_name (str): name of img in self.source_img_path to be cut.
+            new_polygons_df (GeoDataFrame): GeoDataFrame that will be the polygons_df of the associator of the new dataset of cut images that is being created by the calling dataset cutter. 
+            new_graph (BipartiteGraph): the bipartite graph that is being built up for the target associator.
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names. 
@@ -90,95 +89,97 @@ class SingleImgCutter(ABC):
 
 
     def __call__(self, 
-                img_name: str, 
+                source_img_name: str, 
                 new_polygons_df: GeoDataFrame, 
                 new_graph: BipartiteGraph) -> None:
         """
         Args:
-            img_name (str): name of img in self.source_img_path to be cut.
+            source_img_name (str): name of img in self.source_img_path to be cut.
             new_polygons_df (GeoDataFrame): GeoDataFrame that will be the polygons_df of the associator of the new dataset of cut images that is being created by the calling dataset cutter. 
             new_graph (BipartiteGraph): the bipartite graph that is being built up for the target associator.
 
         """
-
         # img and labels paths
-        source_img_path = Path(self.source_assoc.data_dir / f"images/{img_name}")
-        source_label_path = Path(self.source_assoc.data_dir / f"labels/{img_name}")        
-
-        polygon_df_crs_epsg = self.source_assoc.polygons_df.crs.to_epsg()
+        source_img_path = Path(self.source_assoc.data_dir / f"images/{source_img_name}")
+        source_label_path = Path(self.source_assoc.data_dir / f"labels/{source_img_name}")        
 
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {index_or_col_name: [] for index_or_col_name in [self.source_assoc.imgs_df.index.name] + list(self.source_assoc.imgs_df.columns)}
 
-        polygons_contained_in_img = self.source_assoc.polygons_contained_in_img(img_name)
+        windows_transforms_img_names = self._get_windows_transforms_img_name(source_img_name, 
+                                                                            new_polygons_df, 
+                                                                            new_graph)
 
-        # for all polygons in the source_assoc contained in the img
-        for polygon_name, polygon_geometry in (self.source_assoc.polygons_df.loc[polygons_contained_in_img, ['geometry']]).itertuples():
+        for window, window_transform, new_img_name in windows_transforms_img_names:
 
-            if self.polygon_filter_predicate(polygon_name, new_polygons_df, self.source_assoc) == False:
+            # Make new image and label in target_data_dir ...
+            img_bounds_in_img_crs, img_crs = self._make_new_img_and_label(window, window_transform, new_img_name)
 
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # for cut_imgs_iter_over_imgs should drop polygon form new_polygons_df?
-                pass
+            # ... gather all the information about the image in a dict ...
+            single_new_img_info_dict = self._make_img_info_dict(new_img_name, img_bounds_in_img_crs, img_crs)
 
-            else:
+            # ... and accumulate that information. 
+            for key in imgs_from_cut_dict.keys():
+                imgs_from_cut_dict[key].append(single_new_img_info_dict[key])
 
-                windows_transforms_img_names = self._get_windows_transforms_img_name(polygon_name, 
-                                                                                polygon_geometry, 
-                                                                                img_path=self.source_img_path, 
-                                                                                new_img_size=(self.new_img_size_rows, self.new_img_size_cols), 
-                                                                                mode=self.mode, 
-                                                                                polygon_crs_epsg_code=polygon_df_crs_epsg, 
-                                                                                **self.kwargs)
-
-                for window, window_transform, new_img_name in windows_transforms_img_names:
-
-                    dst_img_path = self.target_data_dir / f"images/{new_img_name}"
-                    dst_label_path = self.target_data_dir / f"labels/{new_img_name}"
-
-                    if img_bands is None:
-                        img_bands = self._get_all_band_indices(source_img_path)
-
-                    # write img window to destination img geotif
-                    img_bounds_in_img_crs, img_crs = write_window_to_geotif(self.source_img_path, 
-                                                                            dst_img_path, 
-                                                                            self.img_bands, 
-                                                                            window, 
-                                                                            window_transform)
-
-                    if label_bands is None:
-                        label_bands = self._get_all_band_indices(source_label_path)
-
-                    # write label window to destination label geotif
-                    write_window_to_geotif(self.source_label_path, 
-                                            dst_label_path, 
-                                            self.label_bands, 
-                                            window, 
-                                            window_transform)    
-
-                    # ... put the information about the image ...
-                    img_bounding_rectangle_in_std_crs = box(*transform_bounds(img_crs, 
-                                                                                        self.source_assoc.imgs_df.crs,
-                                                                                        *img_bounds_in_img_crs))
-
-                    # ... in a dict ...
-                    single_new_img_info_dict = {'img_name': new_img_name, 
-                                                'geometry': img_bounding_rectangle_in_std_crs, 
-                                                'orig_crs_epsg_code': img_crs.to_epsg(), 
-                                                'img_processed?': True, 
-                                                'timestamp': self.source_assoc.imgs_df.loc[img_name, 'timestamp']}
-
-                    # ... and accumulate into the dict containing the information for all new images.
-                    for key in imgs_from_cut_dict.keys():
-                        imgs_from_cut_dict[key].append(single_new_img_info_dict[key])
-
-                    # Add connections to new_graph for the new image and modify new_polygons_df.
-                    self.source_assoc._add_img_to_graph_modify_polygons_df(new_img_name, 
-                                                                        img_bounding_rectangle=img_bounding_rectangle_in_std_crs, 
-                                                                        polygons_df=new_polygons_df, 
-                                                                        graph=new_graph)
+            # Add connections to new_graph for the new image and modify new_polygons_df.
+            self.source_assoc._add_img_to_graph_modify_polygons_df(new_img_name, 
+                                                                img_bounding_rectangle=single_new_img_info_dict['geometry'], 
+                                                                polygons_df=new_polygons_df, 
+                                                                graph=new_graph)
 
         return imgs_from_cut_dict
+
+
+    def _make_img_info_dict(self, 
+                            imgs_from_cut_dict: dict, 
+                            new_img_name: str, 
+                            img_bounds_in_img_crs: Tuple[float, float, float, float], 
+                            img_crs: CRS) -> None:
+            
+        img_bounding_rectangle_in_imgs_df_crs = box(*transform_bounds(img_crs, 
+                                                                    self.source_assoc.imgs_df.crs,
+                                                                    *img_bounds_in_img_crs))
+
+        single_new_img_info_dict = {'img_name': new_img_name, 
+                                    'geometry': img_bounding_rectangle_in_imgs_df_crs, 
+                                    'orig_crs_epsg_code': img_crs.to_epsg(), 
+                                    'img_processed?': True}
+        
+        # Copy over any remaining information about the img from self.source_assoc.imgs_df.
+        for col in set(self.source_assoc.imgs_df.columns) - {'img_name', 'geometry', 'orig_crs_epsg_code', 'img_processed?'}:
+            single_new_img_info_dict[col] = self.source_assoc.imgs_df.loc[new_img_name, col]
+
+        return single_new_img_info_dict
+
+            
+    def _make_new_img_and_label(self, 
+                                window: Window, 
+                                window_transform: Affine, 
+                                new_img_name: str) -> Tuple[Tuple[float, float, float, float], CRS]:
+
+        dst_img_path = self.target_data_dir / f"images/{new_img_name}"
+        dst_label_path = self.target_data_dir / f"labels/{new_img_name}"
+
+        # write img window to destination img geotif
+        img_bounds_in_img_crs, img_crs = write_window_to_geotif(self.source_img_path, 
+                                                                dst_img_path, 
+                                                                self.img_bands, 
+                                                                window, 
+                                                                window_transform)
+
+        # write label window to destination label geotif
+        label_bounds_in_img_crs, label_crs = write_window_to_geotif(self.source_label_path, 
+                                dst_label_path, 
+                                self.label_bands, 
+                                window, 
+                                window_transform)    
+
+        assert img_crs == label_crs, "source image and label crs disagree!"
+        assert label_bounds_in_img_crs == img_bounds_in_img_crs, "source image and label bounds disagree"
+
+        return img_bounds_in_img_crs, img_crs
+
 
     def _write_window_to_geotif(self, 
                             src_img_path: Union[Path, str], 
@@ -225,18 +226,24 @@ class SingleImgCutter(ABC):
 
         return dst.bounds, dst.crs
 
-    def _get_all_band_indices(self, img_path: Union[Path, str]) -> List[int]:
+    def _get_all_band_indices(self, mode: str) -> List[int]:
         """
-        Return list of all band indices of GeoTiff
+        Return list of all band indices of GeoTiffs. 
+
+        It is assumed all images (or labels) in the data diretory have the same number of bands.
 
         Args:
-            img_path (Union[Path, str]): path of GeoTif image from which bands are to be extracted. 
+            mode (str): 'images' or 'labels'
 
         Returns:
             List[int]: list of indices of all bands in GeoTiff 
         """
 
-        with rio.open(img_path) as src:
+        img_or_label_dir = self.source_assoc.data_dir / mode
+        img_or_label_name = [filename for filename in os.listdir(img_or_label_dir) if Path(filename).suffix == 'tif'][0]
+        img_or_label_path = img_or_label_dir / img_or_label_name
+
+        with rio.open(img_or_label_path) as src:
             bands = list(range(1, src.count + 1))
 
         return bands
@@ -303,10 +310,38 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
 
         random.seed(random_seed)
 
+
     def _get_windows_transforms_img_names(self, 
+                                            source_img_name: str, 
+                                            new_polygons_df: GeoDataFrame, 
+                                            new_graph: BipartiteGraph):
+
+        polygons_contained_in_img = self.source_assoc.polygons_contained_in_img(source_img_name)
+
+        windows_transforms_img_names = []
+
+        # for all polygons in the source_assoc contained in the img
+        for polygon_name, polygon_geometry in (self.source_assoc.polygons_df.loc[polygons_contained_in_img, ['geometry']]).itertuples():
+
+            if self.polygon_filter_predicate(polygon_name, new_polygons_df, self.source_assoc) == False:
+
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # for cut_imgs_iter_over_imgs should drop polygon form new_polygons_df?
+                pass
+
+            else:
+
+                windows_transforms_img_names_single_polygon = self._get_windows_transforms_img_names_single_polygon(polygon_name, polygon_geometry, source_img_name, (self.new_imgs_size_rows, self.new_imgs_size_cols))
+
+                windows_transforms_img_names += windows_transforms_img_names_single_polygon
+
+        return windows_transforms_img_names
+
+
+    def _get_windows_transforms_img_names_single_polygon(self, 
                                         polygon_name: str, 
                                         polygon_geometry: Polygon, 
-                                        img_path: Union[Path, str], 
+                                        source_img_name: str, 
                                         window_size: Tuple[int, int]) -> List[Tuple[Window, Affine, str]]:
         """
         Given a polygon and a GeoTiff image fully containing it return a list of windows, window transforms, and new img_names defining a minimal rectangular grid in the image covering the polygon.
@@ -315,25 +350,25 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
             polygon_name (str): polygon identifier
             polygon_geometry (Polygon): polygon fully contained in the GeoTiff
             polygon_crs_epsg_code (int): EPSG code of the polygon crs
-            img_path (Union[Path, str]): path to GeoTiff image
+            source_img_name (str): name of source image
             window_size (Tuple[int, int]): window size (row and col lengths in pixels)
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
 
-        with rio.open(img_path) as src:
+        source_img_path = self.source_assoc.data_dir / "images" / source_img_name
+
+        with rio.open(source_img_path) as src:
 
             row_off, col_off, num_small_imgs_in_row_direction, num_small_imgs_in_col_direction = \
                 self._get_grid_row_col_offsets_num_windows_row_col_direction(img = src,                                
                                                                             polygon_name=polygon_name, 
-                                                                            polygon_geometry=polygon_geometry, 
-                                                                            img_path=img_path, 
-                                                                            window_size=window_size)
+                                                                            polygon_geometry=polygon_geometry)
             
             # The row and col offs and number of images in row and col direction define a grid. Iterate through the grid and accumulate windows, transforms, and img_names in a list:
 
-            windows_transforms_img_names = []
+            windows_transforms_img_names_single_polygon = []
 
             for img_row in range(num_small_imgs_in_row_direction):
                 for img_col in range(num_small_imgs_in_row_direction):
@@ -348,7 +383,7 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
                     window_transform = src.window_transform(window)
 
                     # Generate new img name.
-                    img_name_no_extension = img_path.name
+                    img_name_no_extension = Path(source_img_name).stem
                     
                     # (if there is only one window in the grid)
                     if num_small_imgs_in_row_direction==1 and num_small_imgs_in_col_direction==1:
@@ -361,14 +396,14 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
                     # append window if it intersects the polygon
                     if window_bounding_rectangle.intersects(polygon_geometry):
 
-                        windows_transforms_img_names.append((window, window_transform, new_img_name))
+                        windows_transforms_img_names_single_polygon.append((window, window_transform, new_img_name))
 
-            return windows_transforms_img_names
+            return windows_transforms_img_names_single_polygon
+
 
     def _get_grid_row_col_offsets_num_windows_row_col_direction(self, 
                                     img: DatasetReader,
-                                    polygon_geometry: Polygon, 
-                                    img_path: Union[Path, str]) -> Tuple[int, int, int, int]:
+                                    polygon_geometry: Polygon) -> Tuple[int, int, int, int]:
         """Return row and col offsets and number of windows in row and in col direction such that the resulting grid is minimal grid fully covering the polygon."""
 
         # transform polygons from assoc's crs to image source crs
@@ -422,3 +457,4 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
 
         return row_off, col_off, num_small_imgs_in_row_direction, num_small_imgs_in_col_direction
     
+
