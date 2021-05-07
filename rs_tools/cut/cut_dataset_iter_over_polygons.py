@@ -1,9 +1,14 @@
 """
 Functions to cut datasets of GeoTiffs by iterating over polygons.
 
-Customizable general function create_or_update_dataset_from_iter_over_polygons to create or update a new remote sensing imagery dataset (images, labels, and associator) from an existing one by iterating over (a subset of) the polygons and cutting (a subset of) the images containing the polygons, as well as a specialization to functions new_dataset_one_small_img_for_each_polygon and update_dataset_one_small_img_for_each_polygon that create and update exactly one new small image for each polygon in the old dataset.
+Contains: 
+    - new_tif_dataset_small_imgs_for_each_polygon: Creates a new dataset of GeoTiffs form an existing one by cutting out small images covering the polygons.  
+    - update_tif_dataset_small_imgs_for_each_polygon. Updates a dataset of GeoTiffs that was created with new_tif_dataset_small_imgs_for_each_polygon. 
+    - create_or_update_tif_dataset_from_iter_over_polygons: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
 """
+
 from typing import Union, Callable, List, Tuple, Optional
+import logging
 import os
 import copy
 from pathlib import Path
@@ -21,7 +26,8 @@ from rs_tools.cut.single_img_cutters import SingleImgCutter, SmallImgsAroundPoly
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate, AlwaysTrue, DoesPolygonNotHaveImg, OnlyThisPolygon
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector 
 
-          
+logger = logging.getLogger(__name__)
+
 
 def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path], 
                                         target_data_dir: Union[str, Path], 
@@ -31,7 +37,7 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
                                         mode: str = 'random', 
                                         random_seed: int = 10) -> ImgPolygonAssociator:
     """
-    Create a new dataset of GeoTiffs (images, labels, and associator) consisting of one 'small' image for each polygon (or a grid of such images if a polygon is too large to be contained in a single small image) from the dataset of GeoTiffs in source_data_dir in target_data_dir. 
+    Create a new dataset of GeoTiffs (images, labels, and associator) consisting of one 'small' image for each polygon (or a minimal grid of such images if a polygon is too large to be contained in a single small image) from the dataset of GeoTiffs in source_data_dir in target_data_dir. 
     
     Args:
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
@@ -57,108 +63,129 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
         (target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
 
     does_polygon_not_have_img = DoesPolygonNotHaveImg()
-
     random_img_selector = RandomImgSelector()
+    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(
+                                            source_assoc=source_assoc, 
+                                            target_data_dir=target_data_dir, 
+                                            polygon_filter_predicate=does_polygon_not_have_img,
+                                            new_img_size=new_img_size, 
+                                            img_bands=img_bands, 
+                                            labels_bands=label_bands, 
+                                            mode=mode, 
+                                            random_seed=random_seed)
 
-    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(source_assoc=source_assoc, 
-                                                                        target_data_dir=target_data_dir, 
-                                                                        polygon_filter_predicate=does_polygon_not_have_img,
-                                                                        new_img_size=new_img_size, 
-                                                                        img_bands=img_bands, 
-                                                                        labels_bands=label_bands, 
-                                                                        mode=mode, 
-                                                                        random_seed=random_seed)
+    target_assoc = create_or_update_tif_dataset_from_iter_over_polygons(
+                        source_data_dir=source_data_dir, 
+                        target_data_dir=target_data_dir, 
+                        polygon_filter_predicate=does_polygon_not_have_img,
+                        img_cutter=small_imgs_around_polygons_cutter, 
+                        img_selector=random_img_selector, 
+                        new_img_size=new_img_size, 
+                        img_bans=img_bands, 
+                        label_bands=label_bands,
+                        mode=mode)
 
-    target_assoc = create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir=source_data_dir, 
-                                                            target_data_dir=target_data_dir, 
-                                                            polygon_filter_predicate=does_polygon_not_have_img,
-                                                            img_cutter=small_imgs_around_polygons_cutter, 
-                                                            img_selector=random_img_selector, 
-                                                            new_img_size=new_img_size, 
-                                                            img_bans=img_bands, 
-                                                            label_bands=label_bands,
-                                                            mode=mode)
+    # Save args to target params_dict, so we can load them from file when updating the target dataset. 
+    target_assoc._params_dict['source_data_dir'] = str(source_data_dir)
+    target_assoc._params_dict['new_img_size'] = new_img_size
+    target_assoc._params_dict['img_bands'] = img_bands 
+    target_assoc._params_dict['label_bands'] = label_bands 
+    target_assoc.save()
 
     return target_assoc
 
 
-def update_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path], 
-                                        target_data_dir: Union[str, Path], 
-                                        new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
-                                        img_bands: Optional[List[int]]=None, 
-                                        label_bands: Optional[List[int]]=None, 
-                                        mode: str = 'random', 
-                                        random_seed: int = 10) -> ImgPolygonAssociator:
+def update_tif_dataset_small_imgs_for_each_polygon(
+        data_dir: Union[str, Path], 
+        source_data_dir: Union[str, Path], 
+        mode: str = 'random', 
+        random_seed: int = 42) -> ImgPolygonAssociator:
     """
     Update a dataset created by new_tif_dataset_small_imgs_for_each_polygon. 
     
-    Update a dataset of GeoTiffs (images, labels, and associator) in target_data_dir that was created using new_dataset_small_imgs_for_polygons from an updated version of the dataset of GeoTiffs in source_data_dir by adding those polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
+    Update a dataset of GeoTiffs (images, labels, and associator) in data_dir that was created using new_dataset_small_imgs_for_polygons from an updated version of the dataset of GeoTiffs in source_data_dir by adding those polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
 
     Args:
-        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
-        target_data_dir (Union[str, Path]): path to data directory of dataset to be updated.
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length  or (rows, cols)). If None, will infer from randomly chosen image in target dataset. 
-        img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-        label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        mode (str, optional): One of 'random' or 'centered'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. Defaults to 'random'.
-        random_seed (int, optional): random seed.
+        data_dir (Union[str, Path]): path to data directory of dataset to be updated.
+        source_data_dir (Union[str, Path], optional): Optional argument for source data directory containing the GeoTiffs to be cut from. Defaults to None (i.e. use source_data_dir used when creating the dataset). 
+        mode (str, optional): One of None, 'random' or 'centered'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. Defaults to None (i.e. use mode used when creating dataset). 
+        random_seed (int, optional): random seed. Defaults to 42.
         
     Returns:
         ImgPolygonAssociator: associator of updated dataset
     """
 
-    if new_img_size is None:
-        img_name = random.choice(os.listdir(target_data_dir / "images"))
-        with rio.open(target_data_dir / "images" / img_name) as src:
-            new_size_rows = src.height
-            new_img_size_cols = src.width
+    data_dir = Path(data_dir)
+    assoc = ImgPolygonAssociator(data_dir)
 
-    new_img_size = (new_size_rows, new_img_size_cols)
+    # Check necessary params_dict keys in target associator exist. 
+    if not {'source_data_dir', 'new_img_size', 'img_bands', 'label_bands'} <= set(assoc._params_dict.keys()):
 
-    # make sure dir args are Path objects
+        missing_keys = {'source_data_dir', 'new_img_size', 'img_bands', 'label_bands'} - set(assoc._params_dict.keys())
+        
+        message = f"The params_dict of associator in {data_dir=} missing the following keys: {missing_keys}. Looks like the dataset in {data_dir=} was not created using new_tif_dataset_small_imgs_for_each_polygon?"
+        
+        logger.error(message)        
+        raise ValueError(message)
+        
+    # If source_data_dir is given ...
+    if source_data_dir is not None:
+        # ... but differs from source_data_dir on file ...
+        if Path(source_data_dir) != Path(assoc._params_dict['source_data_dir']):
+            # ... throw a warning ...
+            logger.warning(f"source_data_dir {source_data_dir} differs from source_data_dir {assoc._params_dict['source_data_dir']} on file in associator. Hopefully you're doing this on purpose b/c the source_data_dir has moved?")
+            # ... and update assoc._params_dict.
+            
+    else:
+        source_data_dir = assoc._params_dict['source_data_dir']
+    
     source_data_dir = Path(source_data_dir)
-    target_data_dir = Path(target_data_dir)
+    source_assoc = ImgPolygonAssociator(source_data_dir)    
 
-    source_assoc = ImgPolygonAssociator(source_data_dir)
-
-    # Create new target_data_dir and subdirectories if necessary.
-    for subdir in ipa.DATA_DIR_SUBDIRS:
-        (target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
+    new_img_size = assoc._params_dict['new_img_size'] 
+    img_bands = assoc._params_dict['img_bands'] 
+    label_bands = assoc._params_dict['label_bands'] 
 
     does_polygon_not_have_img = DoesPolygonNotHaveImg()
-
     random_img_selector = RandomImgSelector()
-
-    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(source_assoc=source_assoc, 
-                                                                        target_data_dir=target_data_dir, 
-                                                                        polygon_filter_predicate=does_polygon_not_have_img,
-                                                                        new_img_size=new_img_size, 
-                                                                        img_bands=img_bands, 
-                                                                        labels_bands=label_bands, 
-                                                                        mode=mode, 
-                                                                        random_seed=random_seed)
+    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(
+                                            source_assoc=source_assoc, 
+                                            data_dir=data_dir, 
+                                            polygon_filter_predicate=does_polygon_not_have_img,
+                                            new_img_size=new_img_size, 
+                                            img_bands=img_bands, 
+                                            labels_bands=label_bands, 
+                                            mode=mode, 
+                                            random_seed=random_seed)
     
-    target_assoc = create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir=source_data_dir, 
-                                                            target_data_dir=target_data_dir, 
-                                                            polygon_filter_predicate=does_polygon_not_have_img,
-                                                            img_cutter=small_imgs_around_polygons_cutter, 
-                                                            img_selector=random_img_selector, 
-                                                            new_img_size=new_img_size, 
-                                                            img_bans=img_bands, 
-                                                            label_bands=label_bands,
-                                                            mode=mode)
+    assoc = create_or_update_tif_dataset_from_iter_over_polygons(
+                source_data_dir=source_data_dir, 
+                target_data_dir=data_dir, 
+                polygon_filter_predicate=does_polygon_not_have_img,
+                img_cutter=small_imgs_around_polygons_cutter, 
+                img_selector=random_img_selector, 
+                new_img_size=new_img_size, 
+                img_bans=img_bands, 
+                label_bands=label_bands,
+                mode=mode)
 
-    return target_assoc
+    if str(source_data_dir) != str(assoc._params_dict['source_data_dir']):
+        logger.warning("Updating source_data_dir on file in associator.")
+        assoc._params_dict['source_data_dir'] = str(source_data_dir)
+        assoc.save()
+
+    return assoc
 
 
-def create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir: Union[str, Path], 
-                                                    target_data_dir: Union[str, Path], 
-                                                    img_cutter:SingleImgCutter, 
-                                                    img_selector:ImgSelector,
-                                                    polygon_filter_predicate: PolygonFilterPredicate = AlwaysTrue(), 
-                                                    img_bands: List[int] = None, 
-                                                    label_bands: List[int] = None, 
-                                                    **kwargs) -> ImgPolygonAssociator:
+def create_or_update_tif_dataset_from_iter_over_polygons(
+        source_data_dir: Union[str, Path], 
+        target_data_dir: Union[str, Path], 
+        img_cutter:SingleImgCutter, 
+        img_selector:ImgSelector,
+        polygon_filter_predicate: PolygonFilterPredicate = AlwaysTrue(), 
+        img_bands: List[int] = None, 
+        label_bands: List[int] = None, 
+        **kwargs) -> ImgPolygonAssociator:
     """
     Create or update a data set of GeoTiffs by iterating over polygons in the source dataset. 
 
@@ -196,9 +223,10 @@ def create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir: Union[
     mask_polygons_not_in_target_polygons_df = ~source_assoc.polygons_df.index.isin(target_assoc.polygons_df.index)
     polygons_not_in_target_polygons_df = source_assoc.polygons_df.loc[mask_polygons_not_in_target_polygons_df]
     # (deepcopy, just to be safe)
-    polygons_not_in_target_polygons_df = GeoDataFrame(columns=source_assoc.polygons_df.columns, 
-                                        data=copy.deepcopy(polygons_not_in_target_polygons_df.values), 
-                                        crs=source_assoc.polygons_df.crs)
+    polygons_not_in_target_polygons_df = GeoDataFrame(
+                                            columns=source_assoc.polygons_df.columns, 
+                                            data=copy.deepcopy(polygons_not_in_target_polygons_df.values), 
+                                            crs=source_assoc.polygons_df.crs)
     # (make sure types are set correctly)
     polygons_not_in_target_polygons_df = polygons_not_in_target_polygons_df.astype(source_assoc.polygons_df.dtypes)                                        
     # (set index)
@@ -233,16 +261,17 @@ def create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir: Union[
             for img_name in img_selector(source_imgs_containing_polygon, target_assoc.polygons_df, source_assoc):
 
                 # ... and cut/cut the images (and their labels) and remember information to be appended to target_assoc imgs_df in return dict
-                imgs_from_single_cut_dict = img_cutter(img_name=img_name, 
-                                                        source_assoc=source_assoc, 
-                                                        # (the least obvious argument: only consider this polygon for cutting the image)
-                                                        polygon_filter_predicate=only_this_polygon,
-                                                        new_polygons_df=target_assoc.polygons_df, 
-                                                        new_graph=target_assoc._graph, 
-                                                        target_data_dir=target_data_dir, 
-                                                        img_bands=img_bands, 
-                                                        label_bands=label_bands,
-                                                        **kwargs)
+                imgs_from_single_cut_dict = img_cutter(
+                                                img_name=img_name, 
+                                                source_assoc=source_assoc, 
+                                                # (the least obvious argument: only consider this polygon for cutting the image)
+                                                polygon_filter_predicate=only_this_polygon,
+                                                new_polygons_df=target_assoc.polygons_df, 
+                                                new_graph=target_assoc._graph, 
+                                                target_data_dir=target_data_dir, 
+                                                img_bands=img_bands, 
+                                                label_bands=label_bands,
+                                                **kwargs)
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                 assert set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"

@@ -1,4 +1,6 @@
-# ADD imports!!!
+""" 
+SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
+"""
 from typing import Union, List, Optional, Tuple
 from pathlib import Path
 import math
@@ -18,9 +20,7 @@ from rs_tools.utils.utils import transform_shapely_geometry
 
 class SmallImgsAroundPolygonsCutter(SingleImgCutter):
     """
-    SingleImageCutter that cuts new small images around the polygons fully contained in it. 
-
-    Go through all polygons in the source dataset/associator fully contained in the image. For each polygon if it is not filtered out by the polygon filter predicate create a single image fully containing the polygon or a grid of images if the polygon is too large to fit into a single new image. 
+    SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
     """
 
     def __init__(self, 
@@ -223,5 +223,3 @@ class SmallImgsAroundPolygonsCutter(SingleImgCutter):
             raise ValueError(f"Unknown mode: {self.mode}")
 
         return row_off, col_off, num_small_imgs_in_row_direction, num_small_imgs_in_col_direction
-    
-
