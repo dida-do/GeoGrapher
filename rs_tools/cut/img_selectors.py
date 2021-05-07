@@ -22,6 +22,10 @@ class ImgSelector(Callable):
                 new_polygons_df: GeoDataFrame, 
                 source_assoc: ImgPolygonAssociator) -> List[str]:
         """
+        Override to subclass. If img_names_list is empty an empty list should be returned. 
+
+        The new_polygons_df and new_graph arguments contain all the information available to decide which images to select. They should not be modified by this method. 
+        
         Args:
             img_names_list (List[str]): list of images to be selected from
             new_polygons_df (GeoDataFrame): polygons_df of new associator/dataset to be created for the new images created by the cutting function
@@ -29,10 +33,8 @@ class ImgSelector(Callable):
 
         Returns:
             List[str]: sublist of img_names_list
-        """
-        
-        raise NotImplementedError
-
+        """        
+        pass
 
 class RandomImgSelector(ImgSelector):
     """
