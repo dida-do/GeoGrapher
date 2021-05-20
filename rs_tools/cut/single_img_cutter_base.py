@@ -22,7 +22,6 @@ from geopandas.geodataframe import GeoDataFrame
 from rs_tools.graph import BipartiteGraph
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
-from rs_tools.cut.single_img_cutter_utils import write_window_to_geotif
 from rs_tools.utils.utils import transform_shapely_geometry
 
 
@@ -53,7 +52,7 @@ class SingleImgCutter(ABC):
         """
 
         self.source_assoc = source_assoc
-        self.target_data_dir = target_data_dir
+        self.target_data_dir = Path(target_data_dir)
         
         if img_bands is None:
             self.img_bands = self._get_all_band_indices('images')
@@ -107,7 +106,7 @@ class SingleImgCutter(ABC):
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {index_or_col_name: [] for index_or_col_name in [self.source_assoc.imgs_df.index.name] + list(self.source_assoc.imgs_df.columns)}
 
-        windows_transforms_img_names = self._get_windows_transforms_img_name(source_img_name, 
+        windows_transforms_img_names = self._get_windows_transforms_img_names(source_img_name, 
                                                                             new_polygons_df, 
                                                                             new_graph)
 
@@ -178,14 +177,14 @@ class SingleImgCutter(ABC):
         dst_label_path = self.target_data_dir / f"labels/{new_img_name}"
 
         # write img window to destination img geotif
-        img_bounds_in_img_crs, img_crs = write_window_to_geotif(self.source_img_path, 
+        img_bounds_in_img_crs, img_crs = self._write_window_to_geotif(self.source_img_path, 
                                                                 dst_img_path, 
                                                                 self.img_bands, 
                                                                 window, 
                                                                 window_transform)
 
         # write label window to destination label geotif
-        label_bounds_in_img_crs, label_crs = write_window_to_geotif(self.source_label_path, 
+        label_bounds_in_img_crs, label_crs = self._write_window_to_geotif(self.source_label_path, 
                                 dst_label_path, 
                                 self.label_bands, 
                                 window, 
@@ -231,13 +230,13 @@ class SingleImgCutter(ABC):
                             transform=window_transform) as dst:
 
                 # ... and go through the bands.
-                for band in bands:
-                    
+                for target_band, source_band in enumerate(bands, start=1):
+                            
                     # Read window for that band from source ...
-                    new_img_band_raster = src.read(band, window=window)
+                    new_img_band_raster = src.read(source_band, window=window)
 
-                    # ... write to destination geotiff.
-                    dst.write(new_img_band_raster, band)
+                    # ... write to new geotiff.
+                    dst.write(new_img_band_raster, target_band)
 
         return dst.bounds, dst.crs
 
@@ -245,7 +244,7 @@ class SingleImgCutter(ABC):
         """
         Return list of all band indices of GeoTiffs. 
 
-        It is assumed all images (or labels) in the data diretory have the same number of bands.
+        It is assumed all images (or labels) in the data directory have the same number of bands.
 
         Args:
             mode (str): 'images' or 'labels'
