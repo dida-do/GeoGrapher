@@ -1,7 +1,7 @@
 """
 Abstract base class for single image cutters. 
 """
-
+import logging
 from typing import Union, List, Tuple, Optional, Any
 from pathlib import Path
 import os
@@ -24,6 +24,7 @@ from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
 from rs_tools.utils.utils import transform_shapely_geometry
 
+logger = logging.getLogger(__name__)
 
 class SingleImgCutter(ABC):
     def __init__(self, 
@@ -98,6 +99,8 @@ class SingleImgCutter(ABC):
             new_polygons_df (GeoDataFrame): GeoDataFrame that will be the polygons_df of the associator of the new dataset of cut images that is being created by the calling dataset cutter. 
             new_graph (BipartiteGraph): the bipartite graph that is being built up for the target associator.
 
+        Returns:
+            dict of lists that containing the data to be put in the imgs_df of the associator to be constructed for the created images. 
         """
         # img and labels paths
         source_img_path = Path(self.source_assoc.data_dir / f"images/{source_img_name}")
@@ -108,7 +111,8 @@ class SingleImgCutter(ABC):
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(source_img_name, 
                                                                             new_polygons_df, 
-                                                                            new_graph)
+                                                                            new_graph, 
+                                                                            **self.kwargs)
 
         for window, window_transform, new_img_name in windows_transforms_img_names:
 
@@ -184,11 +188,15 @@ class SingleImgCutter(ABC):
                                                                 window_transform)
 
         # write label window to destination label geotif
-        label_bounds_in_img_crs, label_crs = self._write_window_to_geotif(self.source_label_path, 
-                                dst_label_path, 
-                                self.label_bands, 
-                                window, 
-                                window_transform)    
+        if self.source_label_path.is_file():
+            label_bounds_in_img_crs, label_crs = self._write_window_to_geotif(
+                                                    self.source_label_path, 
+                                                    dst_label_path, 
+                                                    self.label_bands, 
+                                                    window, 
+                                                    window_transform)    
+        else:
+            logger.info('No label cut for img {self.source_img_path.name} since it has no label.')
 
         assert img_crs == label_crs, "source image and label crs disagree!"
         assert label_bounds_in_img_crs == img_bounds_in_img_crs, "source image and label bounds disagree"
