@@ -22,7 +22,8 @@ from rs_tools.cut import polygon_filter_predicates
 import rs_tools.img_polygon_associator as ipa
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.cut.single_img_cutters import SingleImgCutter, SmallImgsAroundPolygonsCutter
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cut.single_img_cutter_around_polygons import SmallImgsAroundPolygonsCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate, AlwaysTrue, DoesPolygonNotHaveImg, OnlyThisPolygon
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector 
 
@@ -288,6 +289,19 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
     # ... and append it to self.imgs_df.
     data_frames_list = [target_assoc.imgs_df, new_imgs_df]  
     target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+
+    # Save information needed for updating the target dataset from the source dataset in the future
+    target_assoc._params_dict.update({
+        'source_data_dir': str(source_data_dir), 
+        'img_bands': img_bands, 
+        'label_bands': label_bands})
+
+    # save kwargs. 
+    for key, val in kwargs.items():
+        if key not in target_assoc._params_dict:
+            target_assoc._params_dict[key] = val
+        else:
+            logger.warning(f"target_assoc._params_dict already contains an entry {target_assoc._params_dict[key]} for the key {key}, so not saving value {val} to _params_dict.")
 
     # Save associator to disk.
     target_assoc.save()
