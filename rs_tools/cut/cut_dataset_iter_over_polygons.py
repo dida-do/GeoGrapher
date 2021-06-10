@@ -32,7 +32,9 @@ logger = logging.getLogger(__name__)
 
 def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path], 
                                         target_data_dir: Union[str, Path], 
-                                        new_img_size: Union[int, Tuple[int, int]] = 512, 
+                                        new_img_size: Union[None, int, Tuple[int, int]] = 512, 
+                                        min_new_img_size: Union[None, int, Tuple[int, int]] = 64, 
+                                        scaling_factor: Union[None, float] = 1.2,
                                         img_bands: Optional[List[int]]=None, 
                                         label_bands: Optional[List[int]]=None, 
                                         mode: str = 'random', 
@@ -43,10 +45,12 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
     Args:
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)). Defaults to 512.
+        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
+        scaling_factor (float): scaling factor for 'variable' mode. Defaults to 1.2.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        mode (str, optional): One of 'random' or 'centered'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. Defaults to 'random'.
+        mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to 'random'.
         random_seed (int, optional): random seed.
 
     Returns:
@@ -78,40 +82,44 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
     target_assoc = create_or_update_tif_dataset_from_iter_over_polygons(
                         source_data_dir=source_data_dir, 
                         target_data_dir=target_data_dir, 
-                        polygon_filter_predicate=does_polygon_not_have_img,
                         img_cutter=small_imgs_around_polygons_cutter, 
                         img_selector=random_img_selector, 
-                        new_img_size=new_img_size, 
-                        img_bans=img_bands, 
+                        polygon_filter_predicate=does_polygon_not_have_img,
+                        img_bands=img_bands, 
                         label_bands=label_bands,
+                        new_img_size=new_img_size, 
+                        min_new_img_size=min_new_img_size, 
+                        scaling_factor=scaling_factor, 
                         mode=mode)
-
-    # Save args to target params_dict, so we can load them from file when updating the target dataset. 
-    target_assoc._params_dict['source_data_dir'] = str(source_data_dir)
-    target_assoc._params_dict['new_img_size'] = new_img_size
-    target_assoc._params_dict['img_bands'] = img_bands 
-    target_assoc._params_dict['label_bands'] = label_bands 
-    target_assoc.save()
 
     return target_assoc
 
 
-def update_tif_dataset_small_imgs_for_each_polygon(
-        data_dir: Union[str, Path], 
-        source_data_dir: Union[str, Path], 
-        mode: str = 'random', 
-        random_seed: int = 42) -> ImgPolygonAssociator:
+def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path], 
+                                        source_data_dir: Union[str, Path], 
+                                        new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                                        min_new_img_size: Optional[Union[None, int, Tuple[int, int]]] = None, 
+                                        scaling_factor: Optional[float] = None,
+                                        img_bands: Optional[List[int]]=None, 
+                                        label_bands: Optional[List[int]]=None, 
+                                        mode: Optional[str] = None, 
+                                        random_seed: int = 10) -> ImgPolygonAssociator:
     """
     Update a dataset created by new_tif_dataset_small_imgs_for_each_polygon. 
     
     Update a dataset of GeoTiffs (images, labels, and associator) in data_dir that was created using new_dataset_small_imgs_for_polygons from an updated version of the dataset of GeoTiffs in source_data_dir by adding those polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
 
     Args:
-        data_dir (Union[str, Path]): path to data directory of dataset to be updated.
-        source_data_dir (Union[str, Path], optional): Optional argument for source data directory containing the GeoTiffs to be cut from. Defaults to None (i.e. use source_data_dir used when creating the dataset). 
-        mode (str, optional): One of None, 'random' or 'centered'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. Defaults to None (i.e. use mode used when creating dataset). 
-        random_seed (int, optional): random seed. Defaults to 42.
-        
+        data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. This is the only argument needed. 
+        target_data_dir (Union[str, Path]): path to data directory containing the dataset to be updated. Defaults to None, 
+        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
+        scaling_factor (float): scaling factor for 'variable' mode. Defaults to 1.2.
+        img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
+        label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
+        mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to 'random'.
+        random_seed (int, optional): random seed.
+    
     Returns:
         ImgPolygonAssociator: associator of updated dataset
     """
@@ -119,33 +127,75 @@ def update_tif_dataset_small_imgs_for_each_polygon(
     data_dir = Path(data_dir)
     assoc = ImgPolygonAssociator(data_dir)
 
-    # Check necessary params_dict keys in target associator exist. 
-    if not {'source_data_dir', 'new_img_size', 'img_bands', 'label_bands'} <= set(assoc._params_dict.keys()):
+    # Check right args/params are either on file or have been given, and override given args on file with given args whenever they exist (i.e. are not None)
+    if 'cut_params' not in assoc._params_dict.keys():
+        
+        if mode is None:
+            message = "mode arg not found in data_dir's params_dict.json. Need to provide by hand."
+            logger.error(message)
+            raise ValueError(message)
+        elif mode in {'centered', 'random'}:
+            assert new_img_size is not None, f"for mode {mode} cutting argument new_img_size not found in target associator's params_dict.json, needs to be provided by hand as argument"
+        elif mode == 'variable':
+            assert min_new_img_size is not None, f"for mode {mode} cutting min_argument new_img_size not found in target associator's params_dict.json, needs to be provided by hand as argument"
+            assert scaling_factor is not None, f"for mode {mode} cutting argument scaling_factor not found in target associator's params_dict.json, needs to be provided by hand as argument"
 
-        missing_keys = {'source_data_dir', 'new_img_size', 'img_bands', 'label_bands'} - set(assoc._params_dict.keys())
-        
-        message = f"The params_dict of associator in {data_dir=} missing the following keys: {missing_keys}. Looks like the dataset in {data_dir=} was not created using new_tif_dataset_small_imgs_for_each_polygon?"
-        
-        logger.error(message)        
-        raise ValueError(message)
-        
-    # If source_data_dir is given ...
-    if source_data_dir is not None:
-        # ... but differs from source_data_dir on file ...
-        if Path(source_data_dir) != Path(assoc._params_dict['source_data_dir']):
-            # ... throw a warning ...
-            logger.warning(f"source_data_dir {source_data_dir} differs from source_data_dir {assoc._params_dict['source_data_dir']} on file in associator. Hopefully you're doing this on purpose b/c the source_data_dir has moved?")
-            # ... and update assoc._params_dict.
-            
     else:
-        source_data_dir = assoc._params_dict['source_data_dir']
-    
-    source_data_dir = Path(source_data_dir)
-    source_assoc = ImgPolygonAssociator(source_data_dir)    
 
-    new_img_size = assoc._params_dict['new_img_size'] 
-    img_bands = assoc._params_dict['img_bands'] 
-    label_bands = assoc._params_dict['label_bands'] 
+        # cut params exist in data_dir params_dict.json, override them if given as args above
+        if mode is None:
+            mode = assoc._params_dict['cut_params']['mode']
+        
+        if mode in {'centered', 'random'}:
+            if new_img_size is None:
+                try:
+                    new_img_size = assoc._params_dict['new_img_size']
+                except KeyError:
+                    message = f"new_img_size arg does not exist in data_dir's params_dict.json and is not given."
+                    logger.error(message)
+                    raise ValueError(message)
+        elif mode == 'variable':
+            if min_new_img_size is None:
+                try:
+                    min_new_img_size = assoc._params_dict['min_new_img_size']
+                except KeyError:
+                    message = f"min_new_img_size arg does not exist in data_dir's params_dict.json and is not given."
+                    logger.error(message)
+                    raise ValueError(message)
+            if scaling_factor is None:
+                try:
+                    scaling_factor = assoc._params_dict['scaling_factor']
+                except KeyError:
+                    message = f"scaling_factor arg does not exist in data_dir's params_dict.json and is not given."
+                    logger.error(message)
+                    raise ValueError(f"scaling_factor arg does not exist in data_dir's params_dict.json and is not given.")
+        else:
+            logger.error(f"unknown mode: {mode}")
+            raise ValueError(f"unknown mode: {mode}")
+
+        if img_bands is not None:
+            try:
+                img_bands = assoc._params_dict['img_bands']
+            except KeyError:
+                message = f"img_bands arg does not exist in data_dir's params_dict.json and is not given."
+                logger.error(message)
+                raise ValueError(message)
+        if label_bands is not None:
+            try:
+                label_bands = assoc._params_dict['label_bands']
+            except KeyError:
+                message = f"img_bands arg does not exist in data_dir's params_dict.json and is not given."
+                logger.error(message)
+                raise ValueError(message)
+        if target_data_dir is not None:
+            try:
+                target_data_dir = Path(assoc._params_dict['target_data_dir'])
+            except KeyError:
+                message = f"target_data_dir arg does not exist in data_dir's params_dict.json and is not given."
+                logger.error(message)
+                raise ValueError(message)
+
+    source_assoc = ImgPolygonAssociator(source_data_dir)    
 
     does_polygon_not_have_img = DoesPolygonNotHaveImg()
     random_img_selector = RandomImgSelector()
@@ -162,18 +212,15 @@ def update_tif_dataset_small_imgs_for_each_polygon(
     assoc = create_or_update_tif_dataset_from_iter_over_polygons(
                 source_data_dir=source_data_dir, 
                 target_data_dir=data_dir, 
-                polygon_filter_predicate=does_polygon_not_have_img,
                 img_cutter=small_imgs_around_polygons_cutter, 
                 img_selector=random_img_selector, 
-                new_img_size=new_img_size, 
-                img_bans=img_bands, 
+                polygon_filter_predicate=does_polygon_not_have_img,
+                img_bands=img_bands, 
                 label_bands=label_bands,
+                new_img_size=new_img_size, 
+                min_new_img_size=min_new_img_size, 
+                scaling_factor=scaling_factor, 
                 mode=mode)
-
-    if str(source_data_dir) != str(assoc._params_dict['source_data_dir']):
-        logger.warning("Updating source_data_dir on file in associator.")
-        assoc._params_dict['source_data_dir'] = str(source_data_dir)
-        assoc.save()
 
     return assoc
 
@@ -186,7 +233,7 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
         polygon_filter_predicate: PolygonFilterPredicate = AlwaysTrue(), 
         img_bands: List[int] = None, 
         label_bands: List[int] = None, 
-        **kwargs) -> ImgPolygonAssociator:
+        **kwargs: Any) -> ImgPolygonAssociator:
     """
     Create or update a data set of GeoTiffs by iterating over polygons in the source dataset. 
 
@@ -200,6 +247,7 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
         polygon_filter_predicate (PolygonFilterPredicate, optional): predicate to filter polygons. Defaults to AlwaysTrue().
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
+        **kwargs (Any): additional arguments for the img_cutter. 
         
     Returns:
         ImgPolygonAssociator: associator of newly created or updated dataset
@@ -290,18 +338,16 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
     data_frames_list = [target_assoc.imgs_df, new_imgs_df]  
     target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
-    # Save information needed for updating the target dataset from the source dataset in the future
-    target_assoc._params_dict.update({
+    # Save args/information needed for updating the target dataset from the source dataset in the future
+    kwargs.update({
         'source_data_dir': str(source_data_dir), 
         'img_bands': img_bands, 
         'label_bands': label_bands})
-
-    # save kwargs. 
-    for key, val in kwargs.items():
-        if key not in target_assoc._params_dict:
-            target_assoc._params_dict[key] = val
+    for key, val in kwargs:
+        if key in target_assoc._params_dict['cut_params'] and target_assoc._params_dict['cut_params'][key] != val:
+            logger.warning(f"updating value for key {key} to {value}")
         else:
-            logger.warning(f"target_assoc._params_dict already contains an entry {target_assoc._params_dict[key]} for the key {key}, so not saving value {val} to _params_dict.")
+            target_assoc._params_dict['cut_params'][key] = val
 
     # Save associator to disk.
     target_assoc.save()
