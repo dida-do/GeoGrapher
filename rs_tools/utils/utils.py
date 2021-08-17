@@ -63,3 +63,15 @@ def round_shapely_geometry(geometry, ndigits=1):
     """
     
     return transform(lambda x,y: (round(x, ndigits), round(y, ndigits)), geometry)
+
+
+def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
+    
+    gdf_copy = GeoDataFrame(columns=gdf.columns, 
+                        data=copy.deepcopy(gdf.values), 
+                        crs=gdf.crs)
+    gdf_copy = gdf_copy.astype(gdf.dtypes)    
+    gdf_copy.set_index(gdf.index, inplace=True)
+    
+    return gdf_copy
+
