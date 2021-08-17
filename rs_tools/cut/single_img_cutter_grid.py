@@ -32,7 +32,7 @@ class ToImgGridCutter(SingleImgCutter):
                 polygon_filter_predicate: PolygonFilterPredicate, 
                 new_img_size: Union[int, Tuple[int, int]], 
                 img_bands: Optional[List[int]], 
-                labels_bands: Optional[List[int]]) -> None:
+                label_bands: Optional[List[int]]) -> None:
         """
         Args:
             source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
@@ -46,7 +46,7 @@ class ToImgGridCutter(SingleImgCutter):
         super().__init__(source_assoc=source_assoc, 
                         target_data_dir=target_data_dir, 
                         img_bands=img_bands, 
-                        labels_bands=labels_bands)                        
+                        label_bands=label_bands)                        
         
         # Check new_img_size arg type
         if not isinstance(new_img_size, int) or (isinstance(new_img_size, tuple) and len(new_img_size)==2 and all(isinstance(entry, int) for entry in new_img_size)): 
@@ -73,7 +73,7 @@ class ToImgGridCutter(SingleImgCutter):
 
         source_img_path = self.source_assoc.data_dir / "images" / source_img_name
 
-        with rio.open(self.source_img_path) as src:
+        with rio.open(source_img_path) as src:
 
             if not src.height % self.new_img_size_rows == 0:
                 logger.warning("number of rows in source image not divisible by number of rows in new images")
