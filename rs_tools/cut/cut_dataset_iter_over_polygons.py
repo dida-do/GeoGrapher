@@ -7,7 +7,7 @@ Contains:
     - create_or_update_tif_dataset_from_iter_over_polygons: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
 """
 
-from typing import Union, Callable, List, Tuple, Optional
+from typing import Union, Callable, List, Tuple, Optional, Any
 import logging
 import os
 import copy
@@ -23,9 +23,11 @@ import rs_tools.img_polygon_associator as ipa
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
-from rs_tools.cut.single_img_cutter_around_polygons import SmallImgsAroundPolygonsCutter
+from rs_tools.cut.single_img_cutter_around_polygons import SmallImgsAroundPolygonCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate, AlwaysTrue, DoesPolygonNotHaveImg, OnlyThisPolygon
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector 
+from assoc.utils.utils import deepcopy_gdf
+
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +71,14 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
 
     does_polygon_not_have_img = DoesPolygonNotHaveImg()
     random_img_selector = RandomImgSelector()
-    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(
+    small_imgs_around_polygons_cutter = SmallImgsAroundSinglePolygonCutter(
                                             source_assoc=source_assoc, 
                                             target_data_dir=target_data_dir, 
-                                            polygon_filter_predicate=does_polygon_not_have_img,
                                             new_img_size=new_img_size, 
+                                            min_new_img_size=min_new_img_size, 
+                                            scaling_factor=scaling_factor,
                                             img_bands=img_bands, 
-                                            labels_bands=label_bands, 
+                                            label_bands=label_bands, 
                                             mode=mode, 
                                             random_seed=random_seed)
 
@@ -107,8 +110,9 @@ def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path],
     """
     Update a dataset created by new_tif_dataset_small_imgs_for_each_polygon. 
     
-    Update a dataset of GeoTiffs (images, labels, and associator) in data_dir that was created using new_dataset_small_imgs_for_polygons from an updated version of the dataset of GeoTiffs in source_data_dir by adding those polygons from the source dataset that are not yet in the target dataset and then adding small images and labels for those polygons from the updated source dataset as well as for the polygons in the target dataset that had (i.e. were contained in) no images in the pre-update version of source dataset but now have an image in the updated source dataset. 
+    Adds polygons from source_data_dir not contained in data_dir to data_dir and then iterates over all polygons in data_dir that do not have an image and creates a cutout from source_data_dir for them if one exists. 
 
+    Caution: if the (new_)img_size of the images in data_dir is smaller than the size of an polygon in data_dir then that polygon will not have an image associated with it and so new images will be created for it from the source_data_dir!
     Args:
         data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. This is the only argument needed. 
         target_data_dir (Union[str, Path]): path to data directory containing the dataset to be updated. Defaults to None, 
@@ -173,23 +177,23 @@ def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path],
             logger.error(f"unknown mode: {mode}")
             raise ValueError(f"unknown mode: {mode}")
 
-        if img_bands is not None:
+        if img_bands is None:
             try:
                 img_bands = assoc._params_dict['img_bands']
             except KeyError:
                 message = f"img_bands arg does not exist in data_dir's params_dict.json and is not given."
                 logger.error(message)
                 raise ValueError(message)
-        if label_bands is not None:
+        if label_bands is None:
             try:
                 label_bands = assoc._params_dict['label_bands']
             except KeyError:
                 message = f"img_bands arg does not exist in data_dir's params_dict.json and is not given."
                 logger.error(message)
                 raise ValueError(message)
-        if target_data_dir is not None:
+        if source_data_dir is None:
             try:
-                target_data_dir = Path(assoc._params_dict['target_data_dir'])
+                source_data_dir = Path(assoc._params_dict['source_data_dir'])
             except KeyError:
                 message = f"target_data_dir arg does not exist in data_dir's params_dict.json and is not given."
                 logger.error(message)
@@ -199,13 +203,14 @@ def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path],
 
     does_polygon_not_have_img = DoesPolygonNotHaveImg()
     random_img_selector = RandomImgSelector()
-    small_imgs_around_polygons_cutter = SmallImgsAroundPolygonsCutter(
+    small_imgs_around_polygons_cutter = SmallImgsAroundSinglePolygonCutter(
                                             source_assoc=source_assoc, 
                                             data_dir=data_dir, 
-                                            polygon_filter_predicate=does_polygon_not_have_img,
                                             new_img_size=new_img_size, 
+                                            min_new_img_size=min_new_img_size, 
+                                            scaling_factor=scaling_factor,
                                             img_bands=img_bands, 
-                                            labels_bands=label_bands, 
+                                            label_bands=label_bands, 
                                             mode=mode, 
                                             random_seed=random_seed)
     
@@ -272,15 +277,7 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
     mask_polygons_not_in_target_polygons_df = ~source_assoc.polygons_df.index.isin(target_assoc.polygons_df.index)
     polygons_not_in_target_polygons_df = source_assoc.polygons_df.loc[mask_polygons_not_in_target_polygons_df]
     # (deepcopy, just to be safe)
-    polygons_not_in_target_polygons_df = GeoDataFrame(
-                                            columns=source_assoc.polygons_df.columns, 
-                                            data=copy.deepcopy(polygons_not_in_target_polygons_df.values), 
-                                            crs=source_assoc.polygons_df.crs)
-    # (make sure types are set correctly)
-    polygons_not_in_target_polygons_df = polygons_not_in_target_polygons_df.astype(source_assoc.polygons_df.dtypes)                                        
-    # (set index)
-    polygons_not_in_target_polygons_df.set_index(source_assoc.polygons_df.index, inplace=True)
-
+    polygons_not_in_target_polygons_df = deepcopy_gdf(polygons_not_in_target_polygons_df)
     # ... and modify df to reflect that in target_assoc we don't yet have imgs for these new polygons.
     polygons_not_in_target_polygons_df['have_img?'] = False # will fill as we cut images from old dataset
     polygons_not_in_target_polygons_df['have_img_downloaded?'] = False
@@ -303,24 +300,15 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
             # ... then from the images in the source dataset containing the polygon ...
             source_imgs_containing_polygon = source_assoc.imgs_containing_polygon(polygon_name)
 
-            # (polygon filter predicate to be used in img_cutter)
-            only_this_polygon = OnlyThisPolygon(polygon_name)
-
             # ... select the images we want to cut/cut from ...
             for img_name in img_selector(source_imgs_containing_polygon, target_assoc.polygons_df, source_assoc):
 
                 # ... and cut/cut the images (and their labels) and remember information to be appended to target_assoc imgs_df in return dict
                 imgs_from_single_cut_dict = img_cutter(
+                                                polygon_name=polygon_name, # ignored if not needed
                                                 img_name=img_name, 
-                                                source_assoc=source_assoc, 
-                                                # (the least obvious argument: only consider this polygon for cutting the image)
-                                                polygon_filter_predicate=only_this_polygon,
                                                 new_polygons_df=target_assoc.polygons_df, 
-                                                new_graph=target_assoc._graph, 
-                                                target_data_dir=target_data_dir, 
-                                                img_bands=img_bands, 
-                                                label_bands=label_bands,
-                                                **kwargs)
+                                                new_graph=target_assoc._graph)
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                 assert set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
@@ -338,17 +326,24 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
     data_frames_list = [target_assoc.imgs_df, new_imgs_df]  
     target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
+    if 'cut_params' not in target_assoc._params_dict:
+        target_assoc._params_dict['cut_params'] = {}
+
     # Save args/information needed for updating the target dataset from the source dataset in the future
     kwargs.update({
         'source_data_dir': str(source_data_dir), 
         'img_bands': img_bands, 
         'label_bands': label_bands})
-    for key, val in kwargs:
+    for key, val in kwargs.items():
         if key in target_assoc._params_dict['cut_params'] and target_assoc._params_dict['cut_params'][key] != val:
-            logger.warning(f"updating value for key {key} to {value}")
+            logger.warning(f"updating value for key {key} to {val}")
         else:
             target_assoc._params_dict['cut_params'][key] = val
 
+    # make masks if possible
+    if target_assoc._params_dict['mask_class'] is not None and target_assoc._params_dict['label_type'] == 'categorical':
+        target_assoc.make_missing_masks()
+        
     # Save associator to disk.
     target_assoc.save()
 

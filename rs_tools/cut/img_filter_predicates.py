@@ -14,7 +14,8 @@ class ImgFilterPredicate(Callable):
     @abstractmethod
     def __call__(self, 
                 img_name: str, 
-                source_assoc: ImgPolygonAssociator) -> bool:
+                source_assoc: ImgPolygonAssociator
+                ) -> bool:
         """
         Args:
             img_name (str): img identifier
@@ -28,7 +29,7 @@ class ImgFilterPredicate(Callable):
 
 class AlwaysTrue(ImgFilterPredicate):
     """
-    Simple polygon filter predicate that always returns True. 
+    Default polygon filter predicate that always returns True. Used when filtering is not desired. 
     """
 
     def __init__(self) -> None:
