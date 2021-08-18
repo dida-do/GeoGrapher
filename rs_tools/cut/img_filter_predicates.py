@@ -76,4 +76,6 @@ class ImgFilterRowCondition(ImgFilterPredicate):
         """
 
         row_series : Union[GeoSeries, Series] = source_assoc.imgs_df.loc[img_name]
-        return self.row_series_predicate(row_series) 
+        answer = self.row_series_predicate(row_series) 
+        
+        return answer
