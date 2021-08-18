@@ -23,7 +23,7 @@ import rs_tools.img_polygon_associator as ipa
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
-from rs_tools.cut.single_img_cutter_around_polygons import SmallImgsAroundPolygonCutter
+from rs_tools.cut.single_img_cutter_around_polygons import SmallImgsAroundSinglePolygonCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate, AlwaysTrue, DoesPolygonNotHaveImg, OnlyThisPolygon
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector 
 from assoc.utils.utils import deepcopy_gdf
@@ -112,17 +112,22 @@ def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path],
     
     Adds polygons from source_data_dir not contained in data_dir to data_dir and then iterates over all polygons in data_dir that do not have an image and creates a cutout from source_data_dir for them if one exists. 
 
-    Caution: if the (new_)img_size of the images in data_dir is smaller than the size of an polygon in data_dir then that polygon will not have an image associated with it and so new images will be created for it from the source_data_dir!
+    Warning: 
+        If the (new_)img_size of the images in data_dir is smaller than the size of an polygon in data_dir then that polygon will not have an image associated with it and so new images will be created for it from the source_data_dir!
+
+    Warning:
+        Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir. 
+
     Args:
         data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. This is the only argument needed. 
-        target_data_dir (Union[str, Path]): path to data directory containing the dataset to be updated. Defaults to None, 
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
-        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
+        target_data_dir (Union[str, Path]): path to data directory containing the dataset to be updated. Defaults to None, i.e. infer from target dataset/associator.
+        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to None, i.e. infer from target dataset/associator.
+        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to None, i.e. infer from target dataset/associator.
         scaling_factor (float): scaling factor for 'variable' mode. Defaults to 1.2.
-        img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-        label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to 'random'.
-        random_seed (int, optional): random seed.
+        img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. infer from target dataset/associator).
+        label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. infer from target dataset/associator).
+        mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to None, i.e. infer from target dataset/associator.
+        random_seed (int, optional): random seed, defaults to 10.
     
     Returns:
         ImgPolygonAssociator: associator of updated dataset
@@ -339,10 +344,6 @@ def create_or_update_tif_dataset_from_iter_over_polygons(
             logger.warning(f"updating value for key {key} to {val}")
         else:
             target_assoc._params_dict['cut_params'][key] = val
-
-    # make masks if possible
-    if target_assoc._params_dict['mask_class'] is not None and target_assoc._params_dict['label_type'] == 'categorical':
-        target_assoc.make_missing_masks()
         
     # Save associator to disk.
     target_assoc.save()
