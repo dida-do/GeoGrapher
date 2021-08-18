@@ -12,6 +12,7 @@ import rasterio.mask
 import rasterio as rio
 import os
 import geopandas as gpd
+from geopandas import GeoDataFrame
 import shapely
 from shapely.geometry import box
 from shapely.ops import transform
