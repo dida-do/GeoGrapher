@@ -281,7 +281,9 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
 
 
 class SmallImgsAroundFilteredPolygonsCutter(SmallImgsAroundPolygonsCutterBase):
-    """Iterate over all polygons in an image, filter by the polygon_filter_predicate, and cut a small image (or a grid of images) around each polygon."""
+    """
+    Iterate over all polygons in an image, filter by the polygon_filter_predicate, and cut a small image (or a grid of images) around each polygon.
+    """
     def __init__(self, 
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str], 
