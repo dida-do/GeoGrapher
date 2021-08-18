@@ -121,7 +121,7 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
                     if len(polygon_geometries_in_src_crs) == 0:
                         # ... the label raster is empty.
                         mask = np.zeros((src.height, src.width),
-                                        dtype=np.uint8)
+                                        dtype=rio.float32)
                     # Else, burn the values for those polygons into the band.
                     else:
                         mask = rio.features.rasterize(
