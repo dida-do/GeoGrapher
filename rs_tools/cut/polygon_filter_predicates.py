@@ -1,4 +1,6 @@
-from geopandas import GeoDataFrame
+from typing import Any, Callable, Union
+from geopandas import GeoDataFrame, GeoSeries
+from pandas import Series
 from collections.abc import Callable
 from abc import abstractmethod
 from rs_tools import ImgPolygonAssociator
@@ -89,3 +91,41 @@ class OnlyThisPolygon(PolygonFilterPredicate):
                 source_assoc: ImgPolygonAssociator) -> bool:
 
         return polygon_name == self.this_polygon_name
+
+
+class PolygonFilterRowCondition(PolygonFilterPredicate):
+    """
+    Simple PolygonFilterPredicate that applies a given predicate to the row in new_polygons_df corresponding to the polygon name in question. 
+    """
+
+    def __init__(self, 
+        row_series_predicate : Callable[[Union[GeoSeries, Series]], bool], 
+        mode : str 
+        ) -> None:
+        """
+        Args:
+            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to a polygon in new_polygons_df
+            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'new_polygons_df' or 'source_assoc.polygons_df'
+        """
+        
+        super().__init__()
+
+        self.row_series_predicate = row_series_predicate
+        assert mode in {'new_polygons_df', 'source_assoc.polygons_df'}, f"Unknown mode: {mode}. Should be one of 'new_polygons_df' or 'source_assoc.polygons_df'"
+        self.mode = mode
+
+    def __call__(self, 
+            polygon_name: str, 
+            new_polygons_df: GeoDataFrame, 
+            source_assoc: ImgPolygonAssociator
+            ) -> bool:
+
+        if self.mode == 'new_polygons_df':
+            gdf = new_polygons_df
+        elif self.mode == 'source_assoc.polygons_df':
+            gdf = source_assoc.polygons_df
+
+        row_series : Union[GeoSeries, Series] = gdf.loc[polygon_name]
+        answer = self.row_series_predicate(row_series) 
+
+        return answer
