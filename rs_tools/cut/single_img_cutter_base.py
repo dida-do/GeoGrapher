@@ -95,13 +95,14 @@ class SingleImgCutter(ABC):
 
         pass
 
-    def __call__(self, 
-                img_name: str, 
-                new_polygons_df: GeoDataFrame, 
-                new_graph: BipartiteGraph,
-                **kwargs: Any
-                ) -> dict:
-                """
+    def __call__(
+            self, 
+            img_name: str, 
+            new_polygons_df: GeoDataFrame, 
+            new_graph: BipartiteGraph,
+            **kwargs: Any
+            ) -> dict:
+        """
         Cut new images from source image, update new_polygons_df and new_graph to account for the new images, and return a dict with keys the index and column names of the imgs_df to be created by the calling dataset cutter and values lists containing the new image names and corresponding entries for the new images. See small_imgs_around_polygons_cutter for an example. 
 
         Args:
