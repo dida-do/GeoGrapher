@@ -91,6 +91,9 @@ def update_tif_dataset_img2grid_imgs(data_dir: Union[str, Path]) -> ImgPolygonAs
 
     Returns:
         associator of updated data directory
+
+    Warning:
+        Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir. 
     """
 
     data_dir = Path(data_dir)
@@ -136,7 +139,10 @@ def create_or_update_tif_dataset_from_iter_over_imgs(
     """
     Create or update a data set of GeoTiffs by iterating over images in the source dataset. 
 
-    Create or update a data set of GeoTiffs (images, labels, and associator) in target_data_dir from the data set of GeoTiffs in source_data_dir by iterating over the polygons in the source dataset/associator, selecting a subset of the images in the source dataset containing the polygon (using img_selector) and cutting each selected img using an img_cutter which could could depend e.g. on information in the source associator. We can restrict to a subset of the polygons in the source data_dir by filtering using the img_filter_predicate, which can depend on information in the source associator.
+    Create or update a data set of GeoTiffs (images, labels, and associator) in target_data_dir from the data set of GeoTiffs in source_data_dir by iterating over the images in the source dataset/associator that have not been cut to images in the target_data_dir (i.e. all images if the target dataset doesn not exist yet), filtering the images using the img_filter_predicate, and then cutting using an img_cutter. 
+
+    Warning:
+        Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir. 
 
     Args:
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
@@ -150,6 +156,9 @@ def create_or_update_tif_dataset_from_iter_over_imgs(
         
     Returns:
         ImgPolygonAssociator: associator of newly created or updated dataset
+
+    Warning: 
+        When updating labels 
     """
     
     # Make sure dir args are Path objects.
@@ -226,10 +235,6 @@ def create_or_update_tif_dataset_from_iter_over_imgs(
         else:
             target_assoc._params_dict['cut_params'][key] = val
     target_assoc._params_dict['cut_params']['names_of_cut_imgs'] += names_of_cut_imgs
-
-    # make masks if possible
-    if target_assoc._params_dict['mask_class'] is not None and target_assoc._params_dict['label_type'] == 'categorical':
-        target_assoc.make_missing_masks()
 
     # Save associator to disk.
     target_assoc.save()
