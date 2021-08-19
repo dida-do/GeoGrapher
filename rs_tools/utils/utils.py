@@ -13,6 +13,7 @@ import rasterio.mask
 import rasterio as rio
 import os
 import geopandas as gpd
+from geopandas import GeoDataFrame
 import shapely
 from shapely.geometry import Point, Polygon, MultiPoint, MultiPolygon, MultiLineString, LinearRing, LineString, GeometryCollection
 from shapely.ops import transform
@@ -63,3 +64,15 @@ def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, P
     """
     
     return transform(lambda x,y: (round(x, ndigits), round(y, ndigits)), geometry)
+
+
+def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
+    
+    gdf_copy = GeoDataFrame(columns=gdf.columns, 
+                        data=copy.deepcopy(gdf.values), 
+                        crs=gdf.crs)
+    gdf_copy = gdf_copy.astype(gdf.dtypes)    
+    gdf_copy.set_index(gdf.index, inplace=True)
+    
+    return gdf_copy
+
