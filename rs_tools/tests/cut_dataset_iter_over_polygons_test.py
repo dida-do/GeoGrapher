@@ -1,5 +1,8 @@
 """
-Tests new_dataset_one_small_img_for_each_polygon.
+Unit (py)tests for rs_tools.cut.cut_dataset_iter_over_polygons. 
+
+WARNING! Needs to be updated to work with new associator. 
+WARNING! Uses real data in rstools folder on markov. Ideally, should use artificially generated data. 
 """
 
 import os
@@ -7,10 +10,8 @@ import shutil
 from pathlib import Path
 import rasterio as rio
 
-#import img_polygon_associator_rstools as ipa
 import rs_tools.img_polygon_associator as ipa
-import rs_tools.cut.cut_dataset_iter_over_polygons as cut
-
+from rs_tools.cut.cut_dataset_iter_over_polygons import new_tif_dataset_small_imgs_for_each_polygon as cut2small_imgs
 
 # for test_new_dataset_one_small_img_for_each_polygon
 SOURCE_DATA_DIR = Path.home() / Path("rstools/pytest_data_dirs/") / Path("source")
@@ -48,23 +49,23 @@ def test_new_dataset_one_small_img_for_each_polygon():
     correct_target_assoc = ipa.ImgPolygonAssociator(data_dir=correct_target_dir)
 
     # make labels    
-    source_rs_tools.make_missing_geotif_labels()
+    source_assoc.make_missing_geotif_labels()
 
     # create new dataset in target_dir by cutting source dataset
-    cut.new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=True)
+    cut.new_tif_dataset_small_imgs_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=True)
 
     target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
     
     # check equality of graphs of old and new assoc
-    assert target_rs_tools._graph._graph_dict == correct_target_rs_tools._graph._graph_dict
+    assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict
 
     # check equality of imgs_dfs
-    assert (target_rs_tools.imgs_df).equals(correct_target_rs_tools.imgs_df)
-    assert target_rs_tools.imgs_df.crs == source_rs_tools.imgs_df.crs
+    assert (target_assoc.imgs_df).equals(correct_target_assoc.imgs_df)
+    assert target_assoc.imgs_df.crs == source_assoc.imgs_df.crs
 
     # check equality of polygons_dfs
-    assert (target_rs_tools.polygons_df).equals(correct_target_rs_tools.polygons_df)
-    assert target_rs_tools.polygons_df.crs == correct_target_rs_tools.polygons_df.crs
+    assert (target_assoc.polygons_df).equals(correct_target_assoc.polygons_df)
+    assert target_assoc.polygons_df.crs == correct_target_assoc.polygons_df.crs
 
     # check generated right number of files 
     assert len(list((target_data_dir / 'images').iterdir())) == 3
@@ -93,23 +94,23 @@ def update_dataset_from_iter_over_polygons_test():
     correct_target_assoc = ipa.ImgPolygonAssociator(data_dir=correct_target_dir)
 
     # make labels    
-    source_rs_tools.make_missing_geotif_labels()
+    source_assoc.make_missing_geotif_labels()
 
     # udpate dataset in target_dir by cutting source dataset
-    cut.create_or_update_dataset_from_iter_over_polygons(source_data_dir, target_data_dir, img_size=1024, centered=True)
+    cut.create_or_update_tif_dataset_from_iter_over_polygons(source_data_dir, target_data_dir, img_size=1024, centered=True)
 
     target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
     
     # check equality of graphs of old and new assoc
-    assert target_rs_tools._graph._graph_dict == correct_target_rs_tools._graph._graph_dict
+    assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict
 
     # check equality of imgs_dfs
-    assert (target_rs_tools.imgs_df).equals(correct_target_rs_tools.imgs_df)
-    assert target_rs_tools.imgs_df.crs == source_rs_tools.imgs_df.crs
+    assert (target_assoc.imgs_df).equals(correct_target_assoc.imgs_df)
+    assert target_assoc.imgs_df.crs == source_assoc.imgs_df.crs
 
     # check equality of polygons_dfs
-    assert (target_rs_tools.polygons_df).equals(correct_target_rs_tools.polygons_df)
-    assert target_rs_tools.polygons_df.crs == correct_target_rs_tools.polygons_df.crs
+    assert (target_assoc.polygons_df).equals(correct_target_assoc.polygons_df)
+    assert target_assoc.polygons_df.crs == correct_target_assoc.polygons_df.crs
 
     # check generated right number of files 
     assert len(list((target_data_dir / 'images').iterdir())) == 3
@@ -135,7 +136,7 @@ def test_not_centered_cutting():
         if target_data_dir.exists():
             shutil.rmtree(target_data_dir) 
         # create new dataset in target_dir by cutting source dataset
-        cut.new_dataset_one_small_img_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=False)        
+        cut.new_tif_dataset_small_imgs_for_each_polygon(source_data_dir, target_data_dir, img_size=1024, centered=False)        
 
         # bincount to check generated image fully contains polygon
         with rio.open(target_data_dir / Path('labels') / Path('S2A_MSIL2A_20200403T143721_N0214_R096_T19KES_20200403T184818_730.tif')) as src: 
@@ -153,6 +154,11 @@ def test_not_centered_cutting():
             assert count_dict == {0: 904614, 2: 143962}
             #### Once I got {0: 904627, 2: 143949}? Somehow this can fail if the object is at the edge of the picture... ???
 
+
+if __name__ == "__main__":
+    test_new_dataset_one_small_img_for_each_polygon()
+    update_dataset_from_iter_over_polygons_test()
+    test_not_centered_cutting()
 
     
     
