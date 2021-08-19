@@ -8,6 +8,7 @@ SmallImgsAroundFilteredPolygonsCutter - cuts small images around all polygons in
 
 import logging
 from typing import Any, Union, List, Optional, Tuple
+from rs_tools.cut.type_aliases import ImgSize
 from pathlib import Path
 import math
 import random
@@ -27,7 +28,6 @@ from rs_tools.utils.utils import transform_shapely_geometry
 logger = logging.getLogger(__name__)
 
 
-
 class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
     """
     SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
@@ -37,9 +37,9 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str], 
                 mode: str, 
-                new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                new_img_size: Optional[ImgSize] = None, 
                 scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                min_new_img_size: Optional[ImgSize] = None, 
                 img_bands: Optional[List[int]] = None, 
                 label_bands: Optional[List[int]] = None, 
                 random_seed: int = 42) -> None:
@@ -48,9 +48,9 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
             source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
             target_data_dir (Union[Path, str]): data directory of dataset where new images/labels will be created.
             mode (str, optional): One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
-            new_img_size (Optional[Union[int, Tuple[int, int]]]): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
+            new_img_size (Optional[ImgSize]): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
             scaling factor (Optional[float]): factor to scale the bounding rectangle of the polygon by to get the image size. 
-            min_new_img_size (Optional[Union[int, Tuple[int, int]]]): minimum size of new image in 'variable' mode. 
+            min_new_img_size (Optional[ImgSize]): minimum size of new image in 'variable' mode. 
             img_bands (Optional[List[int]], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
             label_bands (Optional[List[int]], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
             random_seed (int, optional). random seed. Defaults to 42.
@@ -98,7 +98,7 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
 
     def _check_img_size_type_and_value(
             self, 
-            img_size: Union[int, Tuple[int, int]], 
+            img_size: ImgSize, 
             arg_name: str):
         # Check new_img_size arg type
         if not isinstance(img_size, int) or (isinstance(img_size, tuple) and len(img_size)==2 and all(isinstance(entry, int) for entry in img_size)): 
@@ -289,9 +289,9 @@ class SmallImgsAroundFilteredPolygonsCutter(SmallImgsAroundPolygonsCutterBase):
                 target_data_dir : Union[Path, str], 
                 polygon_filter_predicate: PolygonFilterPredicate, 
                 mode: str, 
-                new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                new_img_size: Optional[ImgSize] = None, 
                 scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                min_new_img_size: Optional[ImgSize] = None, 
                 img_bands: Optional[List[int]] = None, 
                 label_bands: Optional[List[int]] = None, 
                 random_seed: int = 42) -> None:
@@ -366,9 +366,9 @@ class SmallImgsAroundSinglePolygonCutter(SmallImgsAroundPolygonsCutterBase):
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str], 
                 mode: str, 
-                new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                new_img_size: Optional[ImgSize] = None, 
                 scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
+                min_new_img_size: Optional[ImgSize] = None, 
                 img_bands: Optional[List[int]] = None, 
                 label_bands: Optional[List[int]] = None, 
                 random_seed: int = 42) -> None:

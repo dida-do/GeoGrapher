@@ -2,6 +2,7 @@
 SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
 """
 from typing import Union, List, Optional, Tuple
+from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
 import math
@@ -30,7 +31,7 @@ class ToImgGridCutter(SingleImgCutter):
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str], 
                 polygon_filter_predicate: PolygonFilterPredicate, 
-                new_img_size: Union[int, Tuple[int, int]], 
+                new_img_size: ImgSize, 
                 img_bands: Optional[List[int]], 
                 label_bands: Optional[List[int]]) -> None:
         """

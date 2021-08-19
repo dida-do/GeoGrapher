@@ -2,6 +2,7 @@
 SingleImgCutter that cuts a small image from a predefined bounding box on the image accepted by the polygon filter predicate.
 """
 from typing import Union, List, Optional, Tuple
+from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
 from shapely.geometry import Polygon, box
@@ -30,7 +31,7 @@ class ToImgBBoxCutter(SingleImgCutter):
     def __init__(self, 
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str],
-                new_img_size: Union[int, Tuple[int, int]],
+                new_img_size: Optional[ImgSize],
                 bounding_boxes: GeoDataFrame, 
                 img_bands: Optional[List[int]] = None, 
                 label_bands: Optional[List[int]] = None) -> None:
