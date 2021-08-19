@@ -8,6 +8,7 @@ Contains:
 """
 
 from typing import Union, Callable, List, Tuple, Optional, Any
+from rs_tools.cut.type_aliases import ImgSize
 import logging
 import os
 import copy
@@ -34,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path], 
                                         target_data_dir: Union[str, Path], 
-                                        new_img_size: Union[None, int, Tuple[int, int]] = 512, 
-                                        min_new_img_size: Union[None, int, Tuple[int, int]] = 64, 
+                                        new_img_size: Optional[ImgSize] = 512, 
+                                        min_new_img_size: Optional[ImgSize] = 64, 
                                         scaling_factor: Union[None, float] = 1.2,
                                         img_bands: Optional[List[int]]=None, 
                                         label_bands: Optional[List[int]]=None, 
@@ -47,8 +48,8 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
     Args:
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
-        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
+        new_img_size (Optional[ImgSize]): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+        min_new_img_size (Optional[ImgSize]): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
         scaling_factor (float): scaling factor for 'variable' mode. Defaults to 1.2.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
@@ -100,8 +101,8 @@ def new_tif_dataset_small_imgs_for_each_polygon(source_data_dir: Union[str, Path
 
 def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path], 
                                         source_data_dir: Union[str, Path], 
-                                        new_img_size: Optional[Union[int, Tuple[int, int]]] = None, 
-                                        min_new_img_size: Optional[Union[None, int, Tuple[int, int]]] = None, 
+                                        new_img_size: Optional[ImgSize] = None, 
+                                        min_new_img_size: Optional[ImgSize] = None, 
                                         scaling_factor: Optional[float] = None,
                                         img_bands: Optional[List[int]]=None, 
                                         label_bands: Optional[List[int]]=None, 
@@ -121,8 +122,8 @@ def update_tif_dataset_small_imgs_for_each_polygon(data_dir: Union[str, Path],
     Args:
         data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. This is the only argument needed. 
         target_data_dir (Union[str, Path]): path to data directory containing the dataset to be updated. Defaults to None, i.e. infer from target dataset/associator.
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to None, i.e. infer from target dataset/associator.
-        min_new_img_size (Union[int, Tuple[int, int], optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to None, i.e. infer from target dataset/associator.
+        new_img_size (ImgSize, optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to None, i.e. infer from target dataset/associator.
+        min_new_img_size (ImgSize, optional): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to None, i.e. infer from target dataset/associator.
         scaling_factor (float): scaling factor for 'variable' mode. Defaults to 1.2.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. infer from target dataset/associator).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. infer from target dataset/associator).

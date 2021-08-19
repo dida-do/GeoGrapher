@@ -8,6 +8,7 @@ Contains:
 """
 
 from typing import Union, Callable, List, Tuple, Optional, Any
+from rs_tools.cut.type_aliases import ImgSize
 import logging
 import os
 import copy
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def new_tif_dataset_img2grid_imgs(source_data_dir: Union[str, Path], 
                                     target_data_dir: Union[str, Path], 
-                                    new_img_size: Union[None, int, Tuple[int, int]] = 512, 
+                                    new_img_size: ImgSize = 512, 
                                     img_bands: Optional[List[int]]=None, 
                                     label_bands: Optional[List[int]]=None
                                     ) -> ImgPolygonAssociator:
@@ -45,7 +46,7 @@ def new_tif_dataset_img2grid_imgs(source_data_dir: Union[str, Path],
     Args:
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
-        new_img_size (Union[int, Tuple[int, int], optional): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+        new_img_size (ImgSize): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
     
