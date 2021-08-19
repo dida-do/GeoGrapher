@@ -1,11 +1,15 @@
 """Label maker for categorical labels."""
+from __future__ import annotations
 import logging
 from pathlib import Path
 import numpy as np
 import rasterio as rio
 
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 log = logging.getLogger(__name__)
 
