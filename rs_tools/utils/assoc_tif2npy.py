@@ -1,7 +1,9 @@
 """
 Convert a dataset (images, labels, and associator) of GeoTiffs to a dataset of npy files.
 """
+from __future__ import annotations
 from typing import Union, Optional, List
+from typing import TYPE_CHECKING
 import os
 import logging
 from pathlib import Path
@@ -11,7 +13,8 @@ from tqdm import tqdm
 import rasterio as rio 
 
 import rs_tools.img_polygon_associator as ipa
-from rs_tools import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools import ImgPolygonAssociator
 
 log = logging.Logger(__name__)
 
