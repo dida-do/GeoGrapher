@@ -1,14 +1,18 @@
 """
 Utilites used in the ImgPolygonAssociator class.
 """
-
+from __future__ import annotations
 from pathlib import Path
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, TYPE_CHECKING
 
 import pandas as pd
 import geopandas as gpd
 
-from rs_tools.img_polygon_associator import ImgPolygonAssociator, STANDARD_CRS_EPSG_CODE
+from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociatorClass
+
+
 from rs_tools.graph.bipartite_graph import BipartiteGraph, empty_bipartite_graph
 
 

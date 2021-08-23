@@ -1,12 +1,8 @@
 """
-dunder to  
-label_makers
-TODO: Do we still need polygon_info_dict?
-
 The ImgPolygonAssociator class organizes and handles remote sensing datasets.
 """
 
-
+from typing import Dict, Type, Any, List, TypeVar
 from rs_tools.label_makers import _make_geotif_label_categorical, _make_geotif_label_onehot, _make_geotif_label_soft_categorical
 from json.decoder import JSONDecodeError
 import os
@@ -19,6 +15,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from geopandas import GeoDataFrame
 from shapely.ops import transform, unary_union
 from shapely.geometry import Polygon
 import rasterio as rio
@@ -26,19 +23,14 @@ from collections import Counter
 
 from typing import Union, Optional, Sequence, List
 
-
+from rs_tools.global_constants import *
 from rs_tools.img_polygon_associator_class import ImgPolygonAssociatorClass
 from rs_tools.graph import BipartiteGraph, empty_bipartite_graph
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.utils.associator_utils import empty_polygons_df_same_format_as, empty_imgs_df_same_format_as, empty_graph
+from rs_tools.utils.associator_utils import empty_gdf, empty_polygons_df_same_format_as, empty_imgs_df_same_format_as, empty_graph
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 
-
-
-STANDARD_CRS_EPSG_CODE = 4326 # WGS84 
-DATA_DIR_SUBDIRS = [Path("images"), Path("labels")] # for sentinel-2, also Path("safe_files")
-IMGS_DF_INDEX_NAME="img_name"
-POLYGONS_DF_INDEX_NAME="polygon_name"
+IPAType = TypeVar('IPAType', bound='ImgPolygonAssociator')
 
 
 # logger
@@ -73,182 +65,327 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
     - crs_epsg_code: EPSG code of the coordinate reference system (crs) the associator (i.e. the associator's imgs_df and polygons_df) is in. Defaults to 4326 (WGS84). Setting this attribute will automatically set the associator's imgs_df and polygons_df crs's. 
     """
 
-    def __init__(self,
-                 data_dir: Union[str, Path], 
-                 imgs_df: Optional[gpd.GeoDataFrame]=None, # should be either given or will be loaded from file
-                 polygons_df: Optional[gpd.GeoDataFrame]=None, # should be either given or will be loaded from file
-                 segmentation_classes: Optional[Sequence[str]]=None,# should be either given or will be inferred for a saved associator from param_dict.json file
-                 label_type: Optional[str]=None, # should be either given or will be inferred for a saved associator from param_dict.json file
-                 add_background_band_in_labels: bool=False, # should be either given or will be inferred for a saved associator from param_dict.json file
-                 crs_epsg_code: int=STANDARD_CRS_EPSG_CODE,
-                 polygons_df_index_name: str=POLYGONS_DF_INDEX_NAME,
-                 imgs_df_index_name: str=IMGS_DF_INDEX_NAME,
-                 **kwargs):
-        """
-        Args:
-            data_dir (str or pathlib.Path): The data directory of the associator. This is the only non-optional argument. 
+    def __init__(self, 
 
-            imgs_df (geopandas.GeoDataFrame, optional): Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load. 
+        # args w/o default values
+        data_dir : Union[Path, str], 
+        segmentation_classes : Sequence[str], 
+        label_type: str,
 
-            polygons_df (geopandas.GeoDataFrame, optional): Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
+        # polygons_df args. Exactly one value needs to be set (i.e. not None).
+        polygons_df : Optional[GeoDataFrame] = None,
+        polygons_df_geojson_path : Optional[Union[Path, str]] = None, 
+        polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
+        
+        # imgs_df args. Exactly one value needs to be set (i.e. not None).
+        imgs_df : Optional[GeoDataFrame] = None, 
+        imgs_df_geojson_path : Optional[Union[Path, str]] = None, 
+        imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
+        
+        # remaining non-path args w/ default values
+        add_background_band_in_labels : bool = False, 
+        crs_epsg_code : int = STANDARD_CRS_EPSG_CODE, 
 
-            segmentation_classes (list of str, optional): List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
+        # path args w/ default values
+        images_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "images"
+        labels_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "labels"
 
-            label_type (str): The type of label to be created, one of 'categorical', 'onehot', or 'soft-categorical'. 
-
-            add_background_band_in_labels (bool): Only relevant if the label_type is 'one-hot' or 'soft-categorical'. If True, will add a background segmentation class band when creating one-hot or soft-categorical labels. If False, will not. 
-
-            crs_epsg_code (int, optional) The EPSG code of the coordinate reference system (crs) the associator is in, by which we mean the crs used to store the geometries in the imgs_df and polygons_df GeoDataFrames. Defaults to 4326 (i.e. WGS84). If not given, will attempt to load from file (param_dict.json in data_dir).
-
-            imgs_df_index_name (str, optional): Name of index of imgs_df. If not given, will attempt to infer or use default. 
-
-            polygons_df_index_name (str, optional): Name of index of polygons_df. If not given, will attempt to infer or use default.
-
-            **kwargs: optional keyword arguments depending on the application, to be passed to e.g. _download_imgs_for_polygon and _process_downloaded_img_file. 
-        """
-
-        # Note to reviewer: Sorry, this is a bit messy!
+        # optional kwargs
+        **kwargs : Any
+        ):
 
         super().__init__()
 
+        # build _params_dict from all args except for imgs_df, polygons_df and the corresponding columns
+        self._params_dict = {}
+        self._params_dict.update( 
+            {
+                "data_dir" : data_dir,
+                "segmentation_classes" : segmentation_classes, 
+                "label_type" : label_type, 
+                "polygons_df_geojson_path" : polygons_df_geojson_path, 
+                "imgs_df_geojson_path" : imgs_df_geojson_path, 
+                "add_background_band_in_labels" : add_background_band_in_labels, 
+                "crs_epsg_code" : crs_epsg_code, 
+                "images_dir" : images_dir, 
+                "labels_dir" : labels_dir,
+                **kwargs
+            })
+
+        # get polygons_df and imgs_df
+        polygons_df = self._init_get_df_from_args(
+                        "polygons_df", 
+                        polygons_df, 
+                        polygons_df_geojson_path, 
+                        polygons_df_cols, 
+                        POLYGONS_DF_INDEX_NAME, 
+                        crs_epsg_code)
+        imgs_df = self._init_get_df_from_args(
+                        "imgs_df",
+                        imgs_df, 
+                        imgs_df_geojson_path, 
+                        imgs_df_cols, 
+                        IMGS_DF_INDEX_NAME, 
+                        crs_epsg_code)
+        self._standardize_df_crss(
+            polygons_df=polygons_df,
+            imgs_df=imgs_df)
+
+        # set remaining associator components (polygons_df, imgs_df, _graph)
+        self.imgs_df = empty_imgs_df_same_format_as(imgs_df)
+        self.polygons_df = empty_polygons_df_same_format_as(polygons_df)
+        self._graph = empty_graph()
+
+        # set paths
         self._data_dir = Path(data_dir)
-        
-        # file paths
-        self._imgs_df_path = data_dir / Path("imgs_df.geojson")
-        self._polygons_df_path = data_dir / Path("polygons_df.geojson")
-        self._graph_path = data_dir / Path("graph.json")
-        self._params_dict_path = data_dir / Path("params_dict.json")
+        self._init_set_paths( #  sets path attributes as well as path values in self._params_dict
+            self._data_dir, 
+            images_dir, 
+            labels_dir)
 
-        # Try loading params dict from disk ...
+        # set label maker
+        self._init_set_label_maker(label_type)
+
+        # run safety checks on polygons_df, imgs_df
+        self._init_check_dfs(
+            polygons_df=polygons_df, 
+            imgs_df=imgs_df)
+
+        # integrate dfs (also builds graph)
+        self.integrate_new_polygons_df(polygons_df)
+        self.integrate_new_imgs_df(imgs_df)
+
+
+    @classmethod
+    def from_json(
+            cls : Type[IPAType], 
+            json_path : Union[Path, str], 
+            polygons_df : Optional[GeoDataFrame] = None,
+            imgs_df : Optional[GeoDataFrame] = None
+            ) -> IPAType:
+
         try:
-            with open(self._params_dict_path, "r") as read_file:
-                self._params_dict = json.load(read_file)
+            with open(json_path, "r") as read_file:
+                kwargs = json.load(read_file)
         except FileNotFoundError:
-            log.info(f"__init__: No params_dict.json found.")
-            self._params_dict = {}
+            log.exception(f"No file under path {json_path} found!")
         except JSONDecodeError:
-            log.exception(f"{data_dir}/params_dict.json corrupted.")
+            log.exception(f"JSON file in {json_path=} corrupted!")
 
-        # ... then update the dict with the args/params from initialization, 
-        # making sure to replace paths by strings, so we can save the dict as a json.
-        if_path_to_str = lambda val: str(val) if isinstance(val, pathlib.PurePath) else val
-        kwargs = {key: if_path_to_str(val) for key, val in kwargs.items()}
-        self._params_dict.update(kwargs)
+        new_assoc = cls(
+            polygons_df=polygons_df, 
+            imgs_df=imgs_df, 
+            **kwargs)
+        return new_assoc
+        
 
-        # For the required parameter args whose default value is not None ... 
-        for param_name, param_val in zip(['polygons_df_index_name',
-                                          'imgs_df_index_name',
-                                          'segmentation_classes',
-                                          'label_type',
-                                          'add_background_band_in_labels',
-                                          'crs_epsg_code'],
-                                         [polygons_df_index_name,
-                                         imgs_df_index_name,
-                                         segmentation_classes,
-                                         label_type,
-                                         add_background_band_in_labels,
-                                         crs_epsg_code]):
-            # ... add them to param dict if they don't yet exist in the dict ...
-            if param_name not in self._params_dict:
+    @classmethod
+    def from_data_dir(
+            cls : Type[IPAType], 
+            data_dir : Union[Path, str], 
+            polygons_df : Optional[GeoDataFrame] = None,
+            imgs_df : Optional[GeoDataFrame] = None
+            ) -> IPAType:
+        """Initialize and return an associator from a data directory
 
-                if param_val is not None:
+        Args:
+            data_dir (Union[Path, str]): data directory containing an associator's params_dict.json file
+            polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None.
+            imgs_df (Optional[GeoDataFrame], optional): imgs_df. Defaults to None.
 
-                    self._params_dict[param_name] = param_val 
+        Returns:
+            IPAType: initialized associator
+        """
+
+        return cls.from_json(
+                json_path=Path(data_dir) / "params_dict.json",
+                polygons_df=polygons_df, 
+                imgs_df=imgs_df)
+
+
+    @classmethod
+    def from_kwargs(cls, **kwargs : Any) -> 'ImgPolygonAssociator':
+        """
+        Initialize and return an associator from keyword arguments. 
+
+        Ars:
+            **kwargs (Any): keyword arguments
+
+        Returns:
+            initialized associator
+        """
+        return cls(**kwargs)
+
+
+    def _init_check_dfs(self, 
+            polygons_df : GeoDataFrame, 
+            imgs_df : GeoDataFrame):
+        """
+        Run safety checks on polygons_df and imgs_df. 
+        
+        Check if polygons_df and imgs_df have the columns needed for the associator to run, the right index names and that the CRSs agree.
+
+        Args:
+            polygons_df (GeoDataFrame): polygons_df
+            imgs_df (GeoDataFrame): imgs_df
+
+        Raises:
+            ValueError: If polygons_df doesn't have the columns needed for the associator to run
+            ValueError: If polygons_df doesn't have the right index name
+            ValueError: If imgs_df doesn't have the right index name
+        """
+
+        if not set({'have_img?', 'have_img_downloaded?'}) <= set(polygons_df.columns):
+            raise ValueError("polygons_df is missing at least one of the following two columns it needs to work: 'have_img?', 'have_img_downloaded?'")
+
+        if not polygons_df.index.name == POLYGONS_DF_INDEX_NAME:
+            raise ValueError(f"polygons_df.index.name is {polygons_df.index.name}, should be {POLYGONS_DF_INDEX_NAME}")
+        if not imgs_df.index.name == IMGS_DF_INDEX_NAME:
+            raise ValueError(f"imgs_df.index.name is {imgs_df.index.name}, should be {IMGS_DF_INDEX_NAME}")
+
+
+
+    def _standardize_df_crss(self, 
+            polygons_df : GeoDataFrame, 
+            imgs_df : GeoDataFrame):
+        """
+        Standardize polygons_df and imgs_df CRS (i.e. set their CRS to associator CRS).
+
+        Args:
+            polygons_df (GeoDataFrame): polygons_df
+            imgs_df (GeoDataFrame): imgs_df
+        """
+
+        if imgs_df.crs.to_epsg() != self._params_dict['crs_epsg_code']: # standard crs
+            imgs_df = imgs_df.to_crs(epsg=self._params_dict['crs_epsg_code'])
+        if polygons_df.crs.to_epsg() != self._params_dict['crs_epsg_code']:
+            polygons_df = polygons_df.to_crs(epsg=self._params_dict['crs_epsg_code'])
+
+
+    @staticmethod
+    def _init_get_df_from_args(
+            mode : str, 
+            df : Optional[GeoDataFrame], 
+            geojson_path : Optional[Union[Path, str]], 
+            df_cols : Optional[Union[List[str], Dict[str, Type]]], 
+            df_index_name : str,
+            crs_epsg_code : int,
+            ) -> GeoDataFrame:
+        """
+        Extract dataframe from dataframe arguments. Used during initialization.
+
+        Args:
+            mode (str): One of "polygons_df" or "imgs_df"
+            df (GeoDataFrame, optional): polygons_df or imgs_df
+            geojson_path (Union[Path, str], optional): path to imgs_df or polygons_df geojson file
+            df_cols (Union[List[str], Dict[str, Type]], optional): list of column names or dict of column names and types or empty dataframe (imgs_df or polygons_df)
+            df_index_name (str, optional): index name of empty dataframe (imgs_df or polygons_df)
+            crs_epsg_code (int): EPSG code of crs of df to be created, used if df_cols is not None.
+
+        Returns:
+            GeoDataFrame: polygons_df or imgs_df
+        """
+
+        if mode not in {"polygons_df", "imgs_df"}:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        if not ((df is not None) ^ (geojson_path is not None) ^ (df_cols is not None)):
+            raise ValueError(f"Exactly one of {mode}, {mode}_json_path, {mode}_cols should be set (i.e. not None).")
+
+        if df is not None:
+        
+            return_df = df
+        
+        elif geojson_path is not None:
+        
+            return_df = gpd.read_file(geojson_path)
+            return_df.set_index(df_index_name, inplace=True)
+        
+        elif df_cols is not None: 
             
-                else:
+            # build df_cols_and_index_types for empty_gdf
+            df_cols_and_index_types = df_cols
+            if isinstance(df_cols, list):
+                df_cols_and_index_types = {col_name: None for col_name in df_cols_and_index_types}
+            df_cols_and_index_types[df_index_name] = object
 
-                    raise ValueError(f"Need value not equal to None for {param_name} argument.")
+            return_df = empty_gdf(
+                            df_index_name=df_index_name,
+                            df_cols_and_index_types=df_cols_and_index_types, 
+                            crs_epsg_code=crs_epsg_code)
+                            
+        return return_df
+            
 
-            # ... else, ...
-            else:
-                # ... if they conflict with the values in the dict ...
-                if param_val is not None and self._params_dict[param_name] != param_val:
-                    
-                    # ... log a warning ...
-                    log.warning(f"param {param_name} value {param_val} differs from value {self._params_dict[param_name]}in associator's params_dict file.")
-                    
-                    # ... and then update the dict.
-                    self._params_dict[param_name] = param_val
+    def _init_set_paths(self, 
+            data_dir: Path, 
+            images_dir: Optional[Union[Path, str]], 
+            labels_dir: Optional[Union[Path, str]]):
+        """Set paths to image/label data and associator component files. Used during initialization."""
+        
+        # image/label directories
+        self._images_dir = Path(images_dir) if images_dir is not None else data_dir / "images"
+        self._labels_dir = Path(labels_dir) if labels_dir is not None else data_dir / "labels"
 
-        # Choose appropriate label maker according to label type.
+        self._params_dict['images_dir'] = self._images_dir
+        self._params_dict['labels_dir'] = self._labels_dir
+        
+        # associator component files
+        self._imgs_df_path = data_dir / "imgs_df.geojson"
+        self._polygons_df_path = data_dir / "polygons_df.geojson"
+        self._graph_path = data_dir / "graph.json"
+        self._params_dict_path = data_dir / "params_dict.json"
+        
+
+    def _init_set_label_maker(self, 
+            label_type : str):
+        """
+        Set associator label makers according to label_type.
+
+        Args:
+            label_type (str): label type
+        """
+
         # (categorical case)
-        if self._params_dict['label_type'] == 'categorical':
-
+        if label_type == 'categorical':
             self._make_geotif_label = _make_geotif_label_categorical
-
         # (onehot case)
-        elif self._params_dict['label_type'] == 'onehot':
-
+        elif label_type == 'onehot':
             self._make_geotif_label = _make_geotif_label_onehot
-
         # (soft-categorical case)
-        elif self._params_dict['label_type'] == 'soft-categorical':
-        
+        elif label_type == 'soft-categorical':
             self._make_geotif_label = _make_geotif_label_soft_categorical
-
         else:
+            log.error(f"Unknown label_type: {label_type}")
+            raise ValueError(f"Unknown label_type: {label_type}")
 
-            log.error(f"Unknown label_type: {self._params_dict['label_type']}")
-            raise TypeError(f"Unknown label_type: {self._params_dict['label_type']}")
+    
+    @staticmethod
+    def _make_dict_json_serializable(input_dict: dict) -> dict:
+        """
+        Make dict serializable as JSON by replacing Path with strings
 
-        # Check that either ...
-        if not ( \
-                # ... the associator files (imgs_df, polygons_df, graph) already exist ...
-                (self._imgs_df_path.is_file() and self._polygons_df_path.is_file() and self._graph_path.is_file()) \
-                ^ # ... or that ...
-                # ... the imgs_df and polygons_df arguments were given. 
-                ((imgs_df is not None) and (polygons_df is not None))):
-            
-            # If not, then alert the user.
-            raise ValueError(f"ImgPolygonAssociator: __init__: Need either existing associator files in data_dir (imgs_df, polygons_df etc.), or both imgs_df and polygons_df arguments and a data_dir without associator files.")
+        Args:
+            input_dict (dict): input dict with keys strings and values of arbitrary type
 
-        # If the associator files exist, load them from file:
-        if self._imgs_df_path.is_file() and self._polygons_df_path.is_file() and self._graph_path.is_file():
+        Returns:
+            dict:  dict with non-serializable values replaced by serializable ones (just Path -> str, for now)
+        """
 
-            # load imgs_df ...
-            self.imgs_df = gpd.read_file(self._imgs_df_path)
-            self.imgs_df.set_index(self._params_dict['imgs_df_index_name'], inplace=True)
+        def make_val_serializable(val): 
+            return str(val) if isinstance(val, pathlib.PurePath) else val
 
-            # ... polygons_df ...
-            self.polygons_df = gpd.read_file(self._polygons_df_path)
-            self.polygons_df.set_index(self._params_dict['polygons_df_index_name'], inplace=True)
-
-            # ..., and the graph.
-            self._graph = BipartiteGraph(file_path=self._graph_path)
-
-        # Else, ...
-        else:
-
-            # ... start with an empty associator, i.e. empty imgs_df and polygons_df dataframes ...
-            self.imgs_df = empty_imgs_df_same_format_as(imgs_df)
-            self.polygons_df = empty_polygons_df_same_format_as(polygons_df)
-            # ... and an empty graph.
-            self._graph = empty_graph()
-            # We will integrate imgs_df and polygons_df into the associator later after some safety checks. 
-
-        # Check crs.
-        if self.imgs_df.crs.to_epsg() != self._params_dict['crs_epsg_code']: # standard crs
-            self.imgs_df = self.imgs_df.to_crs(epsg=self._params_dict['crs_epsg_code'])
-        if self.polygons_df.crs.to_epsg() != self._params_dict['crs_epsg_code']:
-            self.polygons_df = self.polygons_df.to_crs(epsg=self._params_dict['crs_epsg_code'])
-
-        # Check index names.
-        assert self.polygons_df.index.name == self._params_dict['polygons_df_index_name']
-        assert self.imgs_df.index.name == self._params_dict['imgs_df_index_name']
+        serializable_dict = {key : make_val_serializable(val) for key, val in input_dict.items()}
         
-        # Make sure polygons_df has columns necessary for associator to work.
-        assert set({'have_img?', 'have_img_downloaded?'}) <= set(self.polygons_df.columns) 
-
-        # If given as arguments, integrate polygons_df and imgs_df into the associator: 
-        if imgs_df is not None:
-            self.integrate_new_imgs_df(imgs_df)
-        if polygons_df is not None:
-            self.integrate_new_polygons_df(polygons_df)
-
+        return serializable_dict
+        
 
     @property
     def crs_epsg_code(self) -> int:
-        """int: EPSG code of associator's crs. Setting will set associator's imgs_df and polygons_df crs automatically.
+        """
+        int: EPSG code of associator's crs. 
+        
+        Setting will set associator's imgs_df and polygons_df crs automatically.
         """
         return self._params_dict['crs_epsg_code']
 
@@ -297,7 +434,9 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         with open(self._params_dict_path, "w") as write_file:
-            json.dump(self._params_dict, write_file)
+            json.dump(
+                self._make_dict_json_serializable(self._params_dict), 
+                write_file)
 
 
     def have_img_for_polygon(self, polygon_name: str) -> bool:
