@@ -12,7 +12,7 @@ class ImgAlreadyExistsError(Error):
 
 class NoImgsForPolygonFoundError(Error):
     """
-    Error raised by associator's __download_imgs_for_polygon__ method when no images could be found to download for a polygon.
+    Error raised by associator's __download_imgs_for_polygon__ method to indicate no images could be found or downloaded.
     """
 
     pass
