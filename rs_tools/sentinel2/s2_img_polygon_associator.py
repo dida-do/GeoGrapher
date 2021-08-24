@@ -2,6 +2,7 @@
 ImgPolygonAssociator that can download Sentinel-2 images.
 """
 
+from typing import Union, List
 import os
 from pathlib import Path
 import pathlib
@@ -12,7 +13,6 @@ from sentinelsat import SentinelAPI
 import random
 from dotenv import load_dotenv
 from geopandas import GeoDataFrame, GeoSeries
-from typing import Union, List
 
 import rs_tools.img_polygon_associator as ipa 
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
@@ -41,54 +41,78 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns. 
     """
 
-    def __init__(self, data_dir: Union[str, Path],
-                 imgs_df: GeoDataFrame = None,
-                 polygons_df: GeoDataFrame = None,
-                 segmentation_classes: List[str] = None,
-                 crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
-                 producttype: str = PRODUCTTYPE,
-                 resolution: int = RESOLUTION,
-                 max_percent_cloud_coverage: int = MAX_PERCENT_CLOUD_COVERAGE,
-                 label_type: str = LABEL_TYPE
-                 ):
+    def __init__(self, 
+
+        # args w/o default values
+        data_dir : Union[Path, str], 
+        segmentation_classes : Sequence[str], 
+        label_type: str,
+
+        # polygons_df args. Exactly one value needs to be set (i.e. not None).
+        polygons_df : Optional[GeoDataFrame] = None,
+        polygons_df_geojson_path : Optional[Union[Path, str]] = None, 
+        polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
+        
+        # imgs_df args. Exactly one value needs to be set (i.e. not None).
+        imgs_df : Optional[GeoDataFrame] = None, 
+        imgs_df_geojson_path : Optional[Union[Path, str]] = None, 
+        imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
+        
+        # remaining non-path args w/ default values
+        add_background_band_in_labels : bool = False, 
+        crs_epsg_code : int = STANDARD_CRS_EPSG_CODE, 
+        producttype : str = PRODUCTTYPE,
+        resolution : int = RESOLUTION,
+        max_percent_cloud_coverage : int = MAX_PERCENT_CLOUD_COVERAGE,
+
+        # path args w/ default values
+        images_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "images"
+        labels_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "labels"
+
+        # optional kwargs
+        **kwargs : Any
+        ):
+
+        super().__init__()
+            
         """
+        See the docstring for the parent class __init__ for description of the arguments not mentioned here. 
+
         Args:
-            data_dir: The data directory of the associator. This is the only non-optional argument.
+            producttype (str) : Sentinel-2 product type, "L2A" or "L1C", defaults to PRODUCTTYPE
 
-            imgs_df (optional): Imgs_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or there needs to be an existing associator in the data_dir it can load.
+            resolution (int) :  resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters). Defaults to RESOLUTION
 
-            polygons_df: Polygons_df to initialize associator with. If not given, the associator will assume it can load an imgs_df.geojson file from data_dir. The associator needs either both the imgs_df and polygons_df arguments, or needs there to be an existing associator in the data_dir it can load.
+            max_percent_cloud_coverage (int): maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100. Defults to MAX_PERCENT_CLOUD_COVERAGE
 
-            segmentation_classes: List of segmentation classes. If not given, will attempt to load from file (param_dict.json in data_dir).
-
-            standard_crs_epsg_code: the EPSG code of the coordinate reference system (crs) used to store the geometries in the imgs_df and polygons_df GeoDataFrames.
-
-            producttype: Sentinel-2 product type, "L2A" or "L1C".
-
-            resolution: resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters).
-
-            max_percent_cloud_coverage: maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100.
-
-            label_type: #TODO
+            **kwargs (Any): Optional keyword arguments.
         """
 
-        super().__init__(data_dir=data_dir,
-                         imgs_df=imgs_df,
-                         polygons_df=polygons_df,
-                         crs_epsg_code=crs_epsg_code,
-                         segmentation_classes=segmentation_classes,
-                         label_type=label_type,
-                         producttype=producttype,
-                         resolution=resolution,
-                         max_percent_cloud_coverage=max_percent_cloud_coverage)
+        super().__init__(
+            data_dir=data_dir, 
+            segmentation_classes=segmentation_classes, 
+            polygons_df=polygons_df, 
+            polygons_df_geojson_path=polygons_df_geojson_path, 
+            polygons_df_cols=polygons_df_cols, 
+            imgs_df=imgs_df, 
+            imgs_df_geojson_path=imgs_df_geojson_path, 
+            imgs_df_cols=imgs_cols, 
+            add_background_band_in_labels=add_background_band_in_labels, 
+            crs_epsg_code=crs_epsg_code, 
+            images_dir=images_dir, 
+            labels_dir=labels_dir, 
+            producttype=producttype,
+            resolution=resolution,
+            max_percent_cloud_coverage=max_percent_cloud_coverage, 
+            **kwargs)
 
 
     def _download_imgs_for_polygon(self,
-                                   polygon_name: str,
-                                   polygon_geometry: GeoSeries,
-                                   download_dir: Union[str, Path],
-                                   previously_downloaded_imgs_set: List[str],
-                                   **kwargs) -> dict:
+            polygon_name: str,
+            polygon_geometry: GeoSeries,
+            download_dir: Union[str, Path],
+            previously_downloaded_imgs_set: List[str],
+            **kwargs) -> dict:
         """
         Downloads a sentinel-2 image fully containing the polygon, returns a dict in the format needed by the associator.
 
@@ -124,7 +148,6 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         api = SentinelAPI(username, password)
 
         # Return dicts with values to be collected in calling associator.
-        polygon_info_dict = {'download_exception': str(None)}
         img_info_dict = {}
 
         # Determine missing args for the sentinel query.
@@ -139,30 +162,22 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         else:
             raise LookupError(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
     
-        # (One less than) the allowable cloud coverage we'll start querying with. We'll increment this until we find products or reach max allowable.
-        cloud_coverage_counter = -1 
-        
-        products={}
+        try:
 
-        # Increase cloud coverage until query to API returns an image:
-        while cloud_coverage_counter < kwargs['max_percent_cloud_coverage'] and len(products)==0:
+            # Query, remember results
+            products = api.query(area=rectangle_wkt, 
+                                    date=date, 
+                                    area_relation=area_relation,
+                                    producttype=producttype, 
+                                    cloudcoverpercentage=(0,kwargs['max_percent_cloud_coverage']))
 
-            cloud_coverage_counter+=1
+            products = {k: v for k, v in products.items() if api.is_online(k)}
 
-            try:
+        # The sentinelsat API can throw an exception if there are no results for a query instead of returning an empty dict ...
+        except:
 
-                # Query, remember results
-                products = api.query(area=rectangle_wkt,
-                                     date=date,
-                                     area_relation=area_relation,
-                                     producttype=producttype,
-                                     cloudcoverpercentage=(0,cloud_coverage_counter))
-
-            # The sentinelsat API can throw an exception if there are no results for a query instead of returning an empty dict ...
-            except:
-
-                # ... so in that case we set the result by hand:
-                products = {}
+            # ... so in that case we set the result by hand:
+            products = {}
 
         # If we couldn't find anything, remember that, so we can deal with it later.
         if len(products) == 0:
@@ -170,59 +185,44 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
             raise NoImgsForPolygonFoundError(f"No images for polygon {polygon_name} found with cloud coverage less than or equal to {kwargs['max_percent_cloud_coverage']}!")
 
         # If the query was succesful ...
-        else:
-
-            # ... we select a random product, ...
-            product_id = random.choice(list(products.keys()))                
-
+        products_list = list(products.keys())
+        products_list = sorted(products_list, key=lambda x: products[x]["cloudcoverpercentage"])
+        for product_id in products_list:
             # ... and determine the file name.
             product_metadata = api.get_product_odata(product_id, full=True)
             # (this key might have to be 'filename' (minus the .SAFE at the end) for L1C products?)
             try:
                 img_name =  product_metadata['title'] + ".tif"
             except:
-                raise KeyError(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
+                raise Exception(f"Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this...")
 
             # If the file has been downloaded before (really, this should not happen, since EXPLAIN!), throw an error ...
-            if img_name in previously_downloaded_imgs_set:
-
-                raise ImgAlreadyExistsError(f"_download_imgs_for_polygon wanted to download image {img_name} for polygon {polygon_name}, but this image was already downloaded previously by the associator. Something is wrong!")
-
-            # ... if not, ...
-            else:
-
-                # ...  attempt to download it.
+            if img_name not in previously_downloaded_imgs_set:
                 try:
-
                     api.download(product_id, directory_path=download_dir)
+                    zip_path = download_dir / (product_metadata['title'] + ".zip")
+                    with ZipFile(zip_path) as zip_ref:
+                        assert zip_ref.testzip() is None
 
-                # If the download failed, remember that:
-                except:
-
-                    raise ImgDownloadError(f"An error occured while downloading img {img_name} with product id {product_id}.")
-
-                # If the download was succesful...
-                else:
-
-                    # ...remember we downloaded an image for the polygon.
-                    polygon_info_dict['have_img_downloaded?'] = True
-
-                    # And assemble the information to updated in the returned img_info_dict:
-
+                    # And assemble the information to be updated in the returned img_info_dict:
                     img_info_dict['img_name'] = img_name
                     img_info_dict['img_processed?'] = False
                     img_info_dict['timestamp'] = product_metadata['Date'].strftime("%Y-%m-%d-%H:%M:%S")
 
-        info_dicts = {'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict}
-        return info_dicts
+                    return {'list_img_info_dicts': [img_info_dict]}
+
+                except:
+                    log.warn(f"failed to download {product_metadata['title']}")
+
+        raise NoImgsForPolygonFoundError(f"Either no images were found for {polygon_name} found or all images failed to download.")
 
 
     def _process_downloaded_img_file(self,
-                                     img_name: str,
-                                     in_dir: Union[str, Path],
-                                     out_dir: Union[str, Path],
-                                     convert_to_crs_epsg: int,
-                                     **kwargs) -> dict:
+            img_name: str,
+            in_dir: Union[str, Path],
+            out_dir: Union[str, Path],
+            convert_to_crs_epsg: int,
+            **kwargs) -> dict:
         """
         Extracts downloaded sentinel-2 zip file to a .SAFE directory, then processes/converts to a GeoTiff image, deletes the zip file, puts the GeoTiff image in the right directory, and returns information about the img in a dict.
 
