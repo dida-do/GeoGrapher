@@ -29,7 +29,7 @@ from typing import Union, Optional, Sequence, List
 from rs_tools.global_constants import *
 from rs_tools.img_polygon_associator_class import ImgPolygonAssociatorClass
 from rs_tools.graph import BipartiteGraph, empty_bipartite_graph
-from rs_tools.utils.utils import transform_shapely_geometry
+from rs_tools.utils.utils import transform_shapely_geometry, deepcopy_gdf
 from rs_tools.utils.associator_utils import empty_gdf, empty_polygons_df_same_format_as, empty_imgs_df_same_format_as, empty_graph
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 
@@ -618,6 +618,8 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
+        new_polygons_df = deepcopy_gdf(new_polygons_df) #  don't want to modify argument
+
         self._check_and_adjust_df(
             mode='polygons_df', 
             df=new_polygons_df)
@@ -692,6 +694,9 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         Args:
             new_imgs_df (gdf.GeoDataFrame): GeoDataFrame of image information conforming to the associator's imgs_df format
         """        
+
+        new_imgs_df = deepcopy_gdf(new_imgs_df) #  don't want to modify argument
+
         self._check_and_adjust_df(
             mode='imgs_df', 
             df=new_imgs_df)
@@ -1027,8 +1032,8 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         self._params_dict['labels_dir'].mkdir(parents=True, exist_ok=True)
         
         # Find the set of existing images in the dataset, ...
-        existing_images = set(self._params_dict['images_dir'].iterdir())
-        existing_labels = set(self._params_dict['labels_dir'].iterdir())
+        existing_images = {img_path.name for img_path in self._params_dict['images_dir'].iterdir()}
+        existing_labels = {img_path.name for img_path in self._params_dict['labels_dir'].iterdir()}
         
         # For each image without a label ...
         for img_name in tqdm(existing_images - existing_labels):
@@ -1257,7 +1262,7 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         """
 
         # Find the set of existing images in the dataset, ...
-        existing_images = set((self.data_dir / "images").iterdir())
+        existing_images = {img_path.name for img_path in (self.data_dir / "images").iterdir()}
 
         # ... then if the set of images is a strict subset of the images in imgs_df ...
         if existing_images < set(self.imgs_df.index):
