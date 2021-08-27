@@ -239,10 +239,11 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
             ValueError: If the df doesn't have the right index name
         """
 
-        if 'mode' == 'polygons_df' and 'img_count' not in set(df.columns):
+        if mode == 'polygons_df':
+            if 'img_count' not in set(df.columns):
+                log.info("Adding 'img_count' column to polygons_df")
             df['img_count'] = 0
-            log.info("Added 'img_count' column to polygons_df")
-
+            
         if mode == 'polygons_df' and df.index.name != POLYGONS_DF_INDEX_NAME:
             raise ValueError(f"polygons_df.index.name is {df.index.name}, should be {POLYGONS_DF_INDEX_NAME}")
         if mode == 'imgs_df' and df.index.name != IMGS_DF_INDEX_NAME:
