@@ -78,12 +78,12 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
 
         # polygons_df args. Exactly one value needs to be set (i.e. not None).
         polygons_df : Optional[GeoDataFrame] = None,
-        polygons_df_geojson_path : Optional[Union[Path, str]] = None, 
+        polygons_df_path : Optional[Union[Path, str]] = None, 
         polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
         
         # imgs_df args. Exactly one value needs to be set (i.e. not None).
         imgs_df : Optional[GeoDataFrame] = None, 
-        imgs_df_geojson_path : Optional[Union[Path, str]] = None, 
+        imgs_df_path : Optional[Union[Path, str]] = None, 
         imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
         
         # remaining non-path args w/ default values
@@ -107,8 +107,8 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
                 "data_dir" : data_dir,
                 "segmentation_classes" : segmentation_classes, 
                 "label_type" : label_type, 
-                "polygons_df_geojson_path" : polygons_df_geojson_path, 
-                "imgs_df_geojson_path" : imgs_df_geojson_path, 
+                "polygons_df_path" : polygons_df_path, 
+                "imgs_df_path" : imgs_df_path, 
                 "add_background_band_in_labels" : add_background_band_in_labels, 
                 "crs_epsg_code" : crs_epsg_code, 
                 "images_dir" : images_dir, 
@@ -120,14 +120,14 @@ class ImgPolygonAssociator(ImgPolygonAssociatorClass):
         polygons_df = self._init_get_df_from_args(
                         "polygons_df", 
                         polygons_df, 
-                        polygons_df_geojson_path, 
+                        polygons_df_path, 
                         polygons_df_cols, 
                         POLYGONS_DF_INDEX_NAME, 
                         crs_epsg_code)
         imgs_df = self._init_get_df_from_args(
                         "imgs_df",
                         imgs_df, 
-                        imgs_df_geojson_path, 
+                        imgs_df_path, 
                         imgs_df_cols, 
                         IMGS_DF_INDEX_NAME, 
                         crs_epsg_code)
