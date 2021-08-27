@@ -8,6 +8,7 @@ round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely
 """
 
 from typing import Union
+import copy
 import numpy as np
 import rasterio.mask
 import rasterio as rio
