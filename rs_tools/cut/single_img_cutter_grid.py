@@ -30,7 +30,6 @@ class ToImgGridCutter(SingleImgCutter):
     def __init__(self, 
                 source_assoc: ImgPolygonAssociator, 
                 target_data_dir : Union[Path, str], 
-                polygon_filter_predicate: PolygonFilterPredicate, 
                 new_img_size: ImgSize, 
                 img_bands: Optional[List[int]], 
                 label_bands: Optional[List[int]]) -> None:
@@ -38,7 +37,6 @@ class ToImgGridCutter(SingleImgCutter):
         Args:
             source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
             target_data_dir (Union[Path, str]): data directory of dataset where new images/labels will be created.
-            polygon_filter_predicate (PolygonFilterPredicate): predicate to filter polygons. Ignored. 
             new_img_size (Union[int, Tuple[int, int]]): size (side length of square or rows, cols)
             img_bands (Optional[List[int]], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
             label_bands (Optional[List[int]], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
