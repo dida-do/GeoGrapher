@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 
 class SingleImgCutter(ABC):
     def __init__(self, 
-                source_assoc: ImgPolygonAssociator, 
-                target_data_dir: Union[Path, str], 
-                img_bands: Optional[List[int]], 
-                label_bands: Optional[List[int]], 
-                **kwargs: Any):
+            source_assoc : ImgPolygonAssociator, 
+            target_data_dir : Union[Path, str], 
+            img_bands : Optional[List[int]], 
+            label_bands : Optional[List[int]], 
+            **kwargs : Any):
         """
         Abstract base class for single image cutters. 
 
@@ -73,11 +73,11 @@ class SingleImgCutter(ABC):
 
     @abstractmethod
     def _get_windows_transforms_img_names(self, 
-                source_img_name: str, 
-                new_polygons_df: GeoDataFrame, 
-                new_graph: BipartiteGraph, 
-                **kwargs: Any
-                ) -> List[Tuple[Window, Affine, str]]:
+            source_img_name : str, 
+            new_polygons_df : GeoDataFrame, 
+            new_graph : BipartiteGraph, 
+            **kwargs : Any
+            ) -> List[Tuple[Window, Affine, str]]:
         """
         Return a list of rasterio windows, window transformations, and new image names. The returned list will be used to create the new images and labels. Override to subclass. 
 
@@ -95,12 +95,11 @@ class SingleImgCutter(ABC):
 
         pass
 
-    def __call__(
-            self, 
-            img_name: str, 
-            new_polygons_df: GeoDataFrame, 
-            new_graph: BipartiteGraph,
-            **kwargs: Any
+    def __call__(self, 
+            img_name : str, 
+            new_polygons_df : GeoDataFrame, 
+            new_graph : BipartiteGraph,
+            **kwargs : Any
             ) -> dict:
         """
         Cut new images from source image, update new_polygons_df and new_graph to account for the new images, and return a dict with keys the index and column names of the imgs_df to be created by the calling dataset cutter and values lists containing the new image names and corresponding entries for the new images. See small_imgs_around_polygons_cutter for an example. 
@@ -153,10 +152,11 @@ class SingleImgCutter(ABC):
         return imgs_from_cut_dict
 
     def _make_img_info_dict(self, 
-                            new_img_name: str, 
-                            source_img_name: str, 
-                            img_bounds_in_img_crs: Tuple[float, float, float, float], 
-                            img_crs: CRS) -> dict:
+            new_img_name : str, 
+            source_img_name : str, 
+            img_bounds_in_img_crs : Tuple[float, float, float, float], 
+            img_crs : CRS
+            ) -> dict:
         """
         Return an img info dict for a single new image. 
 
@@ -192,11 +192,11 @@ class SingleImgCutter(ABC):
         return single_new_img_info_dict
             
     def _make_new_img_and_label(self, 
-                                new_img_name: str, 
-                                source_img_name: str, 
-                                window: Window, 
-                                window_transform: Affine, 
-                                ) -> Tuple[Tuple[float, float, float, float], CRS]:
+            new_img_name : str, 
+            source_img_name : str, 
+            window : Window, 
+            window_transform : Affine, 
+            ) -> Tuple[Tuple[float, float, float, float], CRS]:
         """
         Make a new image and label with given image name from the given window and transform
 
@@ -240,11 +240,12 @@ class SingleImgCutter(ABC):
         return img_bounds_in_img_crs, img_crs
 
     def _write_window_to_geotif(self, 
-                            src_img_path: Union[Path, str], 
-                            dst_img_path: Union[Path, str], 
-                            bands: List[int],
-                            window: Window, 
-                            window_transform: Affine) -> Tuple[Tuple[float, float, float, float], CRS]:
+            src_img_path : Union[Path, str], 
+            dst_img_path : Union[Path, str], 
+            bands : List[int],
+            window : Window, 
+            window_transform : Affine
+            ) -> Tuple[Tuple[float, float, float, float], CRS]:
         """
         Write window from source GeoTiff to new GeoTiff.
 
