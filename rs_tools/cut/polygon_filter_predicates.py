@@ -15,46 +15,64 @@ class PolygonFilterPredicate(Callable):
 
     @abstractmethod
     def __call__(self, 
-                polygon_name: str, 
-                new_polygons_df: GeoDataFrame, 
-                source_assoc: ImgPolygonAssociator) -> bool:
+            polygon_name : str, 
+            target_assoc : ImgPolygonAssociator,
+            new_imgs_dict : dict, 
+            source_assoc : ImgPolygonAssociator, 
+            **kwargs : Any
+            ) -> bool:
         """
         Args:
             polygon_name (str): polygon identifier
-            new_polygons_df (GeoDataFrame): polygons_df of new associator/dataset to be created for the new images created by the cutting function
+            target_assoc (ImgPolygonAssociator): associator of target dataset. 
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
             source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from 
+            kwargs (Any): Optional keyword arguments
 
         Returns:
             bool: True should mean polygon is to be kept, False that it is to be filtered out
+
+        Note:
+            The polygon filter predicate should be able to return a boolean answer for a given polygon depending on all the information in the source and target associators. It is used by the cutting function create_or_update_tif_dataset_from_iter_over_polygons in rs_tools.cut.cut_iter_over_polygons. This function does not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons have been iterated over. We want to use the polygon filter predicate _during_ this iteration, so we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument. 
         """
         raise NotImplementedError
 
 
-class DoesPolygonNotHaveImg(PolygonFilterPredicate):
+class IsPolygonMissingImgs(PolygonFilterPredicate):
     """
-    Simple polygon filter predicate that tests whether a polygon has already been created for it, i.e. whether there is an image for it in new_polgons_df.
+    Simple polygon filter predicate that tests whether a polygon has fewer images than a specified target image count. 
     """
 
-    def __init__(self) -> None:
+    def __init__(self, target_img_count : int = 1) -> None:
+        """
+        Args:
+            target_img_count (int, optional): Target image count. Defaults to 1.
+        """
+        self.target_img_count = target_img_count
         super().__init__()
 
     def __call__(self, 
-                polygon_name: str, 
-                new_polygons_df: GeoDataFrame, 
-                source_assoc: ImgPolygonAssociator) -> bool:
+            polygon_name : str, 
+            target_assoc : ImgPolygonAssociator,
+            new_imgs_dict : dict, 
+            source_assoc : ImgPolygonAssociator, 
+            **kwargs : Any
+            ) -> bool:
         """
-        Return True if an image has been created for the polygon, i.e. if the polygon has an image in new_polygons_df, False otherwise. 
+        Return True if the image count of the polygon under consideration is strictly less than target_img_count, False otherwise. 
 
         Args:
             polygon_name (str): polygon identifier
-            new_polygons_df (GeoDataFrame): new polygons_df of associator to be created
-            source_assoc (ImgPolygonAssociator): source associator
+            target_assoc (ImgPolygonAssociator): associator of target dataset. 
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
+            source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from 
+            kwargs (Any): Optional keyword arguments
 
         Returns:
-            bool: 
+            answer (bool)
         """
         
-        return new_polygons_df.loc[polygon_name, 'have_img?'] == False
+        return target_assoc.polygons_df.loc[polygon_name, 'img_count'] < self.target_img_count
 
 
 class AlwaysTrue(PolygonFilterPredicate):
@@ -65,10 +83,13 @@ class AlwaysTrue(PolygonFilterPredicate):
     def __init__(self) -> None:
         super().__init__()
 
-    def __call__(self, 
-                    polygon_name: str, 
-                    new_polygons_df: GeoDataFrame, 
-                    source_assoc: ImgPolygonAssociator) -> bool:
+    def __call__(self,
+            polygon_name : str, 
+            target_assoc : ImgPolygonAssociator,
+            new_imgs_dict : dict, 
+            source_assoc : ImgPolygonAssociator, 
+            **kwargs : Any
+            ) -> bool:
         """Return True"""
         return True
 
@@ -86,16 +107,19 @@ class OnlyThisPolygon(PolygonFilterPredicate):
         self.this_polygon_name = this_polygon_name
     
     def __call__(self, 
-                polygon_name: str, 
-                new_polygons_df: GeoDataFrame, 
-                source_assoc: ImgPolygonAssociator) -> bool:
+            polygon_name : str, 
+            target_assoc : ImgPolygonAssociator,
+            new_imgs_dict : dict, 
+            source_assoc : ImgPolygonAssociator, 
+            **kwargs : Any
+            ) -> bool:
 
         return polygon_name == self.this_polygon_name
 
 
 class PolygonFilterRowCondition(PolygonFilterPredicate):
     """
-    Simple PolygonFilterPredicate that applies a given predicate to the row in new_polygons_df corresponding to the polygon name in question. 
+    Simple PolygonFilterPredicate that applies a given predicate to the row in the source or target polygons_df corresponding to the polygon name in question. 
     """
 
     def __init__(self, 
@@ -104,28 +128,31 @@ class PolygonFilterRowCondition(PolygonFilterPredicate):
         ) -> None:
         """
         Args:
-            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to a polygon in new_polygons_df
-            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'new_polygons_df' or 'source_assoc.polygons_df'
+            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to a polygon in polygons_df in source_assoc or target_assoc.
+            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'source_assoc' or 'target_assoc'
         """
         
         super().__init__()
 
         self.row_series_predicate = row_series_predicate
-        assert mode in {'new_polygons_df', 'source_assoc.polygons_df'}, f"Unknown mode: {mode}. Should be one of 'new_polygons_df' or 'source_assoc.polygons_df'"
+        assert mode in {'source_assoc', 'target_assoc'}, f"Unknown mode: {mode}. Should be one of 'source_assoc' or 'target_assoc'"
         self.mode = mode
 
     def __call__(self, 
-            polygon_name: str, 
-            new_polygons_df: GeoDataFrame, 
-            source_assoc: ImgPolygonAssociator
+            polygon_name : str, 
+            target_assoc : ImgPolygonAssociator,
+            new_imgs_dict : dict, 
+            source_assoc : ImgPolygonAssociator, 
+            **kwargs : Any
             ) -> bool:
 
-        if self.mode == 'new_polygons_df':
-            gdf = new_polygons_df
-        elif self.mode == 'source_assoc.polygons_df':
-            gdf = source_assoc.polygons_df
+        if self.mode == 'target_assoc':
+            assoc = target_assoc
+        elif self.mode == 'source_assoc':
+            assoc = source_assoc
 
-        row_series : Union[GeoSeries, Series] = gdf.loc[polygon_name]
+        polygons_df = assoc.polygons_df
+        row_series : Union[GeoSeries, Series] = polygons_df.loc[polygon_name]
         answer = self.row_series_predicate(row_series) 
 
         return answer
