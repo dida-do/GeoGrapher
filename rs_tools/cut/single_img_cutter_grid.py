@@ -1,7 +1,7 @@
 """ 
 SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
 """
-from typing import Union, List, Optional, Tuple
+from typing import Any, Union, List, Optional, Tuple
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
@@ -17,7 +17,6 @@ from affine import Affine
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
-from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.utils import transform_shapely_geometry
 
 logger = logging.getLogger(__name__)
@@ -29,21 +28,24 @@ class ToImgGridCutter(SingleImgCutter):
 
     def __init__(self, 
                 source_assoc: ImgPolygonAssociator, 
-                target_data_dir : Union[Path, str], 
+                target_images_dir : Union[Path, str], 
+                target_labels_dir : Union[Path, str], 
                 new_img_size: ImgSize, 
                 img_bands: Optional[List[int]], 
                 label_bands: Optional[List[int]]) -> None:
         """
         Args:
             source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
-            target_data_dir (Union[Path, str]): data directory of dataset where new images/labels will be created.
+            target_images_dir (Union[Path, str): images directory of target dataset
+            target_labels_dir (Union[Path, str): labels directory of target dataset
             new_img_size (Union[int, Tuple[int, int]]): size (side length of square or rows, cols)
             img_bands (Optional[List[int]], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
             label_bands (Optional[List[int]], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
         """
 
         super().__init__(source_assoc=source_assoc, 
-                        target_data_dir=target_data_dir, 
+                        target_images_dir=target_images_dir, 
+                        target_labels_dir=target_labels_dir, 
                         img_bands=img_bands, 
                         label_bands=label_bands)                        
         
@@ -66,11 +68,13 @@ class ToImgGridCutter(SingleImgCutter):
             raise ValueError("new_img_size needs to have positive side length(s)")
 
     def _get_windows_transforms_img_names(self, 
-                                            source_img_name: str, 
-                                            new_polygons_df: GeoDataFrame, 
-                                            new_graph: BipartiteGraph):
+            source_img_name : str,
+            target_assoc : Optional[ImgPolygonAssociator] = None, 
+            new_imgs_dict : Optional[dict] = None,
+            **kwargs : Any
+            ) -> List[Tuple[Window, Affine, str]]:
 
-        source_img_path = self.source_assoc.data_dir / "images" / source_img_name
+        source_img_path = self.source_assoc._images_dir / source_img_name
 
         with rio.open(source_img_path) as src:
 

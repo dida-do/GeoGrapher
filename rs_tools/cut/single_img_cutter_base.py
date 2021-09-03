@@ -20,7 +20,6 @@ from rasterio.crs import CRS
 from affine import Affine
 
 from geopandas.geodataframe import GeoDataFrame
-from rs_tools.graph import BipartiteGraph
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
 from rs_tools.utils.utils import transform_shapely_geometry
@@ -30,7 +29,8 @@ logger = logging.getLogger(__name__)
 class SingleImgCutter(ABC):
     def __init__(self, 
             source_assoc : ImgPolygonAssociator, 
-            target_data_dir : Union[Path, str], 
+            target_images_dir : Union[Path, str], 
+            target_labels_dir : Union[Path, str], 
             img_bands : Optional[List[int]], 
             label_bands : Optional[List[int]], 
             **kwargs : Any):
@@ -39,11 +39,12 @@ class SingleImgCutter(ABC):
 
         To define an image cutter, override _get_windows_transforms_img_names method. 
 
-        A SingleImgCutter is a Callable that on a given call creates new images cut from a single source image, modifies the new_polygons_df and graph arguments to be used in the calling dataset cutting function to create the new associator organizing the newly created images, and returns a dict containing information about the created images to be used the calling function to create a imgs_df for the new associator (see __call__ docstring for details). 
+        A SingleImgCutter is a Callable that on a given call creates new images cut from a single source image and returns a dict containing information about the created images to be used by the calling function to add to the imgs_df of the target associator (see __call__ docstring for details). 
 
         Args:
             source_assoc (ImgPolygonAssociator): source associator containing images/labels to be cut from.
-            target_data_dir (Union[Path, str]): data directory containing images and labels subdirectories in which the new images and labels will be created.
+            target_images_dir (Union[Path, str): images directory of target dataset
+            target_labels_dir (Union[Path, str): labels directory of target dataset
             img_bands (Optional[List[int]]): list of bands to extract from the image (note GeoTiff bands start at 1).
             labels_bands (Optional[List[int]]): list of bands to extract from the label (note GeoTiff bands start at 1).
     
@@ -54,8 +55,8 @@ class SingleImgCutter(ABC):
         """
 
         self.source_assoc = source_assoc
-        self.source_data_dir = source_assoc.data_dir
-        self.target_data_dir = Path(target_data_dir)
+        self.target_images_dir = Path(target_images_dir)
+        self.target_labels_dir = Path(target_labels_dir)
         
         if img_bands is None:
             self.img_bands = self._get_all_band_indices('images')
@@ -74,20 +75,18 @@ class SingleImgCutter(ABC):
     @abstractmethod
     def _get_windows_transforms_img_names(self, 
             source_img_name : str, 
-            new_polygons_df : GeoDataFrame, 
-            new_graph : BipartiteGraph, 
+            target_assoc : Optional[ImgPolygonAssociator] = None, 
+            new_imgs_dict : Optional[dict] = None,
             **kwargs : Any
             ) -> List[Tuple[Window, Affine, str]]:
         """
         Return a list of rasterio windows, window transformations, and new image names. The returned list will be used to create the new images and labels. Override to subclass. 
 
-        The new_polygons_df and new_graph arguments contain all the information available to decide which windows to select. They should not be modified by this method. 
-
         Args:
-            source_img_name (str): name of img in self.source_img_path to be cut.
-            new_polygons_df (GeoDataFrame): GeoDataFrame that will be the polygons_df of the associator of the new dataset of cut images that is being created by the calling dataset cutter. 
-            new_graph (BipartiteGraph): the bipartite graph that is being built up for the target associator.
-            kwargs (Any): keyword arguments to be used by method in subclass implementations.
+            source_img_name (str): name of img in source dataset to be cut.
+            target_assoc (ImgPolygonAssociator): associator of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.imgs_df
+            kwargs (Any): keyword arguments to be used in subclass implementations.
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names. 
@@ -97,21 +96,24 @@ class SingleImgCutter(ABC):
 
     def __call__(self, 
             img_name : str, 
-            new_polygons_df : GeoDataFrame, 
-            new_graph : BipartiteGraph,
+            target_assoc : Optional[ImgPolygonAssociator] = None, 
+            new_imgs_dict : Optional[dict] = None,
             **kwargs : Any
             ) -> dict:
         """
-        Cut new images from source image, update new_polygons_df and new_graph to account for the new images, and return a dict with keys the index and column names of the imgs_df to be created by the calling dataset cutter and values lists containing the new image names and corresponding entries for the new images. See small_imgs_around_polygons_cutter for an example. 
+        Cut new images from source image and return a dict with keys the index and column names of the imgs_df to be created by the calling dataset cutter and values lists containing the new image names and corresponding entries for the new images. See small_imgs_around_polygons_cutter for an example. 
 
         Args:
-            img_name (str): name of img in self.source_img_path to be cut.
-            new_polygons_df (GeoDataFrame): GeoDataFrame that will be the polygons_df of the associator of the new dataset of cut images that is being created by the calling dataset cutter. 
-            new_graph (BipartiteGraph): the bipartite graph that is being built up for the target associator.
-            kwargs (Any): keyword arguments for _get_windows_transforms_img_names
+            img_name (str): name of img in source dataset to be cut.
+            target_assoc (ImgPolygonAssociator): associator of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.imgs_df
+            kwargs (Any): optional keyword arguments for _get_windows_transforms_img_names
 
         Returns:
             dict of lists that containing the data to be put in the imgs_df of the associator to be constructed for the created images. 
+
+        Note:
+            The __call__ function should be able to access the information contained in the target (and source) associator but should *not* modify its arguments! Since create_or_update_dataset_from_iter_over_polygons and create_or_update_dataset_from_iter_over_imgs do not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons or images have been iterated over and we want to be able to use ImgSelectors _during_ such an iteration, we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument. 
         """
         
         # dict to accumulate information about the newly created images
@@ -119,13 +121,13 @@ class SingleImgCutter(ABC):
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(
             source_img_name=img_name, 
-            new_polygons_df=new_polygons_df, 
-            new_graph=new_graph, 
+            target_assoc=target_assoc, 
+            new_imgs_dict=new_imgs_dict,
             **kwargs)
 
         for window, window_transform, new_img_name in windows_transforms_img_names:
 
-            # Make new image and label in target_data_dir ...
+            # Make new image and label in target dataset ...
             img_bounds_in_img_crs, img_crs = self._make_new_img_and_label(
                                                 new_img_name=new_img_name, 
                                                 source_img_name=img_name, 
@@ -142,12 +144,6 @@ class SingleImgCutter(ABC):
             # ... and accumulate that information. 
             for key in imgs_from_cut_dict.keys():
                 imgs_from_cut_dict[key].append(single_new_img_info_dict[key])
-
-            # Add connections to new_graph for the new image and modify new_polygons_df.
-            self.source_assoc._add_img_to_graph_modify_polygons_df(new_img_name, 
-                                                                img_bounding_rectangle=single_new_img_info_dict['geometry'], 
-                                                                polygons_df=new_polygons_df, 
-                                                                graph=new_graph)
 
         return imgs_from_cut_dict
 
@@ -210,18 +206,19 @@ class SingleImgCutter(ABC):
             Tuple[Tuple[float, float, float, float], CRS]: tuple of bounds (in image CRS) and CRS of new image
         """
         
-        source_img_path = self.source_data_dir / f"images/{source_img_name}"
-        source_label_path = self.source_data_dir / f"labels/{source_img_name}"
+        source_img_path = self.source_assoc._images_dir / source_img_name
+        source_label_path = self.source_assoc._labels_dir / source_img_name
 
-        dst_img_path = self.target_data_dir / f"images/{new_img_name}"
-        dst_label_path = self.target_data_dir / f"labels/{new_img_name}"
+        dst_img_path = self.target_images_dir / new_img_name
+        dst_label_path = self.target_labels_dir / new_img_name
 
         # write img window to destination img geotif
-        img_bounds_in_img_crs, img_crs = self._write_window_to_geotif(source_img_path, 
-                                                                dst_img_path, 
-                                                                self.img_bands, 
-                                                                window, 
-                                                                window_transform)
+        img_bounds_in_img_crs, img_crs = self._write_window_to_geotif(
+                                            source_img_path, 
+                                            dst_img_path, 
+                                            self.img_bands, 
+                                            window, 
+                                            window_transform)
 
         # write label window to destination label geotif
         if source_label_path.is_file():
@@ -298,9 +295,10 @@ class SingleImgCutter(ABC):
             List[int]: list of indices of all bands in GeoTiff 
         """
 
-        img_or_label_dir = self.source_data_dir / mode
-        img_or_label_name = [filename for filename in os.listdir(img_or_label_dir) if Path(filename).suffix == '.tif'][0]
-        img_or_label_path = img_or_label_dir / img_or_label_name
+        assert mode in {'images', 'labels'}
+
+        img_or_label_dir = self.source_assoc._images_dir if mode =='images' else self.source_assoc._labels_dir
+        img_or_label_path = [filepath for filepath in img_or_label_dir.iterdir() if filepath.suffix == '.tif'][0]
 
         with rio.open(img_or_label_path) as src:
             bands = list(range(1, src.count + 1))
