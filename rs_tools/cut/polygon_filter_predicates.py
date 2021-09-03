@@ -1,3 +1,7 @@
+""" 
+Predicates for filtering polygons. 
+"""
+
 from typing import Any, Callable, Union
 from geopandas import GeoDataFrame, GeoSeries
 from pandas import Series
@@ -33,7 +37,7 @@ class PolygonFilterPredicate(Callable):
             bool: True should mean polygon is to be kept, False that it is to be filtered out
 
         Note:
-            The polygon filter predicate should be able to return a boolean answer for a given polygon depending on all the information in the source and target associators. It is used by the cutting function create_or_update_tif_dataset_from_iter_over_polygons in rs_tools.cut.cut_iter_over_polygons. This function does not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons have been iterated over. We want to use the polygon filter predicate _during_ this iteration, so we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument. 
+            The polygon filter predicate should be able to return a boolean answer for a given polygon depending on all the information in the source and target associators. It is used by the cutting function create_or_update_dataset_from_iter_over_polygons in rs_tools.cut.cut_iter_over_polygons. This function does not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons have been iterated over. We want to use the polygon filter predicate _during_ this iteration, so we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument. 
         """
         raise NotImplementedError
 
