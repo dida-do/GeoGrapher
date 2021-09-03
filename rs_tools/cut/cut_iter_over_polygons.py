@@ -40,21 +40,8 @@ def create_or_update_dataset_iter_over_polygons(
     Returns:
         ImgPolygonAssociator: associator of newly created or updated dataset
     """
-    
-    source_data_dir = Path(source_data_dir)
-    target_data_dir = Path(target_data_dir)
 
     source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
-
-    """
-    # Load target associator, if it exists already, ...
-    if (target_data_dir / "imgs_df.geojson").is_file() and (target_data_dir / "polygons_df.geojson").is_file() and (target_data_dir / "graph.json").is_file(): # try target_assoc = ImgPolygonAssociator(data_dir = target_data_dir) except ... didn't work for reason I don't understand, so to test if an associator exists, I just check if the associator files exist
-        target_assoc = ImgPolygonAssociator.from_data_dir(target_data_dir)
-    # ... else, create empty target associator.
-    else:
-        target_assoc = source_assoc.empty_assoc_same_format(target_data_dir)
-        target_assoc._cut_params_dict['cut_imgs'] = {}
-    """
     try: 
         target_assoc = ImgPolygonAssociator.from_data_dir(target_data_dir)
     except FileNotFoundError:
@@ -122,7 +109,7 @@ def create_or_update_dataset_iter_over_polygons(
                         img_name=new_img_name, 
                         img_bounding_rectangle=img_bounding_rectangle)
 
-    # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe...
+    # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
     new_imgs_df = GeoDataFrame(
                     new_imgs_dict, 
                     crs=target_assoc.imgs_df.crs)
