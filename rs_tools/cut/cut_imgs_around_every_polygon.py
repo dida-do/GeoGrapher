@@ -5,17 +5,10 @@ Create or update a dataset of GeoTiffs by cutting images around polygons from a 
 """
 
 from rs_tools.cut.cut_dataset_iter_over_polygons import create_or_update_dataset_iter_over_polygons
-from typing import Union, Callable, List, Tuple, Optional, Any
+from typing import Union, List, Optional
 from rs_tools.cut.type_aliases import ImgSize
 import logging
-import os
-import copy
 from pathlib import Path
-import random
-from tqdm import tqdm
-import rasterio as rio
-import pandas as pd 
-from geopandas import GeoDataFrame
 
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_around_polygons import ImgsAroundPolygonCutter
@@ -26,7 +19,7 @@ from rs_tools.cut.img_selectors import RandomImgSelector
 logger = logging.getLogger(__name__)
 
 
-def cut_dataset_imgs_for_each_polygon(
+def cut_dataset_imgs_around_every_polygon(
         source_data_dir : Union[str, Path], 
         target_data_dir : Union[str, Path], 
         new_img_size : Optional[ImgSize] = 512, 
@@ -58,9 +51,12 @@ def cut_dataset_imgs_for_each_polygon(
 
     Returns:
         ImgPolygonAssociator: associator of target dataset
+
+    Warning:
+        Currently only works if the source associator component files are in the standard locations determined by the source_data_dir arg. 
     """
 
-    return _create_or_update_dataset_imgs_for_each_polygon(
+    return _create_or_update_dataset_imgs_around_every_polygon(
                 source_data_dir=source_data_dir,
                 target_data_dir=target_data_dir,
                 new_img_size=new_img_size,
@@ -73,7 +69,7 @@ def cut_dataset_imgs_for_each_polygon(
                 random_seed=random_seed)
                 
 
-def update_dataset_imgs_for_each_polygon(
+def update_dataset_imgs_around_every_polygon(
         data_dir : Union[str, Path]
         ) -> ImgPolygonAssociator:
     
@@ -114,7 +110,7 @@ def update_dataset_imgs_for_each_polygon(
     if not required_cut_params <= set(assoc._cut_params_dict.keys()):
         raise KeyError(f"The associator in {data_dir} is missing the following cut params: {set(assoc._cut_params_dict.keys()) - required_cut_params}")
 
-    return _create_or_update_dataset_imgs_for_each_polygon(
+    return _create_or_update_dataset_imgs_around_every_polygon(
         source_data_dir=assoc._cut_params_dict['source_data_dir'], 
         target_data_dir=data_dir, 
         new_img_size=assoc._cut_params_dict['new_img_size'],
@@ -127,7 +123,7 @@ def update_dataset_imgs_for_each_polygon(
     )
 
 
-def _create_or_update_dataset_imgs_for_each_polygon(
+def _create_or_update_dataset_imgs_around_every_polygon(
         source_data_dir : Union[str, Path], 
         target_data_dir : Union[str, Path], 
         mode : str = 'random', 
@@ -135,9 +131,9 @@ def _create_or_update_dataset_imgs_for_each_polygon(
         min_new_img_size : Optional[ImgSize] = 64, 
         scaling_factor : Union[None, float] = 1.2,
         target_img_count : int = 1,
-        img_bands: Optional[List[int]]=None, 
-        label_bands: Optional[List[int]]=None, 
-        random_seed: int = 10
+        img_bands : Optional[List[int]]=None, 
+        label_bands : Optional[List[int]]=None, 
+        random_seed : int = 10
         ) -> ImgPolygonAssociator:
     """
     Create or update a dataset of GeoTiffs so that it contains (if possible) for each polygon in the target (or source) dataset a number target_img_count of images cut from images in the source dataset. 
