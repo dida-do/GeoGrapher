@@ -1,7 +1,7 @@
 """ 
 SingleImgCutter that cuts a small image from a predefined bounding box on the image accepted by the polygon filter predicate.
 """
-from typing import Union, List, Optional, Tuple
+from typing import Any, Union, List, Optional, Tuple
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
@@ -12,8 +12,6 @@ from rasterio.windows import from_bounds, Window
 
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
-from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
-from rs_tools.graph import BipartiteGraph
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +27,24 @@ class ToImgBBoxCutter(SingleImgCutter):
     """
 
     def __init__(self, 
-                source_assoc: ImgPolygonAssociator, 
-                target_data_dir : Union[Path, str],
-                new_img_size: Optional[ImgSize],
-                bounding_boxes: GeoDataFrame, 
-                img_bands: Optional[List[int]] = None, 
-                label_bands: Optional[List[int]] = None) -> None:
+            source_assoc : ImgPolygonAssociator, 
+            target_images_dir : Union[Path, str], 
+            target_labels_dir : Union[Path, str], 
+            new_img_size : Optional[ImgSize],
+            bounding_boxes : GeoDataFrame, 
+            img_bands : Optional[List[int]] = None, 
+            label_bands : Optional[List[int]] = None
+            ) -> None:
         """
         An image cutter to extract a pre defined bounding box from an image.
         The new size of the images must be specified as it is used to ensure a standardised output.
 
         :param source_assoc: associator of dataset images are to be cut from.
         :type source_assoc: ImgPolygonAssociator
-        :param target_data_dir: data directory of dataset where new images/labels will be created.
-        :type target_data_dir: Union[Path, str]
+        :param target_images_dir: images directory of target dataset 
+        :type target_images_dir: Union[Path, str]
+        :param target_labels_dir: labels directory of target dataset
+        :type target_labels_dir: Union[Path, str]
         :param new_img_size: size (side length of square or rows, cols)
         :type new_img_size: Union[int, Tuple[int, int]]
         :param bounding_boxes: Bounding boxes to cut from imahe
@@ -54,7 +56,8 @@ class ToImgBBoxCutter(SingleImgCutter):
         """
         
         super().__init__(source_assoc=source_assoc, 
-                        target_data_dir=target_data_dir, 
+                        target_images_dir=target_images_dir, 
+                        target_labels_dir=target_labels_dir, 
                         img_bands=img_bands, 
                         label_bands=label_bands)                        
         
@@ -80,11 +83,13 @@ class ToImgBBoxCutter(SingleImgCutter):
             raise ValueError("new_img_size needs to have positive side length(s)")
 
     def _get_windows_transforms_img_names(self, 
-                                            source_img_name: str, 
-                                            new_polygons_df: GeoDataFrame, 
-                                            new_graph: BipartiteGraph):
+            source_img_name: str, 
+            target_assoc : Optional[ImgPolygonAssociator] = None, 
+            new_imgs_dict : Optional[dict] = None,
+            **kwargs : Any
+            ) -> List[str]:
 
-        source_img_path = self.source_assoc.data_dir / "images" / source_img_name
+        source_img_path = self.source_assoc._images_dir / source_img_name
 
         with rio.open(source_img_path) as src:
             img_bounds = self.source_assoc.imgs_df.to_crs(src.crs).geometry.loc[source_img_name]

@@ -1,9 +1,5 @@
 """ 
-SingleImgCutters that cut small images (or a grid of images) around polygons.
-
-SmallImgsAroundPolygonsCutterBase - base class.
-SmallImgsAroundSinglePolygonCutter - cuts a small image around a given polygon in an image.
-SmallImgsAroundFilteredPolygonsCutter - cuts small images around all polygons in an image satisfying a filtering condition.
+ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a given polygon from a source image.
 """
 
 import logging
@@ -22,31 +18,33 @@ from affine import Affine
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
-from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.utils import transform_shapely_geometry
 
 logger = logging.getLogger(__name__)
 
 
-class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
+class ImgsAroundPolygonCutter(SingleImgCutter):
     """
     SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
     """
 
     def __init__(self, 
-                source_assoc: ImgPolygonAssociator, 
-                target_data_dir : Union[Path, str], 
-                mode: str, 
-                new_img_size: Optional[ImgSize] = None, 
-                scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[ImgSize] = None, 
-                img_bands: Optional[List[int]] = None, 
-                label_bands: Optional[List[int]] = None, 
-                random_seed: int = 42) -> None:
+        source_assoc : ImgPolygonAssociator, 
+        target_images_dir : Union[Path, str], 
+        target_labels_dir : Union[Path, str],         
+        mode : str, 
+        new_img_size : Optional[ImgSize] = None, 
+        scaling_factor : Optional[float] = 1.2, 
+        min_new_img_size : Optional[ImgSize] = None, 
+        img_bands : Optional[List[int]] = None, 
+        label_bands : Optional[List[int]] = None, 
+        random_seed : int = 42
+        ) -> None:
         """
         Args:
             source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
-            target_data_dir (Union[Path, str]): data directory of dataset where new images/labels will be created.
+            target_images_dir (Union[Path, str): images directory of target dataset
+            target_labels_dir (Union[Path, str): labels directory of target dataset
             mode (str, optional): One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
             new_img_size (Optional[ImgSize]): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
             scaling factor (Optional[float]): factor to scale the bounding rectangle of the polygon by to get the image size. 
@@ -59,11 +57,13 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
             ValueError: If the mode is unknown.
         """
 
-        super().__init__(source_assoc=source_assoc, 
-                        target_data_dir=target_data_dir, 
-                        img_bands=img_bands, 
-                        label_bands=label_bands, 
-                        mode=mode)                        
+        super().__init__(
+            source_assoc=source_assoc, 
+            target_images_dir=target_images_dir, 
+            target_labels_dir=target_labels_dir,
+            img_bands=img_bands, 
+            label_bands=label_bands, 
+            mode=mode)                        
 
         if mode in {'random', 'centered'}:
             required_img_size_attr_name = "new_img_size"
@@ -124,35 +124,34 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
 
         return new_img_size_rows, new_img_size_cols
 
-    def _get_windows_transforms_img_names(self, 
-                                            source_img_name: str, 
-                                            new_polygons_df: GeoDataFrame, 
-                                            new_graph: BipartiteGraph):
-        raise NotImplementedError(f"use subclasses!")
-
-    def _get_windows_transforms_img_names_single_polygon(self, 
-                                        polygon_name: str, 
-                                        polygon_geometry: Polygon, 
-                                        source_img_name: str
-                                        ) -> List[Tuple[Window, Affine, str]]:
+    def _get_windows_transforms_img_names(self,
+            polygon_name : str, 
+            source_img_name : str, 
+            target_assoc : ImgPolygonAssociator, 
+            new_imgs_dict : Optional[dict] = None,
+            **kwargs : Any
+            ) -> List[Tuple[Window, Affine, str]]:
         """
         Given a polygon and a GeoTiff image fully containing it return a list of windows, window transforms, and new img_names defining a minimal rectangular grid in the image covering the polygon.
 
         Args:
             polygon_name (str): polygon identifier
-            polygon_geometry (Polygon): polygon fully contained in the GeoTiff
-            polygon_crs_epsg_code (int): EPSG code of the polygon crs
             source_img_name (str): name of source image
+            target_assoc (ImgPolygonAssociator): associator of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.            polygon_crs_epsg_code (int): EPSG code of the polygon crs
+            **kwargs (Any): keyword arguments
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
+    
+        source_img_path = self.source_assoc._images_dir / source_img_name
 
-        source_img_path = self.source_assoc.data_dir / "images" / source_img_name
+        polygon_geometry = target_assoc.polygons_df.loc[polygon_name, "geometry"]
 
         with rio.open(source_img_path) as src:
 
-            # transform polygons from assoc's crs to image source crs
+            # transform polygon from assoc's crs to image source crs
             transformed_polygon_geometry = transform_shapely_geometry(
                                                 polygon_geometry, 
                                                 from_epsg=self.source_assoc.polygons_df.crs.to_epsg(), 
@@ -278,132 +277,3 @@ class SmallImgsAroundPolygonsCutterBase(SingleImgCutter):
             raise ValueError(f"Unknown mode: {self.mode}")
 
         return row_off, col_off, num_small_imgs_in_row_direction, num_small_imgs_in_col_direction
-
-
-class SmallImgsAroundFilteredPolygonsCutter(SmallImgsAroundPolygonsCutterBase):
-    """
-    Iterate over all polygons in an image, filter by the polygon_filter_predicate, and cut a small image (or a grid of images) around each polygon.
-    """
-    def __init__(self, 
-                source_assoc: ImgPolygonAssociator, 
-                target_data_dir : Union[Path, str], 
-                polygon_filter_predicate: PolygonFilterPredicate, 
-                mode: str, 
-                new_img_size: Optional[ImgSize] = None, 
-                scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[ImgSize] = None, 
-                img_bands: Optional[List[int]] = None, 
-                label_bands: Optional[List[int]] = None, 
-                random_seed: int = 42) -> None:
-        """
-        :param source_assoc: associator of dataset images are to be cut from.
-        :type source_assoc: ImgPolygonAssociator
-        :param target_data_dir: data directory of dataset where new images/labels will be created.
-        :type target_data_dir: Union[Path, str]
-        :param polygon_filter_predicate: predicate to filter polygons.
-        :type polygon_filter_predicate: PolygonFilterPredicate
-        :param mode: One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
-        :type mode: str
-        :param new_img_size: size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
-        :type new_img_size: Optional[Union[int, Tuple[int, int]]], optional
-        :param scaling_factor: factor to scale the bounding rectangle of the polygon by to get the image size. 
-        :type scaling_factor: Optional[float], optional
-        :param min_new_img_size: minimum size of new image in 'variable' mode. 
-        :type min_new_img_size: Optional[Union[int, Tuple[int, int]]], optional
-        :param img_bands: list of bands to extract from source images. Defaults to None (i.e. all bands).
-        :type img_bands: Optional[List[int]], optional
-        :param label_bands: list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        :type label_bands: Optional[List[int]], optional
-        :param random_seed: random seed, defaults to 42
-        :type random_seed: int, optional
-        """
-
-        self.polygon_filter_predicate = polygon_filter_predicate
-
-        super().__init__(
-            source_assoc=source_assoc,
-            target_data_dir=target_data_dir, 
-            mode=mode,
-            new_img_size=new_img_size,
-            scaling_factor=scaling_factor,
-            min_new_img_size=min_new_img_size,
-            img_bands=img_bands,
-            label_bands=label_bands,
-            random_seed=random_seed)
-
-    def _get_windows_transforms_img_names(
-            self,
-            source_img_name: str, 
-            new_polygons_df: GeoDataFrame, 
-            new_graph: BipartiteGraph, 
-            **kwargs: Any):
-
-        polygons_contained_in_img = self.source_assoc.polygons_contained_in_img(source_img_name)
-
-        windows_transforms_img_names = []
-
-        # for all polygons in the source_assoc contained in the img
-        for polygon_name, polygon_geometry in (self.source_assoc.polygons_df.loc[polygons_contained_in_img, ['geometry']]).itertuples():
-
-            if self.polygon_filter_predicate(polygon_name, new_polygons_df, self.source_assoc) == False:
-
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # for cut_imgs_iter_over_imgs should drop polygon from new_polygons_df?
-                pass
-
-            else:
-
-                windows_transforms_img_names_single_polygon = self._get_windows_transforms_img_names_single_polygon(polygon_name, polygon_geometry, source_img_name)
-
-                windows_transforms_img_names += windows_transforms_img_names_single_polygon
-
-        return windows_transforms_img_names
-
-
-class SmallImgsAroundSinglePolygonCutter(SmallImgsAroundPolygonsCutterBase):
-    """Cut a small image (or a grid of images) around a given polygon in a given single image. """
-    def __init__(self, 
-                source_assoc: ImgPolygonAssociator, 
-                target_data_dir : Union[Path, str], 
-                mode: str, 
-                new_img_size: Optional[ImgSize] = None, 
-                scaling_factor: Optional[float] = 1.2, 
-                min_new_img_size: Optional[ImgSize] = None, 
-                img_bands: Optional[List[int]] = None, 
-                label_bands: Optional[List[int]] = None, 
-                random_seed: int = 42) -> None:
-        """
-        Args:
-            source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
-            target_data_dir (Union[Path, str]): data directory of dataset where new images/labels will be created.
-            mode (str): One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
-            new_img_size (None, int or int, int tuple): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
-        
-            scaling_factor (Optional[float]): factor to scale the bounding rectangle of the polygon by to get the image size. 
-            min_new_img_size (Optional[Union[int, Tuple[int, int]]]): minimum size of new image in 'variable' mode. 
-            img_bands (Optional[List[int]]): list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands (Optional[List[int]]): list of bands to extract from source labels. Defaults to None (i.e. all bands).
-            random_seed (int): random seed, defaults to 42
-        """
-    
-        super().__init__(
-            source_assoc=source_assoc,
-            target_data_dir=target_data_dir, 
-            mode=mode,
-            new_img_size=new_img_size,
-            scaling_factor=scaling_factor,
-            min_new_img_size=min_new_img_size,
-            img_bands=img_bands,
-            label_bands=label_bands,
-            random_seed=random_seed)
-
-    def _get_windows_transforms_img_names(
-            self,
-            polygon_name: str, 
-            source_img_name: str, 
-            new_polygons_df: GeoDataFrame, 
-            new_graph: BipartiteGraph):
-
-        polygon_geometry = self.source_assoc.polygons_df.loc[polygon_name, 'geometry']
-
-        return self._get_windows_transforms_img_names_single_polygon(polygon_name, polygon_geometry, source_img_name)
