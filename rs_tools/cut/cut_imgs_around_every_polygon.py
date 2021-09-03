@@ -4,14 +4,14 @@ Create or update a dataset of GeoTiffs by cutting images around polygons from a 
     - update_dataset_imgs_for_each_polygon. Updates a dataset of GeoTiffs that was created with cut_dataset_imgs_for_each_polygon. 
 """
 
-from rs_tools.cut.cut_dataset_iter_over_polygons import create_or_update_dataset_iter_over_polygons
+from rs_tools.cut.cut_iter_over_polygons import create_or_update_dataset_iter_over_polygons
 from typing import Union, List, Optional
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
 
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
-from rs_tools.cut.single_img_cutter_around_polygons import ImgsAroundPolygonCutter
+from rs_tools.cut.single_img_cutter_around_polygon import ImgsAroundPolygonCutter
 from rs_tools.cut.polygon_filter_predicates import IsPolygonMissingImgs
 from rs_tools.cut.img_selectors import RandomImgSelector 
 
