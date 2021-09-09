@@ -118,6 +118,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
         """        
 
         super().__init__()
+        
         self._check_dir_args(
             data_dir=data_dir,
             images_dir=images_dir, 
