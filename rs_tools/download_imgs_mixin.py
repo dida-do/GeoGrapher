@@ -38,7 +38,7 @@ class DownloadImgsMixIn(object):
 
         Args:
             polygon_names (List[str], optional): Optional list of polygons to download images for. Defaults to None, i.e. consider all polygons in self.polygons_df.
-            num_target_imgs_per_polygon (int): targetted number of images per polygon the download should achieve. The actual number of images for each polygon P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_polygon images for P P is also contained in images downloaded for other polygons. 
+            target_img_count (int): target for number of images per polygon in the dataset after downloading. The actual number of images for each polygon P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_polygon images for P P is also contained in images downloaded for other polygons. 
             polygons_df (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. self.polygons_df). If provided and not equal to self.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded. 
             add_labels (bool, optional): bool. Whether to add labels for the downloaded images. Defaults to True.
             shuffle_polygons (bool): Whether to shuffle order of polygons for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
