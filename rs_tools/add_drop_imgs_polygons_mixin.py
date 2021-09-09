@@ -1,4 +1,3 @@
-
 from typing import Sequence
 import logging
 import pandas as pd
@@ -15,13 +14,15 @@ class AddDropImgsPolygonsMixIn(object):
     """Mix-in that implements methods to add and drop polygons or images."""
 
     def add_to_polygons_df(self, 
-            new_polygons_df: GeoDataFrame, 
-            force_overwrite: bool=False):
+            new_polygons_df : GeoDataFrame, 
+            recreate_labels : bool=False, 
+            force_overwrite : bool=False):
         """
         Add (or overwrite) polygons in new_polygons_df to the associator (i.e. append to the associator's polygons_df) keeping track of which polygons are contained in which images.
 
         Args:
             new_polygons_df (GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
+            recreate_labels (bool): Whether to recreate labels for images containing polygons that were added
             force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
@@ -76,6 +77,15 @@ class AddDropImgsPolygonsMixIn(object):
         # Finally, append new_polygons_df to the associator's (self.)polygons_df.
         data_frames_list = [self.polygons_df, new_polygons_df]
         self.polygons_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+
+        if recreate_labels == True:
+            imgs_w_new_polygons = [img_name for polygon_name in new_polygons_df.index for img_name in self.imgs_intersecting_polygon(polygon_name)]
+            for img_name in imgs_w_new_polygons:
+                label_path = self.labels_dir / img_name
+                if label_path.suffix != '.tif':
+                    raise ValueError(f"Can only generate labels for geotifs.")
+                label_path.unlink(missing_ok=True)
+            self.make_missing_labels(img_names=imgs_w_new_polygons)
 
 
     def add_to_imgs_df(self, new_imgs_df: GeoDataFrame):
