@@ -142,7 +142,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
                             imgs_df=imgs_df, 
                             imgs_df_cols=imgs_df_cols)
 
-        # build _params_dict from all args except for imgs_df, polygons_df and the corresponding column args
+        # build _params_dict from all args except for imgs_df, polygons_df, the corresponding column args, and the path/dir args
         self._params_dict = {}
         self._params_dict.update( 
             {
