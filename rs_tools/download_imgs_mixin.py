@@ -56,27 +56,19 @@ class DownloadImgsMixIn(object):
         if polygon_names is None:
 
             polygons_to_download = list(self.polygons_df.loc[self.polygons_df['img_count'] < target_img_count].index)
-            target_img_counts = [target_img_count] * len(polygons_to_download)
 
         elif isinstance(polygon_names, list) and all(isinstance(element, str) for element in polygon_names):
 
             polygons_to_download = polygon_names
-            target_img_counts = [target_img_count] * len(polygons_to_download)
 
             if not set(polygon_names) <= set(self.polygons_df.index):
                 raise ValueError(f"Polygons {set(polygon_names) - set(self.polygons_df.index)} missing from self.polygons_df")
 
         else:
             raise TypeError(f"The polygon_names argument should be a list of polygon names (i.e. strings).")
-
-        polygon_names_and_target_img_counts = list(
-                                                zip(
-                                                    polygons_to_download, 
-                                                    target_img_counts
-                                                ))
-                                                    
+    
         if shuffle_polygons == True:
-            random.shuffle(polygon_names_and_target_img_counts)
+            random.shuffle(polygons_to_download)
 
         # Set of previously downloaded images.
         previously_downloaded_imgs_set = set(self.imgs_df.index) 
@@ -86,7 +78,7 @@ class DownloadImgsMixIn(object):
         new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [self.imgs_df.index.name] + list(self.imgs_df.columns)}
 
         # Go through polygons for which not enough images have been downloaded yet.
-        for count, (polygon_name, target_img_count) in tqdm(enumerate(polygon_names_and_target_img_counts)):
+        for count, polygon_name in tqdm(enumerate(polygons_to_download)):
 
             polygon_geometry = self.polygons_df.loc[polygon_name, 'geometry'] 
 
