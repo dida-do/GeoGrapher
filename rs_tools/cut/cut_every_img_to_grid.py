@@ -109,10 +109,6 @@ def _create_or_update_dataset_every_img_to_grid(
 
     source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
 
-    # Create new target_data_dir and subdirectories if necessary.
-    for subdir in DATA_DIR_SUBDIRS:
-        (target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
-
     img2grid_cutter = ImgToGridCutter(
                             source_assoc=source_assoc, 
                             target_images_dir=target_data_dir / 'images', 
