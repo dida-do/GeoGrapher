@@ -1,6 +1,7 @@
 """Label maker for soft-categorical (i.e. probabilistic multi-class) labels."""
 from __future__ import annotations
-import logging
+from logging import Logger 
+from functools import partial
 from pathlib import Path
 import numpy as np
 import rasterio as rio
@@ -9,42 +10,48 @@ from rs_tools.utils.utils import transform_shapely_geometry
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
+                        
 
-log = logging.getLogger(__name__)
-
-
-def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
-                                        img_name: str) -> None:
-    """Create a soft categorical (i.e. probabilistic) GeoTiff pixel label for
+def _make_geotif_label_soft_categorical_onehot(
+        mode : str, 
+        assoc : ImgPolygonAssociator,
+        img_name : str, 
+        logger : Logger
+        ) -> None:
+    """
+    Create a soft-categorical (i.e. probabilistic) or onehot GeoTiff pixel label for
     an image.
 
-    Create a soft-categorical encoded (i.e. one channel per segmentation class,
-    the at a given position in a given channel is the probability that the pixel
+    A soft-categorical label is one for which there are channels for each segmentation class 
+    and the value at a given position in a given channel is the probability that the pixel
     at that position is classified as belonging to the corresponding segmentation
-    class) GeoTiff raster label in the data directory's labels subdirectory for a
-    GeoTiff image with image name img_name. Assumes the associator's polygons_df
-    contains one column prob_seg_class_[segmentation_class] for each segmentation
-    class containing the probability of that polygon belonging to the segmentation
-    class.
+    class. A onehot label is a soft-categorical one for which all probabilities are 0 or 1. 
+    Images are assumed to be in assoc.images_dir and will be created in assoc.labels_dir.
 
     Args:
-        - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
-        - img_name (str): Name of image for which a label should be created.
+        onehot (str): One of 'soft-categorical' or 'onehot'
+        assoc (ImgPolygonAssociator): calling ImgPolygonAssociator
+        img_name (str): Name of image for which a label should be created.
+        logger (Logger): logger of calling associator
+    
     Returns:
-        - None:
+        None:
     """
 
-    img_path = Path(assoc.data_dir) / Path("images") / Path(img_name)
+    if mode not in {'soft-categorical', 'onehot'}:
+        raise ValueError('Unknown mode: {mode}')
 
-    label_path = Path(assoc.data_dir) / Path("labels") / Path(img_name)
+    img_path = assoc.images_dir / img_name
+    label_path = assoc.labels_dir / img_name
 
-    segmentation_classes = assoc._params_dict['segmentation_classes']
+    classes_to_ignore = {class_ for class_ in {assoc._params_dict['background_class']} if class_ is not None}
+    segmentation_classes = [class_ for class_ in assoc._params_dict['segmentation_classes'] if class_ not in classes_to_ignore]
 
     # If the image does not exist ...
     if not img_path.is_file():
 
         # ... log error to file.
-        log.error(
+        logger.error(
             f"_make_geotif_label_soft_categorical: input image {img_path} does not exist!"
         )
 
@@ -52,7 +59,7 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
     elif label_path.is_file():
 
         # ... log error to file.
-        log.error(
+        logger.error(
             f"_make_geotif_label_soft_categorical: label {label_path} already exists!"
         )
 
@@ -63,13 +70,13 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
 
             # ... determine how many bands the label should have.
             # If the background is not included in the segmentation classes (default) ...
-            if assoc._params_dict['add_background_band_in_labels'] is True:
+            if assoc._params_dict['add_background_band_in_labels'] == True:
 
                 # ... add a band for the implicit background segmentation class, ...
                 label_bands_count = 1 + len(segmentation_classes)
 
             # ... if the background *is* included, ...
-            elif assoc._params_dict['background_in_seg_classes'] is False:
+            elif assoc._params_dict['background_in_seg_classes'] == False:
 
                 # ... don't.
                 label_bands_count = len(segmentation_classes)
@@ -78,25 +85,38 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
             else:
 
                 # ... then it is nonsensical, so log an error.
-                log.error(
+                logger.error(
                     f"Unknown background_in_seg_classes "
                     f"value: {assoc._params_dict['background_in_seg_classes']}."
                 )
 
             # Create profile for the label.
             profile = src.profile
-            profile.update({"count": label_bands_count, "dtype": rio.float32})
+            profile.update({"count": label_bands_count, 
+                            "dtype": rio.float32})
 
             # Open the label ...
-            with rio.open(label_path, 'w+', **profile) as dst:
+            with rio.open(
+                    label_path, 
+                    'w+', 
+                    **profile) as dst:
 
                 # ... and create one band in the label for each segmentation class.
-                for count, seg_class in enumerate(segmentation_classes,
-                                                  start=1):
+
+                # (if an implicit background band is to be included, it will go in band/channel 1.)
+                start_band = 1 if assoc._params_dict['add_background_band_in_labels'] == False else 2
+
+                for count, seg_class in enumerate(segmentation_classes, start=start_band):
 
                     # To do that, first find (the df of) the polygons intersecting the image ...
                     polygons_intersecting_img_df = assoc.polygons_df.loc[
                         assoc.polygons_intersecting_img(img_name)]
+
+                    # ... in the onehot case restrict to (the subdf of) polygons
+                    # with the given segmentation class.
+                    if mode == 'onehot':
+                        polygons_intersecting_img_df = polygons_intersecting_img_df.loc[
+                            polygons_intersecting_img_df['type'] == seg_class]
 
                     # Extract the polygon geometries of these polygons ...
                     polygon_geometries_in_std_crs = list(
@@ -111,8 +131,14 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
                             polygon_geometries_in_std_crs))
 
                     # Extract the class probabilities ...
-                    class_probabilities = list(polygons_intersecting_img_df[
-                        f"prob_seg_class_{seg_class}"])
+                    if mode == 'soft-categorical':
+                        class_probabilities = list(
+                                                    polygons_intersecting_img_df[
+                                                        f"prob_seg_class_{seg_class}"
+                                                    ]
+                                                  )
+                    elif mode == 'onehot':
+                        class_probabilities = [1.0] * len(polygon_geometries_in_src_crs)
 
                     # .. and combine with the polygon geometries
                     # to a list of (polygon, value) pairs.
@@ -139,19 +165,28 @@ def _make_geotif_label_soft_categorical(assoc: ImgPolygonAssociator,
                     dst.write(mask, count)
 
                 # If the background is not included in the segmentation classes ...
-                if assoc._params_dict['add_background_band_in_labels'] is True:
+                if assoc._params_dict['add_background_band_in_labels'] == True:
 
                     # ... add background band.
 
                     non_background_band_indices = list(
-                        range(1, 1 + len(segmentation_classes)))
+                        range(start_band, 2 + len(segmentation_classes)))
 
-                    # The probability of a pixel belonging to the
-                    # background is the complement of it belonging
-                    # to some segmentation class.
+                    # The probability of a pixel belonging to 
+                    # the background is the complement of it 
+                    # belonging to some segmentation class.
                     background_band = 1 - np.add.reduce([
                         dst.read(band_index)
                         for band_index in non_background_band_indices
                     ])
 
-                    dst.write(background_band, 1 + len(segmentation_classes))
+                    dst.write(background_band, 1)
+
+
+_make_geotif_label_soft_categorical = partial(
+                                        _make_geotif_label_soft_categorical_onehot, 
+                                        mode='soft-categorial')
+
+_make_geotif_label_onehot = partial(
+                                _make_geotif_label_soft_categorical_onehot, 
+                                mode='onehot')                
