@@ -52,6 +52,10 @@ def create_or_update_dataset_iter_over_polygons(
         for dir in target_assoc.image_data_dirs:
             dir.mkdir(parents=True, exist_ok=True)
 
+    # Remember information to determine for which images to generate new labels
+    imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
+    added_polygons = []  # updated as we iterate
+
     # dict to temporarily store information which will be appended to target_assoc's imgs_df after cutting
     new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [source_assoc.imgs_df.index.name] + list(source_assoc.imgs_df.columns)}
 
@@ -68,7 +72,10 @@ def create_or_update_dataset_iter_over_polygons(
                 new_imgs_dict=new_imgs_dict, 
                 source_assoc=source_assoc):
 
-            # ... then from the images in the source dataset that containing the polygon ...
+            # ... remember it ...
+            added_polygons += [polygon_name]
+
+            # ... and then from the images in the source dataset that containing the polygon ...
             potential_source_images = source_assoc.imgs_containing_polygon(polygon_name)
             # ... but from which an image for that polygon has not yet been cut ...
             potential_source_images = _filter_src_imgs_containing_polygon(
@@ -120,7 +127,16 @@ def create_or_update_dataset_iter_over_polygons(
     data_frames_list = [target_assoc.imgs_df, new_imgs_df]  
     target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
-    # Save associator to disk.
+    # For those images that existed before the update and now intersect with newly added polygons ...
+    imgs_w_new_polygons = [img_name for polygon_name in added_polygons for img_name in target_assoc.imgs_intersecting_polygon(polygon_name) if img_name in imgs_in_target_dataset_before_update]
+    # Delete the old labels (since they won't show the new polygons)...
+    for img_name in imgs_w_new_polygons: 
+        label_path = target_assoc.labels_dir / img_name
+        label_path.unlink(missing_ok=True)
+    # ... and generate new ones. 
+    target_assoc.make_missing_labels(img_names=imgs_w_new_polygons)
+
+    # Finally, save associator to disk.
     target_assoc.save()
 
     return target_assoc
