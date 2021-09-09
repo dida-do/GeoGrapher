@@ -43,7 +43,7 @@ class DownloadImgsMixIn(object):
             add_labels (bool, optional): bool. Whether to add labels for the downloaded images. Defaults to True.
             shuffle_polygons (bool): Whether to shuffle order of polygons for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
         Returns:
-            - None
+            None
 
         Warning:
             It's easy to come up with examples where the image count distribution (i.e. distribution of images per polygon) becomes unbalanced particularly if num_target_imgs_per_polygon is large. These scenarios are not necessarily very likely, but possible. As an example, if one wants to download say 5 images images for a polygon that is not fully contained in any image in the dataset and if there does not exist an image we can download that fully contains it but there are 20 disjoint sets of images we can download that jointly cover the polygon then these 20 disjoint sets will all be downloaded. 
