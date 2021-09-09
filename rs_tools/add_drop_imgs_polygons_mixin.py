@@ -22,7 +22,7 @@ class AddDropImgsPolygonsMixIn(object):
 
         Args:
             new_polygons_df (GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
-            recreate_labels (bool): Whether to generate new labels for images containing polygons that were added
+            generate_labels (bool): Whether to generate new labels for images containing polygons that were added
             force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
