@@ -47,9 +47,10 @@ def create_or_update_dataset_iter_over_polygons(
     except FileNotFoundError:
         target_assoc = source_assoc.empty_assoc_same_format(target_data_dir)
         target_assoc._cut_params_dict['cut_imgs'] = {}
-
-        for subdir in DATA_DIR_SUBDIRS:
-            (target_data_dir / subdir).mkdir(parents=True, exist_ok=True)
+            
+        # Create new target_data_dir and subdirectories if necessary.
+        for dir in target_assoc.image_data_dirs:
+            dir.mkdir(parents=True, exist_ok=True)
 
     # dict to temporarily store information which will be appended to target_assoc's imgs_df after cutting
     new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [source_assoc.imgs_df.index.name] + list(source_assoc.imgs_df.columns)}
