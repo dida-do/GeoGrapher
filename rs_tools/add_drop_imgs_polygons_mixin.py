@@ -84,7 +84,8 @@ class AddDropImgsPolygonsMixIn(object):
                 label_path = self.labels_dir / img_name
                 if label_path.suffix != '.tif':
                     raise ValueError(f"Can only generate labels for geotifs.")
-                label_path.unlink(missing_ok=True)
+                else:
+                    label_path.unlink(missing_ok=True)
             self.make_missing_labels(img_names=imgs_w_new_polygons)
 
 
