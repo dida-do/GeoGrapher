@@ -252,10 +252,10 @@ class DownloadImgsMixIn(object):
 
 
     def _download_imgs_for_polygon(self,
-            polygon_name: str,
-            polygon_geometry: Polygon,
-            download_dir: Union[str, Path],
-            previously_downloaded_imgs_set: Sequence[str],
+            polygon_name : str,
+            polygon_geometry : Polygon,
+            download_dir : Union[str, Path],
+            previously_downloaded_imgs_set : Sequence[str],
             **kwargs):
         """
         Not implemented, overwrite/implement in a subclass. Should download an image fully containing a vector polygon or several images jointly containing it and return a dict with information to be updated in the associator, see below for details.
@@ -275,10 +275,10 @@ class DownloadImgsMixIn(object):
     
 
     def _process_downloaded_img_file(self,
-            img_name: str,
-            in_dir: Union[str, Path],
-            out_dir: Union[str, Path],
-            convert_to_crs_epsg: int,
+            img_name : str,
+            in_dir : Union[str, Path],
+            out_dir : Union[str, Path],
+            convert_to_crs_epsg : int,
             **kwargs):
         """
         Not implemented, overwrite/implement in a subclass. Processes an image file downloaded by _download_imgs_for_polygon. Needs to return a dict with information to be updated in the associator, see below for details.
