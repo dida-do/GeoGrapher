@@ -19,14 +19,14 @@ def _make_geotif_label_soft_categorical_onehot(
         logger : Logger
         ) -> None:
     """
-    Create a soft-categorical (i.e. probabilistic) or onehot GeoTiff pixel label for
+    Create a soft-categorical or onehot GeoTiff pixel label for
     an image.
 
     A soft-categorical label is one for which there are channels for each segmentation class 
     and the value at a given position in a given channel is the probability that the pixel
     at that position is classified as belonging to the corresponding segmentation
     class. A onehot label is a soft-categorical one for which all probabilities are 0 or 1. 
-    Images are assumed to be in assoc.images_dir and will be created in assoc.labels_dir.
+    The images are assumed to be in assoc.images_dir and labels will be created in assoc.labels_dir.
 
     Args:
         onehot (str): One of 'soft-categorical' or 'onehot'

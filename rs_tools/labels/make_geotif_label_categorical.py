@@ -1,6 +1,6 @@
 """Label maker for categorical labels."""
 from __future__ import annotations
-import logging
+from logging import Logger
 from pathlib import Path
 import numpy as np
 import rasterio as rio
@@ -11,11 +11,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
-log = logging.getLogger(__name__)
 
-
-def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
-                                   img_name: str) -> None:
+def _make_geotif_label_categorical(
+        assoc : ImgPolygonAssociator,
+        img_name : str, 
+        logger : Logger
+        ) -> None:
     """Create a categorical GeoTiff pixel label for an image.
 
     Create a categorical GeoTiff pixel label (i.e. one channel images
@@ -28,19 +29,22 @@ def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
     Args:
         - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
         - img_name (str): Name of image for which a label should be created.
+        - logger (Logger): logger of calling associator
     Returns:
         - None:
     """
 
-    img_path = Path(assoc.data_dir) / Path("images") / Path(img_name)
+    img_path = assoc.images_dir / img_name
+    label_path = assoc.labels_dir / img_name
 
-    label_path = Path(assoc.data_dir) / Path("labels") / Path(img_name)
+    classes_to_ignore = {class_ for class_ in {assoc._params_dict['background_class']} if class_ is not None}
+    segmentation_classes = [class_ for class_ in assoc._params_dict['segmentation_classes'] if class_ not in classes_to_ignore]
 
     # If the image does not exist ...
     if not img_path.is_file():
 
         # ... log error to file.
-        log.error(
+        logger.error(
             f"_make_geotif_label_categorical: input image {img_path} does not exist!"
         )
 
@@ -48,7 +52,7 @@ def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
     elif label_path.is_file():
 
         # ... log error to file.
-        log.error(
+        logger.error(
             f"_make_geotif_label_categorical: label {label_path} already exists!"
         )
 
@@ -59,7 +63,12 @@ def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
         with rio.open(img_path) as src:
 
             profile = src.profile
-            profile.update({"count": 1, "dtype": rio.uint8})
+            profile.update(
+                {
+                    "count": 1, 
+                    "dtype": rio.uint8
+                }
+            )
 
             # ... open the label ...
             with rio.open(
@@ -74,8 +83,7 @@ def _make_geotif_label_categorical(assoc: ImgPolygonAssociator,
                 label = np.zeros((src.height, src.width), dtype=np.uint8)
 
                 # ... and fill in values for each segmentation class.
-                for count, seg_class in enumerate(
-                        assoc._params_dict['segmentation_classes'], start=1):
+                for count, seg_class in enumerate(segmentation_classes, start=1):
 
                     # To do that, first find (the df of) the polygons intersecting the image ...
                     polygons_intersecting_img_df = assoc.polygons_df.loc[
