@@ -58,7 +58,6 @@ class DownloadImgsMixIn(object):
             polygons_to_download = list(self.polygons_df.loc[self.polygons_df['img_count'] < target_img_count].index)
             target_img_counts = [target_img_count] * len(polygons_to_download)
 
-        # list of polygon names
         elif isinstance(polygon_names, list) and all(isinstance(element, str) for element in polygon_names):
 
             polygons_to_download = polygon_names
@@ -285,14 +284,13 @@ class DownloadImgsMixIn(object):
         Not implemented, overwrite/implement in a subclass. Processes an image file downloaded by _download_imgs_for_polygon. Needs to return a dict with information to be updated in the associator, see below for details.
         
             Args:
-                -img_name: the image name (index identifiying the corresponding row in imgs_df) 
-                -in_dir: the directory the image file was downloaded to
-                -out_dir: the directory the processed image file should be in (i.e. self.images_dir)
-                -convert_to_crs_epsg: EPSG code of the crs the image (if georeferenced, e.g. as a GeoTiff) 
-                    should be converted to.
-                -**kwargs: optional keyword arguments depending on the application
+                img_name: the image name (index identifiying the corresponding row in imgs_df) 
+                in_dir: the directory the image file was downloaded to
+                out_dir: the directory the processed image file should be in (i.e. self.images_dir)
+                convert_to_crs_epsg: EPSG code of the crs the image (if georeferenced, e.g. as a GeoTiff) should be converted to.
+                **kwargs: optional keyword arguments depending on the application
             Returns:
-                -img_info_dict: a dict containing the information to be updated in the imgs_df of the calling associator. The keys should be the index and column names of the imgs_df and the values lists of indices or entries of those columns.
+                img_info_dict: a dict containing the information to be updated in the imgs_df of the calling associator. The keys should be the index and column names of the imgs_df and the values lists of indices or entries of those columns.
         """
 
         raise NotImplementedError
