@@ -2,23 +2,20 @@
 ImgPolygonAssociator that can download Sentinel-2 images.
 """
 
-from typing import Union, List
+from typing import Union, List, Optional, Dict, Type, Sequence, Any
 import os
 from pathlib import Path
-import pathlib
 import logging
 from shapely import wkt
 from zipfile import ZipFile
 from sentinelsat import SentinelAPI
-import random
 from dotenv import load_dotenv
 from geopandas import GeoDataFrame, GeoSeries
 
-import rs_tools.img_polygon_associator as ipa 
-from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
+from img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
-
+from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
 
 
 MAX_PERCENT_CLOUD_COVERAGE=10
@@ -34,7 +31,7 @@ LABEL_TYPE = 'categorical'
 log = logging.getLogger(__name__)
 
 
-class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
+class ImgPolygonAssociatorS2(ImgPolygonAssociator):
     """
     ImgPolygonAssociator for Sentinel-2 images.
 
@@ -44,18 +41,15 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
     def __init__(self, 
 
         # args w/o default values
-        data_dir : Union[Path, str], 
         segmentation_classes : Sequence[str], 
-        label_type: str,
-
+        label_type : str,
+        
         # polygons_df args. Exactly one value needs to be set (i.e. not None).
         polygons_df : Optional[GeoDataFrame] = None,
-        polygons_df_geojson_path : Optional[Union[Path, str]] = None, 
         polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
         
         # imgs_df args. Exactly one value needs to be set (i.e. not None).
         imgs_df : Optional[GeoDataFrame] = None, 
-        imgs_df_geojson_path : Optional[Union[Path, str]] = None, 
         imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
         
         # remaining non-path args w/ default values
@@ -65,16 +59,16 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         resolution : int = RESOLUTION,
         max_percent_cloud_coverage : int = MAX_PERCENT_CLOUD_COVERAGE,
 
-        # path args w/ default values
-        images_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "images"
-        labels_dir : Optional[Union[Path, str]] = None, # will default to data_dir / "labels"
-
+        # path args
+        data_dir : Optional[Union[Path, str]] = None, # either this arg or all the path args below must be set (i.e. not None)
+        images_dir : Optional[Union[Path, str]] = None, 
+        labels_dir : Optional[Union[Path, str]] = None, 
+        assoc_dir : Optional[Union[Path, str]] = None, 
+        download_dir : Optional[Union[Path, str]] = None, 
+        
         # optional kwargs
         **kwargs : Any
-        ):
-
-        super().__init__()
-            
+        ):            
         """
         See the docstring for the parent class __init__ for description of the arguments not mentioned here. 
 
@@ -89,18 +83,19 @@ class ImgPolygonAssociatorS2(ipa.ImgPolygonAssociator):
         """
 
         super().__init__(
-            data_dir=data_dir, 
             segmentation_classes=segmentation_classes, 
+            label_type=label_type, 
             polygons_df=polygons_df, 
-            polygons_df_geojson_path=polygons_df_geojson_path, 
             polygons_df_cols=polygons_df_cols, 
             imgs_df=imgs_df, 
-            imgs_df_geojson_path=imgs_df_geojson_path, 
-            imgs_df_cols=imgs_cols, 
+            imgs_df_cols=imgs_df_cols, 
             add_background_band_in_labels=add_background_band_in_labels, 
             crs_epsg_code=crs_epsg_code, 
+            data_dir=data_dir, 
             images_dir=images_dir, 
             labels_dir=labels_dir, 
+            assoc_dir=assoc_dir, 
+            download_dir=download_dir,
             producttype=producttype,
             resolution=resolution,
             max_percent_cloud_coverage=max_percent_cloud_coverage, 
