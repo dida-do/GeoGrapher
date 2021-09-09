@@ -97,7 +97,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
         ):
         """
 
-        Either all three of the images_dir, labels_dir, assoc_dir args or the data_dir should be given (i.e. not None). 
+        Either all four of the images_dir, labels_dir, assoc_dir, and download_dir args or the data_dir arg should be given (i.e. not None). 
 
         Args:
 
