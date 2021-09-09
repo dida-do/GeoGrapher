@@ -89,7 +89,7 @@ class AddDropImgsPolygonsMixIn(object):
             self.make_missing_labels(img_names=imgs_w_new_polygons)
 
 
-    def add_to_imgs_df(self, new_imgs_df: GeoDataFrame):
+    def add_to_imgs_df(self, new_imgs_df : GeoDataFrame):
         """
         Add image data in new_imgs_df to the associator keeping track of which polygons are contained in which images.
 
@@ -133,7 +133,7 @@ class AddDropImgsPolygonsMixIn(object):
         self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
 
-    def drop_polygons(self, polygon_names: Sequence[str]):
+    def drop_polygons(self, polygon_names : Sequence[str]):
         """
         Drop polygons from associator (i.e. remove rows from the associator's polygons_df)
 
@@ -155,8 +155,8 @@ class AddDropImgsPolygonsMixIn(object):
 
 
     def drop_imgs(self, 
-        img_names: Sequence[str], 
-        remove_imgs_from_disk: bool=True):
+        img_names : Sequence[str], 
+        remove_imgs_from_disk : bool=True):
         """
         Drop images from associator and dataset, i.e. remove rows from the associator's imgs_df, delete the corresponding vertices in the graph, and delete the image from disk (unless remove_imgs_from_disk is set to False).
 
