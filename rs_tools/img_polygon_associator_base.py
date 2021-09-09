@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 
 
 class ImgPolygonAssociatorBase(object):
+    """Mix-in that implements the public and private interface to the internal bipartite graph."""
 
     def have_img_for_polygon(self, polygon_name: str) -> bool:
         """
