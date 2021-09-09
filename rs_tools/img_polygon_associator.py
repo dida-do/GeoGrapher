@@ -189,7 +189,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             polygons_df=polygons_df, 
             imgs_df=imgs_df)
 
-        # (attribute names of) all directories containing image data
+        # directories containing image data
         self._image_data_dirs = [self.images_dir, self.labels_dir] # in subclass implementation, can add e.g. mask_dir
 
 
