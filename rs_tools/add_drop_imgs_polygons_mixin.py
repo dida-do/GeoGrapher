@@ -15,14 +15,14 @@ class AddDropImgsPolygonsMixIn(object):
 
     def add_to_polygons_df(self, 
             new_polygons_df : GeoDataFrame, 
-            recreate_labels : bool=False, 
+            generate_labels : bool=False, 
             force_overwrite : bool=False):
         """
         Add (or overwrite) polygons in new_polygons_df to the associator (i.e. append to the associator's polygons_df) keeping track of which polygons are contained in which images.
 
         Args:
             new_polygons_df (GeoDataFrame): GeoDataFrame of polygons conforming to the associator's polygons_df format
-            recreate_labels (bool): Whether to recreate labels for images containing polygons that were added
+            recreate_labels (bool): Whether to generate new labels for images containing polygons that were added
             force_overwrite (bool): whether to overwrite existing rows for polygons, default is False
         """        
 
@@ -78,7 +78,7 @@ class AddDropImgsPolygonsMixIn(object):
         data_frames_list = [self.polygons_df, new_polygons_df]
         self.polygons_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
-        if recreate_labels == True:
+        if generate_labels == True:
             imgs_w_new_polygons = [img_name for polygon_name in new_polygons_df.index for img_name in self.imgs_intersecting_polygon(polygon_name)]
             for img_name in imgs_w_new_polygons:
                 label_path = self.labels_dir / img_name
