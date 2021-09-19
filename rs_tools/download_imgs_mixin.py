@@ -26,7 +26,7 @@ class DownloadImgsMixIn(object):
     """
 
     def download_imgs(self, 
-            polygon_names : Optional[List[str]]=None,
+            polygon_names : Optional[Union[str, List[str]]]=None,
             target_img_count : int=1,
             add_labels : bool=True,
             shuffle_polygons : bool=True,
@@ -37,7 +37,7 @@ class DownloadImgsMixIn(object):
         Sequentially considers the polygons for which the image count (number of images fully containing a given polygon) is less than num_target_imgs_per_polygon images in the associator's internal polygons_df or the optional polygons_df argument (if given), for each such polygon attempts to download num_target_imgs_per_polygon - image_count images fully containing the polygon (or several images jointly containing the polygon), creates the associated label(s) for the image(s) (assuming the default value True of add_labels is not changed), and integrates the new image(s) into the dataset/associator. Integrates images downloaded for a polygon into the dataset/associator immediately after downloading them and before downloading images for the next polygon. In particular, the image count is updated immediately after each download. 
 
         Args:
-            polygon_names (List[str], optional): Optional list of polygons to download images for. Defaults to None, i.e. consider all polygons in self.polygons_df.
+            polygon_names (List[str], optional): Optional polygon_name or list of polygon_names to download images for. Defaults to None, i.e. consider all polygons in self.polygons_df.
             target_img_count (int): target for number of images per polygon in the dataset after downloading. The actual number of images for each polygon P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_polygon images for P P is also contained in images downloaded for other polygons. 
             polygons_df (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. self.polygons_df). If provided and not equal to self.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded. 
             add_labels (bool, optional): bool. Whether to add labels for the downloaded images. Defaults to True.
@@ -57,15 +57,20 @@ class DownloadImgsMixIn(object):
 
             polygons_to_download = list(self.polygons_df.loc[self.polygons_df['img_count'] < target_img_count].index)
 
-        elif isinstance(polygon_names, list) and all(isinstance(element, str) for element in polygon_names):
+        else:
+            if isinstance(polygon_names, str):
 
-            polygons_to_download = polygon_names
+                polygons_to_download = [polygon_names]
+
+            elif isinstance(polygon_names, list) and all(isinstance(element, str) for element in polygon_names):
+
+                polygons_to_download = polygon_names
+
+            else:
+                raise TypeError(f"The polygon_names argument should be a list of polygon names (i.e. strings).")
 
             if not set(polygon_names) <= set(self.polygons_df.index):
                 raise ValueError(f"Polygons {set(polygon_names) - set(self.polygons_df.index)} missing from self.polygons_df")
-
-        else:
-            raise TypeError(f"The polygon_names argument should be a list of polygon names (i.e. strings).")
     
         if shuffle_polygons == True:
             random.shuffle(polygons_to_download)
@@ -83,7 +88,7 @@ class DownloadImgsMixIn(object):
             polygon_geometry = self.polygons_df.loc[polygon_name, 'geometry'] 
 
             log.debug(f"download_missing_imgs_for_polygons_df: considering polygon {polygon_name}.")
-            log.info(f"Polygon {count}/{len(polygon_names)}")
+            log.info(f"Polygon {count}/{len(polygons_to_download)}")
 
             # Since we process and connect each image after downloading it, we might not need to download 
             # an image for a polygon that earlier was lacking an image if it is now contained in one of the already downloaded images, so need to check again that there are not enough images for the polygon (since the iterator above is set when it is called and won't know if the "img_count" column value has been changed in the meanwhile).
@@ -241,6 +246,10 @@ class DownloadImgsMixIn(object):
         # ... and append it to self.imgs_df:
         data_frames_list = [self.imgs_df, new_imgs_df]  
         self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+
+        # Save the changes if any have been made.
+        if len(new_imgs_df) > 0:
+            self.save()
 
 
     def _download_imgs_for_polygon(self,
