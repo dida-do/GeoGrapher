@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 
 LABEL_MAKERS = {
-    'soft-categorial' : _make_geotif_label_soft_categorical, 
+    'soft-categorical' : _make_geotif_label_soft_categorical, 
     'categorical' : _make_geotif_label_categorical, 
     'onehot' : _make_geotif_label_onehot
 }
@@ -42,7 +42,7 @@ class LabelsMixIn(object):
         if img_names is None:  # Find images without labels
             existing_labels = {img_path.name for img_path in self.labels_dir.iterdir() if img_path.is_file()}
             img_names = existing_images - existing_labels
-        elif not img_names <= existing_images:
+        elif not set(img_names) <= existing_images:
             raise FileNotFoundError(f"Can't make labels for missing images: {existing_images - img_names}")
 
         try:
@@ -52,7 +52,10 @@ class LabelsMixIn(object):
             raise e
 
         for img_name in tqdm(img_names):
-            label_maker(self, img_name, log)
+            label_maker(
+                assoc=self,
+                img_name=img_name, 
+                logger=log)
 
 
     def _check_label_type(self, label_type : str):
@@ -61,7 +64,7 @@ class LabelsMixIn(object):
             raise ValueError(f"Unknown label_type: {label_type}")
 
 
-    def _get_label_maker(label_type : str) -> Callable:
+    def _get_label_maker(self, label_type : str) -> Callable:
         """Return label maker for label_type"""
         return LABEL_MAKERS[label_type]
 
