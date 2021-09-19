@@ -27,6 +27,7 @@ class AddDropImgsPolygonsMixIn(object):
         """        
 
         new_polygons_df = deepcopy_gdf(new_polygons_df) #  don't modify argument
+        new_polygons_df['img_count'] = 0
 
         self._standardize_df_crs(
             df=new_polygons_df, 
@@ -38,8 +39,6 @@ class AddDropImgsPolygonsMixIn(object):
             self_df=self.polygons_df, 
             self_df_name='self.polygons_df' 
         )
-
-        new_polygons_df['img_count'] = 0
 
         # For each new polygon...
         for polygon_name in new_polygons_df.index:
