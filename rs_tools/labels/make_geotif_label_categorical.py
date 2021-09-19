@@ -82,7 +82,9 @@ def _make_geotif_label_categorical(
                 # ... create an empty band of zeros (background class) ...
                 label = np.zeros((src.height, src.width), dtype=np.uint8)
 
-                # ... and fill in values for each segmentation class.
+                # and build up the shapes to be burnt in 
+                shapes = [] # pairs of polygons and values to burn in 
+
                 for count, seg_class in enumerate(segmentation_classes, start=1):
 
                     # To do that, first find (the df of) the polygons intersecting the image ...
@@ -106,18 +108,22 @@ def _make_geotif_label_categorical(
                                 src.crs.to_epsg()),
                             polygon_geometries_in_std_crs))
 
-                    # Burn the polygon geometries into the label.
-                    if len(polygon_geometries_in_src_crs) != 0:
-                        rio.features.rasterize(
-                            shapes=polygon_geometries_in_src_crs,
-                            out_shape=(src.height,
-                                       src.width),  # or the other way around?
-                            fill=0,
-                            merge_alg=rio.enums.MergeAlg.add,  # important!
-                            out=label,
-                            transform=src.transform,
-                            default_value=count,  # value to add for polygon
-                            dtype=rio.uint8)
+                    shapes_for_seg_class = [(polygon_geom, count) for polygon_geom in polygon_geometries_in_src_crs]
+
+                    shapes += shapes_for_seg_class
+
+                # Burn the polygon geometries into the label.
+                if len(shapes) != 0:
+                    rio.features.rasterize(
+                        shapes=shapes, 
+                        out_shape=
+                            (src.height,
+                            src.width),  # or the other way around?
+                        fill=0,
+                        merge_alg=rio.enums.MergeAlg.replace, 
+                        out=label,
+                        transform=src.transform,
+                        dtype=rio.uint8)
 
                 # Write label to file.
                 dst.write(label, 1)
