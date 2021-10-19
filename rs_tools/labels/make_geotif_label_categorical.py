@@ -37,8 +37,8 @@ def _make_geotif_label_categorical(
     img_path = assoc.images_dir / img_name
     label_path = assoc.labels_dir / img_name
 
-    classes_to_ignore = {class_ for class_ in {assoc._params_dict['background_class']} if class_ is not None}
-    segmentation_classes = [class_ for class_ in assoc._params_dict['segmentation_classes'] if class_ not in classes_to_ignore]
+    classes_to_ignore = {class_ for class_ in {assoc.background_class} if class_ is not None}
+    segmentation_classes = [class_ for class_ in assoc.segmentation_classes if class_ not in classes_to_ignore]
 
     # If the image does not exist ...
     if not img_path.is_file():

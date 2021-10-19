@@ -30,6 +30,9 @@ class LabelsMixIn(object):
         Args:
             img_names (List[str], optional): list of image names to create labels. Defaults to None (i.e. all images without a label).
         """
+        
+        # safety checks
+        self._check_classes_in_polygons_df_contained_in_all_classes()
         self._compare_existing_imgs_to_imgs_df()
 
         log.info("\nCreating missing labels.\n")
