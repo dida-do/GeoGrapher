@@ -14,26 +14,52 @@ from pathlib import Path
 import geopandas as gpd
 from geopandas import GeoDataFrame
 
-from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
-from rs_tools.labels_mixin import LabelsMixIn
-from rs_tools.download_imgs_mixin import DownloadImgsMixIn
-from rs_tools.img_polygon_associator_base import ImgPolygonAssociatorBase
 from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE, DATA_DIR_SUBDIRS, IMGS_DF_INDEX_NAME, POLYGONS_DF_INDEX_NAME
 from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.associator_utils import empty_gdf, empty_gdf_same_format_as, empty_graph
+# Base class:
+from rs_tools.img_polygon_associator_base import ImgPolygonAssociatorBase
+# Mix-in classes:
+from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
+from rs_tools.labels_mixin import LabelsMixIn
+from rs_tools.download_imgs_mixin import DownloadImgsMixIn
+
+#from rs_tools.misc_shared_private_methods_mixin import MiscSharedPrivateMethodsMixIn
+
+#from rs_tools.create_new_dataset_by_cutting_every_img_to_grid_of_imgs_mixin import CreateNewDatasetByCuttingEveryImgToGridOfImgsMixIn
+#from rs_tools.create_new_dataset_by_cuttings_imgs_around_every_polygon_mixin import CreateNewDatasetByCuttingImgsAroundEveryPolygonMixIn
+#from rs_tools.create_new_dataset_with_label_type_mixin import CreateNewDatasetWithNewLabelTypeMixIn
+#from rs_tools.convert_tif_to_npy_mixin import CreateNewDatasetOfNpysFromDatsetOfTifsMixIn
+#from rs_tools.create_new_dataset_by_combining_and_or_removing_seg_classes_mixin import CreateNewDatasetCombiningRemovingSegClassesMixIn
+#from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDatasetMixIn
+#from rs_tools.cut.cut_every_img_to_grid import update_dataset_every_img_to_grid
+#from rs_tools.cut.cut_imgs_around_every_polygon import update_dataset_imgs_around_every_polygon
+#from rs_tools.convert_dataset.soft_to_categorical import update_dataset_soft_categorical_to_categorical
+#from rs_tools.convert_dataset.convert_or_update_dataset_from_tif_to_npy import update_dataset_converted_from_tif_to_npy
+
+
+
 
 INFERRED_PATH_ATTR_FILENAMES = { # attribute self.key will be self._json_path / val
     '_polygons_df_path' : 'polygons_df.geojson',
     '_imgs_df_path' : 'imgs_df.geojson',
     '_params_dict_path' : 'params_dict.json',
     '_graph_path' : "graph.json", 
-    '_cut_params_path' : 'cut_params.json', 
+    '_update_from_source_dataset_dict_path' : 'update_from_source_dataset_dict.json', 
 }
 DEFAULT_ASSOC_DIR_NAME = 'associator' 
 DEFAULT_IMAGES_DIR_NAME = 'images'
 DEFAULT_LABELS_DIR_NAME = 'labels'
 DEFAULT_DOWNLOAD_DIR_NAME = 'downloads'
-
+NON_SEGMENTATION_POLYGON_CLASSES = ['background_class'] # polygon types that are not segmentation classes (e.g. polygons that define background regions or masks)
+"""
+UPDATE_METHODS = {
+    'update_dataset_every_img_to_grid' : update_dataset_every_img_to_grid, 
+    'update_dataset_imgs_around_every_polygon' : update_dataset_imgs_around_every_polygon, 
+    'update_dataset_soft_categorical_to_categorical' : update_dataset_soft_categorical_to_categorical, 
+    'update_dataset_converted_from_tif_to_npy' : update_dataset_converted_from_tif_to_npy    
+}
+"""
 
 IPAType = TypeVar('IPAType', bound='ImgPolygonAssociator')
 
@@ -45,7 +71,18 @@ log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 
 
-class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMixIn, ImgPolygonAssociatorBase):
+class ImgPolygonAssociator(
+        AddDropImgsPolygonsMixIn, 
+        DownloadImgsMixIn, 
+        LabelsMixIn, 
+        #MiscSharedPrivateMethodsMixIn, 
+        #CreateNewDatasetByCuttingEveryImgToGridOfImgsMixIn, 
+        #CreateNewDatasetByCuttingImgsAroundEveryPolygonMixIn, 
+        #CreateNewDatasetWithNewLabelTypeMixIn, 
+        #CreateNewDatasetOfNpysFromDatsetOfTifsMixIn, 
+        #CreateNewDatasetCombiningRemovingSegClassesMixIn,
+        #UpdateFromSourceDatasetMixIn,
+        ImgPolygonAssociatorBase):
     """
     Organize and handle remote sensing datasets consisting of shapely polygons and images/labels.
 
@@ -72,6 +109,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
         # args w/o default values
         segmentation_classes : Sequence[str], 
         label_type : str,
+        background_class : Optional[str], 
         
         # polygons_df args. Exactly one value needs to be set (i.e. not None).
         polygons_df : Optional[GeoDataFrame] = None,
@@ -119,6 +157,12 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
 
         super().__init__()
         
+        self._check_no_non_segmentation_polygon_classes_are_segmentation_classes(
+            segmentation_classes=segmentation_classes, 
+            background_class=background_class, 
+            **kwargs
+        )
+
         self._check_dir_args(
             data_dir=data_dir,
             images_dir=images_dir, 
@@ -132,7 +176,8 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             data_dir=data_dir, 
             images_dir=images_dir, 
             labels_dir=labels_dir, 
-            assoc_dir=assoc_dir
+            assoc_dir=assoc_dir, 
+            download_dir=download_dir
         )
 
         # Check path args for consistency and see if we're loading the associator from disk or not
@@ -148,6 +193,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             {
                 "segmentation_classes" : segmentation_classes, 
                 "label_type" : label_type, 
+                "background_class" : background_class,
                 "add_background_band_in_labels" : add_background_band_in_labels, 
                 "crs_epsg_code" : crs_epsg_code, 
                 **kwargs
@@ -183,19 +229,24 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             mode='imgs_df',
             df=imgs_df)
 
-        # set self.polygons_df, self.imgs_df, self._cut_params_dict
+        # set self.polygons_df, self.imgs_df, self._update_from_source_dataset_dict
         self._set_remaining_assoc_components(
             load_from_disk=load_from_disk, 
             polygons_df=polygons_df, 
             imgs_df=imgs_df)
+
+        # safety check
+        self._check_classes_in_polygons_df_contained_in_all_classes()
 
         # directories containing image data
         self._image_data_dirs = [self.images_dir, self.labels_dir] # in subclass implementation, can add e.g. mask_dir
 
 
     def __getattr__(self,  key):
-        if key in self.__dict__._params_dict:
-            return self.__dict__._params_dict[key]
+        if key in self.__dict__['_params_dict']:
+            return self.__dict__['_params_dict'][key]
+        else:
+            raise AttributeError(f"No such attribute: {key}")
 
 
     @classmethod
@@ -333,7 +384,7 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             if old_label_type == 'soft-categorical' and new_label_type == 'categorical': 
                 self.polygons_df = convert_polygons_df_soft_cat_to_cat(self.polygons_df)
             elif old_label_type == 'categorical' and new_label_type == 'soft-categorical': 
-                needed_cols = {f"prob_seg_class_{class_}" for class_ in self.all_classes}
+                needed_cols = {f"prob_seg_class_{class_}" for class_ in self.all_polygon_classes}
                 existing_cols = set(self.polygons_df.columns)
                 if not needed_cols <= existing_cols:
                     message = f"Can't convert to soft-categorical label_type: Missing columns {existing_cols - needed_cols}"
@@ -346,12 +397,19 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
 
             log.warning(f"label_type has been changed to {new_label_type}. You might want to delete the old labels and create new ones!")
             self._params_dict['label_type'] = new_label_type
-    
+
 
     @property
-    def all_classes(self):
+    def all_polygon_classes(self):
         """Should include not just the segmentation classes but also e.g. mask or background classes."""
-        return self.segmentation_classes + [self.background_class]
+        
+        answer = self.segmentation_classes.copy()
+        for class_name in NON_SEGMENTATION_POLYGON_CLASSES:
+            class_value = getattr(self, class_name)
+            if class_value is not None:
+                answer += [class_value]
+
+        return answer
 
 
     @property
@@ -378,19 +436,21 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             json.dump(
                 save_params_dict, 
                 write_file)
-        # Save cut params dict
-        with open(self._cut_params_path, "w") as write_file:
-            save_cut_params_dict = self._make_dict_json_serializable(self._cut_params_dict)
+        # Save update_from_source_dict
+        with open(self._update_from_source_dataset_dict_path, "w") as write_file:
+            save_update_dict = self._make_dict_json_serializable(self._update_from_source_dataset_dict)
             json.dump(
-                save_cut_params_dict,
+                save_update_dict,
                 write_file)
 
 
     def empty_assoc_same_format_as(self, 
-            data_dir : Optional[Union[Path, str]] = None, 
+            data_dir : Optional[Union[Path, str]] = None, # either this arg or all four path args below must be set
             assoc_dir : Optional[Union[Path, str]] = None, 
             images_dir : Optional[Union[Path, str]] = None, 
-            labels_dir : Optional[Union[Path, str]] = None, # either all three above path args must be set or this one
+            labels_dir : Optional[Union[Path, str]] = None,
+            download_dir : Optional[Union[Path, str]] = None, 
+            copy_update_from_source_dataset_dict : bool = False 
             ) -> ImgPolygonAssociator:
         """
         Factory method that returns an empty associator of the same format (i.e. columns in polygons_df and imgs_df) as self with data_dir target_data_dir.
@@ -400,6 +460,8 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             images_dir (Optional[Union[Path, str]], optional): path to directory containing images. 
             labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels. 
             assoc_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json associator component files.
+            download_dir (Optional[Union[Path, str]], optional): path to download directory.
+            copy_update_from_source_dataset_dict (bool): Whether to copy self._update_from_source_dataset_dict. Defaults to False
             
         Returns: 
             new empty associator
@@ -409,7 +471,8 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             data_dir=data_dir, 
             assoc_dir=assoc_dir, 
             images_dir=images_dir, 
-            labels_dir=labels_dir
+            labels_dir=labels_dir, 
+            download_dir=download_dir
         )
 
         if data_dir is not None:
@@ -432,6 +495,9 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
 
                                 # remaining kwargs 
                                 **self._params_dict)
+
+        if copy_update_from_source_dataset_dict:
+            new_empty_assoc._update_from_source_dataset_dict = self._update_from_source_dataset_dict
 
         return new_empty_assoc
     
@@ -497,23 +563,23 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
             self.add_to_imgs_df(imgs_df)
 
         # Set cut_params_dict 
-        cut_params_path = self._cut_params_path
+        cut_params_path = self._update_from_source_dataset_dict_path
         if cut_params_path is None:
-            self._cut_params_dict = {}
+            self._update_from_source_dataset_dict = {}
         else:
             # read cut_params_dict from disk            
             try:
                 with open(cut_params_path, "r") as read_file:
-                    self._cut_params_dict = json.load(read_file)
+                    self._update_from_source_dataset_dict = json.load(read_file)
             except FileNotFoundError:
                 log.info(f"No cut_params.json file in {cut_params_path.parent} found!")
-                self._cut_params_dict = {}
+                self._update_from_source_dataset_dict = {}
             except JSONDecodeError:
                 log.exception(f"JSON file in {cut_params_path} corrupted!")
-                self._cut_params_dict = {}
+                self._update_from_source_dataset_dict = {}
             except:
                 log.exception("An exception occured while reading the cut_params.json file in {cut_params_path.parent}.")
-                self._cut_params_dict = {}
+                self._update_from_source_dataset_dict = {}
         
 
     def _check_and_adjust_df_format(self, 
@@ -677,6 +743,56 @@ class ImgPolygonAssociator(AddDropImgsPolygonsMixIn, LabelsMixIn, DownloadImgsMi
         serializable_dict = {key : make_val_serializable(val) for key, val in input_dict.items()}
         
         return serializable_dict
+
+    @staticmethod
+    def _check_no_non_segmentation_polygon_classes_are_segmentation_classes(
+            segmentation_classes : List[str], 
+            background_class : str, 
+            **kwargs):
+        """
+        TODO 
+
+        Args:
+            segmentation_classes (List[str]): [description]
+            background_class (str): [description]
+        """
+
+        if not len(segmentation_classes) == len(set(segmentation_classes)):
+            raise ValueError("segmentation_classes list contains duplicates.")
+
+        non_segmentation_classes = {'background_class': background_class}
+        for key, val in kwargs.items():
+            if key in NON_SEGMENTATION_POLYGON_CLASSES and val is not None and val not in non_segmentation_classes:
+                non_segmentation_classes[key] = val
+
+        if not set(non_segmentation_classes.values()) & set(segmentation_classes) == set():
+            bad_values = {class_name: value for class_name, value in non_segmentation_classes.items() if value in set(segmentation_classes)}
+            raise ValueError(f"No non-segmentation polygon classes should be segmentation classes, but the following are: {bad_values}")
+        
+
+    def _check_classes_in_polygons_df_contained_in_all_classes(self, 
+            polygons_df : Optional[GeoDataFrame] = None, 
+            polygons_df_name : Optional[str] = None):
+        """Check TODO"""
+        
+        if polygons_df is None:
+            polygons_df = self.polygons_df
+            polygons_df_name = 'self.polygons_df'
+        elif polygons_df_name is None:
+            ValueError(f"If the polygons_df argument is given, so should the polygons_df_name.")
+
+        if self.label_type in {'categorical', 'onehot'}:
+            polygon_classes_in_polygons_df = set(polygons_df['type'].unique())
+        elif self.label_type == 'soft-categorical':
+            polygon_classes_in_polygons_df = {col_name[15:] for col_name in polygons_df.columns if col_name.startswith('prob_seg_class_')}
+        else:
+            raise Exception(f"Unknown label_type: {self.label_type}")
+
+        if not polygon_classes_in_polygons_df <= set(self.all_polygon_classes):
+            raise ValueError(f"Unrecognized polygon classes in {polygons_df_name}: {polygon_classes_in_polygons_df}")
+
+
+
         
 
 
