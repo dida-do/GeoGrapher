@@ -39,13 +39,13 @@ def _make_geotif_label_soft_categorical_onehot(
     """
 
     if mode not in {'soft-categorical', 'onehot'}:
-        raise ValueError('Unknown mode: {mode}')
+        raise ValueError(f'Unknown mode: {mode}')
 
     img_path = assoc.images_dir / img_name
     label_path = assoc.labels_dir / img_name
 
-    classes_to_ignore = {class_ for class_ in {assoc._params_dict['background_class']} if class_ is not None}
-    segmentation_classes = [class_ for class_ in assoc._params_dict['segmentation_classes'] if class_ not in classes_to_ignore]
+    classes_to_ignore = {class_ for class_ in {assoc.background_class} if class_ is not None}
+    segmentation_classes = [class_ for class_ in assoc.segmentation_classes if class_ not in classes_to_ignore]
 
     # If the image does not exist ...
     if not img_path.is_file():
@@ -185,7 +185,7 @@ def _make_geotif_label_soft_categorical_onehot(
 
 _make_geotif_label_soft_categorical = partial(
                                         _make_geotif_label_soft_categorical_onehot, 
-                                        mode='soft-categorial')
+                                        mode='soft-categorical')
 
 _make_geotif_label_onehot = partial(
                                 _make_geotif_label_soft_categorical_onehot, 
