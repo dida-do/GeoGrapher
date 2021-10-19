@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 def cut_dataset_imgs_around_every_polygon(
-        source_data_dir : Union[str, Path], 
         target_data_dir : Union[str, Path], 
+        source_data_dir : Optional[Union[str, Path]] = None, 
+        source_assoc : Optional[ImgPolygonAssociator] = None, 
         new_img_size : Optional[ImgSize] = 512, 
         min_new_img_size : Optional[ImgSize] = 64, 
         scaling_factor : Union[None, float] = 1.2,
@@ -34,12 +35,15 @@ def cut_dataset_imgs_around_every_polygon(
     """
     Create a dataset of GeoTiffs so that it contains (if possible) for each polygon in the target (or source) dataset a number target_img_count of images cut from images in the source dataset. 
     
+    Exactly one of source_data_dir or source_assoc should be set (i.e. not None).
+
     Note:
         If a polygon is too large to be contained in a single target image grids of images (with the property that the images in each grid should jointly contain the polygon and such that the grid is the minimal grid satisfying this property) will be cut from the target dataset.  
     
     Args:
-        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
+        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+        source_assoc (TODO): TODO
         mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to 'random'.
         new_img_size (Optional[ImgSize]): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
         min_new_img_size (Optional[ImgSize]): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
@@ -56,8 +60,15 @@ def cut_dataset_imgs_around_every_polygon(
         Currently only works if the source associator component files are in the standard locations determined by the source_data_dir arg. 
     """
 
+    if not ((source_data_dir is not None) ^ (source_assoc is not None)):
+        raise ValueError(f"Exactly one of the source_data_dir or source_assoc arguments needs to be set (i.e. not None).")
+
+    if source_assoc is None:
+        source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+
     return _create_or_update_dataset_imgs_around_every_polygon(
-                source_data_dir=source_data_dir,
+                create_or_update='create', 
+                source_assoc=source_assoc, 
                 target_data_dir=target_data_dir,
                 new_img_size=new_img_size,
                 min_new_img_size=min_new_img_size,
@@ -70,7 +81,8 @@ def cut_dataset_imgs_around_every_polygon(
                 
 
 def update_dataset_imgs_around_every_polygon(
-        data_dir : Union[str, Path]
+        data_dir : Optional[Union[str, Path]] = None, 
+        assoc : Optional[ImgPolygonAssociator] = None, 
         ) -> ImgPolygonAssociator:
     
     """
@@ -78,8 +90,11 @@ def update_dataset_imgs_around_every_polygon(
     
     Adds polygons from source_data_dir not contained in data_dir to data_dir and then iterates over all polygons in data_dir that do not have an image and creates a cutout from source_data_dir for them if one exists. 
 
+    Either the data_dir or the assoc argument should be given (i.e. not None). 
+
     Args:
-        data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. This is the only argument needed. 
+        data_dir (Union[str, Path], optional): data directory to be updated. 
+        assoc (ImgPolygonAssociator, optional): associator of dataset to be updated. 
         
     Returns:
         ImgPolygonAssociator: associator of updated dataset
@@ -94,6 +109,9 @@ def update_dataset_imgs_around_every_polygon(
         Make sure this does exactly what you want when updating an existing data_dir. If in doubt it might be easier or safer to just recut the source_data_dir. 
     """
 
+    if not ((data_dir is not None) ^ (assoc is not None)):
+        raise ValueError(f"Exactly one of the data_dir or assoc arguments should be set (i.e. not None).")
+
     required_cut_params = {
         'mode', 
         'source_data_dir', 
@@ -106,26 +124,34 @@ def update_dataset_imgs_around_every_polygon(
         'random_seed' 
     }
 
-    assoc = ImgPolygonAssociator.from_data_dir(data_dir)
-    if not required_cut_params <= set(assoc._cut_params_dict.keys()):
-        raise KeyError(f"The associator in {data_dir} is missing the following cut params: {set(assoc._cut_params_dict.keys()) - required_cut_params}")
+    if assoc is None:    
+        assoc = ImgPolygonAssociator.from_data_dir(data_dir)
+
+    if not required_cut_params <= set(assoc._update_from_source_dataset_dict.keys()):
+        raise KeyError(f"The associator in {data_dir} is missing the following cut params: {set(assoc._update_from_source_dataset_dict.keys()) - required_cut_params}")
+
+    source_data_dir = assoc._update_from_source_dataset_dict['source_data_dir']
+    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
 
     return _create_or_update_dataset_imgs_around_every_polygon(
-        source_data_dir=assoc._cut_params_dict['source_data_dir'], 
-        target_data_dir=data_dir, 
-        new_img_size=assoc._cut_params_dict['new_img_size'],
-        min_new_img_size=assoc._cut_params_dict['min_new_img_size'], 
-        scaling_factor=assoc._cut_params_dict['scaling_factor'], 
-        target_img_count=assoc._cut_params_dict['target_img_count'],
-        img_bands=assoc._cut_params_dict['img_bands'], 
-        label_bands=assoc._cut_params_dict['label_bands'], 
-        mode=assoc._cut_params_dict['mode']
+        create_or_update='update', 
+        source_assoc=source_assoc, 
+        target_assoc=assoc, 
+        new_img_size=assoc._update_from_source_dataset_dict['new_img_size'],
+        min_new_img_size=assoc._update_from_source_dataset_dict['min_new_img_size'], 
+        scaling_factor=assoc._update_from_source_dataset_dict['scaling_factor'], 
+        target_img_count=assoc._update_from_source_dataset_dict['target_img_count'],
+        img_bands=assoc._update_from_source_dataset_dict['img_bands'], 
+        label_bands=assoc._update_from_source_dataset_dict['label_bands'], 
+        mode=assoc._update_from_source_dataset_dict['mode']
     )
 
 
 def _create_or_update_dataset_imgs_around_every_polygon(
-        source_data_dir : Union[str, Path], 
-        target_data_dir : Union[str, Path], 
+        create_or_update : str, 
+        source_assoc : Optional[ImgPolygonAssociator] = None, 
+        target_data_dir : Union[str, Path] = None, 
+        target_assoc : Optional[ImgPolygonAssociator] = None,
         mode : str = 'random', 
         new_img_size : Optional[ImgSize] = 512, 
         min_new_img_size : Optional[ImgSize] = 64, 
@@ -139,11 +165,16 @@ def _create_or_update_dataset_imgs_around_every_polygon(
     Create or update a dataset of GeoTiffs so that it contains (if possible) for each polygon in the target (or source) dataset a number target_img_count of images cut from images in the source dataset. 
     
     Note:
+        Exactly one of the target_data_dir and target_assoc arguments needs to be set (i.e. not None).
+
+    Note:
         If a polygon is too large to be contained in a single target image grids of images (with the property that the images in each grid should jointly contain the polygon and such that the grid is the minimal grid satisfying this property) will be cut from the target dataset.  
     
     Args:
-        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
-        target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
+        create_or_update (str): Whether to create or update the target dataset. 
+        source_assoc (ImgPolygonAssociator, optional): associator of dataset containing the GeoTiffs to be cut from.
+        target_data_dir (Union[str, Path], optional): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
+        target_assoc (ImgPolygonAssociator, optional): associator of target dataset.
         mode (str, optional): One of 'random', 'centered', or 'variable'. If 'random' images (or minimal image grids) will be randomly chose subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable', the images will be centered but of variable size determined by the scaling_factor and min_new_img_size arguments. Defaults to 'random'.
         new_img_size (Optional[ImgSize]): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
         min_new_img_size (Optional[ImgSize]): minimum size of new images (side length or (rows, col)) for 'variable' mode. Defaults to 64.
@@ -157,15 +188,24 @@ def _create_or_update_dataset_imgs_around_every_polygon(
         ImgPolygonAssociator: associator of target dataset
     """
 
-    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+    # check arguments
+    if create_or_update not in {'create', 'update'}:
+        raise ValueError(f"create_or_update argument must be one of 'create' or 'update'")
+    if not ((target_data_dir is not None) ^ (target_assoc is not None)):
+        raise ValueError("Exactly one of the target_data_dir and target_assoc args needs to be set (i.e. not None).")
+
+    # load target associator
+    if create_or_update == 'update':        
+        if target_assoc is None or target_data_dir is not None:
+            raise ValueError(f"When updating, the target_assoc arg needs to be set (not None), and the target_data_dir arg should not be set (i.e. be None).")
 
     # Create the polygon_filter_predicate, img_selector, and single img cutter ...
     is_polygon_missing_imgs = IsPolygonMissingImgs(target_img_count)
     random_img_selector = RandomImgSelector(target_img_count)
     small_imgs_around_polygons_cutter = ImgsAroundPolygonCutter(
                                             source_assoc=source_assoc, 
-                                            target_images_dir=target_data_dir / "images", 
-                                            target_labels_dir=target_data_dir / "labels", 
+                                            target_images_dir=Path(target_data_dir) / "images", 
+                                            target_labels_dir=Path(target_data_dir) / "labels", 
                                             mode=mode, 
                                             new_img_size=new_img_size, 
                                             min_new_img_size=min_new_img_size, 
@@ -176,17 +216,20 @@ def _create_or_update_dataset_imgs_around_every_polygon(
 
     # ... cut the dataset (and return target associator) ...
     target_assoc = create_or_update_dataset_iter_over_polygons(
-                        source_data_dir=source_data_dir, 
-                        target_data_dir=target_data_dir, 
+                        create_or_update=create_or_update, 
+                        source_assoc=source_assoc,
+                        target_data_dir=target_data_dir,  
+                        target_assoc=target_assoc, 
                         img_cutter=small_imgs_around_polygons_cutter, 
                         img_selector=random_img_selector, 
                         polygon_filter_predicate=is_polygon_missing_imgs)
 
     # ... and remember the cutting params.
-    target_assoc._cut_params_dict.update(
+    target_assoc._update_from_source_dataset_dict.update(
         {
+            'update_method' : 'update_dataset_imgs_around_every_polygon', 
             'mode' : mode,    
-            'source_data_dir' : source_data_dir,
+            'source_data_dir' : source_assoc.images_dir.parent, # Assume standard data directory structure
             'new_img_size' :  new_img_size, 
             'min_new_img_size' : min_new_img_size, 
             'scaling_factor' : scaling_factor, 
@@ -196,6 +239,9 @@ def _create_or_update_dataset_imgs_around_every_polygon(
             'random_seed' : random_seed, 
         }
     )
+    
+    if mode != 'variable':
+        target_assoc._params_dict['img_size'] = new_img_size
     target_assoc.save()
     
     return target_assoc
