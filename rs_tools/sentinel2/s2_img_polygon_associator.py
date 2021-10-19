@@ -12,7 +12,7 @@ from sentinelsat import SentinelAPI
 from dotenv import load_dotenv
 from geopandas import GeoDataFrame, GeoSeries
 
-from img_polygon_associator import ImgPolygonAssociator
+from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
@@ -43,6 +43,7 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
         # args w/o default values
         segmentation_classes : Sequence[str], 
         label_type : str,
+        background_class : Optional[str], 
         
         # polygons_df args. Exactly one value needs to be set (i.e. not None).
         polygons_df : Optional[GeoDataFrame] = None,
@@ -85,6 +86,7 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
         super().__init__(
             segmentation_classes=segmentation_classes, 
             label_type=label_type, 
+            background_class=background_class, 
             polygons_df=polygons_df, 
             polygons_df_cols=polygons_df_cols, 
             imgs_df=imgs_df, 
