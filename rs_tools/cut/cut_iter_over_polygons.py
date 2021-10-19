@@ -1,15 +1,14 @@
 """
 Customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
 """
-
-from typing import Union, List
+from __future__ import annotations
+from typing import Union, List, Optional
 import logging
 from pathlib import Path
 from tqdm import tqdm
 import pandas as pd 
 from geopandas import GeoDataFrame
 
-from rs_tools.global_constants import DATA_DIR_SUBDIRS
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate, AlwaysTrue
@@ -19,10 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 def create_or_update_dataset_iter_over_polygons( 
-        source_data_dir : Union[str, Path],
-        target_data_dir : Union[str, Path],
+        create_or_update : str,
         img_cutter : SingleImgCutter, 
         img_selector : ImgSelector, 
+        source_data_dir : Optional[Union[str, Path]] = None, 
+        source_assoc : Optional[ImgPolygonAssociator] = None, 
+        target_data_dir : Optional[Union[str, Path]] = None, 
+        target_assoc : Optional[ImgPolygonAssociator] = None, 
         polygon_filter_predicate : PolygonFilterPredicate = AlwaysTrue()
         ) -> ImgPolygonAssociator:
     """
@@ -31,8 +33,11 @@ def create_or_update_dataset_iter_over_polygons(
     Add all polygons in the source dataset to the target dataset and iterate over all polygons in the target dataset. For each polygon if the polygon_filter_predicate is met use the img_selector to select a subset of the images in the source dataset for which no images for this polygon have previously been cut from. Cut each image using the img_cutter, and add the new images to the target dataset/associator. 
     
     Args:
+        create_or_update (str) : TODO
         source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from. 
+        source_assoc (TODO): TODO
         target_data_dir (Union[str, Path]): data directory of target dataset to be created or updated.
+        target_assoc (TODO): TODO
         img_cutter (SingleImgCutter): single image cutter used to cut selected images in the source dataset. 
         img_selector (ImgSelector): image selector.
         polygon_filter_predicate (PolygonFilterPredicate, optional): predicate to filter polygons. Defaults to AlwaysTrue().
@@ -41,16 +46,38 @@ def create_or_update_dataset_iter_over_polygons(
         ImgPolygonAssociator: associator of newly created or updated dataset
     """
 
-    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
-    try: 
-        target_assoc = ImgPolygonAssociator.from_data_dir(target_data_dir)
-    except FileNotFoundError:
-        target_assoc = source_assoc.empty_assoc_same_format(target_data_dir)
-        target_assoc._cut_params_dict['cut_imgs'] = {}
+    # Check args 
+    if not ((target_data_dir is not None) ^ (target_assoc is not None)):
+        raise ValueError(f"Exactly one of the target_data_dir and target_assoc arguments needs to be given (i.e. not None)")
+    if not ((source_data_dir is not None) ^ (source_assoc is not None)):
+        raise ValueError(f"Exactly one of the source_data_dir or source_assoc arguments needs to be set (i.e. not None).")
+
+    # source_assoc
+    if source_assoc is None:
+        source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+
+    # target associator
+    if create_or_update == 'update':
+        
+        if target_assoc is None:
+            target_assoc = ImgPolygonAssociator.from_data_dir(target_data_dir)
+    
+    elif create_or_update == 'create':
+        
+        # Create target assoc, ...
+        target_assoc = source_assoc.empty_assoc_same_format_as(target_data_dir)
+        target_assoc._update_from_source_dataset_dict['cut_imgs'] = {}
             
-        # Create new target_data_dir and subdirectories if necessary.
+        # ..., image data dirs, ...
         for dir in target_assoc.image_data_dirs:
             dir.mkdir(parents=True, exist_ok=True)
+
+        # ... and the associator dir.
+        target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
+
+        # Make sure no associator files already exist.
+        if list(target_assoc.assoc_dir.iterdir()) != []:
+            raise Exception(f"The assoc_dir in {target_assoc.assoc_dir} should be empty!")
 
     # Remember information to determine for which images to generate new labels
     imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
@@ -60,7 +87,7 @@ def create_or_update_dataset_iter_over_polygons(
     new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [source_assoc.imgs_df.index.name] + list(source_assoc.imgs_df.columns)}
 
     # Add all polygons on source dataset to target dataset
-    target_assoc.integrate_new_polygons_df(source_assoc.polygons_df)
+    target_assoc.add_to_polygons_df(source_assoc.polygons_df)
 
     # For each polygon ...
     for polygon_name in tqdm(target_assoc.polygons_df.index): #!!!!!!!!! all_polygons????????? 
@@ -109,8 +136,8 @@ def create_or_update_dataset_iter_over_polygons(
                 img_bounding_rectangles = imgs_from_single_cut_dict['geometry']
                 for new_img_name, img_bounding_rectangle in zip(new_img_names, img_bounding_rectangles):
 
-                    # Update target_assoc._cut_params_dict
-                    target_assoc._cut_params_dict['cut_imgs'][new_img_name] = img_name # remember img new_img_name in target was cut from img img_name 
+                    # Update target_assoc._update_from_source_dataset_dict
+                    target_assoc._update_from_source_dataset_dict['cut_imgs'][new_img_name] = img_name # remember img new_img_name in target was cut from img img_name 
 
                     # Update graph and modify polygons_df in target_assoc
                     target_assoc._add_img_to_graph_modify_polygons_df(
@@ -159,7 +186,7 @@ def _filter_src_imgs_containing_polygon(
         List[str]: [description]
     """
     
-    previously_cut_imgs_dict = target_assoc._cut_params_dict['cut_imgs']
+    previously_cut_imgs_dict = target_assoc._update_from_source_dataset_dict['cut_imgs']
     target_imgs_containing_polygon = target_assoc.imgs_containing_polygon(polygon_name)
     cut_src_imgs_containing_polygon = [previously_cut_imgs_dict[img_name] for img_name in target_imgs_containing_polygon]    
     answer = [img_name for img_name in src_imgs_containing_polygon if img_name not in cut_src_imgs_containing_polygon]

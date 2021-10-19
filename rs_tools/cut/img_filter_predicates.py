@@ -1,5 +1,5 @@
 from typing import Any, Callable, Union
-from geopandas import GeoDataFrame, GeoSeries
+from geopandas import GeoSeries
 from pandas import Series
 from collections.abc import Callable
 from abc import abstractmethod
