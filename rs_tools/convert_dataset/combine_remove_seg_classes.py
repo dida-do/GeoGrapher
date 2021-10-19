@@ -1,12 +1,15 @@
 """
+TODO: IS THIS DONE? MAYBE TEST AGAIN...
+
 Create a new dataset from an existing one by combining and/or removing segmentation classes.
 """
 
-from rs_tools.global_constants import DATA_DIR_SUBDIRS
+
 from typing import List, Union, Optional
 import os
 import logging
 from pathlib import Path
+from geopandas.geodataframe import GeoDataFrame
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -15,169 +18,367 @@ import shutil
 import rasterio as rio 
 
 from rs_tools import ImgPolygonAssociator
+from rs_tools.utils.utils import deepcopy_gdf
 
 log = logging.Logger(__name__)
 
-def combine_remove_seg_classes(
-        source_data_dir : Union[Path, str], 
-        target_data_dir : Union[Path, str], 
+def create_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
         seg_classes : List[Union[str, List[str]]], 
+        target_data_dir : Union[Path, str], 
+        source_data_dir : Optional[Union[Path, str]] = None, 
+        source_assoc : Optional[ImgPolygonAssociator] = None,
         new_seg_classes : Optional[List[str]] = None, 
         class_separator : str = "+", 
         new_background_class : Optional[str] = None, 
-        new_mask_class : Optional[str] = None, 
+        remove_imgs : bool = True
+        ) -> ImgPolygonAssociator:
+    """
+    Create new dataset from an existing one by combining and/or removing segmentation classes. Works for both categorical and soft-categorical label types. 
+
+    Args:
+        seg_classes (List[Union[str, List[str]]]): [description]
+        target_data_dir (Union[Path, str]): [description]
+        source_data_dir (Optional[Union[Path, str]], optional): [description]. Defaults to None.
+        source_assoc (Optional[ImgPolygonAssociator], optional): [description]. Defaults to None.
+        new_seg_classes (Optional[List[str]], optional): [description]. Defaults to None.
+        class_separator (str, optional): [description]. Defaults to "+".
+        new_background_class (Optional[str], optional): [description]. Defaults to None.
+        remove_imgs (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        ImgPolygonAssociator: associator of created dataset
+
+    Example:
+
+        Suppose the dataset in the SOURCE_DATA_DIR directory has the following segmentation classes (including the background class 'bg' and class 'ig'): 
+        
+        'ct', 'ht', 'wr', 'h', 'pt', 'ig', 'bg'
+
+        Then the command
+
+        >>> create_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
+                source_data_dir=SOURCE_DATA_DIR, 
+                target_data_dir=TARGET_DATA_DIR, 
+                seg_classes=[['ct', 'ht'], 'wr', ['h']]) 
+
+        will create a new dataset in TARGET_DATA_DIR where only the polygons labelled as (or having non-zero probability if the labels are soft-categorical) 'ct', 'ht', 'wr', and 'h' have been retained, and the classes 'ct' and 'ht' have been combined to a class 'ct+ht'. If the label type is soft-categorical, the new dataset will still retain any existing prob_seg_class columns for the background class, though all the entries will in this case be zero, since neither 'bg' nor 'ig' were in the seg_classes argument.
+
+    Warning:
+        Make sure this works as desired for the edge cases as regards the ignore and background classes! 
+    """
+
+    if not ((source_data_dir is not None) ^ (source_assoc is not None)):
+        raise ValueError(f"Exactly one of the source_data_dir or source_assoc arguments needs to be set (i.e. not None).")
+
+    if source_assoc is None:
+        source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+
+    _create_or_update_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
+        create_or_update='create', 
+        seg_classes=seg_classes, 
+        source_assoc=source_assoc, 
+        target_data_dir=target_data_dir, 
+        new_seg_classes=new_seg_classes, 
+        class_separator=class_separator, 
+        new_background_class=new_background_class, 
+        remove_imgs=remove_imgs
+    )
+
+
+def update_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
+        data_dir : Optional[Union[Path, str]] = None, 
+        assoc: Optional[ImgPolygonAssociator] = None,
+        ) -> ImgPolygonAssociator:
+    """
+    Update a dataset created using create_dataset_by_combining_or_removing_seg_classes_from_existing_dataset when the source dataset has become larger. 
+    
+    Warning:
+        Will only add images and polygons from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited. 
+
+    Args:
+        data_dir (Optional[Union[Path, str]], optional): [description]. Defaults to None.
+        assoc (Optional[ImgPolygonAssociator], optional): [description]. Defaults to None.
+
+    Returns:
+        ImgPolygonAssociator: associator of upated dataset
+    """
+
+    if not ((data_dir is not None) ^ (assoc is not None)):
+        raise ValueError(f"Exactly one of the data_dir or assoc arguments needs to be set (i.e. not None).")
+
+    if assoc is None:
+        assoc = ImgPolygonAssociator.from_data_dir(data_dir)
+
+    source_data_dir = assoc._update_from_source_dataset_dict['source_data_dir']
+    new_seg_classes = assoc._update_from_source_dataset_dict['new_seg_classes']
+    class_separator = assoc._update_from_source_dataset_dict['class_separator']
+    new_background_class = assoc._update_from_source_dataset_dict['new_background_class']
+    remove_imgs = assoc._update_from_source_dataset_dict['remove_imgs']
+
+    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+
+    _create_or_update_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
+        create_or_update='update', 
+        source_assoc=source_assoc, 
+        target_assoc=assoc, 
+        new_seg_classes=new_seg_classes, 
+        class_separator=class_separator, 
+        new_background_class=new_background_class, 
+        remove_imgs=remove_imgs
+    )
+
+
+def _create_or_update_dataset_by_combining_or_removing_seg_classes_from_existing_dataset(
+        create_or_update : str, 
+        seg_classes : List[Union[str, List[str]]], 
+        source_assoc : ImgPolygonAssociator,  
+        target_data_dir : Optional[Union[Path, str]] = None, 
+        target_assoc : Optional[ImgPolygonAssociator] = None, 
+        new_seg_classes : Optional[List[str]] = None, 
+        class_separator : str = "+", 
+        new_background_class : Optional[str] = None, 
         remove_imgs : bool = True
         ) -> ImgPolygonAssociator:
     """
     Create a new dataset/associator from an existing one by combining and/or removing segmentation classes. Works for both categorical and soft-categorical label types. 
 
+    Warning:
+        Will only add images and polygons from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited. 
+
     Args:
         source_data_dir (pathlib.Path or str): data_dir of source dataset/associator
         target_data_dir (pathlib.Path or str, optional): data_dir of target dataset/associator. If None (default value), will convert in place, i.e. overwrite source dataset and associator of tifs.
-        seg_classes: (List[Union[List[str], str]]) segmentation classes in existing dataset/associator to be kept and combined in new dataset/associator. E.g. [['ct', 'ht'], 'wr', ['h']] will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h' classes. Along with the regular segmentation classes one may also use the mask or background classes here.  
+        seg_classes: (List[Union[List[str], str]]) segmentation classes in existing dataset/associator to be kept and combined in new dataset/associator. E.g. [['ct', 'ht'], 'wr', ['h']] will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h' classes. Along with the regular segmentation classes one may also use the background class here.  
         new_seg_class_names: (Optional[List[str]]) optional list of names of new segmentation classes corresponding to seg_classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
         class_separator: (str) used if the new_seg_class_names argument is not provided to join the names of existing segmentation classes that are to be kept. Defaults to class_separator.
         new_background_class (Optional[str]): optional new background class, defaults to None, i.e. old background class
-        new_mask_class (Optional[str]): optional new ignore class, defaults to None, i.e. old ignore class
         remove_imgs: (bool). If True, remove images not containing polygons of the segmentation classes to be kept.
 
     Returns:
         The ImgPolygonAssociator of the new dataset. 
 
     Note: 
-        For the purposes of this function the background and mask classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, polygons of the background or mask class will be lost. 
-
-    Example:
-
-        Suppose the dataset in the SOURCE_DATA_DIR directory has the following segmentation classes (including the background class 'bg' and mask class 'ig'): 
-        
-        'ct', 'ht', 'wr', 'h', 'pt', 'ig', 'bg'
-
-        Then the command
-
-        >>> new_assoc_remove_combine_seg_classes(
-                source_data_dir=SOURCE_DATA_DIR, 
-                target_data_dir=TARGET_DATA_DIR, 
-                seg_classes=[['ct', 'ht'], 'wr', ['h']]) 
-
-        will create a new dataset in TARGET_DATA_DIR where only the polygons labelled as (or having non-zero probability if the labels are soft-categorical) 'ct', 'ht', 'wr', and 'h' have been retained, and the classes 'ct' and 'ht' have been combined to a class 'ct+ht'. If the label type is soft-categorical, the new dataset will still retain any existing prob_seg_class columns for the background and mask class, though all the entries will in this case be zero, since neither 'bg' nor 'ig' were in the seg_classes argument.
-
-    Warning:
-        Make sure this works as desired for the edge cases pertaining to the ignore or background classes! 
-
+        For the purposes of this function the background classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, polygons of the background class will be lost. 
     """
 
-    # load source assoc
-    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+    # argument consistency checks
+    if create_or_update not in {'create', 'update'}:
+        raise ValueError(f"create_or_update argument must be one of 'create' or 'update'")
+    if not ((target_data_dir is not None) ^ (target_assoc is not None)):
+        raise ValueError(f"Exactly one of the target_data_dir and target_assoc arguments needs to be given (i.e. not None)")
 
-    seg_classes = list(map(lambda x: x if isinstance(x,list) else [x], seg_classes))
+    # load target associator
+    if create_or_update == 'update':
+        
+        if target_assoc is None or target_data_dir is not None:
+            raise ValueError(f"When updating, the target_assoc arg needs to be set (not None), and the target_data_dir arg should not be set (i.e. be None).")
+
+    elif create_or_update == 'create':
+        target_assoc = source_assoc.empty_assoc_same_format_as(target_data_dir)
+
+        # Note might have to adjust the columns of target_assoc.polygons_df. We will do this later, as we need to define some arguments first.
+
+        # Create image data dirs ...
+        for dir in target_assoc.image_data_dirs:
+            dir.mkdir(parents=True, exist_ok=True)
+            if list(dir.iterdir()) != []:
+                raise Exception(f"{dir} should be empty!")
+        # ... and the associator dir.
+        target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
+
+        # Make sure no associator files already exist.
+        if list(target_assoc.assoc_dir.iterdir()) != []:
+            raise Exception(f"The assoc_dir in {target_assoc.assoc_dir} should be empty!")
+
+    seg_classes = list( # convert strings in seg_classes to singleton lists
+                    map(
+                        lambda x: x if isinstance(x,list) else [x], 
+                        seg_classes
+                        )
+    )
     classes_to_keep = [class_ for list_of_classes in seg_classes for class_ in list_of_classes]
     
-    assert len(classes_to_keep) == len(set(classes_to_keep)), "a segmentation class in the source dataset can only be in at most one of the new segmentation classes"
+    if not set(classes_to_keep) <= set(source_assoc.all_polygon_classes):
+        classes_not_in_source_dataset = set(classes_to_keep) - set(source_assoc.all_polygon_classes)
+        raise ValueError("The following classes are not in source_assoc.all_polygon_classes: {classes_not_in_source_dataset}")
+    if not len(classes_to_keep) == len(set(classes_to_keep)):
+        raise ValueError("a segmentation class in the source dataset can only be in at most one of the new segmentation classes")
 
+    # new_seg_classes
     if new_seg_classes is None:
         new_seg_classes = list(map(lambda x: class_separator.join(x), seg_classes))
     else:
         assert len(new_seg_classes) == len(set(new_seg_classes)), "new_seg_class_names need to be distinct!"
-        assert len(new_seg_classes) == len(seg_classes), "there should be as many new_seg_class_names as there are segmentation classes to be kept!"
-
-    assert source_data_dir != target_data_dir, "Source_data_dir and target_data_dir should not be equal!"
+        assert len(new_seg_classes) == len(seg_classes), "there should be as many new_seg_class_names as there are seg_classes!"
 
     if new_background_class is not None:
         assert new_background_class in new_seg_classes
 
-    if new_mask_class is not None:
-        assert new_mask_class in new_seg_classes
+    # Set information about background ...
+    if new_background_class is not None:
+        target_assoc._params_dict['background_class'] = new_background_class
+    elif source_assoc._params_dict['background_class'] not in new_seg_classes:
+        target_assoc._params_dict['background_class'] = None
+    # ... and segmentation classes in target_assoc.
+    target_assoc._params_dict['segmentation_classes'] = [class_ for class_ in new_seg_classes if class_ not in {target_assoc._params_dict['background_class']}]
 
-    def get_new_class(class_ : str) -> str:
-        for classes_ in seg_classes: 
-            if class_ in classes_:
-                return class_separator.join(classes_)
+    polygons_from_source_df = combine_or_remove_seg_classes_from_polygons_df(
+                                    label_type=source_assoc.label_type, 
+                                    polygons_df=source_assoc.polygons_df, 
+                                    seg_classes=seg_classes, 
+                                    new_seg_classes=new_seg_classes, 
+                                    all_polygon_classes=source_assoc.all_polygon_classes 
+    )
 
-    for subdir in DATA_DIR_SUBDIRS:
-        
-        subdir_path = Path(target_data_dir / subdir)
-        
-        # Make sure subdir exists ...
-        subdir_path.mkdir(parents=True, exist_ok=True)
-        
-        # ... but is empty.
-        if os.listdir(subdir_path) != []:
-                raise Exception(f"{subdir} subdirectory of target_data_dir {target_data_dir} should be empty!")
+    # need this later
+    polygons_to_add_to_target_dataset = set(polygons_from_source_df.index) - set(target_assoc.polygons_df.index)
 
-    # Make sure no associator files already exist.
-    if (target_data_dir / "imgs_df.geojson").is_file():
-        raise Exception(f"target_data_dir {target_data_dir} already contains associator file imgs_df.geojson")
+    # if we are creating a new soft-categorical dataset adjust columns of empty target_assoc.polygons_df 
+    if create_or_update == 'create' and target_assoc.label_type == 'soft-categorical':
+        empty_polygons_df_with_corrected_columns = combine_or_remove_seg_classes_from_polygons_df(
+                                    label_type=target_assoc.label_type, 
+                                    polygons_df=target_assoc.polygons_df, 
+                                    seg_classes=seg_classes, 
+                                    new_seg_classes=new_seg_classes, 
+                                    all_polygon_classes=source_assoc.all_polygon_classes # source_assoc, since we already set classes in target_assoc
+        )
+        target_assoc.polygons_df = empty_polygons_df_with_corrected_columns
 
-    if (target_data_dir / "polygons_df.geojson").is_file():
-        raise Exception(f"target_data_dir {target_data_dir} already contains associator file polygons_df.geojson")
+    target_assoc.add_to_polygons_df(polygons_from_source_df)
 
-    if (target_data_dir / "graph.json").is_file():
-        raise Exception(f"target_data_dir {target_data_dir} already contains associator file graph.json")
+    # Determine which images to copy to target dataset
+    imgs_in_target_dataset_before_addings_imgs_from_source_dataset = {img_path.name for img_path in target_assoc.images_dir.iterdir()}
+    imgs_in_source_images_dir = {img_path.name for img_path in source_assoc.images_dir.iterdir()}
+    if remove_imgs:
+        imgs_in_source_that_should_be_in_target = {
+                                                    # all images in the source dataset ...
+                                                    img_name for img_name in imgs_in_source_images_dir 
+                                                        # ... that intersect with the polygons that will be kept.
+                                                        if set(source_assoc.polygons_intersecting_img(img_name)) & set(polygons_from_source_df.index) != set()
+                                                  }
+    else:
+        imgs_in_source_that_should_be_in_target = imgs_in_source_images_dir
+    imgs_to_copy_to_target_dataset = imgs_in_source_that_should_be_in_target - imgs_in_target_dataset_before_addings_imgs_from_source_dataset
 
-    if (target_data_dir / "params_dict.json").is_file():
-        raise Exception(f"target_data_dir {target_data_dir} already contains associator file params_dict.json")
-    
-    # build empty target associator
-    target_assoc = source_assoc.empty_assoc_same_format(target_data_dir)
+    # Copy those images
+    for img_name in tqdm(imgs_to_copy_to_target_dataset):
+        source_img_path = source_assoc.images_dir / img_name
+        target_img_path = target_assoc.images_dir / img_name
+        shutil.copyfile(source_img_path, target_img_path)
 
-    new_polygons_df = source_assoc.polygons_df
+    # add images to target_assoc
+    df_of_imgs_to_add_to_target_dataset = source_assoc.imgs_df.loc[list(imgs_to_copy_to_target_dataset)]
+    target_assoc.add_to_imgs_df(df_of_imgs_to_add_to_target_dataset)
 
-    if source_assoc.label_type == 'categorical':
-        
+    # Determine labels to delete: 
+    # For each image that already existed in the target dataset ...
+    for img_name in imgs_in_target_dataset_before_addings_imgs_from_source_dataset:
+        # ... if among the polygons intersecting it in the target dataset ...
+        polygons_intersecting_img = set(target_assoc.polygons_intersecting_img(img_name))
+        # ... there is a *new* polygon ...
+        if polygons_intersecting_img & polygons_to_add_to_target_dataset != set():
+            # ... then we need to update the label for it, so we delete the current label.
+            (target_assoc.labels_dir / img_name).unlink(missing_ok=True)
+
+    # make labels
+    target_assoc.make_missing_labels()
+
+    # save associator
+    target_assoc.save()
+
+    log.info(f"new_cat_assoc_remove_classes: done!")
+
+    return target_assoc
+
+
+def combine_or_remove_seg_classes_from_polygons_df(
+        label_type: str, 
+        polygons_df : GeoDataFrame, 
+        seg_classes : List[Union[str, List[str]]], 
+        new_seg_classes : List[str],
+        all_polygon_classes : List[str], 
+        ) -> GeoDataFrame:
+    """
+    Args:
+        label_type (str): [description]
+        polygons_df (GeoDataFrame): [description]
+        seg_classes (List[str]): 
+        new_seg_classes (List[str]):
+        all_polygon_classes (List[str]):
+
+    Returns:
+        GeoDataFrame: [description]
+    """
+    if label_type not in {'categorical', 'soft-categorical'}:
+        raise ValueError(f"Unknown label_type: {label_type}")
+
+    polygons_df = deepcopy_gdf(polygons_df)
+
+    classes_to_keep = [class_ for list_of_classes in seg_classes for class_ in list_of_classes]
+
+    if label_type == 'categorical':
+
+        def get_new_class(class_ : str) -> str:
+            for count, classes_ in enumerate(seg_classes): 
+                if class_ in classes_:
+                    return new_seg_classes[count] 
+
         # keep only polygons belonging to segmentation we want to keep
-        new_polygons_df = new_polygons_df.loc[new_polygons_df['type'].apply(lambda class_: class_ in classes_to_keep)]
+        polygons_df = polygons_df.loc[polygons_df['type'].apply(lambda class_: class_ in classes_to_keep)]
         # rename to new classes
-        new_polygons_df['type'] = new_polygons_df['type'].apply(get_new_class) 
-        # integrate into target_assoc
-        target_assoc.integrate_new_polygons_df(new_polygons_df)
+        polygons_df.loc[:, 'type'] = polygons_df['type'].apply(get_new_class) 
     
-    elif source_assoc.label_type == 'soft-categorical':
+    elif label_type == 'soft-categorical':
         
-        # drop cols for probabilities of classes not to be kept
-        all_classes = source_assoc._params_dict['segmentation_classes'] + [x for x in [source_assoc._params_dict['background_class'], source_assoc._params_dict['mask_class']] if x is not None]
-    
-        classes_to_drop = [class_ for class_ in all_classes if class_ not in classes_to_keep]
-        cols_to_drop = list(map(lambda class_: f"prob_seg_class_{class_}", classes_to_drop))
-        new_polygons_df = new_polygons_df.drop(columns=cols_to_drop)
+        def prob_seg_class_names(classes : List[str]) -> List[str]:
+            answer = list(
+                        map(
+                            lambda class_: f"prob_seg_class_{class_}", 
+                            classes
+                            )
+            )
+            return answer
 
-        # adjust columns of target_assoc.polygons_df
-        cols_of_classes_to_keep = list(map(lambda class_: f"prob_seg_class_{class_}", classes_to_keep))
-        target_assoc.polygons_df = target_assoc.polygons_df.drop(
-                                        columns=cols_of_classes_to_keep + cols_to_drop)
-        for class_ in new_seg_classes:
-            target_assoc.polygons_df[f"prob_seg_class_{class_}"] = None
-
+        # drop cols of classes we don't want to keep
+        classes_to_drop = [class_ for class_ in all_polygon_classes if class_ not in classes_to_keep]
+        cols_to_drop = prob_seg_class_names(classes_to_drop)
+        polygons_df = polygons_df.drop(columns=cols_to_drop)
+        
         # create temporary dataframe to avoid column name conflicts when renaming/deleting etc
-        temp_polygons_df = pd.DataFrame()
+        temp_polygons_df = pd.DataFrame()     
+        temp_polygons_df.index.name = polygons_df.index.name
 
         # for each row/polygon find sum of probabilities for the remaining segmentation classes         
-        cols_probs_remaining_classes = list(map(lambda class_: f"prob_seg_class_{class_}", classes_to_keep))        
-        sum_probs_remaining_classes = pd.DataFrame(new_polygons_df[cols_probs_remaining_classes].sum(axis=1), columns=['sum'], index=new_polygons_df.index)
-        sum_is_zero = (sum_probs_remaining_classes['sum'] == 0)
+        cols_with_probs_of_remaining_classes = prob_seg_class_names(classes_to_keep)     
+        sum_of_probs_of_remaining_classes = pd.DataFrame(
+                                        polygons_df[cols_with_probs_of_remaining_classes].sum(axis=1), 
+                                        columns=['sum'], 
+                                        index=polygons_df.index)
+        rows_where_sum_is_zero = (sum_of_probs_of_remaining_classes['sum'] == 0)
 
         # remove rows/polygons which do not belong to remaining classes
-        new_polygons_df = new_polygons_df.loc[~sum_is_zero]
-        sum_probs_remaining_classes = sum_probs_remaining_classes.loc[~sum_is_zero]
+        polygons_df = polygons_df.loc[~rows_where_sum_is_zero]
+        sum_of_probs_of_remaining_classes = sum_of_probs_of_remaining_classes.loc[~rows_where_sum_is_zero]
 
         # renormalize probabilities to sum to 1
-        new_polygons_df.loc[:, cols_probs_remaining_classes] = new_polygons_df[cols_probs_remaining_classes].div(sum_probs_remaining_classes['sum'], axis=0)
+        polygons_df.loc[:, cols_with_probs_of_remaining_classes] = polygons_df[cols_with_probs_of_remaining_classes].div(sum_of_probs_of_remaining_classes['sum'], axis=0)
 
         # combine probabilities of new_classes and drop old classes
-        for classes_to_combine, new_seg_class_name in zip(seg_classes, new_seg_classes):
-            cols_to_add = list(map(lambda class_: f"prob_seg_class_{class_}", classes_to_combine))
-            temp_polygons_df[f"prob_seg_class_{new_seg_class_name}"] = new_polygons_df[cols_to_add].sum(axis=1)
-            new_polygons_df = new_polygons_df.drop(columns=cols_to_add)
+        for classes_of_new_seg_class, new_seg_class_name in zip(seg_classes, new_seg_classes):
+            cols_of_probs_to_be_added = prob_seg_class_names(classes_of_new_seg_class)
+            temp_polygons_df[f"prob_seg_class_{new_seg_class_name}"] = polygons_df[cols_of_probs_to_be_added].sum(axis=1)
+            polygons_df = polygons_df.drop(columns=cols_of_probs_to_be_added)
         
-        new_polygons_df = pd.concat(
+        # add new columns
+        polygons_df = pd.concat(
                             [
-                                new_polygons_df, 
+                                polygons_df, 
                                 temp_polygons_df
                             ], 
-                            axis=1) # i.e. concatenate along column axis
+                            axis=1) # column axis
 
         # Recompute most likely type column.
-        new_polygons_df["most_likely_class"] = new_polygons_df[temp_polygons_df.columns].apply(
+        polygons_df["most_likely_class"] = polygons_df[temp_polygons_df.columns].apply(
             lambda s: 
                 ",".join(
                     map(
@@ -185,46 +386,8 @@ def combine_remove_seg_classes(
                         s[(s == s.max()) & (s!=0)].index.values)), 
             axis=1) 
 
-        target_assoc.integrate_new_polygons_df(new_polygons_df)
+    return polygons_df
 
-    else:
-        raise ValueError(f"Unknown label type: {source_assoc._label_type}")
-
-    # set information about background, mask, and segmentation classes in target_assoc
-    if new_background_class is not None:
-        target_assoc._params_dict['background_class'] = new_background_class
-    elif source_assoc._params_dict['background_class'] not in new_seg_classes:
-        target_assoc._params_dict['background_class'] = None
-
-    if new_mask_class is not None:
-        target_assoc._params_dict['mask_class'] = new_mask_class
-    elif source_assoc._params_dict['mask_class'] not in new_seg_classes:
-        target_assoc._params_dict['mask_class'] = None
-
-    target_assoc._params_dict['segmentation_classes'] = [class_ for class_ in new_seg_classes if class_ not in {target_assoc._params_dict['background_class'], target_assoc._params_dict['mask_class']}]
-
-    # integrate the imgs_df and optionally keep only those imgs connected to remaining polygons
-    target_assoc.integrate_new_imgs_df(source_assoc.imgs_df)
-
-    if remove_imgs == True:
-        imgs_to_remove = [img_name for img_name in target_assoc.imgs_df.index if len(target_assoc.polygons_intersecting_img(img_name)) == 0]
-        target_assoc.drop_imgs(imgs_to_remove, remove_imgs_from_disk=False)
-
-    # save associator
-    target_assoc.save()
-
-    # copy images to target data dir
-    for img_name in tqdm(target_assoc.imgs_df.index):
-        shutil.copy(source_data_dir / f"images/{img_name}", target_data_dir / f"images/{img_name}")
-
-    # make missing labels and if possible masks
-    target_assoc.make_missing_geotif_labels()
-    if target_assoc._params_dict['mask_class'] is not None and target_assoc._params_dict['label_type'] == 'categorical':
-        target_assoc.make_missing_masks()
-
-    log.info(f"new_cat_assoc_remove_classes: done!")
-
-    return target_assoc
 
             
 
