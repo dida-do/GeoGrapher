@@ -2,7 +2,7 @@
 Create associator imgs_df from a directory containing GeoTiff images.
 """
 
-from typing import Optional, Union
+from typing import Optional, Union, List
 import pathlib
 from pathlib import Path
 from geopandas import GeoDataFrame
@@ -13,14 +13,16 @@ from rs_tools.utils.utils import transform_shapely_geometry
 
 
 def imgs_df_from_tif_dir(
-        images_dir: Union[pathlib.Path, str], 
-        imgs_df_crs_epsg_code: Optional[int] = None
+        images_dir : Union[pathlib.Path, str], 
+        image_names : Optional[List[str]]=None,
+        imgs_df_crs_epsg_code : Optional[int] = None
         ) -> GeoDataFrame:
     """
     Build and return an associator imgs_df from a directory of GeoTiff images (or from a data directory). Only the index (imgs_df_index_name, defaults to img_name), geometry column (coordinates of the img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the GeoTiff image is in) columns will be populated, custom columns will have to be populated by a custom written function.
 
     Args:
         images_dir (Union[pathlib.Path, str]): path to directory containing GeoTiff images
+        image_names (List[str], optional): optional list of image names. Defaults to None, i.e. all images in images_dir.
         imgs_df_crs_epsg_code (int, optional): EPSG code of imgs_df crs to be returned. If None, will use standard crs. Defaults to None.
 
     Returns:
@@ -30,16 +32,21 @@ def imgs_df_from_tif_dir(
     # stupid hack to avoid (not really) circular importing python can't deal with.
     from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE
 
+    images_dir = Path(images_dir)
+
     if imgs_df_crs_epsg_code == None:
         imgs_df_crs_epsg_code = STANDARD_CRS_EPSG_CODE
-
-    images_dir = Path(images_dir)
+        
+    if image_names is None:
+        image_paths = list(images_dir.iterdir())
+    else:
+        image_paths = [images_dir / img_name for img_name in image_names]
 
     # dict to keep track of information about the imgs that we will make the imgs_df from.
     new_imgs_dict = {index_or_col_name: [] for index_or_col_name in {'img_name', 'geometry', 'orig_crs_epsg_code'}}
 
     # for all images in dir ...
-    for img_path in images_dir.iterdir():
+    for img_path in image_paths:
 
         # ... open them in rasterio ...
         with rio.open(img_path) as src:
@@ -54,7 +61,7 @@ def imgs_df_from_tif_dir(
 
             # and put the information into a dict.
             img_info_dict = {
-                                'img_count': img_path.name, 
+                                'img_name': img_path.name, 
                                 'geometry': img_bounding_rectangle_imgs_df_crs, 
                                 'orig_crs_epsg_code': orig_crs_epsg_code
                             }
