@@ -20,17 +20,21 @@ logger = logging.getLogger(__name__)
 
 
 def cut_dataset_every_img_to_grid(
-        source_data_dir : Union[str, Path], 
         target_data_dir : Union[str, Path], 
         new_img_size : ImgSize = 512, 
+        source_data_dir : Optional[Union[str, Path]] = None, 
+        source_assoc : Optional[ImgPolygonAssociator] = None, 
         img_bands : Optional[List[int]]=None, 
         label_bands : Optional[List[int]]=None
         ) -> ImgPolygonAssociator:
     """
     Create a new dataset of GeoTiffs (images, labels, and associator) where each image is cut into a grid of images.
     
+    Exactly one of source_data_dir or source_assoc should be set (i.e. not None).
+
     Args:
-        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+        source_data_dir (Union[str, Path], optional): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+        source_assoc (ImgPolygonAssociator, optional): associator of source dataset to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
         new_img_size (ImgSize): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
@@ -43,8 +47,15 @@ def cut_dataset_every_img_to_grid(
         Currently only works if the source associator component files are in the standard locations determined by the source_data_dir arg. 
     """
 
+    if not ((source_data_dir is not None) ^ (source_assoc is not None)):
+        raise ValueError(f"Exactly one of the source_data_dir or source_assoc arguments needs to be set (i.e. not None).")
+
+    if source_assoc is None:
+        source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+
     return _create_or_update_dataset_every_img_to_grid(
-                source_data_dir=source_data_dir, 
+                create_or_update='create',
+                source_assoc=source_assoc, 
                 target_data_dir=target_data_dir, 
                 new_img_size=new_img_size, 
                 img_bands=img_bands, 
@@ -52,12 +63,18 @@ def cut_dataset_every_img_to_grid(
     )
 
 
-def update_dataset_every_img_to_grid(data_dir: Union[str, Path]) -> ImgPolygonAssociator:
+def update_dataset_every_img_to_grid(
+        data_dir: Optional[Union[str, Path]] = None, 
+        assoc : Optional[ImgPolygonAssociator] = None, 
+        ) -> ImgPolygonAssociator:
     """
     Update a dataset of GeoTiffs (images, labels, and associator) where each image is cut into a grid of images.
     
+    Either the data_dir or the assoc argument should be given (i.e. not None). 
+
     Args:
-        data_dir (Union[str, Path]): data directory to be updated
+        data_dir (Union[str, Path], optional): data directory to be updated. 
+        assoc (ImgPolygonAssociator, optional): associator of dataset to be updated. 
 
     Returns:
         associator of updated data directory
@@ -66,6 +83,9 @@ def update_dataset_every_img_to_grid(data_dir: Union[str, Path]) -> ImgPolygonAs
         Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir. 
     """
     
+    if not ((data_dir is not None) ^ (assoc is not None)):
+        raise ValueError(f"Exactly one of the data_dir or assoc arguments should be set (i.e. not None).")
+
     required_cut_params = {
         'source_data_dir', 
         'new_img_size', 
@@ -73,22 +93,27 @@ def update_dataset_every_img_to_grid(data_dir: Union[str, Path]) -> ImgPolygonAs
         'label_bands'
     }
 
-    assoc = ImgPolygonAssociator.from_data_dir(data_dir)
-    if not required_cut_params <= set(assoc._cut_params_dict.keys()):
-        raise KeyError(f"The associator in {data_dir} is missing the following cut params: {set(assoc._cut_params_dict.keys()) - required_cut_params}")
+    if assoc is None:    
+        assoc = ImgPolygonAssociator.from_data_dir(data_dir)
+    
+    if not required_cut_params <= set(assoc._update_from_source_dataset_dict.keys()):
+        raise KeyError(f"The associator in {data_dir} is missing the following cut params: {set(assoc._update_from_source_dataset_dict.keys()) - required_cut_params}")
 
     return _create_or_update_dataset_every_img_to_grid(
-        source_data_dir=assoc._cut_params_dict['source_data_dir'], 
-        target_data_dir=data_dir, 
-        new_img_size=assoc._cut_params_dict['new_img_size'], 
-        img_bands=assoc._cut_params_dict['img_bands'], 
-        label_bands=assoc._cut_params_dict['label_bands']
+        create_or_update='update',
+        source_data_dir=assoc._update_from_source_dataset_dict['source_data_dir'], 
+        target_assoc=assoc, 
+        new_img_size=assoc._update_from_source_dataset_dict['new_img_size'], 
+        img_bands=assoc._update_from_source_dataset_dict['img_bands'], 
+        label_bands=assoc._update_from_source_dataset_dict['label_bands']
     )
     
 
 def _create_or_update_dataset_every_img_to_grid(
-        source_data_dir : Union[str, Path], 
-        target_data_dir : Union[str, Path], 
+        create_or_update : str, 
+        source_assoc : Optional[ImgPolygonAssociator] = None, 
+        target_data_dir : Union[str, Path] = None, 
+        target_assoc : Optional[ImgPolygonAssociator] = None, 
         new_img_size : ImgSize = 512, 
         img_bands : Optional[List[int]]=None, 
         label_bands : Optional[List[int]]=None
@@ -97,8 +122,10 @@ def _create_or_update_dataset_every_img_to_grid(
     Create a new dataset of GeoTiffs (images, labels, and associator) where each image is cut into a grid of images.
     
     Args:
-        source_data_dir (Union[str, Path]): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+        source_data_dir (Union[str, Path], optional): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+        source_assoc (ImgPolygonAssociator, optional): associator of dataset containing the GeoTiffs to be cut from.
         target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created. 
+        target_assoc (ImgPolygonAssociator, optional): associator of target dataset.
         new_img_size (ImgSize): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
         img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
         label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
@@ -107,7 +134,7 @@ def _create_or_update_dataset_every_img_to_grid(
         ImgPolygonAssociator: associator of new dataset in target_data_dir
     """
 
-    source_assoc = ImgPolygonAssociator.from_data_dir(source_data_dir)
+    target_data_dir = Path(target_data_dir)
 
     img2grid_cutter = ImgToGridCutter(
                             source_assoc=source_assoc, 
@@ -119,9 +146,24 @@ def _create_or_update_dataset_every_img_to_grid(
     always_true = AlwaysTrue()
     
     target_assoc = create_or_update_dataset_iter_over_imgs(
-                        source_data_dir=source_data_dir, 
+                        create_or_update=create_or_update, 
+                        source_assoc=source_assoc, 
                         target_data_dir=target_data_dir, 
+                        target_assoc=target_assoc, 
                         img_cutter=img2grid_cutter, 
                         img_filter_predicate=always_true)
+
+    # remember the cutting params.
+    target_assoc._update_from_source_dataset_dict.update(
+        {
+            'update_method' : 'update_dataset_every_img_to_grid', 
+            'source_data_dir' : source_assoc.images_dir.parent, # Assuming standard data directory format
+            'new_img_size' :  new_img_size, 
+            'img_bands' : img_bands, 
+            'label_bands' : label_bands,
+        }
+    )
+    target_assoc._params_dict['img_size'] = new_img_size
+    target_assoc.save()
 
     return target_assoc
