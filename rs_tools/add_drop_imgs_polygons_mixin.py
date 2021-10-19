@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 import logging
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -39,6 +39,9 @@ class AddDropImgsPolygonsMixIn(object):
             self_df=self.polygons_df, 
             self_df_name='self.polygons_df' 
         )
+
+        if self.label_type == 'categorical':
+            self._check_classes_in_categorical_polygons_df_contained_in_all_classes(new_polygons_df)
 
         # For each new polygon...
         for polygon_name in new_polygons_df.index:
@@ -205,3 +208,11 @@ class AddDropImgsPolygonsMixIn(object):
 
         if df.index.name != self_df.index.name:
             raise ValueError(f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df_name.index.name}")
+
+
+    def _check_classes_in_categorical_polygons_df_contained_in_all_classes(self, 
+            polygons_df : GeoDataFrame):
+        
+        if not set(polygons_df['type'].unique()) <= set(self.all_polygon_classes):
+            raise ValueError(f"Polygon types not recognized by associator: {set(polygons_df['type'].unique()) - set(self.all_polygon_classes)}")
+        
