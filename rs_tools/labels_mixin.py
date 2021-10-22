@@ -20,7 +20,7 @@ LABEL_MAKERS = {
 class LabelsMixIn(object):   
     """Mix-in that implements a method to generate labels. """     
 
-    def make_missing_labels(self, 
+    def make_labels(self, 
             img_names : Optional[List[str]]=None):
         """
         Creates pixel labels for all images without a label. 
@@ -59,6 +59,22 @@ class LabelsMixIn(object):
                 assoc=self,
                 img_name=img_name, 
                 logger=log)
+
+    
+    def delete_labels(self, img_names : Optional[List[str]]=None):
+        """
+        Delete labels from labels_dir (if they exist). 
+
+        Args:
+            img_names (Optional[List[str]], optional): names of images for which to delete labels. Defaults to None, i.e. all labels.
+        """
+        if img_names is None:
+            img_names = self.imgs_df.index
+
+        pbar = tqdm(img_names)
+        pbar.set_description('Deleting labels')
+        for img_name in img_names:
+            (self.labels_dir / img_name).unlink(missing_ok=True)
 
 
     def _check_label_type(self, label_type : str):

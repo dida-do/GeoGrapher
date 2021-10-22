@@ -281,7 +281,7 @@ def _create_or_update_dataset_by_combining_or_removing_seg_classes_from_existing
             (target_assoc.labels_dir / img_name).unlink(missing_ok=True)
 
     # make labels
-    target_assoc.make_missing_labels()
+    target_assoc.make_labels()
 
     # save associator
     target_assoc.save()
