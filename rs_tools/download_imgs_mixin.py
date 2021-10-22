@@ -72,6 +72,11 @@ class DownloadImgsMixIn(object):
             if not set(polygon_names) <= set(self.polygons_df.index):
                 raise ValueError(f"Polygons {set(polygon_names) - set(self.polygons_df.index)} missing from self.polygons_df")
     
+        polygons_w_null_geometry = [polygon_name for polygon_name in polygons_to_download if self.polygons_df.loc[polygon_name].geometry is None]
+        if polygons_w_null_geometry != []:
+            polygons_to_download = [polygon_name for polygon_name in polygons_to_download if polygon_name not in polygons_w_null_geometry]
+            log.info(f"download_imgs: skipping polygons with null geometry: {polygons_w_null_geometry}.")
+
         if shuffle_polygons == True:
             random.shuffle(polygons_to_download)
 
