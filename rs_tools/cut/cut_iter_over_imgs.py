@@ -149,7 +149,7 @@ def create_or_update_dataset_iter_over_imgs(
         label_path = target_assoc.labels_dir / img_name
         label_path.unlink(missing_ok=True)
     # ... and generate new ones. 
-    target_assoc.make_missing_labels(img_names=imgs_w_new_polygons)
+    target_assoc.make_labels(img_names=imgs_w_new_polygons)
 
     # Finally, save associator to disk.
     target_assoc.save()
