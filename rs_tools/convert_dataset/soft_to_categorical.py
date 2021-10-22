@@ -173,7 +173,7 @@ def _create_or_update_categorical_from_soft_categorical_dataset(
             (target_assoc.labels_dir / img_name).unlink(missing_ok=True)
 
     # Finally, we make all missing categorical labels in target dataset.
-    target_assoc.make_missing_labels()
+    target_assoc.make_labels()
 
     # Remember the cutting params and save the associator. 
     target_assoc._update_from_source_dataset_dict.update(
