@@ -214,7 +214,7 @@ class CreateDSCutImgsAroundEveryPolygonMixIn(object):
         # Remember the cutting params.
         target_assoc._update_from_source_dataset_dict.update(
             {
-                'update_method' : 'update_dataset_imgs_around_every_polygon',
+                'update_method' : '_update_cut_imgs_around_every_polygon',
                 'mode' : mode,
                 'source_data_dir' : source_data_dir,
                 'new_img_size' :  new_img_size,
