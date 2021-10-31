@@ -12,18 +12,17 @@ from sentinelsat import SentinelAPI
 from dotenv import load_dotenv
 from geopandas import GeoDataFrame, GeoSeries
 
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
 
 
-MAX_PERCENT_CLOUD_COVERAGE=10
-PRODUCTTYPE='L2A' # or 'L1C'
-STANDARD_CRS_EPSG_CODE = 4326 # WGS84
-RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
-DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
-LABEL_TYPE = 'categorical'
+# MAX_PERCENT_CLOUD_COVERAGE=10
+# PRODUCTTYPE='L2A' # or 'L1C'
+# STANDARD_CRS_EPSG_CODE = 4326 # WGS84
+# RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
+# DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
+# LABEL_TYPE = 'categorical'
 
 
 
@@ -110,10 +109,10 @@ class Sentinel2DownloaderMixIn(object):
     #         max_percent_cloud_coverage=max_percent_cloud_coverage,
 
     @property
-    def sentinel2_producttype(self):
+    def sentinel2_producttype(self) -> str:
         return self._params_dict['sentinel2_producttype']
 
-    @property.setter
+    @sentinel2_producttype.setter
     def sentinel2_producttype(self, new_sentinel2_producttype : str):
         self._params_dict['sentinel2_producttype'] = new_sentinel2_producttype
 
@@ -122,7 +121,7 @@ class Sentinel2DownloaderMixIn(object):
     def sentinel2_resolution(self):
         return self._params_dict['sentinel2_resolution']
 
-    @property.setter
+    @sentinel2_resolution.setter
     def sentinel2_resolution(self, new_sentinel2_resolution : str):
         self._params_dict['sentinel2_resolution'] = new_sentinel2_resolution
 
@@ -131,7 +130,7 @@ class Sentinel2DownloaderMixIn(object):
     def sentinel2_max_percent_cloud_coverage(self):
         return self._params_dict['sentinel2_max_percent_cloud_coverage']
 
-    @property.setter
+    @sentinel2_max_percent_cloud_coverage.setter
     def sentinel2_max_percent_cloud_coverage(self, new_sentinel2_max_percent_cloud_coverage : str):
         self._params_dict['sentinel2_max_percent_cloud_coverage'] = new_sentinel2_max_percent_cloud_coverage
 
