@@ -153,7 +153,7 @@ class CreateDSCategoricalFromSoftCategoricalDatasetMixIn(object):
         # Remember the cutting params and save the associator.
         target_assoc._update_from_source_dataset_dict.update(
             {
-                'update_method' : 'update_dataset_soft_categorical_to_categorical',
+                'update_method' : '_update_categorical_from_soft_categorical_dataset',
                 'source_data_dir' : self.images_dir.parent, # !!! Assuming standard directory format here.
             }
         )

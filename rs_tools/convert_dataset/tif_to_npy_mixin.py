@@ -50,7 +50,7 @@ class CreateDSTifToNpyMixIn(object):
             channels_first_or_last_in_npy=channels_first_or_last_in_npy)
 
 
-    def update_dataset_converted_from_tif_to_npy(
+    def _update_dataset_converted_from_tif_to_npy(
             self,
             data_dir : Optional[Union[Path, str]] = None,
             assoc : Optional[ImgPolygonAssociator] = None
@@ -233,7 +233,7 @@ class CreateDSTifToNpyMixIn(object):
         # Remember the cutting params ...
         target_assoc._update_from_source_dataset_dict.update(
             {
-                'update_method' : 'update_dataset_soft_categorical_to_categorical',
+                'update_method' : '_update_dataset_converted_from_tif_to_npy',
                 'source_data_dir' : self.images_dir.parent, # !!! Assuming standard directory format here.
                 'img_bands' : img_bands,
                 'label_bands' : label_bands,
