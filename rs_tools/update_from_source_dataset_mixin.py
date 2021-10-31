@@ -21,6 +21,14 @@ class UpdateFromSourceDatasetMixIn(object):
     Mix-in that implements updating the dataset from the source dataset (which itself is recursively updated first) it was created from. 
     """
 
+    @property
+    def source_data_dir(self) -> Path:
+        return Path(self._update_from_source_dataset_dict['source_data_dir'])
+
+    @source_data_dir.setter
+    def source_data_dir(self, new_source_data_dir : Union[Path, str]) -> None:
+        self._update_from_source_dataset_dict['source_data_dir'] = str(new_source_data_dir)
+
     def update_from_source_dataset(self):
         """ 
         Recursively update the dataset (and associator) from the source dataset (if any) that it was created from. 
