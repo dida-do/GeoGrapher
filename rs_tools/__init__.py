@@ -1,2 +1,1 @@
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
-
