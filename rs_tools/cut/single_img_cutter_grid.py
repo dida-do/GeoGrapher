@@ -2,7 +2,8 @@
 SingleImgCutter that cuts an image to a grid of images. 
 """
 
-from typing import Any, Union, List, Optional, Tuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Union, List, Optional, Tuple
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
@@ -10,7 +11,8 @@ import rasterio as rio
 from rasterio.windows import Window
 from affine import Affine
 
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 
 logger = logging.getLogger(__name__)
