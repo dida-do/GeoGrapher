@@ -4,16 +4,17 @@ Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cut
     - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
 """
 
+from __future__ import annotations
 from rs_tools.cut.single_img_cutter_bbox import ToImgBBoxCutter
 from rs_tools.global_constants import DATA_DIR_SUBDIRS
-from typing import Union, List, Tuple, Optional
+from typing import TYPE_CHECKING, Union, List, Tuple, Optional
 from geopandas import GeoDataFrame
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
 
-import rs_tools.img_polygon_associator as ipa
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_grid import ImgToGridCutter
 from rs_tools.cut.img_filter_predicates import AlwaysTrue 
 from rs_tools.cut.cut_iter_over_imgs import create_or_update_dataset_iter_over_imgs
