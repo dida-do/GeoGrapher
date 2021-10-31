@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 log = logging.Logger(__name__)
 
-class CreateDSTifToNpyMixIn(object):
+class CreateDSTiffToNpyMixIn(object):
 
     def convert_dataset_from_tif_to_npy(
             self,
