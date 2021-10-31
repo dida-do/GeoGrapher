@@ -22,7 +22,8 @@ from rs_tools.img_polygon_associator_base import ImgPolygonAssociatorBase
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
 from rs_tools.labels_mixin import LabelsMixIn
-from rs_tools.download_imgs_mixin import DownloadImgsMixIn
+from rs_tools.download_imgs_mixin import DownloadImgsBaseMixIn
+from rs_tools.downloaders import Sentinel2DownloaderMixIn, JAXADownloaderMixIn
 from rs_tools.convert_dataset import CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn, CreateDSCategoricalFromSoftCategoricalDatasetMixIn
 from rs_tools.cut import CreateDSCutImgsAroundEveryPolygonMixIn, CreateDSCutEveryImgToGridMixIn, CreateDSCutIterOverImgsMixIn, CreateDSCutIterOverPolygonsMixIn
 from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDatasetMixIn
@@ -54,8 +55,9 @@ log = logging.getLogger(__name__)
 
 class ImgPolygonAssociator(
         AddDropImgsPolygonsMixIn,
-        DownloadImgsMixIn,
-        LabelsMixIn,
+        DownloadImgsBaseMixIn, # needs to before any Downloader mix ins
+        Sentinel2DownloaderMixIn,
+        JAXADownloaderMixIn,
         UpdateFromSourceDatasetMixIn, # Needs to be before any of the CreateDS mix ins
         CreateDSCombineRemoveSegClassesMixIn,
         CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
@@ -64,7 +66,8 @@ class ImgPolygonAssociator(
         CreateDSCutEveryImgToGridMixIn,
         CreateDSCutIterOverImgsMixIn,
         CreateDSCutIterOverPolygonsMixIn,
-        ImgPolygonAssociatorBase):
+        LabelsMixIn,
+        ImgPolygonAssociatorBase): # needs to be last
     """
     Organize and handle remote sensing datasets consisting of shapely polygons and images/labels.
 
@@ -397,15 +400,6 @@ class ImgPolygonAssociator(
     @property
     def image_data_dirs(self) -> List[Path]:
         return self._image_data_dirs
-
-
-    @property
-    def source_data_dir(self) -> Path:
-        return Path(self._update_from_source_dataset_dict['source_data_dir'])
-
-    @property.setter
-    def source_data_dir(self, new_source_data_dir : Union[Path, str]) -> None:
-        self._update_from_source_dataset_dict['source_data_dir'] = str(new_source_data_dir)
 
 
     def save(self):
