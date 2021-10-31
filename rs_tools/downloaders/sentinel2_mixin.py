@@ -20,7 +20,7 @@ from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe
 
 MAX_PERCENT_CLOUD_COVERAGE=10
 PRODUCTTYPE='L2A' # or 'L1C'
-STANDARD_CRS_EPSG_CODE = 4326 # WGS84 
+STANDARD_CRS_EPSG_CODE = 4326 # WGS84
 RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
 DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
 LABEL_TYPE = 'categorical'
@@ -31,84 +31,119 @@ LABEL_TYPE = 'categorical'
 log = logging.getLogger(__name__)
 
 
-class ImgPolygonAssociatorS2(ImgPolygonAssociator):
+class Sentinel2DownloaderMixIn(object):
     """
-    ImgPolygonAssociator for Sentinel-2 images.
+    Downloader for Sentinel-2 images.
 
-    Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns. 
+    Requires environment variables sentinelAPIusername and sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and 'img_processed?'. Subclass/modify if you need other columns.
     """
 
-    def __init__(self, 
+    # def __init__(self,
 
-        # args w/o default values
-        segmentation_classes : Sequence[str], 
-        label_type : str,
-        background_class : Optional[str], 
-        
-        # polygons_df args. Exactly one value needs to be set (i.e. not None).
-        polygons_df : Optional[GeoDataFrame] = None,
-        polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
-        
-        # imgs_df args. Exactly one value needs to be set (i.e. not None).
-        imgs_df : Optional[GeoDataFrame] = None, 
-        imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
-        
-        # remaining non-path args w/ default values
-        add_background_band_in_labels : bool = False, 
-        crs_epsg_code : int = STANDARD_CRS_EPSG_CODE, 
-        producttype : str = PRODUCTTYPE,
-        resolution : int = RESOLUTION,
-        max_percent_cloud_coverage : int = MAX_PERCENT_CLOUD_COVERAGE,
+    #     # args w/o default values
+    #     segmentation_classes : Sequence[str],
+    #     label_type : str,
+    #     background_class : Optional[str],
 
-        # path args
-        data_dir : Optional[Union[Path, str]] = None, # either this arg or all the path args below must be set (i.e. not None)
-        images_dir : Optional[Union[Path, str]] = None, 
-        labels_dir : Optional[Union[Path, str]] = None, 
-        assoc_dir : Optional[Union[Path, str]] = None, 
-        download_dir : Optional[Union[Path, str]] = None, 
-        
-        # optional kwargs
-        **kwargs : Any
-        ):            
-        """
-        See the docstring for the parent class __init__ for description of the arguments not mentioned here. 
+    #     # polygons_df args. Exactly one value needs to be set (i.e. not None).
+    #     polygons_df : Optional[GeoDataFrame] = None,
+    #     polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
 
-        Args:
-            producttype (str) : Sentinel-2 product type, "L2A" or "L1C", defaults to PRODUCTTYPE
+    #     # imgs_df args. Exactly one value needs to be set (i.e. not None).
+    #     imgs_df : Optional[GeoDataFrame] = None,
+    #     imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
 
-            resolution (int) :  resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters). Defaults to RESOLUTION
+    #     # remaining non-path args w/ default values
+    #     add_background_band_in_labels : bool = False,
+    #     crs_epsg_code : int = STANDARD_CRS_EPSG_CODE,
+    #     producttype : str = PRODUCTTYPE,
+    #     resolution : int = RESOLUTION,
+    #     max_percent_cloud_coverage : int = MAX_PERCENT_CLOUD_COVERAGE,
 
-            max_percent_cloud_coverage (int): maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100. Defults to MAX_PERCENT_CLOUD_COVERAGE
+    #     # path args
+    #     data_dir : Optional[Union[Path, str]] = None, # either this arg or all the path args below must be set (i.e. not None)
+    #     images_dir : Optional[Union[Path, str]] = None,
+    #     labels_dir : Optional[Union[Path, str]] = None,
+    #     assoc_dir : Optional[Union[Path, str]] = None,
+    #     download_dir : Optional[Union[Path, str]] = None,
 
-            **kwargs (Any): Optional keyword arguments.
-        """
+    #     # optional kwargs
+    #     **kwargs : Any
+    #     ):
+    #     """
+    #     See the docstring for the parent class __init__ for description of the arguments not mentioned here.
 
-        super().__init__(
-            segmentation_classes=segmentation_classes, 
-            label_type=label_type, 
-            background_class=background_class, 
-            polygons_df=polygons_df, 
-            polygons_df_cols=polygons_df_cols, 
-            imgs_df=imgs_df, 
-            imgs_df_cols=imgs_df_cols, 
-            add_background_band_in_labels=add_background_band_in_labels, 
-            crs_epsg_code=crs_epsg_code, 
-            data_dir=data_dir, 
-            images_dir=images_dir, 
-            labels_dir=labels_dir, 
-            assoc_dir=assoc_dir, 
-            download_dir=download_dir,
-            producttype=producttype,
-            resolution=resolution,
-            max_percent_cloud_coverage=max_percent_cloud_coverage, 
-            **kwargs)
+    #     Args:
+    #         producttype (str) : Sentinel-2 product type, "L2A" or "L1C", defaults to PRODUCTTYPE
+
+    #         resolution (int) :  resolution of Sentinel-2 images, one of 10, 20, 60 (for L2A, in meters). Defaults to RESOLUTION
+
+    #         max_percent_cloud_coverage (int): maximum allowable cloud coverage percentage when querying for a Sentinel-2 image. Should be between 0 and 100. Defults to MAX_PERCENT_CLOUD_COVERAGE
+
+    #         **kwargs (Any): Optional keyword arguments.
+    #     """
+
+    #     super().__init__(
+    #         segmentation_classes=segmentation_classes,
+    #         label_type=label_type,
+    #         background_class=background_class,
+    #         polygons_df=polygons_df,
+    #         polygons_df_cols=polygons_df_cols,
+    #         imgs_df=imgs_df,
+    #         imgs_df_cols=imgs_df_cols,
+    #         add_background_band_in_labels=add_background_band_in_labels,
+    #         crs_epsg_code=crs_epsg_code,
+    #         data_dir=data_dir,
+    #         images_dir=images_dir,
+    #         labels_dir=labels_dir,
+    #         assoc_dir=assoc_dir,
+    #         download_dir=download_dir,
+    #         producttype=producttype,
+    #         resolution=resolution,
+    #         max_percent_cloud_coverage=max_percent_cloud_coverage,
+    #         **kwargs)
 
 
-    def _download_imgs_for_polygon(self,
+    #VARIABLES:
+    #         producttype=producttype,
+    #         resolution=resolution,
+    #         max_percent_cloud_coverage=max_percent_cloud_coverage,
+
+    @property
+    def sentinel2_producttype(self):
+        return self._params_dict['sentinel2_producttype']
+
+    @property.setter
+    def sentinel2_producttype(self, new_sentinel2_producttype : str):
+        self._params_dict['sentinel2_producttype'] = new_sentinel2_producttype
+
+
+    @property
+    def sentinel2_resolution(self):
+        return self._params_dict['sentinel2_resolution']
+
+    @property.setter
+    def sentinel2_resolution(self, new_sentinel2_resolution : str):
+        self._params_dict['sentinel2_resolution'] = new_sentinel2_resolution
+
+
+    @property
+    def sentinel2_max_percent_cloud_coverage(self):
+        return self._params_dict['sentinel2_max_percent_cloud_coverage']
+
+    @property.setter
+    def sentinel2_max_percent_cloud_coverage(self, new_sentinel2_max_percent_cloud_coverage : str):
+        self._params_dict['sentinel2_max_percent_cloud_coverage'] = new_sentinel2_max_percent_cloud_coverage
+
+
+    def _download_imgs_for_polygon_sentinel2(self,
             polygon_name: str,
             polygon_geometry: GeoSeries,
             download_dir: Union[str, Path],
             previously_downloaded_imgs_set: List[str],
+            producttype : Optional[str] = None,
+            resolution : Optional[int] = None,
+            max_percent_cloud_coverage : Optional[int] = None,
             **kwargs) -> dict:
         """
         Downloads a sentinel-2 image fully containing the polygon, returns a dict in the format needed by the associator.
@@ -130,6 +165,64 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
             ImgDownloadError: Raised if an error occurred while trying to download a product.
 
         """
+
+        if producttype is None:
+            try:
+                # Use saved producttype
+                producttype = self.sentinel2_producttype
+            except AttributeError:
+                raise ValueError("Need to set producttype keyword argument ('L2A'/'S2MSI2A' or 'L1C'/'S2MSI1C').")
+        else:
+            if producttype  not in {'L1C', 'S2MSI1C', 'L2A', 'S2MSI2A'}:
+                raise ValueError(f"Unknown producttype: {producttype}")
+            else:
+                # Remember 
+                self.sentinel2_producttype = producttype
+
+        if resolution is None:
+            try:
+                # Use saved resolution
+                resolution = self.sentinel2_resolution
+            except AttributeError:
+                raise ValueError("Need to set resolution keyword argument ('L2A'/'S2MSI2A' or 'L1C'/'S2MSI1C').")
+        else:
+            if resolution  not in {'L1C', 'S2MSI1C', 'L2A', 'S2MSI2A'}:
+                raise ValueError(f"Unknown resolution: {resolution}")
+            else:
+                self.sentinel2_resolution = resolution
+
+        if max_percent_cloud_coverage is None:
+            try:
+                # Use saved max_percent_cloud_coverage
+                max_percent_cloud_coverage = self.sentinel2_max_percent_cloud_coverage
+            except AttributeError:
+                raise ValueError("Need to set max_percent_cloud_coverage keyword argument ('L2A'/'S2MSI2A' or 'L1C'/'S2MSI1C').")
+        else:
+            if max_percent_cloud_coverage  not in {'L1C', 'S2MSI1C', 'L2A', 'S2MSI2A'}:
+                raise ValueError(f"Unknown max_percent_cloud_coverage: {max_percent_cloud_coverage}")
+            else:
+                self.sentinel2_max_percent_cloud_coverage = max_percent_cloud_coverage
+
+        if 'producttype' not in kwargs:
+            raise TypeError("Missing argument: The sentinel-2 downloader needs a producttype keyword arg ('L2A' or 'L1C').")
+        elif kwargs['producttype'] not in {'L1C', 'S2MSI1C', 'L2A', 'S2MSI2A'}:
+            raise ValueError(f"Unknown producttype: {kwargs['producttype']}")
+
+        # Check keyword arguments:
+        if 'producttype' not in kwargs:
+            raise TypeError("Missing argument: The sentinel-2 downloader needs a producttype keyword arg ('L2A' or 'L1C').")
+        elif kwargs['producttype'] not in {'L1C', 'S2MSI1C', 'L2A', 'S2MSI2A'}:
+            raise ValueError(f"Unknown producttype: {kwargs['producttype']}")
+
+        if 'resolution' not in kwargs:
+            raise TypeError("Missing argument: The sentinel-2 downloader needs a resolution keyword arg of integer type (10,20, or 60).")
+        elif kwargs['resolution'] not in {10,20,60}:
+            raise ValueError(f"resolution is: {kwargs['resolution']}, needs to be one of 10, 20, or 60.")
+
+        if 'max_percent_cloud_coverage' not in kwargs:
+            raise TypeError("Missing argument: The sentinel-2 downloader needs a max_percent_cloud_coverage arg of integer type (0-100).")
+        elif kwargs['max_percent_cloud_coverage'] < 0 or kwargs['max_percent_cloud_coverage'] > 100:
+            raise ValueError(f"max_percent_cloud_coverage needs to be between 0 and 100.")
 
         # To set up sentinel API, ...
         # ... load environment variables ...
@@ -158,14 +251,14 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
             producttype = 'S2MSI1C'
         else:
             raise LookupError(f"ImgPolygonAssociator.__init__: unknown producttype: {kwargs['producttype']}")
-    
+
         try:
 
             # Query, remember results
-            products = api.query(area=rectangle_wkt, 
-                                    date=date, 
+            products = api.query(area=rectangle_wkt,
+                                    date=date,
                                     area_relation=area_relation,
-                                    producttype=producttype, 
+                                    producttype=producttype,
                                     cloudcoverpercentage=(0,kwargs['max_percent_cloud_coverage']))
 
             products = {k: v for k, v in products.items() if api.is_online(k)}
@@ -214,7 +307,7 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
         raise NoImgsForPolygonFoundError(f"Either no images were found for {polygon_name} found or all images failed to download.")
 
 
-    def _process_downloaded_img_file(self,
+    def _process_downloaded_img_file_sentinel2(self,
             img_name: str,
             in_dir: Union[str, Path],
             out_dir: Union[str, Path],
@@ -240,13 +333,13 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
         safe_path = os.path.abspath(in_dir / Path("safe_files") / (filename_no_extension + ".SAFE"))
         zip_path = os.path.abspath(in_dir / zip_filename)
 
-        # extract zip to .SAFE and delete zip             
+        # extract zip to .SAFE and delete zip
         with ZipFile(zip_path) as zip_ref:
             zip_ref.extractall(in_dir / Path("safe_files/"))
         os.remove(zip_path)
 
         # convert SAFE to GeoTiff
-        conversion_dict = safe_to_geotif_L2A(safe_root=safe_path, 
+        conversion_dict = safe_to_geotif_L2A(safe_root=safe_path,
                             resolution=kwargs['resolution'],
                             outdir=out_dir)
 
@@ -257,11 +350,9 @@ class ImgPolygonAssociatorS2(ImgPolygonAssociator):
         # try using rio.warp.transform_bounds?? maybe this is more accurate when comparing to APIfootprint??
 
         # return a dict
-        return_dict = {'img_name': img_name, 
-                        'geometry': img_bounding_rectangle, 
-                        'orig_crs_epsg_code': orig_crs_epsg_code, 
+        return_dict = {'img_name': img_name,
+                        'geometry': img_bounding_rectangle,
+                        'orig_crs_epsg_code': orig_crs_epsg_code,
                         'img_processed?': True}
 
         return return_dict
-
-
