@@ -1,3 +1,3 @@
 from rs_tools.convert_dataset.combine_remove_seg_classes_mixin import CreateDSCombineRemoveSegClassesMixIn
 from rs_tools.convert_dataset.soft_to_categorical_mixin import CreateDSCategoricalFromSoftCategoricalDatasetMixIn
-from rs_tools.convert_dataset.tif_to_npy_mixin import CreateDSTifToNpyMixIn
+from rs_tools.convert_dataset.tif_to_npy_mixin import CreateDSTiffToNpyMixIn
