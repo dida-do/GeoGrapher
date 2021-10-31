@@ -1,13 +1,13 @@
 """
-Utility functions. 
+Utility functions.
 
 
 transform_shapely_geometry(geometry, from_epsg, to_epsg): Transforms a shapely geometry from one crs to another.
 
-round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector geometry. Useful in some cases for testing the coordinate conversion of image bounding rectangles. 
+round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector geometry. Useful in some cases for testing the coordinate conversion of image bounding rectangles.
 """
 
-from typing import Union
+from typing import Union, Callable
 import copy
 import numpy as np
 import rasterio.mask
@@ -19,12 +19,12 @@ import shapely
 from shapely.geometry import Point, Polygon, MultiPoint, MultiPolygon, MultiLineString, LinearRing, LineString, GeometryCollection
 from shapely.ops import transform
 import pyproj
-    
+
 GEOMS_UNION = Union[Point, Polygon, MultiPoint, MultiPolygon, MultiLineString, LinearRing, LineString, GeometryCollection]
 
 
-def transform_shapely_geometry(geometry: GEOMS_UNION, 
-                                from_epsg: int, 
+def transform_shapely_geometry(geometry: GEOMS_UNION,
+                                from_epsg: int,
                                 to_epsg: int) -> GEOMS_UNION:
     """
     Transform a shapely geometry (e.g. Polygon or Point) from one crs to another.
@@ -37,7 +37,7 @@ def transform_shapely_geometry(geometry: GEOMS_UNION,
     Returns:
         GEOMS_UNION: transformed shapely geometry
     """
-    
+
     # define the coordinate transform ...
     project = pyproj.Transformer.from_crs(f"epsg:{from_epsg}", f"epsg:{to_epsg}", always_xy=True)
 
@@ -54,8 +54,8 @@ def transform_shapely_geometry(geometry: GEOMS_UNION,
 
 def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, Point]:
     """
-    Round the coordinates of a shapely geometry (e.g. Polygon or Point). Useful in some cases for testing the coordinate conversion of image bounding rectangles. 
-    
+    Round the coordinates of a shapely geometry (e.g. Polygon or Point). Useful in some cases for testing the coordinate conversion of image bounding rectangles.
+
     Args:
         geometry (GEOMS_UNION): shapely geometry to be rounded
         ndigits (int, optional): number of significant digits to round to. Defaults to 1.
@@ -63,17 +63,24 @@ def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, P
     Returns:
         GEOMS_UNION: geometry with all coordinates rounded to ndigits number of significant digits.
     """
-    
+
     return transform(lambda x,y: (round(x, ndigits), round(y, ndigits)), geometry)
 
 
 def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
-    
-    gdf_copy = GeoDataFrame(columns=gdf.columns, 
-                        data=copy.deepcopy(gdf.values), 
+
+    gdf_copy = GeoDataFrame(columns=gdf.columns,
+                        data=copy.deepcopy(gdf.values),
                         crs=gdf.crs)
-    gdf_copy = gdf_copy.astype(gdf.dtypes)    
+    gdf_copy = gdf_copy.astype(gdf.dtypes)
     gdf_copy.set_index(gdf.index, inplace=True)
-    
+
     return gdf_copy
+
+
+def map_dict_values(
+        fun : Callable,
+        dict_arg : dict
+        ) -> dict:
+        return {key : fun(val) for key, val in dict_arg.items()}
 
