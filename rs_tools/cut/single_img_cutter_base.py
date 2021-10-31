@@ -1,8 +1,9 @@
 """
 Abstract base class for single image cutters. 
 """
+from __future__ import annotations
 import logging
-from typing import Union, List, Tuple, Optional, Any
+from typing import TYPE_CHECKING, Union, List, Tuple, Optional, Any
 from pathlib import Path
 import os
 from abc import ABC, abstractmethod
@@ -20,7 +21,8 @@ from rasterio.crs import CRS
 from affine import Affine
 
 from geopandas.geodataframe import GeoDataFrame
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
 from rs_tools.utils.utils import transform_shapely_geometry
 
