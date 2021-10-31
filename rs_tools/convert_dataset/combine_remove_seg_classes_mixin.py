@@ -268,6 +268,7 @@ class CreateDSCombineRemoveSegClassesMixIn(object):
             target_assoc.polygons_df.loc[polygons_to_add_to_target_dataset, 'orig_type'] = self.polygons_df.loc[polygons_to_add_to_target_dataset, 'type']
 
         target_assoc._update_from_source_dataset_dict.update({
+            'update_method': '_update_dataset_by_combining_or_removing_seg_classes',
             'seg_classes' : seg_classes,
             'source_data_dir' : self.images_dir.parent,
             'new_seg_classes' : new_seg_classes,

@@ -151,7 +151,7 @@ class CreateDSCutEveryImgToGridMixIn(object):
         # remember the cutting params.
         target_assoc._update_from_source_dataset_dict.update(
             {
-                'update_method' : 'update_dataset_every_img_to_grid',
+                'update_method' : '_update_cut_every_img_to_grid',
                 'source_data_dir' : source_assoc.images_dir.parent, # Assuming standard data directory format
                 'new_img_size' :  new_img_size,
                 'img_bands' : img_bands,
