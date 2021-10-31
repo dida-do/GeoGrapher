@@ -1,7 +1,8 @@
 """ 
 SingleImgCutter that cuts a small image from a predefined bounding box on the image accepted by the polygon filter predicate.
 """
-from typing import Any, Union, List, Optional, Tuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Union, List, Optional, Tuple
 from rs_tools.cut.type_aliases import ImgSize
 import logging
 from pathlib import Path
@@ -10,7 +11,8 @@ from geopandas import GeoDataFrame
 import rasterio as rio
 from rasterio.windows import from_bounds, Window
 
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 
 logger = logging.getLogger(__name__)

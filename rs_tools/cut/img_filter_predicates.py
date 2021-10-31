@@ -1,9 +1,11 @@
-from typing import Any, Callable, Union
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Callable, Union
 from geopandas import GeoSeries
 from pandas import Series
 from collections.abc import Callable
 from abc import abstractmethod
-from rs_tools import ImgPolygonAssociator
+if TYPE_CHECKING:
+    from rs_tools import ImgPolygonAssociator
 
 
 class ImgFilterPredicate(Callable):
