@@ -143,7 +143,7 @@ class CreateDSTiffToNpyMixIn(object):
             target_assoc = self.empty_assoc_same_format_as(target_data_dir)
         
             # Create image data dirs ...
-            for dir in target_assoc.image_data_dirs:
+            for dir in target_assoc.img_data_dirs:
                 dir.mkdir(parents=True, exist_ok=True)
                 if list(dir.iterdir()) != []:
                     raise Exception(f"{dir} should be empty!")
@@ -187,7 +187,7 @@ class CreateDSTiffToNpyMixIn(object):
                 (target_assoc.labels_dir / img_name).unlink(missing_ok=True)
 
         # For the images_dir and labels_dir of the source tif and target npy dataset ...
-        for tif_dir, npy_dir in zip(self.image_data_dirs, target_assoc.image_data_dirs):
+        for tif_dir, npy_dir in zip(self.image_data_dirs, target_assoc.img_data_dirs):
             # ... go through all tif files. ...
             for tif_img_name in tqdm(tif_img_name_list, desc=f"Converting {tif_dir.name}"):
                 # If the corresponding npy in the target image data dir does not exist ...
