@@ -14,7 +14,7 @@ from pathlib import Path
 import geopandas as gpd
 from geopandas import GeoDataFrame
 
-from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE, DATA_DIR_SUBDIRS, IMGS_DF_INDEX_NAME, POLYGONS_DF_INDEX_NAME
+from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE, IMGS_DF_INDEX_NAME, POLYGONS_DF_INDEX_NAME
 from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.associator_utils import empty_gdf, empty_gdf_same_format_as, empty_graph
 # Base class:
@@ -26,7 +26,7 @@ from rs_tools.download_imgs_mixin import DownloadImgsBaseMixIn
 from rs_tools.downloaders import Sentinel2DownloaderMixIn, JAXADownloaderMixIn
 from rs_tools.convert_dataset import CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn, CreateDSCategoricalFromSoftCategoricalDatasetMixIn
 from rs_tools.cut import CreateDSCutImgsAroundEveryPolygonMixIn, CreateDSCutEveryImgToGridMixIn, CreateDSCutIterOverImgsMixIn, CreateDSCutIterOverPolygonsMixIn
-from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDatasetMixIn
+from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDSMixIn
 
 
 INFERRED_PATH_ATTR_FILENAMES = { # attribute self.key will be self._json_path / val
@@ -58,7 +58,7 @@ class ImgPolygonAssociator(
         DownloadImgsBaseMixIn, # needs to before any Downloader mix ins
         Sentinel2DownloaderMixIn,
         JAXADownloaderMixIn,
-        UpdateFromSourceDatasetMixIn, # Needs to be before any of the CreateDS mix ins
+        UpdateFromSourceDSMixIn, # Needs to be before any of the CreateDS mix ins
         CreateDSCombineRemoveSegClassesMixIn,
         CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
         CreateDSTiffToNpyMixIn,
@@ -398,7 +398,7 @@ class ImgPolygonAssociator(
 
 
     @property
-    def image_data_dirs(self) -> List[Path]:
+    def img_data_dirs(self) -> List[Path]:
         return self._image_data_dirs
 
 
