@@ -106,7 +106,7 @@ class CreateDSCategoricalFromSoftCategoricalDatasetMixIn(object):
             target_assoc.label_type = 'categorical' # converts cols of empty polygons_df as well
 
             # Create image data dirs ...
-            for dir in target_assoc.image_data_dirs:
+            for dir in target_assoc.img_data_dirs:
                 dir.mkdir(parents=True, exist_ok=True)
                 if list(dir.iterdir()) != []:
                     raise Exception(f"{dir} should be empty!")
