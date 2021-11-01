@@ -12,17 +12,18 @@ from sentinelsat import SentinelAPI
 from dotenv import load_dotenv
 from geopandas import GeoDataFrame, GeoSeries
 
+from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
 
 
-# MAX_PERCENT_CLOUD_COVERAGE=10
-# PRODUCTTYPE='L2A' # or 'L1C'
-# STANDARD_CRS_EPSG_CODE = 4326 # WGS84
-# RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
-# DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
-# LABEL_TYPE = 'categorical'
+MAX_PERCENT_CLOUD_COVERAGE=10
+PRODUCTTYPE='L2A' # or 'L1C'
+STANDARD_CRS_EPSG_CODE = 4326 # WGS84
+RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
+DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
+LABEL_TYPE = 'categorical'
 
 
 
@@ -109,10 +110,10 @@ class Sentinel2DownloaderMixIn(object):
     #         max_percent_cloud_coverage=max_percent_cloud_coverage,
 
     @property
-    def sentinel2_producttype(self) -> str:
+    def sentinel2_producttype(self):
         return self._params_dict['sentinel2_producttype']
 
-    @sentinel2_producttype.setter
+    @property.setter
     def sentinel2_producttype(self, new_sentinel2_producttype : str):
         self._params_dict['sentinel2_producttype'] = new_sentinel2_producttype
 
@@ -121,7 +122,7 @@ class Sentinel2DownloaderMixIn(object):
     def sentinel2_resolution(self):
         return self._params_dict['sentinel2_resolution']
 
-    @sentinel2_resolution.setter
+    @property.setter
     def sentinel2_resolution(self, new_sentinel2_resolution : str):
         self._params_dict['sentinel2_resolution'] = new_sentinel2_resolution
 
@@ -130,9 +131,27 @@ class Sentinel2DownloaderMixIn(object):
     def sentinel2_max_percent_cloud_coverage(self):
         return self._params_dict['sentinel2_max_percent_cloud_coverage']
 
-    @sentinel2_max_percent_cloud_coverage.setter
+    @property.setter
     def sentinel2_max_percent_cloud_coverage(self, new_sentinel2_max_percent_cloud_coverage : str):
         self._params_dict['sentinel2_max_percent_cloud_coverage'] = new_sentinel2_max_percent_cloud_coverage
+
+
+    @property
+    def sentinel2_area_relation(self):
+        return self._params_dict['sentinel2_area_relation']
+
+    @property.setter
+    def sentinel2_area_relation(self, new_sentinel2_area_relation : str):
+        self._params_dict['sentinel2_area_relation'] = new_sentinel2_area_relation
+
+
+    @property
+    def sentinel2_date(self):
+        return self._params_dict['sentinel2_date']
+
+    @property.setter
+    def sentinel2_date(self, new_sentinel2_date : Any):
+        self._params_dict['sentinel2_date'] = new_sentinel2_date
 
 
     def _download_imgs_for_polygon_sentinel2(self,
@@ -164,7 +183,6 @@ class Sentinel2DownloaderMixIn(object):
             KeyError: Raised if the product name could not be extracted correctly.
             ImgAlreadyExistsError: Raised if the image selected to download already exists in the associator.
             ImgDownloadError: Raised if an error occurred while trying to download a product.
-
         """
 
         for s2_specific_keyword_arg, value in {
@@ -178,14 +196,14 @@ class Sentinel2DownloaderMixIn(object):
             if value is None:
                 try:
                     # Use saved value
-                    value = getattr(self, f"sentinel2_{s2_specific_keyword_arg}")
+                    value = getattr(self, s2_specific_keyword_arg)
                 except AttributeError:
-                    raise ValueError(f"Need to set {s2_specific_keyword_arg} keyword argument.")
+                    raise ValueError("Need to set producttype keyword argument ('L2A'/'S2MSI2A' or 'L1C'/'S2MSI1C').")
             else:
                 # Remember value
-                setattr(self, f"sentinel2_{s2_specific_keyword_arg}", value)
+                setattr(self, s2_specific_keyword_arg, value)
 
-        # Run some safety checks on the arg values
+        # Check args
         if resolution  not in {10, 20, 60}:
             raise ValueError(f"Unknown resolution: {resolution}")
         if max_percent_cloud_coverage < 0 or max_percent_cloud_coverage > 100:
@@ -219,13 +237,6 @@ class Sentinel2DownloaderMixIn(object):
         rectangle_wkt = wkt.dumps(polygon_geometry.envelope)
         # area_relation='Contains'
         # date = ("NOW-364DAYS", "NOW") # anything older is in long-term archive
-        # Allow for producttype shorthand.
-        if producttype in {'L2A', 'S2MSI2A'}:
-            producttype = 'S2MSI2A'
-        elif producttype in {'L1C', 'S2MSI1C'}:
-            producttype = 'S2MSI1C'
-        else:
-            raise LookupError(f"ImgPolygonAssociator.__init__: unknown producttype: {producttype}")
 
         try:
 
@@ -287,7 +298,6 @@ class Sentinel2DownloaderMixIn(object):
             in_dir: Union[str, Path],
             out_dir: Union[str, Path],
             convert_to_crs_epsg: int,
-            resolution: int,
             **kwargs) -> dict:
         """
         Extracts downloaded sentinel-2 zip file to a .SAFE directory, then processes/converts to a GeoTiff image, deletes the zip file, puts the GeoTiff image in the right directory, and returns information about the img in a dict.
@@ -297,7 +307,6 @@ class Sentinel2DownloaderMixIn(object):
             in_dir: The directory containing the zip file.
             out_dir: The directory to save the
             convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
-            resolution: int
 
         Returns:
             return_dict: Contains information about the downloaded product.
