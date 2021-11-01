@@ -37,12 +37,12 @@ class AddDropImgsPolygonsMixIn(object):
             df=new_polygons_df,
             df_name='new_polygons_df')
 
-        self._compare_df_col_index_names(
-            df=new_polygons_df,
-            df_name='new_polygons_df',
-            self_df=self.polygons_df,
-            self_df_name='self.polygons_df'
-        )
+        # self._compare_df_col_index_names(
+        #     df=new_polygons_df,
+        #     df_name='new_polygons_df',
+        #     self_df=self.polygons_df,
+        #     self_df_name='self.polygons_df'
+        # )
 
         if self.label_type == 'categorical':
             self._check_classes_in_categorical_polygons_df_contained_in_all_classes(new_polygons_df)
@@ -113,11 +113,11 @@ class AddDropImgsPolygonsMixIn(object):
             df=new_imgs_df,
             df_name='new_imgs_df')
 
-        self._compare_df_col_index_names(
-            df=new_imgs_df,
-            df_name='new_imgs_df',
-            self_df=self.imgs_df,
-            self_df_name='self.imgs_df')
+        # self._compare_df_col_index_names(
+        #     df=new_imgs_df,
+        #     df_name='new_imgs_df',
+        #     self_df=self.imgs_df,
+        #     self_df_name='self.imgs_df')
 
         # go through all new imgs...
         for img_name in new_imgs_df.index:
