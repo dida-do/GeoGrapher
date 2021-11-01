@@ -1,6 +1,6 @@
 from typing import Optional, Sequence, Union, List, Tuple
 from pathlib import Path
-from collections import Counter
+from collections import Counter, defaultdict
 import logging
 import copy
 import random
@@ -62,8 +62,9 @@ class DownloadImgsBaseMixIn(object):
             # Remember value
             setattr(self, 'downloader', downloader)
 
-        # Make sure images_dir exists
+        # Make sure images_dir and downloads_dir exists
         self.images_dir.mkdir(parents=True, exist_ok=True)
+        self.download_dir.mkdir(parents=True, exist_ok=True)
 
         if polygon_names is None:
 
@@ -97,7 +98,8 @@ class DownloadImgsBaseMixIn(object):
         # (Will be used to make sure no attempt is made to download an image more than once.)
 
         # Dict to keep track of imgs we've downloaded. We'll append this to self.imgs_df as a (geo)dataframe later
-        new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [self.imgs_df.index.name] + list(self.imgs_df.columns)}
+        #new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [self.imgs_df.index.name] + list(self.imgs_df.columns)}
+        new_imgs_dict = defaultdict(list)
 
         # Go through polygons for which not enough images have been downloaded yet.
         for count, polygon_name in tqdm(enumerate(polygons_to_download)):
@@ -131,8 +133,8 @@ class DownloadImgsBaseMixIn(object):
                         # DEBUG INFO
                         log.debug(f"attempting to download image for polygon {polygon_name}.")
 
-                        downloader = getattr(self, f"_download_imgs_for_polygon_{downloader}")
-                        return_dict = downloader(
+                        download_method = getattr(self, f"_download_imgs_for_polygon_{downloader}")
+                        return_dict = download_method(
                                         polygon_name,
                                         polygon_geometry,
                                         self.download_dir,
@@ -216,10 +218,6 @@ class DownloadImgsBaseMixIn(object):
                                     img_name=img_name,
                                     img_bounding_rectangle=img_info_dict['geometry'])
 
-                                # ... and create the label, if necessary.
-                                if add_labels==True:
-                                    self._make_geotif_label(self, img_name, log) # the self arg is needed, see import
-
                                 # Finally, remember we downloaded the image.
                                 previously_downloaded_imgs_set.add(img_name)
 
@@ -240,18 +238,20 @@ class DownloadImgsBaseMixIn(object):
                             # Go through all images downloaded/processed for this polygon.
                             for img_info_dict in list_img_info_dicts:
 
-                                # After checking img_info_dict contains the columns/index we want
-                                # (so we don't for example fill in missing columns with nonsensical default values)...
-                                if set(img_info_dict.keys()) != set(self.imgs_df.columns) | {self.imgs_df.index.name}:
+                                # # After checking img_info_dict contains the columns/index we want
+                                # # (so we don't for example fill in missing columns with nonsensical default values)...
+                                # if set(img_info_dict.keys()) != set(self.imgs_df.columns) | {self.imgs_df.index.name}:
 
-                                    keys_not_in_cols_or_index = {key for key in img_info_dict.keys() if key not in set(self.imgs_df.columns) | {self.imgs_df.index.name}}
+                                #     keys_not_in_cols_or_index = {key for key in img_info_dict.keys() if key not in set(self.imgs_df.columns) | {self.imgs_df.index.name}}
 
-                                    cols_or_index_not_in_keys = {x for x in set(self.imgs_df.columns) | {self.imgs_df.index.name} if x not in img_info_dict}
+                                #     cols_or_index_not_in_keys = {x for x in set(self.imgs_df.columns) | {self.imgs_df.index.name} if x not in img_info_dict}
 
-                                    raise Exception(f"img_info_dict keys not equal to imgs_df columns and index name. \n Keys not in cols or index name {keys_not_in_cols_or_index} \n Columns or index not in keys: {cols_or_index_not_in_keys}")
+                                #     raise Exception(f"img_info_dict keys not equal to imgs_df columns and index name. \n Keys not in cols or index name {keys_not_in_cols_or_index} \n Columns or index not in keys: {cols_or_index_not_in_keys}")
 
                                 # ... accumulate the information in new_imgs_dict, which we will convert to a dataframe and append to imgs_df after we've gone through all new polygons.
-                                for key in new_imgs_dict:
+
+                                #for key in new_imgs_dict:
+                                for key in img_info_dict:
 
                                     new_imgs_dict[key].append(img_info_dict[key])
 
@@ -265,6 +265,10 @@ class DownloadImgsBaseMixIn(object):
         # ... and append it to self.imgs_df:
         data_frames_list = [self.imgs_df, new_imgs_df]
         self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+
+        # Create the label, if necessary.
+        if add_labels==True:
+            self.make_labels()
 
         # Save the changes if any have been made.
         if len(new_imgs_df) > 0:
