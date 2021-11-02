@@ -91,20 +91,17 @@ class ImgPolygonAssociator(
 
     def __init__(self,
 
+        load_from_disk : bool,
+
         # args w/o default values
         segmentation_classes : Sequence[str],
         label_type : str,
-        background_class : Optional[str],
 
-        # polygons_df args. Exactly one value needs to be set (i.e. not None).
         polygons_df : Optional[GeoDataFrame] = None,
-        polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
-
-        # imgs_df args. Exactly one value needs to be set (i.e. not None).
         imgs_df : Optional[GeoDataFrame] = None,
-        imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]] = None,
 
         # remaining non-path args w/ default values
+        background_class : Optional[str] = None,
         add_background_band_in_labels : bool = False,
         crs_epsg_code : int = STANDARD_CRS_EPSG_CODE,
 
@@ -120,16 +117,25 @@ class ImgPolygonAssociator(
         ):
         """
 
+        To initialize a new associator use either the from_scratch class method
+        or the empty_assoc_same_format_as method. To initialize an existing
+        associator use the from_data_dir or from_paths class methods.
+
+        Warning:
+            Note that many methods that create new dataset from existing ones
+            won't work if you use a nonstandard directory format (i.e. set the
+            images_dir, labels_dir, assoc_dir, download_dir from hand instead
+            of setting the data_dir arg).
+
         Either all four of the images_dir, labels_dir, assoc_dir, and download_dir args or the data_dir arg should be given (i.e. not None).
 
         Args:
 
+            load_from_disk (bool): whether to load an existing associator from disk or create a new one.
             segmentation_classes (Sequence[str]): list of segmentation classes (excluding mask and background classes)
             label_type (str): Label type. One of 'categorical' (default), 'onehot', or 'soft-categorical'
-            polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None.
-            polygons_df_cols (Optional[Union[List[str], Dict[str, Type]]], optional): column names (and optionally types) of empty polygons_df to start associator with. Defaults to None.
-            imgs_df (Optional[GeoDataFrame], optional): imgs_df. Defaults to None.
-            imgs_df_cols (Optional[Union[List[str], Dict[str, Type]]], optional): column names (and optionally types) of empty imgs_df to start associator with. Defaults to None.
+            polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None, i.e. (if not loading from disk) an empty polygons_df.
+            imgs_df (Optional[GeoDataFrame], optional): imgs_df. Defaults to None, i.e. (if not loading from disk) an empty imgs_df.
             add_background_band_in_labels (bool, optional): Whether to add a background segmentation class band when creating labels. Only relevant for 'one-hot' or 'soft-categorical' labels. Defaults to False.
             crs_epsg_code (int, optional): EPSG code associator works with. Defaults to STANDARD_CRS_EPSG_CODE
             data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, assoc_dir.
@@ -165,13 +171,6 @@ class ImgPolygonAssociator(
             download_dir=download_dir
         )
 
-        # Check path args for consistency and see if we're loading the associator from disk or not
-        load_from_disk = self._load_from_disk_or_not(
-                            polygons_df=polygons_df,
-                            polygons_df_cols=polygons_df_cols,
-                            imgs_df=imgs_df,
-                            imgs_df_cols=imgs_df_cols)
-
         # build _params_dict from all args except for imgs_df, polygons_df, the corresponding column args, and the path/dir args
         self._params_dict = {}
         self._params_dict.update(
@@ -185,20 +184,15 @@ class ImgPolygonAssociator(
             })
 
         # get polygons_df and imgs_df
-        polygons_df = self._init_get_df(
-                        "polygons_df",
-                        load_from_disk,
-                        polygons_df,
-                        polygons_df_cols,
-                        POLYGONS_DF_INDEX_NAME,
-                        crs_epsg_code)
-        imgs_df = self._init_get_df(
-                        "imgs_df",
-                        load_from_disk,
-                        imgs_df,
-                        imgs_df_cols,
-                        IMGS_DF_INDEX_NAME,
-                        crs_epsg_code)
+        if load_from_disk:
+            polygons_df = self._load_df_from_disk('polygons_df')
+            imgs_df = self._load_df_from_disk('imgs_df')
+        else:
+            if polygons_df is None:
+                polygons_df = self._get_empty_df('polygons_df')
+            if imgs_df is None:
+                imgs_df = self._get_empty_df('imgs_df')
+
         self._standardize_df_crs(
             df=polygons_df,
             df_name='polygons_df')
@@ -255,6 +249,7 @@ class ImgPolygonAssociator(
             log.exception(f"The {INFERRED_PATH_ATTR_FILENAMES['_params_dict_path']} file in {assoc_dir} is corrupted!")
 
         new_assoc = cls(
+            load_from_disk=True,
             assoc_dir=assoc_dir,
             images_dir=images_dir,
             labels_dir=labels_dir,
@@ -293,16 +288,17 @@ class ImgPolygonAssociator(
 
 
     @classmethod
-    def from_kwargs(cls, **kwargs : Any) -> ImgPolygonAssociator:
+    def from_scratch(cls, **kwargs : Any) -> ImgPolygonAssociator:
         """
-        Initialize and return an associator from keyword arguments.
+        Initialize and return a new associator from keyword arguments.
 
         Ars:
-            **kwargs (Any): keyword arguments, see docstring for __init__
+            **kwargs (Any): keyword arguments (except load_from_disk), see docstring for __init__
 
         Returns:
             initialized associator
         """
+        kwargs.update({'load_from_disk': False})
         return cls(**kwargs)
 
 
@@ -466,7 +462,7 @@ class ImgPolygonAssociator(
         new_empty_polygons_df = empty_gdf_same_format_as(self.polygons_df)
         new_empty_imgs_df = empty_gdf_same_format_as(self.imgs_df)
 
-        new_empty_assoc = self.__class__.from_kwargs(
+        new_empty_assoc = self.__class__.from_scratch(
 
                                 # dir args
                                 images_dir=images_dir,
@@ -494,24 +490,36 @@ class ImgPolygonAssociator(
         print(self._graph)
 
 
-    def _load_from_disk_or_not(self,
-        polygons_df : Optional[GeoDataFrame],
-        polygons_df_cols : Optional[Union[List[str], Dict[str, Type]]],
-        imgs_df : Optional[GeoDataFrame],
-        imgs_df_cols : Optional[Union[List[str], Dict[str, Type]]],
-        ) -> bool:
-        """Check path args for consistency and return True if we are loading the associator components from disk."""
+    def _get_empty_df(self, df_name : str) -> GeoDataFrame:
 
-        polygons_df_from_disk : bool = polygons_df is None and polygons_df_cols is None
-        imgs_df_from_disk : bool = imgs_df is None and imgs_df_cols is None
+        if df_name == 'polygons_df':
+            index_name = POLYGONS_DF_INDEX_NAME
+            columns = self._get_required_df_cols('polygons_df')
+        elif df_name == 'imgs_df':
+            index_name = IMGS_DF_INDEX_NAME
+            columns = self._get_required_df_cols('imgs_df')
 
-        both_from_disk = polygons_df_from_disk and imgs_df_from_disk
-        neither_from_disk = not polygons_df_from_disk and not imgs_df_from_disk
+        df = empty_gdf(
+                index_name=index_name,
+                columns=columns,
+                crs_epsg_code=self.crs_epsg_code)
 
-        if (not both_from_disk) and (not neither_from_disk):
-            raise ValueError(f"Either _both_ or none of polygons_df and imgs_df should be loaded from disk.")
+        return df
 
-        return both_from_disk
+
+    def _get_required_df_cols(self, df_name : str) -> List[str]:
+
+        if df_name == 'polygons_df':
+
+            if self.label_type in {'categorical', 'onehot'}:
+                columns = ['geometry', 'img_count', 'type']
+            elif self.label_type == 'soft-categorical':
+                columns = ['geometry', 'img_count'] + [f"prob_seg_class_{class_}" for class_ in self.all_polygon_classes]
+
+        elif df_name == 'imgs_df':
+                columns = ['geometry']
+
+        return columns
 
 
     def _set_remaining_assoc_components(self,
@@ -581,10 +589,6 @@ class ImgPolygonAssociator(
             ValueError: If the df doesn't have the right index name
         """
 
-        if mode == 'polygons_df':
-            if 'img_count' not in set(df.columns):
-                log.info("Adding 'img_count' column to polygons_df")
-
         if mode == 'polygons_df' and df.index.name != POLYGONS_DF_INDEX_NAME:
             raise ValueError(f"polygons_df.index.name is {df.index.name}, should be {POLYGONS_DF_INDEX_NAME}")
         if mode == 'imgs_df' and df.index.name != IMGS_DF_INDEX_NAME:
@@ -607,54 +611,19 @@ class ImgPolygonAssociator(
             df = df.to_crs(epsg=self.crs_epsg_code)
 
 
-    def _init_get_df(self,
-            mode : str,
-            load_from_disk : bool,
-            df : Optional[GeoDataFrame],
-            df_cols : Optional[Union[List[str], Dict[str, Type]]],
-            df_index_name : str,
-            crs_epsg_code : int,
+    def _load_df_from_disk(self,
+            df_name : str
             ) -> GeoDataFrame:
-        """
-        Extract dataframe from arguments. Used during initialization.
+        """Load polygons_df or imgs_df from disk"""
 
-        Args:
-            mode (str): One of "polygons_df" or "imgs_df"
-            load_from_disk (bool): Whether to load from disk
-            df (GeoDataFrame, optional): polygons_df or imgs_df
-            df_cols (Union[List[str], Dict[str, Type]], optional): list of column names or dict of column names and types or empty dataframe (imgs_df or polygons_df)
-            df_index_name (str, optional): index name of empty dataframe (imgs_df or polygons_df)
-            crs_epsg_code (int): EPSG code of crs of df to be created, used if df_cols is not None.
+        if df_name == 'polygons_df':
+            df_index_name = POLYGONS_DF_INDEX_NAME
+        elif df_name == 'imgs_df':
+            df_index_name = IMGS_DF_INDEX_NAME
 
-        Returns:
-            GeoDataFrame: polygons_df or imgs_df
-        """
-
-        if mode not in {"polygons_df", "imgs_df"}:
-            raise ValueError(f"Unknown mode: {mode}")
-
-        if load_from_disk:
-
-            df_json_path = getattr(self, f"_{mode}_path")
-            return_df = gpd.read_file(df_json_path)
-            return_df.set_index(df_index_name, inplace=True)
-
-        elif df is not None:
-
-            return_df = df
-
-        elif df_cols is not None:
-
-            # build df_cols_and_index_types for empty_gdf
-            df_cols_and_index_types = df_cols
-            if isinstance(df_cols, list):
-                df_cols_and_index_types = {col_name: None for col_name in df_cols_and_index_types}
-            df_cols_and_index_types[df_index_name] = object
-
-            return_df = empty_gdf(
-                            df_index_name=df_index_name,
-                            df_cols_and_index_types=df_cols_and_index_types,
-                            crs_epsg_code=crs_epsg_code)
+        df_json_path = getattr(self, f"_{df_name}_path")
+        return_df = gpd.read_file(df_json_path)
+        return_df.set_index(df_index_name, inplace=True)
 
         return return_df
 
