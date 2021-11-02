@@ -37,12 +37,12 @@ class AddDropImgsPolygonsMixIn(object):
             df=new_polygons_df,
             df_name='new_polygons_df')
 
-        # self._compare_df_col_index_names(
-        #     df=new_polygons_df,
-        #     df_name='new_polygons_df',
-        #     self_df=self.polygons_df,
-        #     self_df_name='self.polygons_df'
-        # )
+        self._check_df_cols_index_name(
+            df=new_polygons_df,
+            df_name='new_polygons_df',
+            self_df=self.polygons_df,
+            self_df_name='self.polygons_df'
+        )
 
         if self.label_type == 'categorical':
             self._check_classes_in_categorical_polygons_df_contained_in_all_classes(new_polygons_df)
@@ -113,11 +113,11 @@ class AddDropImgsPolygonsMixIn(object):
             df=new_imgs_df,
             df_name='new_imgs_df')
 
-        # self._compare_df_col_index_names(
-        #     df=new_imgs_df,
-        #     df_name='new_imgs_df',
-        #     self_df=self.imgs_df,
-        #     self_df_name='self.imgs_df')
+        self._check_df_cols_index_name(
+            df=new_imgs_df,
+            df_name='new_imgs_df',
+            self_df=self.imgs_df,
+            self_df_name='self.imgs_df')
 
         # go through all new imgs...
         for img_name in new_imgs_df.index:
@@ -204,16 +204,23 @@ class AddDropImgsPolygonsMixIn(object):
                 for img_name in img_names:
                     (dir / img_name).unlink(missing_ok=True)
 
-    @staticmethod
-    def _compare_df_col_index_names(
+    def _check_df_cols_index_name(
+            self,
             df : GeoDataFrame,
             df_name : str,
             self_df : GeoDataFrame,
             self_df_name : str
             ) -> bool:
-        """Check if column and index names of df1 and df2 agree. Raise a ValueError if they don't. """
+        """Check if column and index names of df1 and df2 agree."""
 
-        if set(df.columns) != set(self_df.columns):
+        required_cols = self._get_required_df_cols(self_df_name.split(".")[1])
+
+        if not set(required_cols) <= set(df.columns):
+
+            missing_cols = set(required_cols) - set(df.columns)
+            raise ValueError(f"{df_name} is missing required columns: {', '.join(missing_cols)}")
+
+        if set(df.columns) != set(self_df.columns) and len(self_df) > 0:
 
             df1_cols_not_in_df2 = set(df.columns) - set(self_df.columns)
             df2_cols_not_in_df1 = set(self_df.columns) - set(df.columns)
@@ -223,7 +230,7 @@ class AddDropImgsPolygonsMixIn(object):
             if df2_cols_not_in_df1 != {}:
                 log.error(f"columns that are in {self_df_name} but not in {df_name}: {df2_cols_not_in_df1}")
 
-            raise ValueError(f"columns of {df_name} and {df_name} don't agree.")
+            log.warning(f"columns of {df_name} and {df_name} don't agree.")
 
         if df.index.name != self_df.index.name:
             raise ValueError(f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df_name.index.name}")
