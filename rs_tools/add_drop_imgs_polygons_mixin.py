@@ -44,8 +44,7 @@ class AddDropImgsPolygonsMixIn(object):
             self_df_name='self.polygons_df'
         )
 
-        if self.label_type == 'categorical':
-            self._check_classes_in_categorical_polygons_df_contained_in_all_classes(new_polygons_df)
+        self._check_classes_in_polygons_df_contained_in_all_classes(new_polygons_df, 'new_polygons_df')
 
         # For each new polygon...
         for polygon_name in new_polygons_df.index:
@@ -83,6 +82,7 @@ class AddDropImgsPolygonsMixIn(object):
         # Finally, append new_polygons_df to the associator's (self.)polygons_df.
         data_frames_list = [self.polygons_df, new_polygons_df]
         self.polygons_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+        #self.polygons_df = self.polygons_df.convert_dtypes()
 
         if generate_labels == True:
             imgs_w_new_polygons = [img_name for polygon_name in new_polygons_df.index for img_name in self.imgs_intersecting_polygon(polygon_name)]
@@ -141,6 +141,7 @@ class AddDropImgsPolygonsMixIn(object):
         # append new_imgs_df
         data_frames_list = [self.imgs_df, new_imgs_df]
         self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+        #self.imgs_df = self.imgs_df.convert_dtypes()
 
 
     def drop_polygons(self,
@@ -233,12 +234,4 @@ class AddDropImgsPolygonsMixIn(object):
             log.warning(f"columns of {df_name} and {df_name} don't agree.")
 
         if df.index.name != self_df.index.name:
-            raise ValueError(f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df_name.index.name}")
-
-
-    def _check_classes_in_categorical_polygons_df_contained_in_all_classes(self,
-            polygons_df : GeoDataFrame):
-
-        if not set(polygons_df['type'].unique()) <= set(self.all_polygon_classes):
-            raise ValueError(f"Polygon types not recognized by associator: {set(polygons_df['type'].unique()) - set(self.all_polygon_classes)}")
-
+            raise ValueError(f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df.index.name}")
