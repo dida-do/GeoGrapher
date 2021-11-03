@@ -13,27 +13,55 @@ if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
 from rs_tools.graph.bipartite_graph import BipartiteGraph, empty_bipartite_graph
 
+def empty_gdf(index_name,
+              cols_and_types,
+              crs_epsg_code=STANDARD_CRS_EPSG_CODE):
+    """Return a empty GeoDataFrame with specified index and column names and types and crs.
 
-def empty_gdf(
-        index_name : str,
-        columns : Union[List[str], Dict[str, str]],
-        crs_epsg_code : int=STANDARD_CRS_EPSG_CODE
-        ) -> GeoDataFrame:
-    """Return a empty GeoDataFrame with specified index and column names and crs.
-
-    :param df_index_name: name of the index of the new empty GeoDataFrame
-    :param df_cols_and_index_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
-    :param crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
-
-    :return: new_empty_df: the empty polygons_df GeoDataFrame.
+    Args:
+        - index_name: name of the index of the new empty GeoDataFrame
+        - cols_and_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
+        - crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
+    Returns:
+        - new_empty_df: the empty polygons_df GeoDataFrame.
     """
 
-    cols_and_index = [index_name] + list(columns)
+    new_empty_gdf_dict = {
+        index_name : str,
+        'geometry': GeoSeries([]),
+        **{
+            index_or_col_name: pd.Series([], dtype=index_or_col_type)
+            for index_or_col_name, index_or_col_type in cols_and_types.items(
+            ) if index_or_col_name != 'geometry'
+        }
+    }
 
-    new_empty_gdf = GeoDataFrame(columns=cols_and_index, crs=f"EPSG:{crs_epsg_code}")
+    new_empty_gdf = GeoDataFrame(new_empty_gdf_dict,
+                                     crs=f"EPSG:{crs_epsg_code}")
     new_empty_gdf.set_index(index_name, inplace=True)
-
     return new_empty_gdf
+
+
+# def empty_gdf(
+#         index_name : str,
+#         columns : Union[List[str], Dict[str, str]],
+#         crs_epsg_code : int=STANDARD_CRS_EPSG_CODE
+#         ) -> GeoDataFrame:
+#     """Return a empty GeoDataFrame with specified index and column names and crs.
+
+#     :param index_name: name of the index of the new empty GeoDataFrame
+#     :param df_cols_and_index_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
+#     :param crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
+
+#     :return: new_empty_df: the empty polygons_df GeoDataFrame.
+#     """
+
+#     cols_and_index = [index_name] + list(columns)
+
+#     new_empty_gdf = GeoDataFrame(columns=cols_and_index, crs=f"EPSG:{crs_epsg_code}")
+#     new_empty_gdf.set_index(index_name, inplace=True)
+
+#     return new_empty_gdf
 
 
 # def empty_imgs_df(
@@ -72,24 +100,44 @@ def empty_gdf(
 
 #     return empty_gdf(polygons_df_index_name, polygons_df_cols, crs_epsg_code=crs_epsg_code)
 
-
-def empty_gdf_same_format_as(source_df: GeoDataFrame) -> GeoDataFrame:
+def empty_gdf_same_format_as(df):
     """
-    Creates an empty geodataframe of the same format (index name, columns, column types) as the source_df argument.
-
-    :param polygons_df: Example polygon dataframe
-
-    :return: New empty dataframe
+    Creates an empty df of the same format (index name, columns, column types) as the df argument.
     """
-    df_index_name = source_df.index.name
-    df_cols = source_df.columns
-    crs_epsg_code = source_df.crs.to_epsg()
+    df_index_name = df.index.name
 
-    new_empty_df = empty_gdf(df_index_name,
-                             df_cols,
-                             crs_epsg_code=crs_epsg_code)
+    df_cols_and_index_types = {
+        df.index.name: df.index.dtype,
+        **df.dtypes.to_dict()
+    }
+
+    crs_epsg_code = df.crs.to_epsg()
+
+    new_empty_df = empty_gdf(
+                    df_index_name,
+                    df_cols_and_index_types,
+                    crs_epsg_code=crs_epsg_code)
 
     return new_empty_df
+
+
+# def empty_gdf_same_format_as(source_df: GeoDataFrame) -> GeoDataFrame:
+#     """
+#     Creates an empty geodataframe of the same format (index name, columns, column types) as the source_df argument.
+
+#     :param polygons_df: Example polygon dataframe
+
+#     :return: New empty dataframe
+#     """
+#     df_index_name = source_df.index.name
+#     df_cols = source_df.columns
+#     crs_epsg_code = source_df.crs.to_epsg()
+
+#     new_empty_df = empty_gdf(df_index_name,
+#                              df_cols,
+#                              crs_epsg_code=crs_epsg_code)
+
+#     return new_empty_df
 
 
 def empty_polygons_df_same_format_as(polygons_df: GeoDataFrame) -> GeoDataFrame:

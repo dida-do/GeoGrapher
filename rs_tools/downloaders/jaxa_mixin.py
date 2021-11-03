@@ -1,6 +1,4 @@
 """
-TODO: remove polygon_info_dict
-
 downloader to be used by image-polygon-associator library that
 obtains digital elevation model (DEM) data from jaxa.jp's ALOS data-source
 
@@ -37,7 +35,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-JAXA_DATA_VERSION = ['1804', '1903', '2003', '2012'][0]     # select which data to use here (attn: only 1804 has been tested so far)
+JAXA_DATA_VERSIONS = ['1804', '1903', '2003', '2012']     # select which data to use here (attn: only 1804 has been tested so far)
 
 
 class JAXADownloaderMixIn(object):
@@ -60,7 +58,8 @@ class JAXADownloaderMixIn(object):
             polygon_geometry : Polygon,
             download_dir : Union[Path, str],
             previously_downloaded_imgs_set : Set[str],
-            jaxa_data_version : str = JAXA_DATA_VERSION,
+            data_version : str = None,
+            download_mode : str = None,
             **kwargs):
         """
         Downloads DSM-data from jaxa.jp's ftp-server for a given polygon and returns dict-structure compatible
@@ -68,67 +67,104 @@ class JAXADownloaderMixIn(object):
 
         Note:
         – Only operates on a single polygon
-        – Downloads up to 4 files per polygon (but not more if polygon is exceptionally large)
         - Does not collate multiple images currently
         – Only returns a single exception / error-code (not one per file downloaded)
+
+        Warning:
+        The downloader has only been tested for the 1804 jaxa_data_version.
+
+        Explanation:
+        The 'bboxvertices' download_mode will download images for
+        vertices of the bbox of the polygon. This is preferred for
+        small polygons, but will miss regions inbetween if a polygon spans
+        more than two images in each axis. The 'bboxgrid' mode will download
+        images for each point on a grid defined by the bbox. This overshoots
+        for small polygons, but works for large polygons.
 
         Args:
         :param polygon_name: str, the name of the polygon
         :param polygon_geometry: shapely object, geometry of a polygon
         :param download_dir: Path variable or str, directory that the image file should be downloaded to
+        :param jaxa_data_version: One of '1804' (this is the only version that has been tested), '1903', '2003', or '2012'. Defaults if possible to whichever choice you made last time.
+        :type jaxa_data_version: str
+        :param jaxa_download_mode: One of 'bboxvertices', 'bboxgrid'. Defaults if possible to whichever choice you made last time.
+        :type jaxa_download_mode: str
         :param **kwargs: ignored currently
         :return: dict of dicts according to assoc-convention (list_img_info_dict and polygon_info_dict),
 
         :raises log.warning: when a file cannot be found or opened on jaxa's-ftp (download_exception = 'file_not_available_on_JAXA_ftp')
         """
 
-        self.jaxa_data_version = jaxa_data_version
+        for jaxa_specific_keyword_arg, value in {
+                                                ('data_version', data_version),
+                                                ('download_mode', download_mode),
+                                            }:
 
-        # obtain all files that intersect with the vertices of the bounding box of the polygon
-        # ATTENTION: if polygon extends beyond 2 files in width or height this might miss files in between
-        # the ones containing the outer points
+            if value is None:
+                try:
+                    # Use saved value
+                    value = getattr(self, f"jaxa_{jaxa_specific_keyword_arg}")
+                except (AttributeError, KeyError):
+                    raise ValueError(f"Need to set {jaxa_specific_keyword_arg} keyword argument for the jaxa downloader.")
+            else:
+                # Remember value
+                setattr(self, f"jaxa_{jaxa_specific_keyword_arg}", value)
 
-
-        # MAX:
-        # jaxa_folder_names = []
-        # jaxa_file_names = []
-        # for (x,y) in polygon_geometry.envelope.exterior.coords:
-        #     jaxa_folder_names.append('{}/'.format(self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)))
-        #     jaxa_file_names.append('{}.tar.gz'.format(self._obtain_jaxa_index(x, y)))
-
-        # # only keep unique entries, ie up to 4 different files
-        # jaxa_folder_names = list(set(jaxa_folder_names))
-        # jaxa_file_names = list(set(jaxa_file_names))
-
-        # list_img_info_dicts = [] # to collect information per downloaded file for associator
-
-        # download_exception = str(None)
-        # have_img_downloaded = False
-
-        # jaxa_file_and_folder_names = zip(jaxa_file_names, jaxa_folder_names)
-        # for jaxa_file_name, jaxa_folder_name in zip(jaxa_file_names, jaxa_folder_names):
+        if data_version not in JAXA_DATA_VERSIONS:
+            raise ValueError(f"Unknown data_version {data_version}. Should be one of {', '.join(JAXA_DATA_VERSIONS)}")
 
         jaxa_file_and_folder_names = set()
 
-        minx, miny, maxx, maxy = polygon_geometry.envelope.exterior.bounds
+        if download_mode == 'bboxvertices':
 
-        deltax = math.ceil(maxx - minx)
-        deltay = math.ceil(maxy - miny)
+            # obtain all files that intersect with the vertices of the bounding box of the polygon
+            # ATTENTION: if polygon extends beyond 2 files in width or height this might miss files in between
+            # the ones containing the outer points
 
-        for countx in range(deltax + 1):
-            for county in range(deltay + 1):
+            # jaxa_folder_names = []
+            # jaxa_file_names = []
+            # for (x,y) in polygon_geometry.envelope.exterior.coords:
+            #     jaxa_folder_names.append('{}/'.format(self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)))
+            #     jaxa_file_names.append('{}.tar.gz'.format(self._obtain_jaxa_index(x, y)))
 
-                x = minx + countx
-                y = miny + county
+            # # only keep unique entries, ie up to 4 different files
+            # jaxa_folder_names = list(set(jaxa_folder_names))
+            # jaxa_file_names = list(set(jaxa_file_names))
 
-                jaxa_file_name = f"{self._obtain_jaxa_index(x, y)}.tar.gz"
-                jaxa_folder_name = f"{self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)}/"
+            # jaxa_file_and_folder_names = zip(jaxa_file_names, jaxa_folder_names)
+
+            for (x,y) in polygon_geometry.envelope.exterior.coords:
+
+                jaxa_folder_name = '{}/'.format(self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
+                jaxa_file_name = '{}.tar.gz'.format(self._obtain_jaxa_index(x, y))
+
                 jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
+
+        elif download_mode == 'bboxgrid':
+
+            minx, miny, maxx, maxy = polygon_geometry.envelope.exterior.bounds
+
+            deltax = math.ceil(maxx - minx)
+            deltay = math.ceil(maxy - miny)
+
+            for countx in range(deltax + 1):
+                for county in range(deltay + 1):
+
+                    x = minx + countx
+                    y = miny + county
+
+                    jaxa_file_name = f"{self._obtain_jaxa_index(x, y)}.tar.gz"
+                    jaxa_folder_name = f"{self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)}/"
+
+                    jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
+
+        else:
+            raise ValueError(f"Unknown download_mode: {download_mode}")
 
         list_img_info_dicts = [] # to collect information per downloaded file for associator
 
-        download_exception = str(None)
-        have_img_downloaded = False
+        # download_exception = str(None)
+        # have_img_downloaded = False
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
 
@@ -138,16 +174,16 @@ class JAXADownloaderMixIn(object):
                 continue
             else:
                 # downloading from jaxa's FTP
-                log.info(   f'Downloading from ftp.eorc.jaxa.jp (v{JAXA_DATA_VERSION}) for polygon {polygon_name} ' \
+                log.info(   f'Downloading from ftp.eorc.jaxa.jp (v{data_version}) for polygon {polygon_name} ' \
                             f'to: {os.path.join(download_dir, jaxa_file_name)}')
                 try:
-                    with closing(request.urlopen('ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_v' + JAXA_DATA_VERSION + '/' \
+                    with closing(request.urlopen('ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_v' + data_version + '/' \
                                                     + jaxa_folder_name + jaxa_file_name)) as remote_source:
                         with open(os.path.join(download_dir, jaxa_file_name), 'wb') as local_file:
                             shutil.copyfileobj(remote_source, local_file)
                 except Exception as e:
-                    log.exception(f'File could not be found or opened: {e.args}')
-                    download_exception = 'file_not_available_on_JAXA_ftp'
+                    log.exception(f'File could not be found on JAXA ftp or could not be opened: {e.args}')
+                    # download_exception = 'file_not_available_on_JAXA_ftp'
 
                 else:
                     # extracting .tar file and deleting it afterwards
@@ -171,7 +207,7 @@ class JAXADownloaderMixIn(object):
                     #             log.warning('DEM ' + jaxa_file_name + ' bounds: ' + str(img_bounding_rectangle))
                     #             download_exception = 'polygon_outside_file_bounds'
 
-                    have_img_downloaded = True
+                    # have_img_downloaded = True
                     dateTimeObj = datetime.now()
                     list_img_info_dicts.append(
                         {
@@ -183,15 +219,15 @@ class JAXADownloaderMixIn(object):
 
 
 
-        polygon_info_dict = {
-            'have_img_downloaded?' : have_img_downloaded, # TODO: what happens when this is set to false?
-            'download_exception' : download_exception     # TODO: where is this processed? what happens for the specified cases?
-                                                          # TODO: possibility / usefulness of storing multiple exceptions (per image)
-        }
+        # polygon_info_dict = {
+        #     'have_img_downloaded?' : have_img_downloaded, # TODO: what happens when this is set to false?
+        #     'download_exception' : download_exception     # TODO: where is this processed? what happens for the specified cases?
+        #                                                   # TODO: possibility / usefulness of storing multiple exceptions (per image)
+        # }
 
         return {
-            'list_img_info_dicts' : list_img_info_dicts,
-            'polygon_info_dict' : polygon_info_dict
+            'list_img_info_dicts' : list_img_info_dicts
+            #'polygon_info_dict' : polygon_info_dict
         }
 
 
