@@ -408,7 +408,7 @@ class ImgPolygonAssociator(
         # Make sure assoc_dir exists.
         self._assoc_dir.mkdir(parents=True, exist_ok=True)
 
-        self.imgs_df.to_file(Path(self._imgs_df_path), driver="GeoJSON")
+        self.imgs_df.convert_dtypes(infer_objects=True, convert_string=True, convert_integer=True, convert_boolean=True, convert_floating=False).to_file(Path(self._imgs_df_path), driver="GeoJSON")
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
@@ -494,32 +494,44 @@ class ImgPolygonAssociator(
 
         if df_name == 'polygons_df':
             index_name = POLYGONS_DF_INDEX_NAME
-            columns = self._get_required_df_cols('polygons_df')
+            cols_and_types = self._get_required_df_cols_and_types('polygons_df')
         elif df_name == 'imgs_df':
             index_name = IMGS_DF_INDEX_NAME
-            columns = self._get_required_df_cols('imgs_df')
+            cols_and_types = self._get_required_df_cols_and_types('imgs_df')
 
         df = empty_gdf(
                 index_name=index_name,
-                columns=columns,
+                cols_and_types=cols_and_types,
                 crs_epsg_code=self.crs_epsg_code)
 
         return df
 
 
-    def _get_required_df_cols(self, df_name : str) -> List[str]:
+    def _get_required_df_cols_and_types(self, df_name : str) -> dict:
 
         if df_name == 'polygons_df':
 
             if self.label_type in {'categorical', 'onehot'}:
-                columns = ['geometry', 'img_count', 'type']
+                cols_and_types = {
+                    'geometry' : None, # not used
+                    'img_count' : int,
+                    'type' : str
+                }
             elif self.label_type == 'soft-categorical':
-                columns = ['geometry', 'img_count'] + [f"prob_seg_class_{class_}" for class_ in self.all_polygon_classes]
+                cols_and_types = {
+                    'geometry' : None, # type ignored by empty_gdf
+                    'img_count' : int,
+                    **{f"prob_seg_class_{class_}" : float for class_ in self.all_polygon_classes}
+                }
 
         elif df_name == 'imgs_df':
-                columns = ['geometry']
+                cols_and_types = {'geometry' : None} # type ignored by empty_gdf
 
-        return columns
+        return cols_and_types
+
+
+    def _get_required_df_cols(self, df_name : str) -> List[str]:
+        return list(self._get_required_df_cols_and_types(df_name).keys())
 
 
     def _set_remaining_assoc_components(self,
@@ -743,4 +755,4 @@ class ImgPolygonAssociator(
             raise Exception(f"Unknown label_type: {self.label_type}")
 
         if not polygon_classes_in_polygons_df <= set(self.all_polygon_classes):
-            raise ValueError(f"Unrecognized polygon classes in {polygons_df_name}: {polygon_classes_in_polygons_df}")
+            raise ValueError(f"Unrecognized polygon classes in {polygons_df_name}: {polygon_classes_in_polygons_df - set(self.all_polygon_classes)}")
