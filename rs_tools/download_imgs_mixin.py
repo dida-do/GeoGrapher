@@ -45,6 +45,25 @@ class DownloadImgsBaseMixIn(object):
             shuffle_polygons (bool): Whether to shuffle order of polygons for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
             downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
 
+        Kwargs (downloader='jaxa'):
+            data_version (str): One of '1804', '1903', '2003', or '2012'.
+                Defaults if possible to whichever choice you made last time,
+                else to '1804'.
+            download_mode (str): One of 'bboxvertices' (download images for
+                vertices of the bbox of the polygon, preferred for
+                small polygons, but will miss inbetween if the polygon spans
+                more than two images in each axis), 'bboxgrid' (download images
+                for each point on a grid defined by the bbox. Overshoots for
+                small polygons, but works for large polygons). Defaults if possible
+                to whichever choice you made last time, else to 'bboxvertices'.
+
+        Kwargs (downloader='sentinel2'):
+            producttype (str): One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'. Defaults if possible to whichever choice you made last time.
+            resolution (int): One of 10, 20, or 60. Defaults if possible to whichever choice you made last time.
+            max_percent_cloud_coverage (int): Integer between 0 and 100. Defaults if possible to whichever choice you made last time.
+            date (Any):  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html Defaults if possible to whichever choice you made last time.
+            area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html Defaults if possible to whichever choice you made last time.
+
         Returns:
             None
 
@@ -257,19 +276,20 @@ class DownloadImgsBaseMixIn(object):
 
                                 num_img_series_to_download -= 1
 
-        # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe ...
-        new_imgs_df = GeoDataFrame(new_imgs_dict)
-        new_imgs_df.set_crs(epsg=self._params_dict['crs_epsg_code'], inplace=True) # standard crs
-        new_imgs_df.set_index("img_name", inplace=True)
+        if len(new_imgs_dict) > 0:
+            # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe ...
+            new_imgs_df = GeoDataFrame(new_imgs_dict)
+            new_imgs_df.set_crs(epsg=self._params_dict['crs_epsg_code'], inplace=True) # standard crs
+            new_imgs_df.set_index("img_name", inplace=True)
+            new_imgs_df = new_imgs_df.convert_dtypes(infer_objects=True, convert_string=True, convert_integer=True, convert_boolean=True, convert_floating=False)
 
-        # ... and append it to self.imgs_df:
-        data_frames_list = [self.imgs_df, new_imgs_df]
-        self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
+            # ... and append it to self.imgs_df:
+            data_frames_list = [self.imgs_df, new_imgs_df]
+            self.imgs_df = GeoDataFrame(pd.concat(data_frames_list), crs=data_frames_list[0].crs)
 
-        # Create the label, if necessary.
-        if add_labels==True:
-            self.make_labels()
-
-        # Save the changes if any have been made.
-        if len(new_imgs_df) > 0:
             self.save()
+
+            # Create the label, if necessary.
+            if add_labels==True:
+                self.make_labels()
+            

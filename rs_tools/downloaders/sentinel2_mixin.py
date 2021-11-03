@@ -154,6 +154,11 @@ class Sentinel2DownloaderMixIn(object):
             polygon_geometry: The areas the images shall be downloaded for.
             download_dir: Directory to save the downloaded Sentinel-2 products.
             previously_downloaded_imgs_set: A list of already downloaded products, will be used prevent double downloads.
+            producttype (str): One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'
+            resolution (int): One of 10, 20, or 60.
+            max_percent_cloud_coverage (int): Integer between 0 and 100.
+            date (Any):  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+            area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
 
         Returns:
             info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict})
@@ -179,8 +184,8 @@ class Sentinel2DownloaderMixIn(object):
                 try:
                     # Use saved value
                     value = getattr(self, f"sentinel2_{s2_specific_keyword_arg}")
-                except AttributeError:
-                    raise ValueError(f"Need to set {s2_specific_keyword_arg} keyword argument.")
+                except (AttributeError, KeyError):
+                    raise ValueError(f"Need to set {s2_specific_keyword_arg} keyword argument for the sentinel2 downloader.")
             else:
                 # Remember value
                 setattr(self, f"sentinel2_{s2_specific_keyword_arg}", value)
@@ -329,7 +334,7 @@ class Sentinel2DownloaderMixIn(object):
         # return a dict
         return_dict = {'img_name': img_name,
                         'geometry': img_bounding_rectangle,
-                        'orig_crs_epsg_code': orig_crs_epsg_code,
+                        'orig_crs_epsg_code': int(orig_crs_epsg_code),
                         'img_processed?': True}
 
         return return_dict
