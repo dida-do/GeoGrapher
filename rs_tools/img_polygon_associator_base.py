@@ -56,7 +56,10 @@ class ImgPolygonAssociatorBase(object):
             list of strs of polygon_names/ids of all polygons in associator which have non-empty intersection with the image
         """
         
-        return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs')
+        try:
+            return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs')
+        except KeyError:
+            raise ValueError(f"Unknown image: {img_name}")
 
 
     def imgs_intersecting_polygon(self, 
@@ -75,7 +78,10 @@ class ImgPolygonAssociatorBase(object):
             list of str: list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image.
         """
         
-        img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons')        
+        try:
+            img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons')        
+        except KeyError:
+            raise ValueError(f"Unknown polygon: {polygon_name}")
 
         if mode == 'names':
             answer = img_names
@@ -99,8 +105,10 @@ class ImgPolygonAssociatorBase(object):
             list of str: list of the polygon_names/identifiers of all polygons in associator contained in the image.
         """
         
-        return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs', edge_data='contains')
-
+        try:
+            return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs', edge_data='contains')
+        except KeyError:
+            raise ValueError(f"Unknown image: {img_name}")
 
     def imgs_containing_polygon(self, 
             polygon_name: str,
@@ -117,7 +125,10 @@ class ImgPolygonAssociatorBase(object):
             List[str]: list of the img_names/identifiers of all images in associator containing the polygon
         """
         
-        img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons', edge_data='contains')
+        try:
+            img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons', edge_data='contains')
+        except KeyError:
+            raise ValueError(f"Unknown polygon: {polygon_name}")
 
         if mode == 'names':
             answer = img_names
