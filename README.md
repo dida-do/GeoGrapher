@@ -1,13 +1,13 @@
-# remote-sensing-tools
+# remote-sensing-tools: the ImgPolygonAssociator
 
-Organize, build up, and handle (e.g. generating labels, cutting, converting GeoTiffs to numpy files) remote sensing segmentation datasets consisting of polygons, images and segmentation labels while always keeping track of which polygons are contained in or intersect which images and vice versa.
+Organize, build up, and handle (e.g. generate labels, cut, convert GeoTiffs to numpy files) remote sensing segmentation datasets consisting of polygons, images and segmentation labels while always keeping track of which polygons are contained in or intersect which images and vice versa.
 
-## Installation
+# Installation
 At the moment, you have to clone the git repo and run `pip install -e .`. 
 Whenever you get an import error you'l have to import the missing libraries into your
 environment by hand. Sorry, no (working) requirements.txt or Makefile for now (feel free to change this!).
 
-## Basic usage
+# Basic usage
 
 Everything is built around the associator class.
 An associator organizes a segmentation dataset consisting of images and
@@ -50,6 +50,8 @@ and similarly for images.
 
 ## Downloading images (basic usage)
 
+One can download either Sentinel-2 or JAXA DEM data. Easily extendable to other data sources.
+
     assoc.download_imgs(
         polygon_names=optional_list_of_polygon_names_you_want_to_download_imgs_for,
         add_labels=True,
@@ -59,6 +61,8 @@ and similarly for images.
         resolution=10, 
         date=(“NOW-1DAY”, “NOW”),
         area_relation='Contains')
+When dealing with 'large' polygons consider using the
+`filter_out_polygons_contained_in_union_of_intersecting_imgs` argument (see docstring).
 
 ## Create new datasets from existing ones by cutting the images and labels (basic usage)
 
@@ -95,7 +99,7 @@ classes if the labels are soft-categorical) will be retained, and the classes 'c
 
 ## Updating an existing dataset created from a source dataset
 
-Warning: Hasn't been tested at all!
+**Warning: Hasn't been tested at all!**
 
     assoc.update()
 
