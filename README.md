@@ -77,6 +77,7 @@ All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments will be remem
 
 ## Saving an associator
 Don't forget to save your changes!
+
     assoc.save()
 
 ## Create new datasets from existing ones by cutting the images and labels (basic usage)
