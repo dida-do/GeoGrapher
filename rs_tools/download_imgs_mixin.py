@@ -69,7 +69,9 @@ class DownloadImgsBaseMixIn(object):
             producttype (str): One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'. Defaults if possible to whichever choice you made last time.
             resolution (int): One of 10, 20, or 60. Defaults if possible to whichever choice you made last time.
             max_percent_cloud_coverage (int): Integer between 0 and 100. Defaults if possible to whichever choice you made last time.
-            date (Any):  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html Defaults if possible to whichever choice you made last time.
+            date (Any):  E.g. (“NOW-1DAY”, “NOW”) to avoid the long term archive.
+                See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+                Defaults if possible to whichever choice you made last time.
             area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html Defaults if possible to whichever choice you made last time.
 
         Returns:
