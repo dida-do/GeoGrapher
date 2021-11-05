@@ -18,7 +18,7 @@ Please help me out by installing sphinx!
 Everything is built around the associator class.
 An associator organizes a segmentation dataset consisting of images and
 segmentation labels (raster data) and polygons (vector data). 
-The associator itself consists two geopandas GeoDataFrames
+The associator itself consists of two geopandas GeoDataFrames
 polygons_df and imgs that contain tabular information about
 the polygons and images. 
 
