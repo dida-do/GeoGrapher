@@ -33,6 +33,11 @@ The graph can be queried with the `imgs_containing_polygon`, `imgs_intersecting_
     assoc.imgs_containing_polygon(polygon_name)
 (returns list of images containing polygon)
 
+Where are the images and labels? Here:
+    assoc.images_dir
+    assoc.labels_dir
+(return Path to images or labels, usually data_dir / 'images' or 'labels')
+
 ## Creating an associator from scratch
 
     from rs_tools import ImgPolygonAssociator as IPA
@@ -69,6 +74,10 @@ One can download either Sentinel-2 or JAXA DEM data. Easily extendable to other 
         area_relation='Contains')
 All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments will be remembered and used as defaults after the first time the method is called. When dealing with 'large' polygons consider using the
 `filter_out_polygons_contained_in_union_of_intersecting_imgs` argument (see docstring).
+
+## Saving an associator
+Don't forget to save your changes!
+    assoc.save()
 
 ## Create new datasets from existing ones by cutting the images and labels (basic usage)
 
