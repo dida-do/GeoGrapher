@@ -93,7 +93,7 @@ Don't forget to save your changes!
             target_img_count = 1,
             mode = 'random')
 If these methods are not exactly what you need you can roll your own 
-using the general purpose higher order methods `create_or_update_dataset_iter_over_polygons` or `create_or_update_dataset_iter_over_imgs`.
+using the general purpose higher order methods `create_or_update_dataset_iter_over_polygons` or `create_or_update_dataset_iter_over_imgs` of which the above methods are special cases. 
 
 ## Create a new dataset from an existing one by combining or removing segmentation classes
 
