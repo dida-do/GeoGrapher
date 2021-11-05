@@ -2,6 +2,9 @@
 
 Organize, build up, and handle (e.g. generate labels, cut, convert GeoTiffs to numpy files) remote sensing segmentation datasets consisting of polygons, images and segmentation labels while always keeping track of which polygons are contained in or intersect which images and vice versa.
 
+# How to contribute
+Please let me know if you use this repo! If you want to contribute you can add functionality, install sphinx, write a Makefile, create a requirements.txt, review code, clean up code, write documentation, submit issues, or just let me know what needs improving or what you found confusing.
+
 # Installation
 At the moment, you have to clone the git repo and run `pip install -e .`. 
 Whenever you get an import error you'l have to import the missing libraries into your
