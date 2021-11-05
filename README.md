@@ -39,7 +39,7 @@ Where are the images and labels? Here:
 
     assoc.images_dir
     assoc.labels_dir
-(returns Paths to images and labels, usually data_dir / 'images' or 'labels')
+(returns `pathlib.Paths` to images and labels, usually data_dir / 'images' or 'labels')
 
 ## Creating an associator from scratch
 
