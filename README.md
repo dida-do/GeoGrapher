@@ -7,6 +7,9 @@ At the moment, you have to clone the git repo and run `pip install -e .`.
 Whenever you get an import error you'l have to import the missing libraries into your
 environment by hand. Sorry, no (working) requirements.txt or Makefile for now (feel free to change this!).
 
+# Documentation
+Please help me out by installing sphinx!
+
 # Basic usage
 
 Everything is built around the associator class.
