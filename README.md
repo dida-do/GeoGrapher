@@ -37,7 +37,7 @@ The graph can be queried with the `imgs_containing_polygon`, `imgs_intersecting_
 
 ## Initializing an existing associator
 
-    assoc = IPA.from_scratch(data_dir=<DATA_DIR>)
+    assoc = IPA.from_data_dir(data_dir=<DATA_DIR>)
 
 ## Adding or deleting polygons or images to polygons_df or imgs_df
 
