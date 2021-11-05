@@ -41,7 +41,7 @@ Where are the images and labels? Here:
     assoc.labels_dir
 (returns `pathlib.Paths` to images and labels, usually data_dir / 'images' or 'labels')
 
-## Creating an associator from scratch
+## Creating an (empty) associator from scratch
 
     from rs_tools import ImgPolygonAssociator as IPA
     assoc = IPA.from_scratch(
