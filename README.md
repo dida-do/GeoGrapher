@@ -62,7 +62,7 @@ There are some minimal requirements the new_polygons_df has to satisfy, in parti
 
 ## Downloading images (basic usage)
 
-One can download either Sentinel-2 or JAXA DEM data. Easily extendable to other data sources.
+Currently suported data sources are Sentinel-2 or JAXA (DEM data). Easily extendable to other data sources.
 
     assoc.download_imgs(
         polygon_names=optional_list_of_polygon_names_you_want_to_download_imgs_for,
