@@ -73,7 +73,7 @@ Currently suported data sources are Sentinel-2 or JAXA (DEM data). Easily extend
         resolution=10, 
         date=(“NOW-1DAY”, “NOW”),
         area_relation='Contains')
-All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments will be remembered and used as defaults after the first time the method is called. When dealing with 'large' polygons consider using the
+All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments (`'downloader'`, `'producttype'`, ...) will be remembered and used as defaults after the first time the method is called. When dealing with 'large' polygons consider using the
 `filter_out_polygons_contained_in_union_of_intersecting_imgs` argument (see docstring).
 
 ## Saving an associator
