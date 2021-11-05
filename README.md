@@ -55,8 +55,8 @@ The `label_type` argument means that each polygon belongs to exactly one segment
 
 ## Adding or deleting polygons to or from polygons_df (or images to or from imgs_df)
 
-NEVER use any other methods to add/drop polygons or images
-to the polygons_df (or imgs_df) dataframes! You'll mess up the graph.
+**NEVER add/drop polygons or images
+by modifying the polygons_df (or imgs_df) attributes by hand! You'll mess up the graph.**
 
     assoc.add_to_polygons_df(new_polygons_df)
     assoc.drop_polygons(list_of_polygons)
