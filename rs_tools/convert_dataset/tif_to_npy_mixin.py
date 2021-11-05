@@ -1,5 +1,6 @@
 """
-Convert a dataset (images, labels, and associator) of GeoTiffs to a dataset of npy files.
+Mix-in that implements converting a dataset (images, labels, and associator)
+of GeoTiffs to a dataset of npy files.
 """
 
 from __future__ import annotations

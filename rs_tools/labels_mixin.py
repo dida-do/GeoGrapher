@@ -18,7 +18,7 @@ LABEL_MAKERS = {
 
 
 class LabelsMixIn(object):
-    """Mix-in that implements a method to generate labels. """
+    """Mix-in that implements generating and deleting labels. """
 
     def make_labels(self,
             img_names : Optional[List[str]]=None):

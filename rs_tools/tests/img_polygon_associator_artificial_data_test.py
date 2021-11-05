@@ -1,4 +1,6 @@
 """
+TODO: Doesn't work at the moment. Update to work with rs_tools associator. 
+
 Simple pytest test suite of rstoolsImgPolygonAssociator using artificial data (i.e. we write a polygons_df and an imgs_df by hand and don't test any methods (e.g. add/download missing images, create labels) that deal with the actual images.)
 
 See img_polygon_associator_artificial_data_test for a visualization of the test data (polygons and images). 
