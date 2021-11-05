@@ -121,18 +121,6 @@ class JAXADownloaderMixIn(object):
             # ATTENTION: if polygon extends beyond 2 files in width or height this might miss files in between
             # the ones containing the outer points
 
-            # jaxa_folder_names = []
-            # jaxa_file_names = []
-            # for (x,y) in polygon_geometry.envelope.exterior.coords:
-            #     jaxa_folder_names.append('{}/'.format(self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)))
-            #     jaxa_file_names.append('{}.tar.gz'.format(self._obtain_jaxa_index(x, y)))
-
-            # # only keep unique entries, ie up to 4 different files
-            # jaxa_folder_names = list(set(jaxa_folder_names))
-            # jaxa_file_names = list(set(jaxa_file_names))
-
-            # jaxa_file_and_folder_names = zip(jaxa_file_names, jaxa_folder_names)
-
             for (x,y) in polygon_geometry.envelope.exterior.coords:
 
                 jaxa_folder_name = '{}/'.format(self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
@@ -217,17 +205,8 @@ class JAXADownloaderMixIn(object):
                         }
                     )
 
-
-
-        # polygon_info_dict = {
-        #     'have_img_downloaded?' : have_img_downloaded, # TODO: what happens when this is set to false?
-        #     'download_exception' : download_exception     # TODO: where is this processed? what happens for the specified cases?
-        #                                                   # TODO: possibility / usefulness of storing multiple exceptions (per image)
-        # }
-
         return {
             'list_img_info_dicts' : list_img_info_dicts
-            #'polygon_info_dict' : polygon_info_dict
         }
 
 
