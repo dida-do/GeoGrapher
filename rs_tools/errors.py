@@ -1,5 +1,5 @@
 class Error(Exception):
-    """Base class for exceptions in the assoc module"""
+    """Base class for exceptions in the associator class"""
     
     pass
 
@@ -12,14 +12,14 @@ class ImgAlreadyExistsError(Error):
 
 class NoImgsForPolygonFoundError(Error):
     """
-    Error raised by associator's __download_imgs_for_polygon__ method to indicate no images could be found or downloaded.
+    Error raised by an associator's downloader to indicate no images could be found or downloaded.
     """
 
     pass
 
 class ImgDownloadError(Error):
     """
-    Error raised by associator's __download_imgs_for_polygon__ if an error occurs while downloading. 
+    Error raised by an associator's downloader if an error occurs while downloading. 
     """
 
     pass

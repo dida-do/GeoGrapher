@@ -1,4 +1,6 @@
 """
+TODO: Include as method in ImgPolygonAssociator.
+
 Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cutting each image in the source dataset to a grid of images.
     - cut_dataset_img_to_grid_of_imgs. Updates a dataset of GeoTiffs that was created with new_tif_dataset_img2grid_imgs. 
     - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
