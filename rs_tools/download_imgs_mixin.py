@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pandas as pd
 from geopandas import GeoDataFrame
 from shapely.geometry import Polygon
+from shapely.ops import unary_union
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
 
 
@@ -27,10 +28,11 @@ class DownloadImgsBaseMixIn(object):
 
     def download_imgs(self,
             polygon_names : Optional[Union[str, List[str]]]=None,
+            downloader : Optional[str] = None,
             target_img_count : int=1,
             add_labels : bool=True,
+            filter_out_polygons_contained_in_union_of_intersecting_imgs : bool = False,
             shuffle_polygons : bool=True,
-            downloader : Optional[str] = None,
             **kwargs):
         """
         Download images for polygons.
@@ -43,15 +45,16 @@ class DownloadImgsBaseMixIn(object):
             images in the dataset fully containing a polygon for "large"
             polygons the img_count will always remain zero and every call of the
             download_imgs method that includes this polygon will download 
-            target_img_count images (or image series). 
+            target_img_count images (or image series). To avoid this, you can use the filter_out_polygons_contained_in_union_of_intersecting_imgs argument.
 
         Args:
             polygon_names (List[str], optional): Optional polygon_name or list of polygon_names to download images for. Defaults to None, i.e. consider all polygons in self.polygons_df.
+            downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.            
             target_img_count (int): target for number of images per polygon in the dataset after downloading. The actual number of images for each polygon P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_polygon images for P P is also contained in images downloaded for other polygons.
             polygons_df (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. self.polygons_df). If provided and not equal to self.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded.
             add_labels (bool, optional): bool. Whether to add labels for the downloaded images. Defaults to True.
+            filter_out_polygons_contained_in_union_of_intersecting_imgs (bool): Useful when dealing with 'large' polygons. Defaults to False.
             shuffle_polygons (bool): Whether to shuffle order of polygons for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
-            downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
 
         Kwargs (downloader='jaxa'):
             data_version (str): One of '1804', '1903', '2003', or '2012'.
@@ -118,6 +121,15 @@ class DownloadImgsBaseMixIn(object):
         if polygons_w_null_geometry != []:
             polygons_to_download = [polygon_name for polygon_name in polygons_to_download if polygon_name not in polygons_w_null_geometry]
             log.info(f"download_imgs: skipping polygons with null geometry: {polygons_w_null_geometry}.")
+
+        if filter_out_polygons_contained_in_union_of_intersecting_imgs:
+            filter_fun = lambda polygon_name: 
+
+            polygons_to_download = [
+                polygon_name for polygon_name in polygons_to_download
+                if not unary_union(self.imgs_df.loc[self.imgs_intersecting_polygon(polygon_name)].geometry.tolist().contains(
+                    self.polygons_df.loc[polygon_name].geometry)
+                ]
 
         if shuffle_polygons == True:
             random.shuffle(polygons_to_download)
