@@ -1,13 +1,15 @@
 """
-downloader to be used by image-polygon-associator library that
-obtains digital elevation model (DEM) data from jaxa.jp's ALOS data-source
+Downloader mix in that obtains digital elevation model (DEM) data 
+from jaxa.jp's ALOS data-source.
 
-background: https://www.eorc.jaxa.jp/ALOS/en/index.htm
-ALOS product description (file-format, etc): https://www.eorc.jaxa.jp/ALOS/en/aw3d30/aw3d30v3.2_product_e_e1.0.pdf
-data is assumed to be stored on FTP server: ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_vXXXX/
-port: 46287
+Background: https://www.eorc.jaxa.jp/ALOS/en/index.htm
+ALOS product description (file-format, etc): 
+https://www.eorc.jaxa.jp/ALOS/en/aw3d30/aw3d30v3.2_product_e_e1.0.pdf
+The data is assumed to be stored on the FTP server:
+ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_vXXXX/
+(port: 46287)
 
-different versions exist, to access replace XXXX with one of numbers the below:
+different versions exist
 ––– 1804
 ––– 1903
 ––– 2003
@@ -35,7 +37,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-JAXA_DATA_VERSIONS = ['1804', '1903', '2003', '2012']     # select which data to use here (attn: only 1804 has been tested so far)
+JAXA_DATA_VERSIONS = ['1804', '1903', '2003', '2012']     # (attn: only 1804 has been tested so far)
 
 
 class JAXADownloaderMixIn(object):
@@ -62,37 +64,44 @@ class JAXADownloaderMixIn(object):
             download_mode : str = None,
             **kwargs):
         """
-        Downloads DSM-data from jaxa.jp's ftp-server for a given polygon and returns dict-structure compatible
-        with image-polygon-associator.
+        Downloads DEM data from jaxa.jp's ftp-server for a given polygon and
+        returns dict-structure compatible with the image-polygon-associator.
 
         Note:
-        – Only operates on a single polygon
-        - Does not collate multiple images currently
-        – Only returns a single exception / error-code (not one per file downloaded)
+            - Only operates on a single polygon
+            - Does not collate multiple images currently
+            - Only returns a single exception / error-code
+                (not one per file downloaded)
 
         Warning:
-        The downloader has only been tested for the 1804 jaxa_data_version.
+            The downloader has only been tested for the 1804 jaxa_data_version.
 
         Explanation:
-        The 'bboxvertices' download_mode will download images for
-        vertices of the bbox of the polygon. This is preferred for
-        small polygons, but will miss regions inbetween if a polygon spans
-        more than two images in each axis. The 'bboxgrid' mode will download
-        images for each point on a grid defined by the bbox. This overshoots
-        for small polygons, but works for large polygons.
+            The 'bboxvertices' download_mode will download images for
+            vertices of the bbox of the polygon. This is preferred for
+            small polygons, but will miss regions inbetween if a polygon spans
+            more than two images in each axis. The 'bboxgrid' mode will download
+            images for each point on a grid defined by the bbox. This overshoots
+            for small polygons, but works for large polygons.
 
         Args:
-        :param polygon_name: str, the name of the polygon
-        :param polygon_geometry: shapely object, geometry of a polygon
-        :param download_dir: Path variable or str, directory that the image file should be downloaded to
-        :param jaxa_data_version: One of '1804' (this is the only version that has been tested), '1903', '2003', or '2012'. Defaults if possible to whichever choice you made last time.
-        :type jaxa_data_version: str
-        :param jaxa_download_mode: One of 'bboxvertices', 'bboxgrid'. Defaults if possible to whichever choice you made last time.
-        :type jaxa_download_mode: str
-        :param **kwargs: ignored currently
-        :return: dict of dicts according to assoc-convention (list_img_info_dict and polygon_info_dict),
+            polygon_name (str): the name of the polygon
+            polygon_geometry (shapely polygon): 
+            download_dir (Path or str): directory that the image file should be downloaded to
+            jaxa_data_version (str): One of '1804', '1903', '2003', or '2012'.
+                1804 is the only version that has been tested. 
+                Defaults if possible to whichever choice you made last time.
+            jaxa_download_mode (str): One of 'bboxvertices', 'bboxgrid'.
+                Defaults if possible to whichever choice you made last time.
+            **kwargs (Any): currently ignored
+        
+        Returns: 
+            dict of dicts according to the associator convention
+            (containing list_img_info_dict).
 
-        :raises log.warning: when a file cannot be found or opened on jaxa's-ftp (download_exception = 'file_not_available_on_JAXA_ftp')
+        Raises:
+            log.warning: when a file cannot be found or opened on jaxa's-ftp
+            (download_exception = 'file_not_available_on_JAXA_ftp')
         """
 
         for jaxa_specific_keyword_arg, value in {

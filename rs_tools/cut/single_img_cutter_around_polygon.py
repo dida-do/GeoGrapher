@@ -1,5 +1,6 @@
 """
-ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a given polygon from a source image.
+ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
+given polygon from a source image.
 """
 
 from __future__ import annotations
@@ -27,7 +28,9 @@ logger = logging.getLogger(__name__)
 
 class ImgsAroundPolygonCutter(SingleImgCutter):
     """
-    SingleImgCutter that cuts a small image (or several contiguous such images if the polygon does not fit into a single one) around each polygon in the image accepted by the polygon filter predicate.
+    SingleImgCutter that cuts a small image (or several contiguous such images
+    if the polygon does not fit into a single one) around each polygon in the
+    image accepted by the polygon filter predicate.
     """
 
     def __init__(self,

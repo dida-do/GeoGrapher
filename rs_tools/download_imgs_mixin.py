@@ -20,9 +20,9 @@ log.setLevel(logging.DEBUG)
 
 class DownloadImgsBaseMixIn(object):
     """
-    Mix-in that implements a generic download method.
+    Mix-in that implements a download method. 
 
-    The download_imgs method depends on the _download_imgs_for_polygon and _process_downloaded_img_file methods that need to be implemented in a subclass for each data source (e.g. Sentinel-2).
+    Currently supports sentinel-2 and JAXA DEM, easily extendable to other sources. 
     """
 
     def download_imgs(self,
@@ -36,6 +36,14 @@ class DownloadImgsBaseMixIn(object):
         Download images for polygons.
 
         Sequentially considers the polygons for which the image count (number of images fully containing a given polygon) is less than num_target_imgs_per_polygon images in the associator's internal polygons_df or the optional polygons_df argument (if given), for each such polygon attempts to download num_target_imgs_per_polygon - image_count images fully containing the polygon (or several images jointly containing the polygon), creates the associated label(s) for the image(s) (assuming the default value True of add_labels is not changed), and integrates the new image(s) into the dataset/associator. Integrates images downloaded for a polygon into the dataset/associator immediately after downloading them and before downloading images for the next polygon. In particular, the image count is updated immediately after each download.
+
+        Warning:
+            The targeted number of downloads is determined by target_img_count
+            and a polygons img_count. Since the img_count is the number of
+            images in the dataset fully containing a polygon for "large"
+            polygons the img_count will always remain zero and every call of the
+            download_imgs method that includes this polygon will download 
+            target_img_count images (or image series). 
 
         Args:
             polygon_names (List[str], optional): Optional polygon_name or list of polygon_names to download images for. Defaults to None, i.e. consider all polygons in self.polygons_df.
