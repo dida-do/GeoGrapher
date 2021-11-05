@@ -125,7 +125,7 @@ classes if the labels are soft-categorical) will be retained, and the classes 'c
 
 ## Updating an existing dataset created from a source dataset
 
-**Warning: Hasn't been tested at all!**
+**Warning: Hasn't been tested at all!** Recursive update (i.e. before updating updates the source datadirectory first):
 
     assoc.update()
 
