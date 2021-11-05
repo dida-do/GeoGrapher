@@ -1,5 +1,6 @@
 """
-Create or update dataset with categorical labels from a source dataset with soft-categorical labels.
+Mix-in that implements creating or updating dataset with categorical labels
+from a source dataset with soft-categorical labels.
 """
 
 from __future__ import annotations

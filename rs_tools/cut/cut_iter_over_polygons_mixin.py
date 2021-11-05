@@ -1,7 +1,8 @@
 """
 TODO: img count
 
-Customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
+Mix-in that implements a higher order general-purpose method to create
+or update datasets of GeoTiffs from existing ones by iterating over polygons.
 """
 
 from __future__ import annotations
@@ -34,7 +35,8 @@ class CreateDSCutIterOverPolygonsMixIn(object):
             polygon_filter_predicate : PolygonFilterPredicate = AlwaysTrue()
             ) -> ImgPolygonAssociator:
         """
-        Create or update a dataset of GeoTiffs by iterating over polygons.
+        Higher order general purpose method to create or update a dataset
+        of GeoTiffs by iterating over polygons.
 
         Add all polygons in the source dataset to the target dataset and
         iterate over all polygons in the target dataset. For each polygon if
