@@ -51,7 +51,7 @@ The `label_type` argument means that each polygon belongs to exactly one segment
 
     assoc = IPA.from_data_dir(data_dir=<DATA_DIR>)
 
-## Adding or deleting polygons (or images) to polygons_df (or imgs_df)
+## Adding or deleting polygons to or from polygons_df (or images to or from imgs_df)
 
 NEVER use any other methods to add/drop polygons or images
 to the polygons_df (or imgs_df) dataframes! You'll mess up the graph.
