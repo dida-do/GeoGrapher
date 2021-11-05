@@ -394,7 +394,7 @@ class ImgPolygonAssociator(
 
 
     @property
-    def img_data_dirs(self) -> List[Path]:
+    def image_data_dirs(self) -> List[Path]:
         return self._image_data_dirs
 
 
