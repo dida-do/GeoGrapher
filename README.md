@@ -85,6 +85,10 @@ Don't forget to save your changes!
 
     assoc.save()
 
+## Creating labels
+
+    make_labels(img_names=optional_list_of_img_names_to_create_labels_for)
+
 ## Create new datasets from existing ones by cutting the images and labels (basic usage)
 
     assoc.cut_every_img_to_grid(
