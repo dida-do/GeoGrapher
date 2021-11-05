@@ -45,19 +45,20 @@ Where are the images and labels? Here:
         data_dir=<DATA_DIR>,
         segmentation_classes = ['seg_class1', 'seg_class2'],
         label_type='categorical')
+The `label_type` argument means that each polygon belongs to exactly one segmentation class which will be specified in the `type` column in `assoc.polygons_df`.
 
 ## Initializing an existing associator
 
     assoc = IPA.from_data_dir(data_dir=<DATA_DIR>)
 
-## Adding or deleting polygons or images to polygons_df or imgs_df
+## Adding or deleting polygons (or images) to polygons_df (or imgs_df)
 
 NEVER use any other methods to add/drop polygons or images
-to the imgs_df or polygons_df dataframes! You'll mess up the graph.
+to the polygons_df (or imgs_df) dataframes! You'll mess up the graph.
 
     assoc.add_to_polygons_df(new_polygons_df)
     assoc.drop_polygons(list_of_polygons)
-and similarly for images.
+There are some minimal requirements the new_polygons_df has to satisfy, in particular the index name needs to be `'polygon_name'`. You will be alerted with an error message if these are not met. 
 
 ## Downloading images (basic usage)
 
