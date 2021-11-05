@@ -18,7 +18,9 @@ log = logging.getLogger(__name__)
 
 class UpdateFromSourceDSMixIn(object):
     """
-    Mix-in that implements updating the dataset from the source dataset (which itself is recursively updated first) it was created from.
+    Mix-in that implements updating the dataset organized by the associator
+    from the source dataset (which itself is recursively updated first)
+    it was created from.
     """
 
     @property
@@ -31,7 +33,8 @@ class UpdateFromSourceDSMixIn(object):
 
     def update_from_source_dataset(self):
         """
-        Recursively update the dataset (and associator) from the source dataset (if any) that it was created from.
+        Recursively update the dataset (and associator) from the source dataset
+        (if any) that it was created from.
         """
 
         try:

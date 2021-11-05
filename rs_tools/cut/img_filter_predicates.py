@@ -1,3 +1,6 @@
+"""
+Abstract base class for predicates used to filter images in cutting functions.
+"""
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Union
 from geopandas import GeoSeries
