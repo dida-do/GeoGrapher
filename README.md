@@ -61,7 +61,7 @@ One can download either Sentinel-2 or JAXA DEM data. Easily extendable to other 
         resolution=10, 
         date=(“NOW-1DAY”, “NOW”),
         area_relation='Contains')
-When dealing with 'large' polygons consider using the
+All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments will be remembered and used as defaults after the first time the method is called. When dealing with 'large' polygons consider using the
 `filter_out_polygons_contained_in_union_of_intersecting_imgs` argument (see docstring).
 
 ## Create new datasets from existing ones by cutting the images and labels (basic usage)
