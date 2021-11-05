@@ -69,7 +69,7 @@ class ImgPolygonAssociator(
         LabelsMixIn,
         ImgPolygonAssociatorBase): # needs to be last
     """
-    Organize and handle remote sensing datasets consisting of shapely polygons and images/labels.
+    Organize, build up and handle remote sensing datasets consisting of shapely polygons and images/labels.
 
     The ImgPolygonAssociator class can build up, handle, and organize datasets consisting of shapely vector polygon labels (as well as tabular information about them in the form of a GeoDataFrame) and remote sensing raster images and potentially (semantic) segmentation pixel labels (e.g. GeoTiffs or .npy files) (as well as tabular information about the images and pixel labels in the form of a GeoDataFrame) by providing a two-way linkage between the polygons and the images/pixel labels automatically keeping track of which polygons are contained in which images/pixel labels.
 
@@ -116,7 +116,6 @@ class ImgPolygonAssociator(
         **kwargs : Any
         ):
         """
-
         To initialize a new associator use either the from_scratch class method
         or the empty_assoc_same_format_as method. To initialize an existing
         associator use the from_data_dir or from_paths class methods.

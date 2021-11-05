@@ -1,9 +1,8 @@
 """
 REWRITE DOCSTRINGS
 
-Create or update a dataset of GeoTiffs by cutting images around polygons from a source dataset.
-    - cut_dataset_imgs_for_each_polygon: Creates a new dataset of GeoTiffs from an existing one by cutting out images around polygons.
-    - update_dataset_imgs_for_each_polygon. Updates a dataset of GeoTiffs that was created with cut_dataset_imgs_for_each_polygon.
+Mixin that implements creating or updating a dataset of GeoTiffs
+by cutting images around polygons from a source dataset.
 """
 
 from __future__ import annotations
@@ -39,8 +38,6 @@ class CreateDSCutImgsAroundEveryPolygonMixIn(object):
         """
         TODO: rewrite!
         Create a dataset of GeoTiffs so that it contains (if possible) for each polygon in the target (or source) dataset a number target_img_count of images cut from images in the source dataset.
-
-        Exactly one of source_data_dir or source_assoc should be set (i.e. not None).
 
         Note:
             If a polygon is too large to be contained in a single target image grids of images (with the property that the images in each grid should jointly contain the polygon and such that the grid is the minimal grid satisfying this property) will be cut from the target dataset.
@@ -79,7 +76,7 @@ class CreateDSCutImgsAroundEveryPolygonMixIn(object):
     def _update_cut_imgs_around_every_polygon(self) -> None:
 
         """
-        Update a dataset of GeoTiffs created by new_tif_dataset_small_imgs_for_each_polygon.
+        Update a dataset of GeoTiffs created by cut_imgs_around_every_polygon.
 
         Adds polygons from source_data_dir not contained in data_dir to data_dir and then iterates over all polygons in data_dir that do not have an image and creates a cutout from source_data_dir for them if one exists.
 

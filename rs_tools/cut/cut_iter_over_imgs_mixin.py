@@ -1,5 +1,6 @@
 """
-Customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over images.
+Mixin that implements a general-purpose higher order function to create
+or update datasets of GeoTiffs from existing ones by iterating over images.
 """
 
 from __future__ import annotations
@@ -30,12 +31,15 @@ class CreateDSCutIterOverImgsMixIn(object):
             img_filter_predicate : ImgFilterPredicate = AlwaysTrueImgs()
             ) -> ImgPolygonAssociator:
         """
-        Create or update a data set of GeoTiffs by iterating over images in the source dataset.
+        Higher order method to create or update a data set of GeoTiffs
+        by iterating over images in the source dataset.
 
-        Create or update a data set of GeoTiffs (images, labels, and associator) in target_data_dir from the data set of GeoTiffs in source_data_dir by iterating over the images in the source dataset/associator that have not been cut to images in the target_data_dir (i.e. all images if the target dataset doesn not exist yet), filtering the images using the img_filter_predicate, and then cutting using an img_cutter.
-
-        Note:
-            Exactly one of the source_data_dir and source_assoc arguments needs to be set (i.e. not None) and simillarly for target_data_dir and target_assoc.
+        Create or update a data set of GeoTiffs (images, labels, and associator)
+        in target_data_dir from the data set of GeoTiffs in source_data_dir by
+        iterating over the images in the source dataset/associator that have
+        not been cut to images in the target_data_dir (i.e. all images if the
+        target dataset doesn not exist yet), filtering the images
+        using the img_filter_predicate, and then cutting using an img_cutter.
 
         Warning:
             Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir.

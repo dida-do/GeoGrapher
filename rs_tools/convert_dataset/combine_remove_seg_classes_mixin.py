@@ -1,7 +1,8 @@
 """
 TODO: IS THIS DONE? MAYBE TEST AGAIN...
 
-Create a new dataset from an existing one by combining and/or removing segmentation classes.
+Mix-in that implements creating a new dataset from an existing one
+by combining and/or removing segmentation classes.
 """
 
 from __future__ import annotations
@@ -31,8 +32,8 @@ class CreateDSCombineRemoveSegClassesMixIn(object):
             remove_imgs : bool = True
             ) -> ImgPolygonAssociator:
         """
-        Create new dataset by combining and/or removing segmentation classes.
-        Works for both categorical and soft-categorical label types.
+        Create a new dataset by combining and/or removing segmentation classes.
+        Works for categorical and soft-categorical label types.
 
         Args:
             seg_classes (List[Union[str, List[str]]]): [description]
