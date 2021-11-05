@@ -48,17 +48,18 @@ class CreateDSCombineRemoveSegClassesMixIn(object):
 
         Example:
 
-            Suppose the associator assoc's dataset has the following segmentation classes (including the background class 'bg' and class 'ig'):
+            Suppose the associator assoc's dataset has the following segmentation classes:
 
             'ct', 'ht', 'wr', 'h', 'pt', 'ig', 'bg'
 
-            Then the command
+            Then,
 
             >>> assoc.create_dataset_by_combining_or_removing_seg_classes(
                     target_data_dir=TARGET_DATA_DIR,
                     seg_classes=[['ct', 'ht'], 'wr', ['h']])
-
-            will create a new dataset in TARGET_DATA_DIR where only the polygons labelled as (or having non-zero probability if the labels are soft-categorical) 'ct', 'ht', 'wr', and 'h' have been retained, and the classes 'ct' and 'ht' have been combined to a class 'ct+ht'. If the label type is soft-categorical, the new dataset will still retain any existing prob_seg_class columns for the background class, though all the entries will in this case be zero, since neither 'bg' nor 'ig' were in the seg_classes argument.
+            will create a new dataset in TARGET_DATA_DIR where only the polygons belonging
+            to the 'ct', 'ht', 'wr', and 'h' (or having a non-zero probability of belonging to these
+            classes if the labels are soft-categorical) will be retained, and the classes 'ct' and 'ht' will be combined to a class 'ct+ht'. If the label type is soft-categorical, the new dataset will still retain any existing prob_seg_class columns for the background class, though all the entries will in this case be zero, since neither 'bg' nor 'ig' were in the seg_classes argument.
 
         Warning:
             Make sure this works as desired for the edge cases as regards the ignore and background classes!
