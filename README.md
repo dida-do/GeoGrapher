@@ -36,9 +36,10 @@ The graph can be queried with the `imgs_containing_polygon`, `imgs_intersecting_
 The `geometry` column in `assoc.imgs_df` stores the bounding boxes of the images. The `img_count` column in `assoc.polygons_df` keeps track of how many images there are in `imgs_df` that fully contain a polygon.
 
 Where are the images and labels? Here:
+
     assoc.images_dir
     assoc.labels_dir
-(return Path to images or labels, usually data_dir / 'images' or 'labels')
+(returns Path to images or labels, usually data_dir / 'images' or 'labels')
 
 ## Creating an associator from scratch
 
