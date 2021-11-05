@@ -15,7 +15,7 @@ from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, I
 log = logging.getLogger(__name__)
 
 # log level (e.g. 'DEBUG')
-# log.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 
 
 class DownloadImgsBaseMixIn(object):
@@ -79,7 +79,7 @@ class DownloadImgsBaseMixIn(object):
                 raise ValueError("Need to set downloader keyword argument (TODO!!!).")
         else:
             # Remember value
-            setattr(self, 'downloader', downloader)
+            self._params_dict['downloader'] = downloader
 
         # Make sure images_dir and downloads_dir exists
         self.images_dir.mkdir(parents=True, exist_ok=True)
@@ -194,7 +194,8 @@ class DownloadImgsBaseMixIn(object):
                         log.debug(f"\nimg_polygon_associator: list_img_info_dicts is {list_img_info_dicts}\n\n")
 
                         # If at least one image was downloaded, ...
-                        if list_img_info_dicts != [{}]:
+                        # if list_img_info_dicts != [{}]:
+                        if list_img_info_dicts != []:
 
                             # ... extract the new image names ...
                             new_img_names_list = [img_info_dict[self.imgs_df.index.name] for img_info_dict in list_img_info_dicts]
@@ -274,7 +275,9 @@ class DownloadImgsBaseMixIn(object):
 
                                     new_imgs_dict[key].append(img_info_dict[key])
 
-                                num_img_series_to_download -= 1
+                            num_img_series_to_download -= 1
+                        else:
+                            num_img_series_to_download = 0 # no further imgs to be found
 
         if len(new_imgs_dict) > 0:
             # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe ...
