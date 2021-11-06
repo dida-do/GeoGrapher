@@ -123,11 +123,10 @@ class DownloadImgsBaseMixIn(object):
             log.info(f"download_imgs: skipping polygons with null geometry: {polygons_w_null_geometry}.")
 
         if filter_out_polygons_contained_in_union_of_intersecting_imgs:
-            filter_fun = lambda polygon_name: 
-
             polygons_to_download = [
                 polygon_name for polygon_name in polygons_to_download
-                if not unary_union(self.imgs_df.loc[self.imgs_intersecting_polygon(polygon_name)].geometry.tolist().contains(
+                if not unary_union(self.imgs_df.loc[
+                    self.imgs_intersecting_polygon(polygon_name)].geometry.tolist().contains(
                     self.polygons_df.loc[polygon_name].geometry)
                 ]
 
