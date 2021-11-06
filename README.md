@@ -85,6 +85,7 @@ All the downloader (`'sentinel-2'` or `'jaxa'`) specific arguments (`'downloader
 Don't forget to save your changes!
 
     assoc.save()
+Unfortunately geopanpdas can not save empty GeoDataFrames.
 
 ## Creating labels
 
