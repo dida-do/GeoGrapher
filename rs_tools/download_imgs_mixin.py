@@ -126,9 +126,9 @@ class DownloadImgsBaseMixIn(object):
             polygons_to_download = [
                 polygon_name for polygon_name in polygons_to_download
                 if not unary_union(self.imgs_df.loc[
-                    self.imgs_intersecting_polygon(polygon_name)].geometry.tolist().contains(
-                    self.polygons_df.loc[polygon_name].geometry)
-                ]
+                    self.imgs_intersecting_polygon(polygon_name)].geometry.tolist()).contains(
+                        self.polygons_df.loc[polygon_name].geometry)
+            ]
 
         if shuffle_polygons == True:
             random.shuffle(polygons_to_download)
