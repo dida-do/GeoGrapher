@@ -31,7 +31,7 @@ import os
 from datetime import datetime
 import math
 import numpy as np
-from assoc.utils.utils import transform_shapely_geometry
+from rs_tools.utils.utils import transform_shapely_geometry
 
 import logging
 log = logging.getLogger(__name__)
