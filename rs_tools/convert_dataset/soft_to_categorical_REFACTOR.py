@@ -41,6 +41,7 @@ def update_dataset_soft_categorical_to_categorical(
         data_dir : Optional[Union[Path, str]] = None, 
         assoc : Optional[ImgPolygonAssociator] = None
         ) -> ImgPolygonAssociator:
+    pass
 
         
     
