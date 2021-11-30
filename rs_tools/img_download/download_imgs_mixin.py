@@ -114,8 +114,8 @@ class DownloadImgsBaseMixIn(object):
             else:
                 raise TypeError(f"The polygon_names argument should be a list of polygon names (i.e. strings).")
 
-            if not set(polygon_names) <= set(self.polygons_df.index):
-                raise ValueError(f"Polygons {set(polygon_names) - set(self.polygons_df.index)} missing from self.polygons_df")
+            if not set(polygons_to_download) <= set(self.polygons_df.index):
+                raise ValueError(f"Polygons {set(polygons_to_download) - set(self.polygons_df.index)} missing from self.polygons_df")
 
         polygons_w_null_geometry = [polygon_name for polygon_name in polygons_to_download if self.polygons_df.loc[polygon_name].geometry is None]
         if polygons_w_null_geometry != []:
@@ -179,7 +179,8 @@ class DownloadImgsBaseMixIn(object):
                                         polygon_geometry,
                                         self.download_dir,
                                         previously_downloaded_imgs_set, # _download_imgs_for_polygon should use this to make sure no attempt at downloading an already downloaded image is made.
-                                        **temporary_params_dict)
+                                        **temporary_params_dict,
+                                        )
 
                     # ... unless either no images could be found or a download error occured, ...
                     except NoImgsForPolygonFoundError as e:
@@ -249,7 +250,7 @@ class DownloadImgsBaseMixIn(object):
                                                                         self.download_dir,
                                                                         self.images_dir,
                                                                         self._params_dict['crs_epsg_code'],
-                                                                        **self._params_dict)
+                                                                        **temporary_params_dict)
 
                                 # ... and update the img_info_dict with the returned information from processing. (This modifies list_img_info_dicts, too).
                                 img_info_dict.update(single_img_processed_return_dict)
