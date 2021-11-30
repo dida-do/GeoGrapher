@@ -22,8 +22,10 @@ from rs_tools.img_polygon_associator_base import ImgPolygonAssociatorBase
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
 from rs_tools.labels_mixin import LabelsMixIn
-from rs_tools.download_imgs_mixin import DownloadImgsBaseMixIn
-from rs_tools.downloaders import Sentinel2DownloaderMixIn, JAXADownloaderMixIn
+from rs_tools.img_download.download_imgs_mixin import DownloadImgsBaseMixIn
+from rs_tools.img_download.sentinel2_mixin import Sentinel2DownloaderMixIn
+from rs_tools.img_download.jaxa_mixin import JAXADownloaderMixIn
+
 from rs_tools.convert_dataset import CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn, CreateDSCategoricalFromSoftCategoricalDatasetMixIn
 from rs_tools.cut import CreateDSCutImgsAroundEveryPolygonMixIn, CreateDSCutEveryImgToGridMixIn, CreateDSCutIterOverImgsMixIn, CreateDSCutIterOverPolygonsMixIn
 from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDSMixIn
