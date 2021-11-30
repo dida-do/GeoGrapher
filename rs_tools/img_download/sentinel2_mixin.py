@@ -18,7 +18,6 @@ from geopandas import GeoDataFrame, GeoSeries
 
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
-from didatools.remote_sensing.data_preparation.sentinel_2_preprocess import safe_to_geotif_L2A
 
 
 # MAX_PERCENT_CLOUD_COVERAGE=10
