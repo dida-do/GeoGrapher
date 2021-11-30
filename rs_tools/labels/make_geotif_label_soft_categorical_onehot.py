@@ -38,14 +38,13 @@ def _make_geotif_label_soft_categorical_onehot(
         None:
     """
 
+    # check mode
     if mode not in {'soft-categorical', 'onehot'}:
         raise ValueError(f'Unknown mode: {mode}')
 
+    # paths
     img_path = assoc.images_dir / img_name
     label_path = assoc.labels_dir / img_name
-
-    classes_to_ignore = {class_ for class_ in {assoc.background_class} if class_ is not None}
-    segmentation_classes = [class_ for class_ in assoc.segmentation_classes if class_ not in classes_to_ignore]
 
     # If the image does not exist ...
     if not img_path.is_file():
@@ -65,30 +64,11 @@ def _make_geotif_label_soft_categorical_onehot(
 
     # Else, ...
     else:
+
+        label_bands_count = _get_label_bands_count(assoc)
+
         # ...open the image, ...
         with rio.open(img_path) as src:
-
-            # ... determine how many bands the label should have.
-            # If the background is not included in the segmentation classes (default) ...
-            if assoc._params_dict['add_background_band_in_labels'] == True:
-
-                # ... add a band for the implicit background segmentation class, ...
-                label_bands_count = 1 + len(segmentation_classes)
-
-            # ... if the background *is* included, ...
-            elif assoc._params_dict['background_in_seg_classes'] == False:
-
-                # ... don't.
-                label_bands_count = len(segmentation_classes)
-
-            # If the add_background_band_in_labels value is neither True nor False ...
-            else:
-
-                # ... then it is nonsensical, so log an error.
-                logger.error(
-                    f"Unknown background_in_seg_classes "
-                    f"value: {assoc._params_dict['background_in_seg_classes']}."
-                )
 
             # Create profile for the label.
             profile = src.profile
@@ -104,9 +84,9 @@ def _make_geotif_label_soft_categorical_onehot(
                 # ... and create one band in the label for each segmentation class.
 
                 # (if an implicit background band is to be included, it will go in band/channel 1.)
-                start_band = 1 if assoc._params_dict['add_background_band_in_labels'] == False else 2
+                start_band = 1 if not assoc._params_dict['add_background_band_in_labels'] else 2
 
-                for count, seg_class in enumerate(segmentation_classes, start=start_band):
+                for count, seg_class in enumerate(assoc.segmentation_classes, start=start_band):
 
                     # To do that, first find (the df of) the polygons intersecting the image ...
                     polygons_intersecting_img_df = assoc.polygons_df.loc[
@@ -165,12 +145,12 @@ def _make_geotif_label_soft_categorical_onehot(
                     dst.write(mask, count)
 
                 # If the background is not included in the segmentation classes ...
-                if assoc._params_dict['add_background_band_in_labels'] == True:
+                if assoc._params_dict['add_background_band_in_labels']:
 
                     # ... add background band.
 
                     non_background_band_indices = list(
-                        range(start_band, 2 + len(segmentation_classes)))
+                        range(start_band, 2 + len(assoc.segmentation_classes)))
 
                     # The probability of a pixel belonging to 
                     # the background is the complement of it 
@@ -182,7 +162,6 @@ def _make_geotif_label_soft_categorical_onehot(
 
                     dst.write(background_band, 1)
 
-
 _make_geotif_label_soft_categorical = partial(
                                         _make_geotif_label_soft_categorical_onehot, 
                                         mode='soft-categorical')
@@ -190,3 +169,19 @@ _make_geotif_label_soft_categorical = partial(
 _make_geotif_label_onehot = partial(
                                 _make_geotif_label_soft_categorical_onehot, 
                                 mode='onehot')                
+
+def _get_label_bands_count(assoc: ImgPolygonAssociator) -> bool:
+
+    # If the background is not included in the segmentation classes (default) ...
+    if assoc._params_dict['add_background_band_in_labels']:
+
+        # ... add a band for the implicit background segmentation class, ...
+        label_bands_count = 1 + len(assoc.segmentation_classes)
+
+    # ... if the background *is* included, ...
+    elif not assoc._params_dict['add_background_band_in_labels']:
+
+        # ... don't.
+        label_bands_count = len(assoc.segmentation_classes)
+
+    return label_bands_count
