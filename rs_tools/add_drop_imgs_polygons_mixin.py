@@ -33,6 +33,9 @@ class AddDropImgsPolygonsMixIn(object):
         if len(duplicates) > 0:
             raise ValueError(f"new_polygons_df contains rows with duplicate polygon_names: {duplicates.index.tolist()}")
 
+        if len(new_polygons_df[new_polygons_df.geometry.isna()]) > 0:
+            raise ValueError(f"new_polygons_df contains rows with None geometries: {', '.join(new_polygons_df[new_polygons_df.geometry.isna()].index)}")
+
         self._standardize_df_crs(
             df=new_polygons_df,
             df_name='new_polygons_df')
@@ -108,6 +111,9 @@ class AddDropImgsPolygonsMixIn(object):
         duplicates = new_imgs_df[new_imgs_df.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(f"new_imgs_df contains rows with duplicate img_names: {duplicates.index.tolist()}")
+
+        if len(new_imgs_df[new_imgs_df.geometry.isna()]) > 0:
+            raise ValueError(f"new_imgs_df contains rows with None geometries: {', '.join(new_imgs_df[new_imgs_df.geometry.isna()].index)}")
 
         self._standardize_df_crs(
             df=new_imgs_df,
