@@ -63,7 +63,7 @@ def imgs_df_from_tif_dir(
             img_info_dict = {
                                 'img_name': img_path.name, 
                                 'geometry': img_bounding_rectangle_imgs_df_crs, 
-                                'orig_crs_epsg_code': orig_crs_epsg_code
+                                'orig_crs_epsg_code': int(orig_crs_epsg_code)
                             }
 
         #  Add information about the image to new_imgs_dict ...
