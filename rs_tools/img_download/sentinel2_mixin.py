@@ -2,7 +2,7 @@
 ImgPolygonAssociator that can download Sentinel-2 images.
 """
 
-from typing import Union, List, Optional, Dict, Type, Sequence, Any
+from typing import Union, List, Optional, Dict, Any
 import os
 from pathlib import Path
 import logging
@@ -14,10 +14,10 @@ from shapely import wkt
 from zipfile import ZipFile
 from sentinelsat import SentinelAPI
 from dotenv import load_dotenv
-from geopandas import GeoDataFrame, GeoSeries
+from geopandas import GeoSeries
 
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.errors import ImgAlreadyExistsError, NoImgsForPolygonFoundError, ImgDownloadError
+from rs_tools.errors import NoImgsForPolygonFoundError
 
 
 # MAX_PERCENT_CLOUD_COVERAGE=10
@@ -343,7 +343,8 @@ class Sentinel2DownloaderMixIn(object):
 
         return return_dict
 
-    def safe_to_geotif_L2A(
+    def _safe_to_geotif_L2A(
+            self,
             safe_root : Union[Path, str],
             resolution : Union[int, str],
             outdir : Optional[Union[Path, str]] = None,
