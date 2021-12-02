@@ -102,7 +102,7 @@ class ImgPolygonAssociator(
 
         # remaining non-path args w/ default values
         background_class : Optional[str] = None,
-        add_background_band_in_labels : bool = False,
+        add_background_band_in_labels : bool = True,
         crs_epsg_code : int = STANDARD_CRS_EPSG_CODE,
 
         # path args
