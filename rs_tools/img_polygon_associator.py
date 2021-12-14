@@ -380,6 +380,18 @@ class ImgPolygonAssociator(
 
 
     @property
+    def segmentation_classes(self):
+        return self._params_dict['segmentation_classes']
+
+    @segmentation_classes.setter
+    def segmentation_classes(self, new_segmentation_classes : List[str]):
+        if not len(new_segmentation_classes) == len(set(new_segmentation_classes)):
+            raise ValueError('no duplicates in list of segmentation_classes allowed')
+        self._params_dict['segmentation_classes'] = new_segmentation_classes
+        if self.label_type != 'categorical':
+            log.warning("segmentation_classes changed. You might want to add a column in polygons_df and recompute the labels!")
+
+    @property
     def all_polygon_classes(self):
         """Should include not just the segmentation classes but also e.g. mask or background classes."""
 
@@ -407,7 +419,14 @@ class ImgPolygonAssociator(
         # Make sure assoc_dir exists.
         self._assoc_dir.mkdir(parents=True, exist_ok=True)
 
-        self.imgs_df.convert_dtypes(infer_objects=True, convert_string=True, convert_integer=True, convert_boolean=True, convert_floating=False).to_file(Path(self._imgs_df_path), driver="GeoJSON")
+        imgs_df_non_geometry_columns = [col for col in self.imgs_df.columns if col != 'geometry']
+        self.imgs_df[imgs_df_non_geometry_columns] = self.imgs_df[imgs_df_non_geometry_columns].convert_dtypes(
+            infer_objects=True,
+            convert_string=True,
+            convert_integer=True,
+            convert_boolean=True,
+            convert_floating=False)
+        self.imgs_df.to_file(Path(self._imgs_df_path), driver="GeoJSON")
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
