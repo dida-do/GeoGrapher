@@ -127,7 +127,8 @@ class CreateDSCutIterOverImgsMixIn(object):
                                                 new_graph=target_assoc._graph)
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
-                assert set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
+                assert {'img_name', 'geometry', 'orig_crs_epsg_code'} <= set(imgs_from_single_cut_dict.keys()), f"dict returned by img_cutter needs the following keys: 'img_name', 'geometry', 'orig_crs_epsg_code'."
+                # assert set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
 
                 # Accumulate information for the new imgs in new_imgs_dict.
                 for key in new_imgs_dict.keys():
