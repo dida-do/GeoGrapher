@@ -1,5 +1,5 @@
 """
-TODO: img count
+TODO: fmg count
 
 Mix-in that implements a higher order general-purpose method to create
 or update datasets of GeoTiffs from existing ones by iterating over polygons.
@@ -103,6 +103,10 @@ class CreateDSCutIterOverPolygonsMixIn(object):
             target_assoc = self
             source_assoc = self.__class__.from_data_dir(source_data_dir)
 
+            target_assoc._update_from_source_dataset_dict['cut_imgs'] = defaultdict(
+                list,
+                target_assoc._update_from_source_dataset_dict['cut_imgs'])
+
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
         added_polygons = []  # updated as we iterate
@@ -150,7 +154,8 @@ class CreateDSCutIterOverPolygonsMixIn(object):
                                                     new_imgs_dict=new_imgs_dict)
 
                     # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
-                    assert set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
+                    assert {'img_name', 'geometry', 'orig_crs_epsg_code'} <= set(imgs_from_single_cut_dict.keys()), f"dict returned by img_cutter needs the following keys: 'img_name', 'geometry', 'orig_crs_epsg_code'."
+                    # if not set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
 
                     # Accumulate information for the new imgs in new_imgs_dict.
                     for key in new_imgs_dict.keys():
@@ -166,14 +171,22 @@ class CreateDSCutIterOverPolygonsMixIn(object):
                             img_bounding_rectangle=img_bounding_rectangle)
 
                         # Update target_assoc._update_from_source_dataset_dict
-                        for polygon_name in target_assoc.polygons_contained_in_img(new_img_name):
-                            target_assoc._update_from_source_dataset_dict['cut_imgs'][polygon_name] += [img_name]
+                        for polygon_name_ in target_assoc.polygons_contained_in_img(new_img_name):
+                            target_assoc._update_from_source_dataset_dict['cut_imgs'][polygon_name_] += [img_name]
+
+                    # In case the polygon polygon_name is not contained in any of the new_imgs:
+                    if img_name not in target_assoc._update_from_source_dataset_dict['cut_imgs'][polygon_name]:
+                        target_assoc._update_from_source_dataset_dict['cut_imgs'][polygon_name] += [img_name]
 
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
         new_imgs_df = GeoDataFrame(
                         new_imgs_dict,
                         crs=target_assoc.imgs_df.crs)
         new_imgs_df.set_index(target_assoc.imgs_df.index.name, inplace=True)
+
+        # log warning if columns don't agree
+        if set(new_imgs_df.columns) - set(target_assoc.imgs_df.columns) != set() or set(target_assoc.imgs_df.columns) - set(new_imgs_df.columns) != set():
+            logger.warning("columns of source and target datasets don't agree")
 
         # ... and append it to self.imgs_df.
         data_frames_list = [target_assoc.imgs_df, new_imgs_df]
