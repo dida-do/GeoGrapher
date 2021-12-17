@@ -1,4 +1,13 @@
 """
+data_version
+'1804'
+jaxa_file_name
+'S034E152.tar.gz'
+jaxa_folder_name
+'S035E150/'
+
+urllib.error.URLError: <urlopen error ftp error: URLError("ftp error: error_perm('550 S029E154.tar.gz: No such file or directory')")>
+
 Downloader mix in that obtains digital elevation model (DEM) data 
 from jaxa.jp's ALOS data-source.
 
@@ -179,7 +188,8 @@ class JAXADownloaderMixIn(object):
                         with open(os.path.join(download_dir, jaxa_file_name), 'wb') as local_file:
                             shutil.copyfileobj(remote_source, local_file)
                 except Exception as e:
-                    log.exception(f'File could not be found on JAXA ftp or could not be opened: {e.args}')
+                    log.exception(f'File {jaxa_file_name} in folder {jaxa_folder_name} could not be found on JAXA ftp or could not be opened: {e.args}')
+                    # continue
                     # download_exception = 'file_not_available_on_JAXA_ftp'
 
                 else:
