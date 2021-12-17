@@ -337,8 +337,8 @@ class ImgPolygonAssociator(
         self._params_dict['crs_epsg_code'] = epsg_code
 
         # reproject imgs_df and polygons_df GeoDataFrames
-        self.polygons_df.to_crs(epsg=epsg_code)
-        self.imgs_df.to_crs(epsg=epsg_code)
+        self.polygons_df = self.polygons_df.to_crs(epsg=epsg_code)
+        self.imgs_df = self.imgs_df.to_crs(epsg=epsg_code)
 
 
     @property
