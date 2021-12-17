@@ -69,11 +69,14 @@ class RandomImgSelector(ImgSelector):
         Select target_img_count - #{img_count of polygon in target_assoc} images (or if not possible less) from img_names_list.
         """
 
-        target_num_imgs_to_sample = max(
-                                        0,
-                                        self.target_img_count - len(target_assoc.imgs_containing_polygon(polygon_name))
-                                    )
+        target_num_imgs_to_sample = self.target_img_count \
+            - len(target_assoc.imgs_containing_polygon(polygon_name)) \
+            - len(target_assoc._update_from_source_dataset_dict['cut_imgs'][polygon_name])
 
+        # can only sample a non-negative number of images
+        target_num_imgs_to_sample = max(0, target_num_imgs_to_sample)
+
+        # can only sample from img_names_list
         num_imgs_to_sample = min(
                                 len(img_names_list),
                                 target_num_imgs_to_sample
