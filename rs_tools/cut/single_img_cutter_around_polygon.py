@@ -1,6 +1,11 @@
 """
 ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
 given polygon from a source image.
+
+transformed_polygon_geometry.bounds
+(702447.9249869362, 5488515.894993714, 725881.4386058747, 5500023.0914324345)
+img_bbox.bounds
+(699960.0, 5390200.0, 809760.0, 5500000.0)
 """
 
 from __future__ import annotations
@@ -162,9 +167,18 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
                                                 from_epsg=self.source_assoc.polygons_df.crs.to_epsg(),
                                                 to_epsg=src.crs.to_epsg())
 
+            # FOR DEBUGGING:
+            img_bbox = box(*src.bounds)
+            assert self.source_assoc.polygons_df.loc[polygon_name].geometry.within(self.source_assoc.imgs_df.loc[source_img_name].geometry)
+            if not transformed_polygon_geometry.within(img_bbox):
+                logger.debug(f"img {source_img_name} doesn't contain polygon {polygon_name} in img crs")
+                transformed_polygon_geometry = img_bbox.intersection(transformed_polygon_geometry)
+
             min_row, max_row, min_col, max_col = self._get_min_max_row_col(
                                                     img=src,
                                                     transformed_polygon_geometry=transformed_polygon_geometry)
+
+            assert min(min_row, max_row, min_col, max_col) >= 0, f'nonsensical negative max/min row/col values. sth went wrong cutting {source_img_name} for {polygon_name}'
 
             if self.mode in {'centered', 'random'}:
                 new_img_size_rows = self.new_img_size_rows
