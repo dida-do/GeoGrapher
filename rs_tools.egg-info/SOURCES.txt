@@ -6,7 +6,6 @@ setup.py
 rs_tools/__init__.py
 rs_tools/add_drop_imgs_polygons_mixin.py
 rs_tools/documentation.md
-rs_tools/download_imgs_mixin.py
 rs_tools/errors.py
 rs_tools/global_constants.py
 rs_tools/img_polygon_associator.py
@@ -48,6 +47,10 @@ rs_tools/downloaders/sentinel2_mixin.py
 rs_tools/graph/__init__.py
 rs_tools/graph/bipartite_graph.py
 rs_tools/graph/bipartite_graph_class.py
+rs_tools/img_download/__init__.py
+rs_tools/img_download/download_imgs_mixin.py
+rs_tools/img_download/jaxa_mixin.py
+rs_tools/img_download/sentinel2_mixin.py
 rs_tools/labels/__init__.py
 rs_tools/labels/label_type_conversion_utils.py
 rs_tools/labels/make_geotif_label_categorical.py
