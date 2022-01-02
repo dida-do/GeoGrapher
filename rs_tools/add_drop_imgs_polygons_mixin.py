@@ -211,6 +211,13 @@ class AddDropImgsPolygonsMixIn(object):
                 for img_name in img_names:
                     (dir / img_name).unlink(missing_ok=True)
 
+    def _standardize_df_crs(
+            self,
+            df : GeoDataFrame,
+            df_name: str):
+
+        df = df.to_crs(epsg=self.crs_epsg_code)
+
     def _check_df_cols_index_name(
             self,
             df : GeoDataFrame,

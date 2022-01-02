@@ -118,6 +118,7 @@ class CreateDSCutEveryImgToGridMixIn(object):
                 raise ValueError("TODOTODO")
 
             source_assoc = self
+            target_data_dir = Path(target_data_dir)
 
         elif create_or_update == 'update':
 
@@ -128,8 +129,7 @@ class CreateDSCutEveryImgToGridMixIn(object):
                 raise ValueError("TODOTODO")
 
             source_assoc = self.__class__.from_data_dir(source_data_dir)
-
-        target_data_dir = Path(target_data_dir)
+            target_data_dir = self.images_dir.parent
 
         img2grid_cutter = ImgToGridCutter(
                                 source_assoc=source_assoc,
@@ -139,6 +139,9 @@ class CreateDSCutEveryImgToGridMixIn(object):
                                 img_bands=img_bands,
                                 label_bands=label_bands)
         always_true = AlwaysTrue()
+
+        if create_or_update == 'update':
+            target_data_dir = None # we needed the value for the ImgCutter above, but if it's not None and we're updating create_or_update_dataset_iter_over_imgs will complain
 
         target_assoc = self.create_or_update_dataset_iter_over_imgs(
                             create_or_update=create_or_update,
