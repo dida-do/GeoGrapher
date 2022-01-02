@@ -178,6 +178,8 @@ class CreateDSCutImgsAroundEveryPolygonMixIn(object):
             # Check args
             if target_data_dir is not None:
                 raise ValueError(f"TODOTODO")
+            else:
+                target_data_dir = self.images_dir.parent
             if source_data_dir is None:
                 raise ValueError("TODOTODO")
 
@@ -197,6 +199,10 @@ class CreateDSCutImgsAroundEveryPolygonMixIn(object):
                                                 img_bands=img_bands,
                                                 label_bands=label_bands,
                                                 random_seed=random_seed)
+
+        # clean this up
+        if create_or_update == 'update':
+            target_data_dir = None
 
         # ... cut the dataset and return the target associator.
         # Note that target_assoc is self if we are updating.
