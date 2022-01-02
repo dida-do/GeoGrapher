@@ -1,4 +1,6 @@
 """
+TODO: role reversal (self as source vs target for 'update' and 'create') to be consistent with other methods and the update() method.
+
 Mix-in that implements converting a dataset (images, labels, and associator)
 of GeoTiffs to a dataset of npy files.
 """
@@ -29,14 +31,14 @@ class CreateDSTiffToNpyMixIn(object):
             channels_first_or_last_in_npy : str = 'last'
             ) -> ImgPolygonAssociator:
         """
-        TODO:
+        Create a new dataset of npy files from a dataset of GeoTiffs.
 
         Args:
-            target_data_dir (Union[Path, str]): [description]
-            img_bands (Optional[List[int]], optional): [description]. Defaults to None.
-            label_bands (Optional[List[int]], optional): [description]. Defaults to None.
-            squeeze_label_channel_dim_if_single_channel (bool, optional): [description]. Defaults to True.
-            channels_first_or_last_in_npy (str, optional): [description]. Defaults to 'last'.
+            target_data_dir (Union[Path, str]): data directory of target data set
+            img_bands (Optional[List[int]], optional): selection of image bands to be converted. Defaults to None (i.e. all).
+            label_bands (Optional[List[int]], optional): selection of label bands to be converted. Defaults to None.
+            squeeze_label_channel_dim_if_single_channel (bool, optional): whether to squeeze single channel labels. Defaults to True.
+            channels_first_or_last_in_npy (str, optional): location of channel axis. Defaults to 'last'.
 
         Returns:
             ImgPolygonAssociator: [description]
@@ -53,8 +55,8 @@ class CreateDSTiffToNpyMixIn(object):
 
     def _update_dataset_converted_from_tif_to_npy(
             self,
-            data_dir : Optional[Union[Path, str]] = None,
-            assoc : Optional[ImgPolygonAssociator] = None
+            # data_dir : Optional[Union[Path, str]] = None,
+            # assoc : Optional[ImgPolygonAssociator] = None
             ) -> None:
         """
         TODO:
@@ -130,9 +132,9 @@ class CreateDSTiffToNpyMixIn(object):
         if create_or_update == 'update':
 
             if target_assoc is None:
-                raise ValueError("TODO")
+                raise ValueError("TODO: target_assoc is None")
             if target_data_dir is not None:
-                raise ValueError("TODO")
+                raise ValueError("TODO: target_data_dir is not None")
 
         elif create_or_update == 'create':
 
@@ -142,7 +144,7 @@ class CreateDSTiffToNpyMixIn(object):
                 raise ValueError("TODO")
 
             target_assoc = self.empty_assoc_same_format_as(target_data_dir)
-        
+
             # Create image data dirs ...
             for dir in target_assoc.image_data_dirs:
                 dir.mkdir(parents=True, exist_ok=True)
@@ -154,7 +156,7 @@ class CreateDSTiffToNpyMixIn(object):
             # Make sure no associator files already exist.
             if list(target_assoc.assoc_dir.iterdir()) != []:
                 raise Exception(f"The assoc_dir in {target_assoc.assoc_dir} should be empty!")
-        
+
         # need this later
         polygons_that_will_be_added_to_target_dataset = set(self.polygons_df.index) - set(target_assoc.polygons_df.index)
 

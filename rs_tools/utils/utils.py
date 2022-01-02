@@ -7,7 +7,7 @@ transform_shapely_geometry(geometry, from_epsg, to_epsg): Transforms a shapely g
 round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector geometry. Useful in some cases for testing the coordinate conversion of image bounding rectangles.
 """
 
-from typing import Union, Callable
+from typing import Union, Callable, List, Any
 import copy
 import numpy as np
 import rasterio.mask
@@ -15,6 +15,7 @@ import rasterio as rio
 import os
 import geopandas as gpd
 from geopandas import GeoDataFrame
+import pandas as pd
 import shapely
 from shapely.geometry import Point, Polygon, MultiPoint, MultiPolygon, MultiLineString, LinearRing, LineString, GeometryCollection
 from shapely.ops import transform
@@ -76,6 +77,20 @@ def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
     gdf_copy.set_index(gdf.index, inplace=True)
 
     return gdf_copy
+
+
+# def concat_gdfs(
+#         objs: List[Union[GeoDataFrame],
+#         **kwargs: Any
+#     ) -> GeoDataFrame:
+
+#     for obj in objs:
+#         if isinstance(obj, GeoDataFrame) and not obj.crs == objs[0].crs:
+#             raise ValueError('all geodataframes should have the same crs')
+#         elif not isinstance(pd.DataFrame):
+#             raise ValueError('all geodataframes should have the same crs')
+
+#     return GeoDataFrame(pd.concat(objs, **kwargs), crs=objs[0].crs)
 
 
 def map_dict_values(
