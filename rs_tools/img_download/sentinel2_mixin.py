@@ -361,7 +361,7 @@ class Sentinel2DownloaderMixIn(object):
         band structure of final geotif:
             if TCI: 1-3 TCI RGB
             else bands_order (only the available ones will be stored though) , jp2_masks_order, gml_mask_order
-        
+
         resolution: the desired resolution
 
         jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
@@ -445,7 +445,7 @@ class Sentinel2DownloaderMixIn(object):
                         bands["B02"], shapes, crop=False, invert=True)
                 except ValueError:
                     mask = np.full(shape=bands["B02"].read(1).shape,fill_value=0.0,dtype=np.uint16)
-                
+
                 dst.write(mask.astype(np.uint16), len(bands)+3*TCI+idx+1)
 
             #write jp2 bands

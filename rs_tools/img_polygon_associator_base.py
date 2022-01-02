@@ -1,8 +1,8 @@
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Optional, Union
 import logging
 import pandas as pd
 from geopandas import GeoDataFrame
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, polygon
 from rs_tools.utils.utils import deepcopy_gdf
 from rs_tools.graph import BipartiteGraph
 
@@ -40,101 +40,148 @@ class ImgPolygonAssociatorBase(object):
         Returns:
             Polygon: shapely polygon giving the bounds of the image in the standard crs of the associator
         """
-        
+
         return self.imgs_df.loc[img_name, 'geometry']
 
 
-    def polygons_intersecting_img(self, img_name : str) -> List[str]:
+    def polygons_intersecting_img(self, img_name : Union[str, List[str]]) -> List[str]:
         """
-        Given an image, return the list of (the names of) all polygons 
+        Given an image or a list of images, return the list of (the names of) all polygons
         which have non-empty intersection with it.
 
         Args:
-            img_name (str): the img_name/identifier of the image
+            img_name (str, or List[str]): name/id of image or list names/ids
 
         Returns:
-            list of strs of polygon_names/ids of all polygons in associator which have non-empty intersection with the image
+            list of strs of polygon_names/ids of all polygons in associator which have non-empty intersection with the image(s)
         """
-        
-        try:
-            return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs')
-        except KeyError:
-            raise ValueError(f"Unknown image: {img_name}")
 
+        if isinstance(img_name, str):
+            img_names = [img_name]
+        else:
+            img_names = img_name
 
-    def imgs_intersecting_polygon(self, 
-            polygon_name: str, 
+        polygon_names = []
+
+        for img_name in img_names:
+            try:
+                polygon_names += self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs')
+            except KeyError:
+                raise ValueError(f"Unknown image: {img_name}")
+
+        return polygon_names
+
+    def imgs_intersecting_polygon(self,
+            polygon_name: Union[str, List[str]],
             mode : str = 'names'
             ) -> List[str]:
         """
-        Given a polygon, return a list of the names or paths of all images 
-        which have non-empty intersection with it.
+        Given a polygon (or list of polygons), return a list of the names or paths of all images
+        which have non-empty intersection with the polygon(s).
 
         Args:
-            polygon_name (str): the img_name/identifier of the polygon
+            polygon_name (str): name/id (or list) of polygon(s)
             mode (str): One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
 
         Returns:
             list of str: list of the polygon_names/identifiers of all polygons in associator with non-empty intersection with the image.
         """
-        
-        try:
-            img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons')        
-        except KeyError:
-            raise ValueError(f"Unknown polygon: {polygon_name}")
+
+        if isinstance(polygon_name, str):
+            polygon_names = [polygon_name]
+        else:
+            polygon_names = polygon_name
+
+        img_names = []
+
+        for polygon_name in polygon_names:
+            try:
+                img_names += self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons')
+            except KeyError:
+                raise ValueError(f"Unknown polygon: {polygon_name}")
 
         if mode == 'names':
             answer = img_names
         elif mode == 'paths':
-            answer = [self.images_dir / img_name for img_name in img_names]
-        else: 
+            answer = list(
+                        map(
+                            lambda img_name: self.images_dir / img_name,
+                            img_names
+                        )
+            )
+
+        else:
             raise ValueError(f"Unknown mode: {mode}")
 
         return answer
 
 
-    def polygons_contained_in_img(self, img_name: str) -> List[str]:
+    def polygons_contained_in_img(self, img_name: Union[str, List[str]]) -> List[str]:
         """
-        Given an image, return an iterator of the names of all polygons 
+        Given an image, return an iterator of the names of all polygons
         which it fully contains.
 
         Args:
-            img_name (str): the img_name/identifier of the image
+            img_name (str): name/id of image or list of names/ids of images
 
         Returns:
-            list of str: list of the polygon_names/identifiers of all polygons in associator contained in the image.
+            list of str: list of the polygon_names/identifiers of all polygons in associator contained in the image(s).
         """
-        
-        try:
-            return self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs', edge_data='contains')
-        except KeyError:
-            raise ValueError(f"Unknown image: {img_name}")
+
+        if isinstance(img_name, str):
+            img_names = [img_name]
+        else:
+            img_names = img_name
+
+        polygon_names = []
+
+        for img_name in img_names:
+            try:
+                polygon_names += self._graph.vertices_opposite(vertex=img_name, vertex_color='imgs', edge_data='contains')
+            except KeyError:
+                raise ValueError(f"Unknown image: {img_name}")
+
+        return polygon_names
 
     def imgs_containing_polygon(self, 
-            polygon_name: str,
+            polygon_name: Union[str, List[str]],
             mode : str = 'names', 
             ) -> List[str]:
         """
-        Given a ploygon, return a list of the names or paths of all images in which it us fully contained.
+        Given a polygon (or a list of polygons), return a list of the names or paths of all images in which the polygon(s) is/are fully contained.
 
         Args:
-            polygon_name (str): the img_name/identifier of the polygon
+            polygon_name (str): polygon name/id (or list)
             mode (str): One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
 
         Returns:
-            List[str]: list of the img_names/identifiers of all images in associator containing the polygon
+            List[str]: list of the img_names/identifiers of all images in associator containing the polygon(s)
         """
-        
-        try:
-            img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons', edge_data='contains')
-        except KeyError:
-            raise ValueError(f"Unknown polygon: {polygon_name}")
+
+        if isinstance(polygon_name, str):
+            polygon_names = [polygon_name]
+        else:
+            polygon_names = polygon_name
+
+        img_names = []
+
+        for polygon_name in polygon_names:
+            try:
+                img_names = self._graph.vertices_opposite(vertex=polygon_name, vertex_color='polygons', edge_data='contains')
+            except KeyError:
+                raise ValueError(f"Unknown polygon: {polygon_name}")
 
         if mode == 'names':
             answer = img_names
         elif mode == 'paths':
-            answer = [self.images_dir / img_name for img_name in img_names]
-        else: 
+            answer = list(
+                        map(
+                            lambda img_name: self.images_dir / img_name,
+                            img_names
+                        )
+            )
+
+        else:
             raise ValueError(f"Unknown mode: {mode}")
 
         return answer
@@ -145,14 +192,14 @@ class ImgPolygonAssociatorBase(object):
         Args:
             img_name (str): Name of image
             polygon_name (str): name of polygon
-        
+
         Returns:
             bool: True or False depending on whether the image contains the polygon or not
         """
-        
+
         return polygon_name in self.polygons_contained_in_img(img_name)
 
-    
+
     def is_polygon_contained_in_img(self, polygon_name: str, img_name: str) -> bool:
         """
         Args:
@@ -162,7 +209,7 @@ class ImgPolygonAssociatorBase(object):
         Returns:
             bool: True or False depending on whether the polygon contains the image or not
         """
-        
+
         return self.does_img_contain_polygon(img_name, polygon_name)
 
 
@@ -201,7 +248,7 @@ class ImgPolygonAssociatorBase(object):
             graph : Optional[BipartiteGraph] = None):
         """
         Connect an image to a polygon in the graph.
-        
+
         Remember (i.e. create a connection in the graph) whether the image fully contains or just has non-empty intersection with the polygon, i.e. add an edge of the approriate type between the image and the polygon.
 
         Args:
@@ -211,7 +258,7 @@ class ImgPolygonAssociatorBase(object):
             polygons_df (optional, gdf.GeoDataFrame): Optional polygon dataframe
             img_bounding_rectangle (optional, Polygon): polygon decribing image footprint
             graph (optional, BipartiteGraph): optional bipartied graph
-        """ 
+        """
 
         # default polygons_df
         if polygons_df is None:
@@ -228,18 +275,18 @@ class ImgPolygonAssociatorBase(object):
         # first, check whether img and polygon have non-empty intersection
         polygon_geometry = polygons_df.loc[polygon_name, 'geometry']
         non_empty_intersection = polygon_geometry.intersects(img_bounding_rectangle)
-        
+
         # if not, don't do anything
         if non_empty_intersection == False:
             log.info(f"_connect_img_to_polygon: not connecting, sinceimg  {img_name} and polygon {polygon_name} do not overlap.")
-        
+
         # else, add an edge of the appropriate type
         else:
             if contains_or_intersects is None:
                 contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
             else:
                 assert contains_or_intersects == 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
-            
+
             graph.add_edge(img_name, 'imgs', polygon_name, contains_or_intersects)
 
             # if the polygon is fully contained in the image increment the image counter in self.polygons_df
