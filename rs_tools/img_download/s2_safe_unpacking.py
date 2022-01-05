@@ -33,13 +33,13 @@ def safe_to_geotif_L2A(
         requested_jp2_masks: List[str] = ["CLDPRB", "SNWPRB"],
         requested_gml_mask: List[Tuple[str]] = [("CLOUDS", "B00")],
         # upsampling_method_specifier: str = "bilinear"
-        ) -> Tuple[Dict, Dict]:
+) -> Tuple[Dict, Dict]:
     """
     Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a dict 
     with the crs epsg code and a shapely polygon defined by the image bounds.
 
     ..note::
-    
+
         - band structure of final geotif:
             if TCI: 1-3 TCI RGB
             else sorted(jps2_masks and bands (either only desired resolution or additionally upsampled)), gml_mask_order
@@ -66,10 +66,10 @@ def safe_to_geotif_L2A(
     starttime = (time.time(), 'start')
     times.append(starttime)
 
-    #assert resolution is within available
+    # assert resolution is within available
     assert resolution in [10, 20, 60, "10", "20", "60"]
 
-    #define output file
+    # define output file
     out_file_parent_dir = outdir if (outdir
                                      and outdir.is_dir()) else safe_root.parent
     outfile = out_file_parent_dir / (safe_root.stem + ".tif")
@@ -83,7 +83,7 @@ def safe_to_geotif_L2A(
         filter(
             lambda file: any(mask_name in file.name
                              for mask_name in requested_jp2_masks) and
-            f"{jp2_resolution}m" in file.name, masks_dir.glob("*.jp2")))
+                         f"{jp2_resolution}m" in file.name, masks_dir.glob("*.jp2")))
 
     # Paths for S2 Bands
     jp2_path_desired_resolution = granule_dir / "{}/IMG_DATA/R{}m/".format(
@@ -93,7 +93,7 @@ def safe_to_geotif_L2A(
         filter(lambda path: path.stem.split("_")[-2] == "TCI",
                jp2_path_desired_resolution.glob("*.jp2")))
 
-    #add missing higher res jps paths
+    # add missing higher res jps paths
     img_data_bands = list(
         filter(lambda path: path.stem.split("_")[-2] not in ["TCI"],
                jp2_path_desired_resolution.glob("*.jp2")))
@@ -111,24 +111,23 @@ def safe_to_geotif_L2A(
                 filter(
                     lambda path: path.stem.split("_")[-2] not in itertools.
                         chain(
-                            map(
-                                lambda path: path.stem.split("_")[-2],
-                                img_data_bands
-                            ),
-                            ["TCI"]
+                        map(
+                            lambda path: path.stem.split("_")[-2],
+                            img_data_bands
                         ),
+                        ["TCI"]
+                    ),
                     jp2_higher_res_path.glob("*.jp2")))
 
     # # if we have both B08 and B8A remove B8A
     # if {'B8A', 'B08'} <= {name.name.split("_")[-2] for name in img_data_bands}:
     #     img_data_bands = [path for path in img_data_bands if path.name.split("_")[-2] != 'B8A']
 
-    #set up rasterio loaders
+    # set up rasterio loaders
     bands_dict = OrderedDict()
     max_width = 0
     max_height = 0
     for file in img_data_bands + jp2_mask_paths:
-
         band = rio.open(file, driver="JP2OpenJPEG")
         max_width = max(max_width, band.width)
         max_height = max(max_height, band.height)
@@ -142,16 +141,16 @@ def safe_to_geotif_L2A(
     gml_mask_paths = list(
         filter(
             lambda path: tuple(path.stem.split("_")[-2:]) in
-            requested_gml_mask, masks_dir.glob("*.gml")))
+                         requested_gml_mask, masks_dir.glob("*.gml")))
     gml_mask_paths_dict = {
         tuple(path.stem.split("_")[-2:]): path
         for path in gml_mask_paths
     }
 
-    #reader for tci
+    # reader for tci
     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
 
-    #number of bands in final geotif
+    # number of bands in final geotif
     count = len(img_data_bands + jp2_mask_paths + gml_mask_paths) + 3 * TCI
 
     # upsampling_function = {
@@ -170,10 +169,10 @@ def safe_to_geotif_L2A(
     timestamp = (time.time(), 'before_write')
     prev_time = times[-1][0]
     elapsed_time = timestamp[0] - prev_time
-    print(f'{timestamp[1]}}: {elapsed_time}')
+    print(f'{timestamp[1]}: {elapsed_time}')
     times.append(timestamp)
 
-    #write geotif
+    # write geotif
     tif_band_names = {}
     with rio.open(outfile,
                   "w",
@@ -187,7 +186,7 @@ def safe_to_geotif_L2A(
 
         dst.nodata = NO_DATA_VAL
 
-        #write gml masks
+        # write gml masks
         for idx, (gml_name,
                   gml_path) in enumerate(gml_mask_paths_dict.items()):
 
@@ -195,7 +194,7 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'before_generating_gml_{gml_name}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
             try:
@@ -214,7 +213,7 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'after_generating_gml_{gml_name}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
             dst.write(mask.astype(np.uint16), band_idx)
@@ -223,10 +222,10 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'after_writing_gml_{gml_name}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
-        #write jp2 bands
+        # write jp2 bands
         for idx, (band_name, (dst_reader,
                               res)) in enumerate(bands_dict.items()):
 
@@ -242,7 +241,7 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'before_reading_jp2_{band_name}, res{res}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
             if res != int(resolution):
@@ -269,7 +268,7 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'after_reading_jp2_{band_name}, res{res}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
             band_idx = 3 * TCI + idx + 1
@@ -281,18 +280,17 @@ def safe_to_geotif_L2A(
             timestamp = (time.time(), f'after_writing_jp2_{band_name}, res{res}')
             prev_time = times[-1][0]
             elapsed_time = timestamp[0] - prev_time
-            print(f'{timestamp[1]}}: {elapsed_time}')
+            print(f'{timestamp[1]}: {elapsed_time}')
             times.append(timestamp)
 
-        #write tci
+        # write tci
         if TCI:
             for i in range(3):
-
                 # DEBUG
                 timestamp = (time.time(), f'before_reading_TCI_band_{i}')
                 prev_time = times[-1][0]
                 elapsed_time = timestamp[0] - prev_time
-                print(f'{timestamp[1]}}: {elapsed_time}')
+                print(f'{timestamp[1]}: {elapsed_time}')
                 times.append(timestamp)
 
                 band_idx = i + 1
@@ -304,7 +302,7 @@ def safe_to_geotif_L2A(
                 timestamp = (time.time(), f'before_writing_TCI_band_{i}')
                 prev_time = times[-1][0]
                 elapsed_time = timestamp[0] - prev_time
-                print(f'{timestamp[1]}}: {elapsed_time}')
+                print(f'{timestamp[1]}: {elapsed_time}')
                 times.append(timestamp)
 
                 dst.write(img, band_idx)
@@ -313,7 +311,7 @@ def safe_to_geotif_L2A(
                 timestamp = (time.time(), f'after_writing_TCI_band_{i}')
                 prev_time = times[-1][0]
                 elapsed_time = timestamp[0] - prev_time
-                print(f'{timestamp[1]}}: {elapsed_time}')
+                print(f'{timestamp[1]}: {elapsed_time}')
                 times.append(timestamp)
 
         # add tags and descriptions
@@ -339,7 +337,6 @@ def safe_to_geotif_L2A(
 
 
 if __name__ == "__main__":
-
     2
     # # name = "S2B_MSIL2A_20211020T110009_N0301_R094_T30STC_20211020T125659.SAFE"
     # name = "S2B_MSIL2A_20211120T035039_N0301_R104_T47PMS_20211120T060056.SAFE"
@@ -353,7 +350,6 @@ if __name__ == "__main__":
     # # for safe in itertools.chain(SAFES_ROOT.rglob(".SAFE"), SAFES_ROOT_OLD.rglob(".SAFE")):
     # for safe in SAFES_ROOT.rglob("*.SAFE"):
     #     print(safe)
-
 
     # safe_path = Path(f"/home/rustam/rstools/data/segmentation/rustam_testing_ground/{name}")
     # codes,names = safe_to_geotif_L2A(
