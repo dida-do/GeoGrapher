@@ -72,7 +72,7 @@ def safe_to_geotif_L2A(
     # define output file
     out_file_parent_dir = outdir if (outdir
                                      and outdir.is_dir()) else safe_root.parent
-    outfile = out_file_parent_dir / (safe_root.stem + ".tif")
+    outfile = out_file_parent_dir / (safe_root.stem + "_TEMP.tif")
 
     granule_dir = safe_root / "GRANULE"
     masks_dir = granule_dir / "{}/QI_DATA/".format(os.listdir(granule_dir)[0])
@@ -321,6 +321,8 @@ def safe_to_geotif_L2A(
 
         crs_epsg_code = dst.crs.to_epsg()
         img_bounding_rectangle = box(*dst.bounds)
+
+    outfile.rename(out_file_parent_dir / (safe_root.stem + ".tif"))
 
     for t, action in enumerate(times):
         print(f'{action}: time {t}')
