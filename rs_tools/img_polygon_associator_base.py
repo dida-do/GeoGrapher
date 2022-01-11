@@ -267,6 +267,9 @@ class ImgPolygonAssociatorBase(object):
             ignore_safety_check (bool): whether to check contains_or_intersects relation
         """
 
+        if contains_or_intersects not in {'contains', 'intersects', None}:
+            raise ValueError(f"contains_or_intersects should be one of 'contains' or 'intersects' or None, is {contains_or_intersects}")
+
         # default polygons_df
         if polygons_df is None:
             polygons_df=self.polygons_df
@@ -279,28 +282,27 @@ class ImgPolygonAssociatorBase(object):
         if img_bounding_rectangle is None:
             img_bounding_rectangle = self.imgs_df.loc[img_name, 'geometry']
 
-        # first, check whether img and polygon have non-empty intersection
-        polygon_geometry = polygons_df.loc[polygon_name, 'geometry']
-        non_empty_intersection = polygon_geometry.intersects(img_bounding_rectangle)
+        # get containment relation if not given
+        if contains_or_intersects is None:
 
-        # if not, don't do anything
-        if non_empty_intersection == False:
-            log.info(f"_connect_img_to_polygon: not connecting, sinceimg  {img_name} and polygon {polygon_name} do not overlap.")
+            polygon_geometry = polygons_df.loc[polygon_name, 'geometry']
 
-        # else, add an edge of the appropriate type
-        else:
-            if contains_or_intersects is None:
+            non_empty_intersection = polygon_geometry.intersects(img_bounding_rectangle)
+            if not non_empty_intersection:
+                log.info(f"_connect_img_to_polygon: not connecting, sinceimg  {img_name} and polygon {polygon_name} do not overlap.")
+            else:
                 contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
-            elif do_safety_check:
-                assert contains_or_intersects == 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
-            elif contains_or_intersects not in {'contains', 'intersects'}:
-                raise ValueError(f"contains_or_intersects should be one of 'contains' or 'intersects', is {contains_or_intersects}")
 
-            graph.add_edge(img_name, 'imgs', polygon_name, contains_or_intersects)
+        elif do_safety_check:
+            polygon_geometry = polygons_df.loc[polygon_name, 'geometry']
+            assert img_bounding_rectangle.intersects(polygon_geometry)
+            assert contains_or_intersects == 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
 
-            # if the polygon is fully contained in the image increment the image counter in self.polygons_df
-            if contains_or_intersects == 'contains':
-                polygons_df.loc[polygon_name, 'img_count'] += 1
+        graph.add_edge(img_name, 'imgs', polygon_name, contains_or_intersects)
+
+        # if the polygon is fully contained in the image increment the image counter in self.polygons_df
+        if contains_or_intersects == 'contains':
+            polygons_df.loc[polygon_name, 'img_count'] += 1
 
 
     def _add_polygon_to_graph(self,
@@ -329,34 +331,34 @@ class ImgPolygonAssociatorBase(object):
         polygon_geometry = polygons_df.geometry.loc[polygon_name]
 
         # REFACTORED
-        # # go through all images and connect if intersection is non-empty
-        # for img_name, img_bounding_rectangle in self.imgs_df.loc[:, ['geometry']].itertuples():
-        #     if img_bounding_rectangle.intersects(polygon_geometry):
-        #         contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
-        #         self._connect_img_to_polygon(img_name, polygon_name, contains_or_intersects, polygons_df=polygons_df)
+        # go through all images and connect if intersection is non-empty
+        for img_name, img_bounding_rectangle in self.imgs_df.loc[:, ['geometry']].itertuples():
+            if img_bounding_rectangle.intersects(polygon_geometry):
+                contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
+                self._connect_img_to_polygon(img_name, polygon_name, contains_or_intersects, polygons_df=polygons_df, do_safety_check=False)
 
-        # determine intersecting and containing imgs
-        intersection_mask = self.imgs_df.geometry.intersects(polygon_geometry)
-        containment_mask = self.imgs_df.loc[intersection_mask].geometry.contains(polygon_geometry)
+        # # determine intersecting and containing imgs
+        # intersection_mask = self.imgs_df.geometry.intersects(polygon_geometry)
+        # containment_mask = self.imgs_df.loc[intersection_mask].geometry.contains(polygon_geometry)
 
-        intersecting_imgs = set(self.imgs_df.loc[intersection_mask].index)
-        containing_imgs = set(self.imgs_df.loc[intersection_mask].loc[containment_mask].index)
+        # intersecting_imgs = set(self.imgs_df.loc[intersection_mask].index)
+        # containing_imgs = set(self.imgs_df.loc[intersection_mask].loc[containment_mask].index)
 
-        # add edges in graph
-        for img_name in containing_imgs:
-            self._connect_img_to_polygon(
-                img_name,
-                polygon_name,
-                'contains',
-                polygons_df=polygons_df,
-                do_safety_check=False)
-        for img_name in intersecting_imgs - containing_imgs:
-            self._connect_img_to_polygon(
-                img_name,
-                polygon_name,
-                'intersects',
-                polygons_df=polygons_df,
-                do_safety_check=False)
+        # # add edges in graph
+        # for img_name in containing_imgs:
+        #     self._connect_img_to_polygon(
+        #         img_name,
+        #         polygon_name,
+        #         'contains',
+        #         polygons_df=polygons_df,
+        #         do_safety_check=False)
+        # for img_name in intersecting_imgs - containing_imgs:
+        #     self._connect_img_to_polygon(
+        #         img_name,
+        #         polygon_name,
+        #         'intersects',
+        #         polygons_df=polygons_df,
+        #         do_safety_check=False)
 
 
     def _add_img_to_graph_modify_polygons_df(self,
@@ -396,43 +398,44 @@ class ImgPolygonAssociatorBase(object):
 
         # REFACTORED
         # # go through all polygons in polygons_df and connect by an edge if the polygon and img intersect
-        # for polygon_name, polygon_geometry in polygons_df.loc[:, ['geometry']].itertuples():
-        #     if img_bounding_rectangle.intersects(polygon_geometry):
-        #         contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
-        #         self._connect_img_to_polygon(
-        #             img_name, 
-        #             polygon_name, 
-        #             contains_or_intersects, 
-        #             polygons_df=polygons_df, 
-        #             img_bounding_rectangle=img_bounding_rectangle, 
-        #             graph=graph)
+        for polygon_name, polygon_geometry in polygons_df.loc[:, ['geometry']].itertuples():
+            if img_bounding_rectangle.intersects(polygon_geometry):
+                contains_or_intersects = 'contains' if img_bounding_rectangle.contains(polygon_geometry) else 'intersects'
+                self._connect_img_to_polygon(
+                    img_name=img_name,
+                    polygon_name=polygon_name,
+                    contains_or_intersects=contains_or_intersects,
+                    polygons_df=polygons_df,
+                    img_bounding_rectangle=img_bounding_rectangle,
+                    graph=graph,
+                    do_safety_check=False)
 
         # determine intersecting and containing imgs
-        intersection_mask = self.polygons_df.geometry.intersects(img_bounding_rectangle)
-        containment_mask = self.polygons_df.loc[intersection_mask].geometry.contains(img_bounding_rectangle)
+        # intersection_mask = self.polygons_df.geometry.intersects(img_bounding_rectangle)
+        # containment_mask = self.polygons_df.loc[intersection_mask].geometry.contains(img_bounding_rectangle)
 
-        intersecting_polygons = set(self.polygons_df.loc[intersection_mask].index)
-        containing_polygons = set(self.polygons_df.loc[intersection_mask].loc[containment_mask].index)
+        # intersecting_polygons = set(self.polygons_df.loc[intersection_mask].index)
+        # containing_polygons = set(self.polygons_df.loc[intersection_mask].loc[containment_mask].index)
 
-        # add edges in graph
-        for polygon_name in containing_polygons:
-            self._connect_img_to_polygon(
-                img_name,
-                polygon_name,
-                'contains',
-                polygons_df=polygons_df,
-                img_bounding_rectangle=img_bounding_rectangle,
-                graph=graph,
-                do_safety_check=False)
-        for polygon_name in intersecting_polygons - containing_polygons:
-            self._connect_img_to_polygon(
-                img_name,
-                polygon_name,
-                'intersects',
-                polygons_df=polygons_df,
-                img_bounding_rectangle=img_bounding_rectangle,
-                graph=graph,
-                do_safety_check=False)
+        # # add edges in graph
+        # for polygon_name in containing_polygons:
+        #     self._connect_img_to_polygon(
+        #         img_name,
+        #         polygon_name,
+        #         'contains',
+        #         polygons_df=polygons_df,
+        #         img_bounding_rectangle=img_bounding_rectangle,
+        #         graph=graph,
+        #         do_safety_check=False)
+        # for polygon_name in intersecting_polygons - containing_polygons:
+        #     self._connect_img_to_polygon(
+        #         img_name,
+        #         polygon_name,
+        #         'intersects',
+        #         polygons_df=polygons_df,
+        #         img_bounding_rectangle=img_bounding_rectangle,
+        #         graph=graph,
+        #         do_safety_check=False)
 
 
     def _remove_polygon_from_graph_modify_polygons_df(self,
