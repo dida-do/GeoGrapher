@@ -1,7 +1,7 @@
 .PHONY: env env-update env-remove lint install
 
 # put the name of your project here (has to be the name of the package dir)
-PROJECTNAME=name
+PROJECTNAME=rs_tools
 
 help:
 	@echo "Available commands:"
