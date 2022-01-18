@@ -10,3 +10,4 @@ sentinelsat==1.1.0
 setuptools==41.2.0
 Shapely==1.7.1
 tqdm==4.62.3
+python-dotenv==0.19.2
