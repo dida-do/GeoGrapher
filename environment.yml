@@ -1,4 +1,4 @@
-name: rs_tools
+name: rs_tools-env
 channels:
   - conda-forge
   - defaults
