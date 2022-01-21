@@ -2,7 +2,9 @@
 ImgPolygonAssociator that can download Sentinel-2 images.
 """
 
-from typing import Union, List, Optional, Dict, Any
+from typing import Union, List, Optional, Dict, Any, Tuple
+import itertools
+from collections import OrderedDict
 import os
 from pathlib import Path
 import logging
@@ -15,6 +17,8 @@ from zipfile import ZipFile
 from sentinelsat import SentinelAPI
 from dotenv import load_dotenv
 from geopandas import GeoSeries
+from scipy.ndimage import zoom
+
 
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import NoImgsForPolygonFoundError
@@ -343,128 +347,348 @@ class Sentinel2DownloaderMixIn(object):
 
         return return_dict
 
+    # def _safe_to_geotif_L2A(
+    #         self,
+    #         safe_root : Union[Path, str],
+    #         resolution : Union[int, str],
+    #         outdir : Optional[Union[Path, str]] = None,
+    #         TCI : bool = True,
+    #         bands_order : List[str] = ["B01", "B02", "B03", "B04", "B05", "B06",
+    #                     "B07","B8A","B08", "B09", "B11", "B12", "WVP", "AOT"],
+    #         jp2_masks_order : List[str] = ["CLDPRB"],
+    #         gml_mask_order : List[str] = [("CLOUDS", "B00")]
+    #         ) -> dict:
+
+
     def _safe_to_geotif_L2A(
-            self,
-            safe_root : Union[Path, str],
-            resolution : Union[int, str],
-            outdir : Optional[Union[Path, str]] = None,
-            TCI : bool = True,
-            bands_order : List[str] = ["B01", "B02", "B03", "B04", "B05", "B06",
-                        "B07","B8A","B08", "B09", "B11", "B12", "WVP", "AOT"],
-            jp2_masks_order : List[str] = ["CLDPRB"],
-            gml_mask_order : List[str] = [("CLOUDS", "B00")]
-            ) -> dict:
+            safe_root: Path,
+            resolution: Union[str, int],
+            upsample_lower_resolution: bool = True,
+            outdir: Path = None,
+            TCI: bool = True,
+            requested_jp2_masks: List[str] = ["CLDPRB", "SNWPRB"],
+            requested_gml_mask: List[Tuple[str]] = [("CLOUDS", "B00")],
+    ) -> Tuple[Dict, Dict]:
         """
         Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a dict 
         with the crs epsg code and a shapely polygon defined by the image bounds.
 
-        band structure of final geotif:
-            if TCI: 1-3 TCI RGB
-            else bands_order (only the available ones will be stored though) , jp2_masks_order, gml_mask_order
+        ..note::
 
-        resolution: the desired resolution
+            - band structure of final geotif:
+                if TCI: 1-3 TCI RGB
+                else sorted(jps2_masks and bands (either only desired resolution or additionally upsampled)), gml_mask_order
+            - jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
+            - SNWPRB for snow masks
 
-        jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
+        Args:
+            safe_root (Path): is the safe folder root
+            resolution (Union[int,str]): the desired resolution
+            upsample_lower_resolution (bool): Whether to include lower resolution bands and upsample them
+            TCI (bool): whether to load the true color image
+            requested_jp2_masks (List[str]): jp2 mask to load
+            requested_gml_mask (List[Tuple[str]]): gml masks to load ([0] mask name as string, [1] band for which to get the mask)
+            upsampling_method_specifier (str): method to upsample from lower resolution to higher. Options: (nearest,bilinear,cubic,average)
 
-        safe_root is the safe folder root
+        Returns:
+            Dict: tif crs and bounding rectangle
+            Dict: Band names of tif
 
-        TCI = true color image
-
-        bands_order and jp2_masks_order are lists of strings
-        gml_mask_order is a list of tuples -> [0] mask name as string, [1] band for which to get the mask 
         """
 
-        #assert resolution is within available
+        # assert resolution is within available
         assert resolution in [10, 20, 60, "10", "20", "60"]
 
-        #define output file
-        if outdir and os.path.isdir(outdir):
-            outfile = os.path.join(outdir, os.path.split(safe_root)[-1][:-4]+"tif")
-        else:
-            outfile = safe_root[:-4] + "tif"
+        # define output file
+        out_file_parent_dir = outdir if (outdir
+                                        and outdir.is_dir()) else safe_root.parent
+        outfile = out_file_parent_dir / (safe_root.stem + "_TEMP.tif")
 
-        granule_dir = os.path.join(safe_root, "GRANULE")
-        masks_dir = os.path.join(
-            granule_dir, "{}/QI_DATA/".format(os.listdir(granule_dir)[0]))
+        granule_dir = safe_root / "GRANULE"
+        masks_dir = granule_dir / "{}/QI_DATA/".format(os.listdir(granule_dir)[0])
 
-        if resolution in [10, "10"]:
-            jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
-                            and f.split("_")[-1][:2] == "20"]
-        else:
-            jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
-                            and f.split("_")[-1][:2] == str(resolution)]
+        # JP2 masks
+        jp2_resolution = 20 if resolution in [10, "10"] else resolution
+        jp2_mask_paths = list(
+            filter(
+                lambda file: any(mask_name in file.name
+                                for mask_name in requested_jp2_masks) and
+                            f"{jp2_resolution}m" in file.name, masks_dir.glob("*.jp2")))
 
-        jp2_path = os.path.join(
-            granule_dir, "{}/IMG_DATA/R{}m/".format(os.listdir(granule_dir)[0], resolution))
-        img_data_bands = [
-            jp2_path + f for f in os.listdir(jp2_path) if not f.split("_")[-2] in ["TCI", "SCL"]]
+        # Paths for S2 Bands
+        jp2_path_desired_resolution = granule_dir / "{}/IMG_DATA/R{}m/".format(
+            os.listdir(granule_dir)[0], resolution)
 
-        tci_path = [
-            jp2_path + f for f in os.listdir(jp2_path) if f.split("_")[-2] == "TCI"][0]
+        tci_path = next(
+            filter(lambda path: path.stem.split("_")[-2] == "TCI",
+                jp2_path_desired_resolution.glob("*.jp2")))
 
-        #set up rasterio loaders
-        bands = {}
+        # add missing higher res jps paths
+        img_data_bands = list(
+            filter(lambda path: path.stem.split("_")[-2] not in ["TCI"],
+                jp2_path_desired_resolution.glob("*.jp2")))
+        out_default_reader = rio.open(img_data_bands[0], driver="JP2OpenJPEG")
+
+        # include lower resolution bands
+        if upsample_lower_resolution:
+
+            for higher_res in filter(lambda res: res > int(resolution),
+                                    [10, 20, 60]):
+                jp2_higher_res_path = granule_dir / "{}/IMG_DATA/R{}m/".format(
+                    os.listdir(granule_dir)[0], higher_res)
+
+                img_data_bands += list(
+                    filter(
+                        lambda path: path.stem.split("_")[-2] not in itertools.
+                            chain(
+                            map(
+                                lambda path: path.stem.split("_")[-2],
+                                img_data_bands
+                            ),
+                            ["TCI"]
+                        ),
+                        jp2_higher_res_path.glob("*.jp2")))
+
+        # # if we have both B08 and B8A remove B8A
+        # if {'B8A', 'B08'} <= {name.name.split("_")[-2] for name in img_data_bands}:
+        #     img_data_bands = [path for path in img_data_bands if path.name.split("_")[-2] != 'B8A']
+
+        # set up rasterio loaders
+        bands_dict = OrderedDict()
         max_width = 0
         max_height = 0
-        for file in img_data_bands+jp2_masks_paths:
-
+        for file in img_data_bands + jp2_mask_paths:
             band = rio.open(file, driver="JP2OpenJPEG")
             max_width = max(max_width, band.width)
             max_height = max(max_height, band.height)
-            bands[file.split("_")[-2]] = band
+            bands_dict[file.stem.split("_")[-2]] = (
+                band, int(file.stem.split("_")[-1][:2]))
 
-        gml_mask_paths = {(f.split("_")[-2], f.split(
-            "_")[-1].split(".")[-2]): masks_dir+f for f in os.listdir(masks_dir) if (f.split("_")[-2], f.split(
-                "_")[-1].split(".")[-2]) in gml_mask_order and f.split(".")[-1] == "gml"}
+        # sort bands_dict
+        bands_dict = OrderedDict(sorted(bands_dict.items()))
 
-        #reader for tci
+        # paths for gml masks
+        gml_mask_paths = list(
+            filter(
+                lambda path: tuple(path.stem.split("_")[-2:]) in
+                            requested_gml_mask, masks_dir.glob("*.gml")))
+        gml_mask_paths_dict = {
+            tuple(path.stem.split("_")[-2:]): path
+            for path in gml_mask_paths
+        }
+
+        # reader for tci
         tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
 
-        #number of bands in final geotif
-        count = len([b for b in bands if b in bands_order or b in jp2_masks_order] +
-                    [g for g in gml_mask_paths if g in gml_mask_order])+3*TCI
+        # number of bands in final geotif
+        count = len(img_data_bands + jp2_mask_paths + gml_mask_paths) + 3 * TCI
 
-        #write geotif
+        # write geotif
+        tif_band_names = {}
         with rio.open(outfile,
                     "w",
                     driver="GTiff",
                     width=max_width,
                     height=max_width,
                     count=count,
-                    crs=bands["B02"].crs,
-                    transform=bands["B02"].transform,
-                    dtype=bands["B02"].dtypes[0]) as dst:
+                    crs=out_default_reader.crs,
+                    transform=out_default_reader.transform,
+                    dtype=out_default_reader.dtypes[0]) as dst:
 
             dst.nodata = NO_DATA_VAL
 
-            #write gml masks
-            for idx, (_, gml_path) in enumerate(gml_mask_paths.items()):
+            # write gml masks
+            for idx, (gml_name,
+                    gml_path) in enumerate(gml_mask_paths_dict.items()):
+
                 try:
                     shapes = gpd.read_file(gml_path)["geometry"].values
                     mask, _, _ = rio.mask.raster_geometry_mask(
-                        bands["B02"], shapes, crop=False, invert=True)
+                        out_default_reader, shapes, crop=False, invert=True)
                 except ValueError:
-                    mask = np.full(shape=bands["B02"].read(1).shape,fill_value=0.0,dtype=np.uint16)
+                    mask = np.full(shape=out_default_reader.read(1).shape,
+                                fill_value=0.0,
+                                dtype=np.uint16)
 
-                dst.write(mask.astype(np.uint16), len(bands)+3*TCI+idx+1)
+                band_idx = len(bands_dict) + 3 * TCI + idx + 1
+                tif_band_names[band_idx] = "_".join(gml_name)
 
-            #write jp2 bands
-            for idx, dst_reader in enumerate([bands[b] for b in bands_order+jp2_masks_order if b in bands]):
+                dst.write(mask.astype(np.uint16), band_idx)
 
-                img = dst_reader.read(1)
-                if not dst_reader.dtypes[0] == bands["B02"].dtypes[0]:
-                    img = (img*(65535.0/255.0)).astype(np.uint16)
-                dst.write(img, 3*TCI+idx+1)
+            # write jp2 bands
+            for idx, (band_name, (dst_reader,
+                                res)) in enumerate(bands_dict.items()):
 
+                if res != int(resolution):
+
+                    assert res % int(resolution) == 0
+                    factor = res // int(resolution)
+
+                    img = dst_reader.read(1)
+                    img = zoom(img, factor, order=3)
+
+                    assert img.shape == (10980, 10980)
+
+                else:
+                    img = dst_reader.read(1)
+
+                if not dst_reader.dtypes[0] == out_default_reader.dtypes[0]:
+                    img = (img * (65535.0 / 255.0)).astype(np.uint16)
+
+                band_idx = 3 * TCI + idx + 1
+                tif_band_names[band_idx] = band_name
+                dst.write(img, band_idx)
                 dst_reader.close()
 
-            #write tci
+            # write tci
             if TCI:
                 for i in range(3):
-                    img = (tci_band.read(i+1)*(65535.0/255.0)).astype(np.uint16)
-                    dst.write(img, i+1)
+
+                    band_idx = i + 1
+                    img = (tci_band.read(band_idx) * (65535.0 / 255.0)).astype(
+                        np.uint16)
+                    tif_band_names[band_idx] = f"tci_{band_idx}"
+
+                    dst.write(img, band_idx)
+
+            # add tags and descriptions
+            for band_idx, name in tif_band_names.items():
+                dst.update_tags(band_idx, band_name=name)
+                dst.set_band_description(bidx=band_idx, value=name)
 
             crs_epsg_code = dst.crs.to_epsg()
             img_bounding_rectangle = box(*dst.bounds)
 
-            return {'crs_epsg_code': crs_epsg_code, 'img_bounding_rectangle': img_bounding_rectangle}
+        outfile.rename(out_file_parent_dir / (safe_root.stem + ".tif"))
+
+        return {
+            'crs_epsg_code': crs_epsg_code,
+            'img_bounding_rectangle': img_bounding_rectangle
+        }
+
+
+    # def _safe_to_geotif_L2A(
+    #         self,
+    #         safe_root : Union[Path, str],
+    #         resolution : Union[int, str],
+    #         outdir : Optional[Union[Path, str]] = None,
+    #         TCI : bool = True,
+    #         bands_order : List[str] = ["B01", "B02", "B03", "B04", "B05", "B06",
+    #                     "B07","B8A","B08", "B09", "B11", "B12", "WVP", "AOT"],
+    #         jp2_masks_order : List[str] = ["CLDPRB"],
+    #         gml_mask_order : List[str] = [("CLOUDS", "B00")]
+    #         ) -> dict:
+    #     """
+    #     Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a dict 
+    #     with the crs epsg code and a shapely polygon defined by the image bounds.
+
+    #     band structure of final geotif:
+    #         if TCI: 1-3 TCI RGB
+    #         else bands_order (only the available ones will be stored though) , jp2_masks_order, gml_mask_order
+
+    #     resolution: the desired resolution
+
+    #     jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
+
+    #     safe_root is the safe folder root
+
+    #     TCI = true color image
+
+    #     bands_order and jp2_masks_order are lists of strings
+    #     gml_mask_order is a list of tuples -> [0] mask name as string, [1] band for which to get the mask 
+    #     """
+
+    #     #assert resolution is within available
+    #     assert resolution in [10, 20, 60, "10", "20", "60"]
+
+    #     #define output file
+    #     if outdir and os.path.isdir(outdir):
+    #         outfile = os.path.join(outdir, os.path.split(safe_root)[-1][:-4]+"tif")
+    #     else:
+    #         outfile = safe_root[:-4] + "tif"
+
+    #     granule_dir = os.path.join(safe_root, "GRANULE")
+    #     masks_dir = os.path.join(
+    #         granule_dir, "{}/QI_DATA/".format(os.listdir(granule_dir)[0]))
+
+    #     if resolution in [10, "10"]:
+    #         jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
+    #                         and f.split("_")[-1][:2] == "20"]
+    #     else:
+    #         jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
+    #                         and f.split("_")[-1][:2] == str(resolution)]
+
+    #     jp2_path = os.path.join(
+    #         granule_dir, "{}/IMG_DATA/R{}m/".format(os.listdir(granule_dir)[0], resolution))
+    #     img_data_bands = [
+    #         jp2_path + f for f in os.listdir(jp2_path) if not f.split("_")[-2] in ["TCI", "SCL"]]
+
+    #     tci_path = [
+    #         jp2_path + f for f in os.listdir(jp2_path) if f.split("_")[-2] == "TCI"][0]
+
+    #     #set up rasterio loaders
+    #     bands = {}
+    #     max_width = 0
+    #     max_height = 0
+    #     for file in img_data_bands+jp2_masks_paths:
+
+    #         band = rio.open(file, driver="JP2OpenJPEG")
+    #         max_width = max(max_width, band.width)
+    #         max_height = max(max_height, band.height)
+    #         bands[file.split("_")[-2]] = band
+
+    #     gml_mask_paths = {(f.split("_")[-2], f.split(
+    #         "_")[-1].split(".")[-2]): masks_dir+f for f in os.listdir(masks_dir) if (f.split("_")[-2], f.split(
+    #             "_")[-1].split(".")[-2]) in gml_mask_order and f.split(".")[-1] == "gml"}
+
+    #     #reader for tci
+    #     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
+
+    #     #number of bands in final geotif
+    #     count = len([b for b in bands if b in bands_order or b in jp2_masks_order] +
+    #                 [g for g in gml_mask_paths if g in gml_mask_order])+3*TCI
+
+    #     #write geotif
+    #     with rio.open(outfile,
+    #                 "w",
+    #                 driver="GTiff",
+    #                 width=max_width,
+    #                 height=max_width,
+    #                 count=count,
+    #                 crs=bands["B02"].crs,
+    #                 transform=bands["B02"].transform,
+    #                 dtype=bands["B02"].dtypes[0]) as dst:
+
+    #         dst.nodata = NO_DATA_VAL
+
+    #         #write gml masks
+    #         for idx, (_, gml_path) in enumerate(gml_mask_paths.items()):
+    #             try:
+    #                 shapes = gpd.read_file(gml_path)["geometry"].values
+    #                 mask, _, _ = rio.mask.raster_geometry_mask(
+    #                     bands["B02"], shapes, crop=False, invert=True)
+    #             except ValueError:
+    #                 mask = np.full(shape=bands["B02"].read(1).shape,fill_value=0.0,dtype=np.uint16)
+
+    #             dst.write(mask.astype(np.uint16), len(bands)+3*TCI+idx+1)
+
+    #         #write jp2 bands
+    #         for idx, dst_reader in enumerate([bands[b] for b in bands_order+jp2_masks_order if b in bands]):
+
+    #             img = dst_reader.read(1)
+    #             if not dst_reader.dtypes[0] == bands["B02"].dtypes[0]:
+    #                 img = (img*(65535.0/255.0)).astype(np.uint16)
+    #             dst.write(img, 3*TCI+idx+1)
+
+    #             dst_reader.close()
+
+    #         #write tci
+    #         if TCI:
+    #             for i in range(3):
+    #                 img = (tci_band.read(i+1)*(65535.0/255.0)).astype(np.uint16)
+    #                 dst.write(img, i+1)
+
+    #         crs_epsg_code = dst.crs.to_epsg()
+    #         img_bounding_rectangle = box(*dst.bounds)
+
+    #         return {'crs_epsg_code': crs_epsg_code, 'img_bounding_rectangle': img_bounding_rectangle}
