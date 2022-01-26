@@ -1,5 +1,5 @@
 """
-ImgPolygonAssociator that can download Sentinel-2 images.
+MixIn that implements downloading sentinel-2 images.
 """
 
 from typing import Union, List, Optional, Dict, Any, Tuple
