@@ -5,6 +5,7 @@ Create associator imgs_df from a directory containing GeoTiff images.
 import pathlib
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
+from tqdm import tqdm
 
 import rasterio as rio
 from geopandas import GeoDataFrame
@@ -88,7 +89,7 @@ def imgs_df_from_imgs_dir(
     }
 
     # for all images in dir ...
-    for img_path in image_paths:
+    for img_path in tqdm(image_paths, desc='building imgs_df'):
 
         orig_crs_epsg_code, img_bounding_rectangle_orig_crs = read_in_img_for_img_df_function(
             img_path=img_path)
