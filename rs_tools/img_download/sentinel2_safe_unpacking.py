@@ -13,7 +13,7 @@ import geopandas as gpd
 import numpy as np
 import rasterio as rio
 import rasterio.mask
-from rstools.utils import create_logger
+from rs_tools.utils.utils import create_logger
 from rasterio.enums import Resampling
 from shapely.geometry import box
 
