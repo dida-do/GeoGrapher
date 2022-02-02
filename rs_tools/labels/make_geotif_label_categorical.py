@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def _make_geotif_label_categorical(
         assoc : ImgPolygonAssociator,
-        img_name : str, 
+        img_name : str,
         logger : Logger
         ) -> None:
     """Create a categorical GeoTiff pixel label for an image.
