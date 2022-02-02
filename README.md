@@ -61,7 +61,7 @@ by modifying the polygons_df (or imgs_df) attributes by hand! You'll mess up the
 
     assoc.add_to_polygons_df(new_polygons_df)
     assoc.drop_polygons(list_of_polygons)
-There are some minimal requirements the new_polygons_df has to satisfy, in particular the index name needs to be `'polygon_name'` and the `polygon_names` should be strings. You will be alerted with an error message if they are not met. 
+There are some minimal requirements the new_polygons_df has to satisfy, in particular the index name needs to be `'polygon_name'` and the `polygon_names` should be strings. You will be alerted with an error message if they are not met. There has to be a `'type'` column specifying each polygons label class. 
 
 Adding/dropping images works the same way, just replace `polygon` with `img` in the above methods. The associator doesn't keep track of what images are actually on disk (except for performing some safety checks in some situations). If you have a directory of GeoTiffs that you would like the associator to keep track of, use the `imgs_df_from_tif_dir` function in `utils/utils.py` to create a `new_imgs_df` you can add to your associator. 
 
