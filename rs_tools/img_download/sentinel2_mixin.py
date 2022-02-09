@@ -258,7 +258,7 @@ class Sentinel2DownloaderMixIn(object):
         os.remove(zip_path)
 
         # convert SAFE to GeoTiff
-        conversion_dict = safe_to_geotif_L2A(safe_root=safe_path,
+        conversion_dict = safe_to_geotif_L2A(safe_root=Path(safe_path),
                             resolution=resolution,
                             outdir=out_dir)
 
