@@ -136,7 +136,7 @@ def safe_to_geotif_L2A(
     for pair in requested_gml_mask:
         if pair not in gml_mask_paths_dict:
             gml_mask_paths_dict[pair] = Path(f"/path/to/nowhere")
-        gml_mask_paths.append(Path(f"/path/to/nowhere"))
+            gml_mask_paths.append(Path(f"/path/to/nowhere"))
 
     # reader for tci
     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
@@ -169,7 +169,7 @@ def safe_to_geotif_L2A(
                 mask, _, _ = rasterio.mask.raster_geometry_mask(out_default_reader, shapes, crop=False, invert=True)
             # in case mask is empty or does not exist:
             except (ValueError, AssertionError, RasterioIOError):
-                log.info(f"using all zero band instead instead of gml mask {gml_name} for {safe_root.name}")
+                log.info(f"Using all zero band for gml mask {gml_name} for {safe_root.name}")
                 mask = np.full(shape=out_default_reader.read(1).shape, fill_value=0.0, dtype=np.uint16)
 
             band_idx = len(bands_dict) + 3 * TCI + idx + 1
