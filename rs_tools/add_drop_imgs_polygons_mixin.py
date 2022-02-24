@@ -240,11 +240,11 @@ class AddDropImgsPolygonsMixIn(object):
             df2_cols_not_in_df1 = set(self_df.columns) - set(df.columns)
 
             if df1_cols_not_in_df2 != {}:
-                log.error(f"columns that are in {df_name} but not in {self_df_name}: {df1_cols_not_in_df2}")
+                log.debug(f"columns that are in {df_name} but not in {self_df_name}: {df1_cols_not_in_df2}")
             if df2_cols_not_in_df1 != {}:
-                log.error(f"columns that are in {self_df_name} but not in {df_name}: {df2_cols_not_in_df1}")
+                log.debug(f"columns that are in {self_df_name} but not in {df_name}: {df2_cols_not_in_df1}")
 
-            log.warning(f"columns of {df_name} and {df_name} don't agree.")
+            log.debug(f"columns of {df_name} and {df_name} don't agree.")
 
         if df.index.name != self_df.index.name:
             raise ValueError(f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df.index.name}")
