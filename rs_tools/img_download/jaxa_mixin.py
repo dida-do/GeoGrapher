@@ -188,7 +188,7 @@ class JAXADownloaderMixIn(object):
                         with open(os.path.join(download_dir, jaxa_file_name), 'wb') as local_file:
                             shutil.copyfileobj(remote_source, local_file)
                 except Exception as e:
-                    log.exception(f'File {jaxa_file_name} in folder {jaxa_folder_name} could not be found on JAXA ftp or could not be opened: {e.args}')
+                    log.warning(f'File {jaxa_file_name} in folder {jaxa_folder_name} could not be found on JAXA ftp or could not be opened: {e.args}')
                     # continue
                     # download_exception = 'file_not_available_on_JAXA_ftp'
 
