@@ -1,4 +1,4 @@
-"""Label maker for categorical labels."""
+"""Label maker for categorical (pixel) labels."""
 from __future__ import annotations
 from logging import Logger
 from pathlib import Path
@@ -17,14 +17,8 @@ def _make_geotif_label_categorical(
         img_name : str,
         logger : Logger
         ) -> None:
-    """Create a categorical GeoTiff pixel label for an image.
-
-    Create a categorical GeoTiff pixel label (i.e. one channel images
-    where each pixel is an integer corresponding to either the background
-    or a segmentation class, 0 indicating the background class, and k=1,2, ...
-    indicating the k-th entry (starting from 1) of the segmentation_classes
-    parameter of the associator) in the data directory's labels subdirectory
-    for the GeoTiff image img_name in the images subdirectory.
+    """
+    Create a categorical GeoTiff (pixel) label for an image.
 
     Args:
         - assoc (ImgPolygonAssociator): calling ImgPolygonAssociator.
@@ -65,7 +59,7 @@ def _make_geotif_label_categorical(
             profile = src.profile
             profile.update(
                 {
-                    "count": 1, 
+                    "count": 1,
                     "dtype": rio.uint8
                 }
             )
@@ -82,8 +76,8 @@ def _make_geotif_label_categorical(
                 # ... create an empty band of zeros (background class) ...
                 label = np.zeros((src.height, src.width), dtype=np.uint8)
 
-                # and build up the shapes to be burnt in 
-                shapes = [] # pairs of polygons and values to burn in 
+                # and build up the shapes to be burnt in
+                shapes = [] # pairs of polygons and values to burn in
 
                 for count, seg_class in enumerate(segmentation_classes, start=1):
 
@@ -115,12 +109,12 @@ def _make_geotif_label_categorical(
                 # Burn the polygon geometries into the label.
                 if len(shapes) != 0:
                     rio.features.rasterize(
-                        shapes=shapes, 
+                        shapes=shapes,
                         out_shape=
                             (src.height,
                             src.width),  # or the other way around?
                         fill=0,
-                        merge_alg=rio.enums.MergeAlg.replace, 
+                        merge_alg=rio.enums.MergeAlg.replace,
                         out=label,
                         transform=src.transform,
                         dtype=rio.uint8)

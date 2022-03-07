@@ -1,6 +1,6 @@
-"""Label maker for soft-categorical (i.e. probabilistic multi-class) labels."""
+"""Label maker for soft-categorical (i.e. probabilistic multi-class) (pixel) labels."""
 from __future__ import annotations
-from logging import Logger 
+from logging import Logger
 from functools import partial
 from pathlib import Path
 import numpy as np
@@ -10,30 +10,24 @@ from rs_tools.utils.utils import transform_shapely_geometry
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
-                        
+
 
 def _make_geotif_label_soft_categorical_onehot(
-        mode : str, 
+        mode : str,
         assoc : ImgPolygonAssociator,
-        img_name : str, 
+        img_name : str,
         logger : Logger
         ) -> None:
     """
-    Create a soft-categorical or onehot GeoTiff pixel label for
+    Create a soft-categorical or onehot GeoTiff (pixel) label for
     an image.
 
-    A soft-categorical label is one for which there are channels for each segmentation class 
-    and the value at a given position in a given channel is the probability that the pixel
-    at that position is classified as belonging to the corresponding segmentation
-    class. A onehot label is a soft-categorical one for which all probabilities are 0 or 1. 
-    The images are assumed to be in assoc.images_dir and labels will be created in assoc.labels_dir.
-
     Args:
-        onehot (str): One of 'soft-categorical' or 'onehot'
+        mode (str): One of 'soft-categorical' or 'onehot'
         assoc (ImgPolygonAssociator): calling ImgPolygonAssociator
-        img_name (str): Name of image for which a label should be created.
+        img_name (str): name of image for which a label should be created
         logger (Logger): logger of calling associator
-    
+
     Returns:
         None:
     """
@@ -72,13 +66,13 @@ def _make_geotif_label_soft_categorical_onehot(
 
             # Create profile for the label.
             profile = src.profile
-            profile.update({"count": label_bands_count, 
+            profile.update({"count": label_bands_count,
                             "dtype": rio.float32})
 
             # Open the label ...
             with rio.open(
-                    label_path, 
-                    'w+', 
+                    label_path,
+                    'w+',
                     **profile) as dst:
 
                 # ... and create one band in the label for each segmentation class.
@@ -137,7 +131,7 @@ def _make_geotif_label_soft_categorical_onehot(
                             shapes=polygon_value_pairs,
                             # or the other way around?
                             out_shape=(src.height, src.width),
-                            fill=0.0,  # 
+                            fill=0.0,  #
                             transform=src.transform,
                             dtype=rio.float32)
 
@@ -152,8 +146,8 @@ def _make_geotif_label_soft_categorical_onehot(
                     non_background_band_indices = list(
                         range(start_band, 2 + len(assoc.segmentation_classes)))
 
-                    # The probability of a pixel belonging to 
-                    # the background is the complement of it 
+                    # The probability of a pixel belonging to
+                    # the background is the complement of it
                     # belonging to some segmentation class.
                     background_band = 1 - np.add.reduce([
                         dst.read(band_index)
@@ -163,12 +157,12 @@ def _make_geotif_label_soft_categorical_onehot(
                     dst.write(background_band, 1)
 
 _make_geotif_label_soft_categorical = partial(
-                                        _make_geotif_label_soft_categorical_onehot, 
+                                        _make_geotif_label_soft_categorical_onehot,
                                         mode='soft-categorical')
 
 _make_geotif_label_onehot = partial(
-                                _make_geotif_label_soft_categorical_onehot, 
-                                mode='onehot')                
+                                _make_geotif_label_soft_categorical_onehot,
+                                mode='onehot')
 
 def _get_label_bands_count(assoc: ImgPolygonAssociator) -> bool:
 

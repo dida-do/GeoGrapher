@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 
 
-class ImgPolygonAssociatorBase(object):
+class BipartiteGraphMixIn(object):
     """Mix-in that implements the public and private interface to the internal bipartite graph."""
 
     def have_img_for_polygon(self, polygon_name: str) -> bool:
@@ -108,13 +108,7 @@ class ImgPolygonAssociatorBase(object):
         if mode == 'names':
             answer = img_names
         elif mode == 'paths':
-            answer = list(
-                        map(
-                            lambda img_name: self.images_dir / img_name,
-                            img_names
-                        )
-            )
-
+            answer = [self.images_dir / img_name for img_name in img_names]
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
@@ -148,9 +142,9 @@ class ImgPolygonAssociatorBase(object):
 
         return polygon_names
 
-    def imgs_containing_polygon(self, 
+    def imgs_containing_polygon(self,
             polygon_name: Union[str, List[str]],
-            mode : str = 'names', 
+            mode : str = 'names',
             ) -> List[str]:
         """
         Given a polygon (or a list of polygons), return a list of the names or paths of all images in which the polygon(s) is/are fully contained.
@@ -179,13 +173,7 @@ class ImgPolygonAssociatorBase(object):
         if mode == 'names':
             answer = img_names
         elif mode == 'paths':
-            answer = list(
-                        map(
-                            lambda img_name: self.images_dir / img_name,
-                            img_names
-                        )
-            )
-
+            answer = [self.images_dir / img_name for img_name in img_names]
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
