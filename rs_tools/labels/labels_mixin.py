@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional, Callable
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from rs_tools.labels.make_geotif_label_categorical import _make_geotif_label_categorical
 from rs_tools.labels.make_geotif_label_soft_categorical_onehot import _make_geotif_label_onehot, _make_geotif_label_soft_categorical
 
@@ -18,17 +18,17 @@ LABEL_MAKERS = {
 
 
 class LabelsMixIn(object):
-    """Mix-in that implements generating and deleting labels. """
+    """Mix-in that implements creating and deleting (pixel) labels."""
 
     def make_labels(self,
             img_names : Optional[List[str]]=None):
         """
-        Creates pixel labels for all images without a label.
+        Create (pixel) labels for all images without a (pixel) label.
 
         Currently only works for GeoTiffs.
 
         Args:
-            img_names (List[str], optional): list of image names to create labels. Defaults to None (i.e. all images without a label).
+            img_names (List[str], optional): list of image names to create labels for. Defaults to None (i.e. all images without a label).
         """
 
         # safety checks
@@ -37,12 +37,12 @@ class LabelsMixIn(object):
 
         log.info("\nCreating missing labels.\n")
 
-        # Make sure the labels_dir exists.
         self.labels_dir.mkdir(parents=True, exist_ok=True)
 
         existing_images = {img_path.name for img_path in self.images_dir.iterdir() if img_path.is_file() and img_path.name in self.imgs_df.index}
 
-        if img_names is None:  # Find images without labels
+        if img_names is None:
+            # Find images without labels
             existing_labels = {img_path.name for img_path in self.labels_dir.iterdir() if img_path.is_file() and img_path.name in self.imgs_df.index}
             img_names = existing_images - existing_labels
         elif not set(img_names) <= existing_images:
@@ -63,7 +63,7 @@ class LabelsMixIn(object):
 
     def delete_labels(self, img_names : Optional[List[str]]=None):
         """
-        Delete labels from labels_dir (if they exist).
+        Delete (pixel) labels from labels_dir (if they exist).
 
         Args:
             img_names (Optional[List[str]], optional): names of images for which to delete labels. Defaults to None, i.e. all labels.
@@ -88,10 +88,9 @@ class LabelsMixIn(object):
 
     def _compare_existing_imgs_to_imgs_df(self):
         """
-        Safety check that compares the set of images in the images_dir with the set of images in self.imgs_df
+        Safety check: compare sets of images in images_dir and in self.imgs_df.
 
-        Raises:
-            Exception if there are images in the dataset's images subdirectory that are not in self.imgs_df.
+        Raises warnings if there is a discrepancy.
         """
 
         # Find the set of existing images in the dataset, ...
