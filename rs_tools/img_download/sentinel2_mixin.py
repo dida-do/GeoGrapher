@@ -24,12 +24,6 @@ from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.errors import NoImgsForPolygonFoundError
 
 
-# MAX_PERCENT_CLOUD_COVERAGE=10
-# PRODUCTTYPE='L2A' # or 'L1C'
-# STANDARD_CRS_EPSG_CODE = 4326 # WGS84
-# RESOLUTION = 10 # possible values for Sentinel-2 L2A: 10, 20, 60 (in meters). See here https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/resolutions/spatial
-# DATA_DIR_SUBDIRS = [Path("images"), Path("labels"), Path("safe_files")]
-# LABEL_TYPE = 'categorical'
 NO_DATA_VAL = 0 # No data value for sentinel 2
 
 
@@ -38,7 +32,7 @@ NO_DATA_VAL = 0 # No data value for sentinel 2
 log = logging.getLogger(__name__)
 
 
-class Sentinel2DownloaderMixIn(object):
+class Sentinel2DownloaderMixIn:
     """
     Downloader for Sentinel-2 images.
 

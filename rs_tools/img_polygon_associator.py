@@ -23,14 +23,14 @@ from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.associator_utils import empty_gdf, empty_gdf_same_format_as, empty_graph
 
 # Base class:
-from rs_tools.img_polygon_associator_base import ImgPolygonAssociatorBase
+from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
 
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
-from rs_tools.labels_mixin import LabelsMixIn
+from rs_tools.labels.labels_mixin import LabelsMixIn
 from rs_tools.img_download.download_imgs_mixin import DownloadImgsBaseMixIn
 from rs_tools.img_download import Sentinel2DownloaderMixIn, JAXADownloaderMixIn
-from rs_tools.convert_dataset import (
+from rs_tools.convert import (
     CreateDSCombineRemoveSegClassesMixIn,
     CreateDSTiffToNpyMixIn,
     CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
@@ -84,7 +84,7 @@ class ImgPolygonAssociator(
     CreateDSCutIterOverImgsMixIn,
     CreateDSCutIterOverPolygonsMixIn,
     LabelsMixIn,
-    ImgPolygonAssociatorBase,
+    BipartiteGraphMixIn,
 ):  # needs to be last
     """
     Organize, build up and handle remote sensing datasets consisting of shapely polygons and images/labels.
