@@ -27,7 +27,7 @@ class DownloadImgsBaseMixIn(object):
     """
 
     def download_imgs(self,
-            polygon_names : Optional[Union[str, List[str]]]=None,
+            polygon_names : Optional[Union[str, int, List[int], List[str]]]=None,
             downloader : Optional[str] = None,
             target_img_count : int=1,
             add_labels : bool=True,
@@ -103,11 +103,11 @@ class DownloadImgsBaseMixIn(object):
             polygons_to_download = list(self.polygons_df.loc[self.polygons_df['img_count'] < target_img_count].index)
 
         else:
-            if isinstance(polygon_names, str):
+            if isinstance(polygon_names, (str, int)):
 
                 polygons_to_download = [polygon_names]
 
-            elif isinstance(polygon_names, list) and all(isinstance(element, str) for element in polygon_names):
+            elif isinstance(polygon_names, list) and all(isinstance(element, (str, int)) for element in polygon_names):
 
                 polygons_to_download = polygon_names
 
