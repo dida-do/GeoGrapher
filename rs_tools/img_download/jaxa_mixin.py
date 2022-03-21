@@ -65,7 +65,7 @@ class JAXADownloaderMixIn(object):
 
     def _download_imgs_for_polygon_jaxa(
             self,
-            polygon_name : str,
+            polygon_name : Union[str, int],
             polygon_geometry : Polygon,
             download_dir : Union[Path, str],
             previously_downloaded_imgs_set : Set[str],
@@ -94,7 +94,7 @@ class JAXADownloaderMixIn(object):
             for small polygons, but works for large polygons.
 
         Args:
-            polygon_name (str): the name of the polygon
+            polygon_name (Union[str, int]): the name of the polygon
             polygon_geometry (shapely polygon): 
             download_dir (Path or str): directory that the image file should be downloaded to
             jaxa_data_version (str): One of '1804', '1903', '2003', or '2012'.
