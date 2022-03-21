@@ -67,7 +67,7 @@ class Sentinel2DownloaderMixIn:
 
 
     def _download_imgs_for_polygon_sentinel2(self,
-            polygon_name: str,
+            polygon_name: Union[str, int],
             polygon_geometry: GeoSeries,
             download_dir: Union[str, Path],
             previously_downloaded_imgs_set: List[str],
