@@ -1,34 +1,44 @@
-.PHONY: env env-update env-remove lint install
+.PHONY: help env env-update env-remove init install format lint test \
+	docs-sphinx requirements
 
-# put the name of your project here (has to be the name of the package dir)
 PROJECTNAME=rs_tools
 
 help:
 	@echo "Available commands:"
-	@echo "env              create the conda environment '$(PROJECTNAME)-env'."
-	@echo "env-update       update '$(PROJECTNAME)-env'."
-	@echo "env-remove       remove '$(PROJECTNAME)-env'."
-	@echo "install	        install package in editable mode."
+	@echo "env              create the venv '$(PROJECTNAME)-env'."
+	@echo "env-update       update '$(PROJECTNAME)-env' venv."
+	@echo "env-remove       remove '$(PROJECTNAME)-env' venv."
+	@echo "conda0env        create the conda environment '$(PROJECTNAME)-env'."
+	@echo "env-update       update the '$(PROJECTNAME)-env' conda environment."
+	@echo "env-remove       remove the '$(PROJECTNAME)-env' conda environment."
+	@echo "install          install package in editable mode."
 	@echo "format           format code."
 	@echo "lint             run linters."
 	@echo "test             run unit tests."
+	@echo "docs-sphinx      build sphinx documentation."
 
 env:
-	conda env create --file environment.yml
+	python -m venv $(PROJECTNAME)-env && \
+		$(PROJECTNAME)-env/bin/pip install --upgrade pip
 
 env-update:
-	conda env update --name $(PROJECTNAME)-env --file environment.yml
+	pip install --upgrade -r requirements.txt
 
 env-remove:
+	rm -rf rstools-env
+
+conda-env:
+	conda env create --file environment.yml
+
+conda-env-update:
+	conda env update --name $(PROJECTNAME)-env --file environment.yml
+
+conda-env-remove:
 	conda remove --name $(PROJECTNAME)-env --all
 
 install:
-ifeq (${CONDA_DEFAULT_ENV}, $(PROJECTNAME)-env)
-	pip install -e .
-else
-	@echo "Activate conda env first with 'conda activate $(PROJECTNAME)-env'"
-endif
-
+	pip install --upgrade pip wheel pip-tools &&\
+	pip-sync requirements.txt
 
 format:
 	yapf -i --recursive $(PROJECTNAME)
@@ -42,3 +52,6 @@ lint:
 
 test:
 	pytest -v
+
+docs-sphinx:
+	cd docs && make html
