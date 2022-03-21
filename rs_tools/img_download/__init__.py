@@ -1,2 +1,2 @@
-from rs_tools.img_download.sentinel2_mixin import Sentinel2DownloaderMixIn
 from rs_tools.img_download.jaxa_mixin import JAXADownloaderMixIn
+from rs_tools.img_download.sentinel2_mixin import Sentinel2DownloaderMixIn
