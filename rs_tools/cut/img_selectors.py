@@ -3,7 +3,7 @@ Callable classes for selecting a sublist from a list of images used by cutting f
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Any
+from typing import TYPE_CHECKING, List, Any, Union
 import random
 from geopandas import GeoDataFrame
 from collections.abc import Callable
@@ -59,7 +59,7 @@ class RandomImgSelector(ImgSelector):
         self.target_img_count = target_img_count
 
     def __call__(self,
-            polygon_name : str,
+            polygon_name : Union[str, int],
             img_names_list: List[str],
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict,

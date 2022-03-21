@@ -1,4 +1,4 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Union
 import logging
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -151,7 +151,7 @@ class AddDropImgsPolygonsMixIn(object):
 
 
     def drop_polygons(self,
-            polygon_names : Sequence[str],
+            polygon_names : Sequence[Union[str, int]],
             recompute_labels : bool = True):
         """
         Drop polygons from associator (i.e. remove rows from the associator's polygons_df)
@@ -162,7 +162,7 @@ class AddDropImgsPolygonsMixIn(object):
         """
 
         # make sure we don't interpret a string as a list of characters in the iteration below:
-        if type(polygon_names) == str:
+        if isinstance(polygon_names, (str, int)):
             polygon_names = [polygon_names]
         assert pd.api.types.is_list_like(polygon_names)
 

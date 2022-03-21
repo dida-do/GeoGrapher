@@ -135,7 +135,7 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
         return new_img_size_rows, new_img_size_cols
 
     def _get_windows_transforms_img_names(self,
-            polygon_name : str,
+            polygon_name : Union[str, int],
             source_img_name : str,
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : Optional[dict] = None,
@@ -145,7 +145,7 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
         Given a polygon and a GeoTiff image fully containing it return a list of windows, window transforms, and new img_names defining a minimal rectangular grid in the image covering the polygon.
 
         Args:
-            polygon_name (str): polygon identifier
+            polygon_name (Union[str, int]): polygon identifier
             source_img_name (str): name of source image
             target_assoc (ImgPolygonAssociator): associator of target dataset
             new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.            polygon_crs_epsg_code (int): EPSG code of the polygon crs
