@@ -1,47 +1,46 @@
-"""
-Abstract base class for single image cutters. 
-"""
+"""Abstract base class for single image cutters."""
 from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Union, List, Tuple, Optional, Any
-from pathlib import Path
-import os
-from abc import ABC, abstractmethod
-
-from tqdm import tqdm
 import math
+import os
 import random
-from shapely.geometry.polygon import Polygon
-from shapely.geometry import box
-import rasterio as rio 
-from rasterio.windows import Window
-from rasterio.warp import transform_bounds
-from rasterio.io import DatasetReader
-from rasterio.crs import CRS
-from affine import Affine
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
+import rasterio as rio
+from affine import Affine
 from geopandas.geodataframe import GeoDataFrame
+from rasterio.crs import CRS
+from rasterio.io import DatasetReader
+from rasterio.warp import transform_bounds
+from rasterio.windows import Window
+from shapely.geometry import box
+from shapely.geometry.polygon import Polygon
+from tqdm import tqdm
+
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
+
 from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
 from rs_tools.utils.utils import transform_shapely_geometry
 
 logger = logging.getLogger(__name__)
 
+
 class SingleImgCutter(ABC):
-    def __init__(self, 
-            source_assoc : ImgPolygonAssociator, 
-            target_images_dir : Union[Path, str], 
-            target_labels_dir : Union[Path, str], 
-            img_bands : Optional[List[int]], 
-            label_bands : Optional[List[int]], 
-            **kwargs : Any):
-        """
-        Abstract base class for single image cutters. 
 
-        To define an image cutter, override _get_windows_transforms_img_names method. 
+    def __init__(self, source_assoc: ImgPolygonAssociator,
+                 target_images_dir: Union[Path, str],
+                 target_labels_dir: Union[Path,
+                                          str], img_bands: Optional[List[int]],
+                 label_bands: Optional[List[int]], **kwargs: Any):
+        """Abstract base class for single image cutters.
 
-        A SingleImgCutter is a Callable that on a given call creates new images cut from a single source image and returns a dict containing information about the created images to be used by the calling function to add to the imgs_df of the target associator (see __call__ docstring for details). 
+        To define an image cutter, override _get_windows_transforms_img_names method.
+
+        A SingleImgCutter is a Callable that on a given call creates new images cut from a single source image and returns a dict containing information about the created images to be used by the calling function to add to the imgs_df of the target associator (see __call__ docstring for details).
 
         Args:
             source_assoc (ImgPolygonAssociator): source associator containing images/labels to be cut from.
@@ -49,7 +48,7 @@ class SingleImgCutter(ABC):
             target_labels_dir (Union[Path, str): labels directory of target dataset
             img_bands (Optional[List[int]]): list of bands to extract from the image (note GeoTiff bands start at 1).
             labels_bands (Optional[List[int]]): list of bands to extract from the label (note GeoTiff bands start at 1).
-    
+
         Raises:
             ValueError: if the mode is unknown.
             TypeError: if the new image size is not an integer or a pair of integers.
@@ -59,7 +58,7 @@ class SingleImgCutter(ABC):
         self.source_assoc = source_assoc
         self.target_images_dir = Path(target_images_dir)
         self.target_labels_dir = Path(target_labels_dir)
-        
+
         if img_bands is None:
             self.img_bands = self._get_all_band_indices('images')
         else:
@@ -72,17 +71,18 @@ class SingleImgCutter(ABC):
 
         self.polygons_df_crs_epsg = self.source_assoc.polygons_df.crs.to_epsg()
 
-        self.kwargs = kwargs 
+        self.kwargs = kwargs
 
     @abstractmethod
-    def _get_windows_transforms_img_names(self, 
-            source_img_name : str, 
-            target_assoc : Optional[ImgPolygonAssociator] = None, 
-            new_imgs_dict : Optional[dict] = None,
-            **kwargs : Any
-            ) -> List[Tuple[Window, Affine, str]]:
-        """
-        Return a list of rasterio windows, window transformations, and new image names. The returned list will be used to create the new images and labels. Override to subclass. 
+    def _get_windows_transforms_img_names(
+            self,
+            source_img_name: str,
+            target_assoc: Optional[ImgPolygonAssociator] = None,
+            new_imgs_dict: Optional[dict] = None,
+            **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
+        """Return a list of rasterio windows, window transformations, and new
+        image names. The returned list will be used to create the new images
+        and labels. Override to subclass.
 
         Args:
             source_img_name (str): name of img in source dataset to be cut.
@@ -91,19 +91,21 @@ class SingleImgCutter(ABC):
             kwargs (Any): keyword arguments to be used in subclass implementations.
 
         Returns:
-            List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names. 
+            List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names.
         """
 
         pass
 
-    def __call__(self, 
-            img_name : str, 
-            target_assoc : Optional[ImgPolygonAssociator] = None, 
-            new_imgs_dict : Optional[dict] = None,
-            **kwargs : Any
-            ) -> dict:
-        """
-        Cut new images from source image and return a dict with keys the index and column names of the imgs_df to be created by the calling dataset cutter and values lists containing the new image names and corresponding entries for the new images. See small_imgs_around_polygons_cutter for an example. 
+    def __call__(self,
+                 img_name: str,
+                 target_assoc: Optional[ImgPolygonAssociator] = None,
+                 new_imgs_dict: Optional[dict] = None,
+                 **kwargs: Any) -> dict:
+        """Cut new images from source image and return a dict with keys the
+        index and column names of the imgs_df to be created by the calling
+        dataset cutter and values lists containing the new image names and
+        corresponding entries for the new images. See
+        small_imgs_around_polygons_cutter for an example.
 
         Args:
             img_name (str): name of img in source dataset to be cut.
@@ -112,18 +114,22 @@ class SingleImgCutter(ABC):
             kwargs (Any): optional keyword arguments for _get_windows_transforms_img_names
 
         Returns:
-            dict of lists that containing the data to be put in the imgs_df of the associator to be constructed for the created images. 
+            dict of lists that containing the data to be put in the imgs_df of the associator to be constructed for the created images.
 
         Note:
-            The __call__ function should be able to access the information contained in the target (and source) associator but should *not* modify its arguments! Since create_or_update_dataset_from_iter_over_polygons and create_or_update_dataset_from_iter_over_imgs do not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons or images have been iterated over and we want to be able to use ImgSelectors _during_ such an iteration, we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument. 
+            The __call__ function should be able to access the information contained in the target (and source) associator but should *not* modify its arguments! Since create_or_update_dataset_from_iter_over_polygons and create_or_update_dataset_from_iter_over_imgs do not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons or images have been iterated over and we want to be able to use ImgSelectors _during_ such an iteration, we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument.
         """
-        
+
         # dict to accumulate information about the newly created images
-        imgs_from_cut_dict = {index_or_col_name: [] for index_or_col_name in [self.source_assoc.imgs_df.index.name] + list(self.source_assoc.imgs_df.columns)}
+        imgs_from_cut_dict = {
+            index_or_col_name: []
+            for index_or_col_name in [self.source_assoc.imgs_df.index.name] +
+            list(self.source_assoc.imgs_df.columns)
+        }
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(
-            source_img_name=img_name, 
-            target_assoc=target_assoc, 
+            source_img_name=img_name,
+            target_assoc=target_assoc,
             new_imgs_dict=new_imgs_dict,
             **kwargs)
 
@@ -131,39 +137,36 @@ class SingleImgCutter(ABC):
 
             # Make new image and label in target dataset ...
             img_bounds_in_img_crs, img_crs = self._make_new_img_and_label(
-                                                new_img_name=new_img_name, 
-                                                source_img_name=img_name, 
-                                                window=window, 
-                                                window_transform=window_transform)
+                new_img_name=new_img_name,
+                source_img_name=img_name,
+                window=window,
+                window_transform=window_transform)
 
             # ... gather all the information about the image in a dict ...
             single_new_img_info_dict = self._make_img_info_dict(
-                                            new_img_name=new_img_name, 
-                                            source_img_name=img_name, 
-                                            img_bounds_in_img_crs=img_bounds_in_img_crs, 
-                                            img_crs=img_crs)
+                new_img_name=new_img_name,
+                source_img_name=img_name,
+                img_bounds_in_img_crs=img_bounds_in_img_crs,
+                img_crs=img_crs)
 
-            # ... and accumulate that information. 
+            # ... and accumulate that information.
             for key in imgs_from_cut_dict.keys():
                 imgs_from_cut_dict[key].append(single_new_img_info_dict[key])
 
         return imgs_from_cut_dict
 
-    def _make_img_info_dict(self, 
-            new_img_name : str, 
-            source_img_name : str, 
-            img_bounds_in_img_crs : Tuple[float, float, float, float], 
-            img_crs : CRS
-            ) -> dict:
-        """
-        Return an img info dict for a single new image. 
+    def _make_img_info_dict(self, new_img_name: str, source_img_name: str,
+                            img_bounds_in_img_crs: Tuple[float, float, float,
+                                                         float],
+                            img_crs: CRS) -> dict:
+        """Return an img info dict for a single new image.
 
         An img info dict contains the following key/value pairs:
             - key: the index name of the imgs_df to be created by calling dataset cutter,
                 value: the image name of the new image.
             - keys: the columns names of the imgs_df to be created by calling dataset cutter,
                 value: the entries to be written in those columns for the new image.
-        
+
         Args:
             new_img_name (str): name of new image
             source_img_name (str): name of source image
@@ -173,41 +176,46 @@ class SingleImgCutter(ABC):
         Returns:
             dict: img info dict (see above)
         """
-            
-        img_bounding_rectangle_in_imgs_df_crs = box(*transform_bounds(img_crs, 
-                                                                    self.source_assoc.imgs_df.crs,
-                                                                    *img_bounds_in_img_crs))
 
-        single_new_img_info_dict = {'img_name': new_img_name, 
-                                    'geometry': img_bounding_rectangle_in_imgs_df_crs, 
-                                    'orig_crs_epsg_code': img_crs.to_epsg(), 
-                                    'img_processed?': True}
-        
+        img_bounding_rectangle_in_imgs_df_crs = box(*transform_bounds(
+            img_crs, self.source_assoc.imgs_df.crs, *img_bounds_in_img_crs))
+
+        single_new_img_info_dict = {
+            'img_name': new_img_name,
+            'geometry': img_bounding_rectangle_in_imgs_df_crs,
+            'orig_crs_epsg_code': img_crs.to_epsg(),
+            'img_processed?': True
+        }
+
         # Copy over any remaining information about the img from self.source_assoc.imgs_df.
-        for col in set(self.source_assoc.imgs_df.columns) - {'img_name', 'geometry', 'orig_crs_epsg_code', 'img_processed?'}:
-            single_new_img_info_dict[col] = self.source_assoc.imgs_df.loc[source_img_name, col]
+        for col in set(self.source_assoc.imgs_df.columns) - {
+                'img_name', 'geometry', 'orig_crs_epsg_code', 'img_processed?'
+        }:
+            single_new_img_info_dict[col] = self.source_assoc.imgs_df.loc[
+                source_img_name, col]
 
         return single_new_img_info_dict
-            
-    def _make_new_img_and_label(self, 
-            new_img_name : str, 
-            source_img_name : str, 
-            window : Window, 
-            window_transform : Affine, 
-            ) -> Tuple[Tuple[float, float, float, float], CRS]:
-        """
-        Make a new image and label with given image name from the given window and transform
+
+    def _make_new_img_and_label(
+        self,
+        new_img_name: str,
+        source_img_name: str,
+        window: Window,
+        window_transform: Affine,
+    ) -> Tuple[Tuple[float, float, float, float], CRS]:
+        """Make a new image and label with given image name from the given
+        window and transform.
 
         Args:
             new_img_name (str): name of new image
             source_img_name (str): name of source image
-            window (Window): 
-            window_transform (Affine): 
+            window (Window):
+            window_transform (Affine):
 
         Returns:
             Tuple[Tuple[float, float, float, float], CRS]: tuple of bounds (in image CRS) and CRS of new image
         """
-        
+
         source_img_path = self.source_assoc._images_dir / source_img_name
         source_label_path = self.source_assoc._labels_dir / source_img_name
 
@@ -216,36 +224,28 @@ class SingleImgCutter(ABC):
 
         # write img window to destination img geotif
         img_bounds_in_img_crs, img_crs = self._write_window_to_geotif(
-                                            source_img_path, 
-                                            dst_img_path, 
-                                            self.img_bands, 
-                                            window, 
-                                            window_transform)
+            source_img_path, dst_img_path, self.img_bands, window,
+            window_transform)
 
         # write label window to destination label geotif
         if source_label_path.is_file():
             label_bounds_in_img_crs, label_crs = self._write_window_to_geotif(
-                                                    source_label_path, 
-                                                    dst_label_path, 
-                                                    self.label_bands, 
-                                                    window, 
-                                                    window_transform)    
+                source_label_path, dst_label_path, self.label_bands, window,
+                window_transform)
             assert img_crs == label_crs, "source image and label crs disagree!"
             assert label_bounds_in_img_crs == img_bounds_in_img_crs, "source image and label bounds disagree"
         else:
-            logger.info('No label cut for img {source_img_path.name} since it has no label.')
+            logger.info(
+                'No label cut for img {source_img_path.name} since it has no label.'
+            )
 
         return img_bounds_in_img_crs, img_crs
 
-    def _write_window_to_geotif(self, 
-            src_img_path : Union[Path, str], 
-            dst_img_path : Union[Path, str], 
-            bands : List[int],
-            window : Window, 
-            window_transform : Affine
-            ) -> Tuple[Tuple[float, float, float, float], CRS]:
-        """
-        Write window from source GeoTiff to new GeoTiff.
+    def _write_window_to_geotif(
+        self, src_img_path: Union[Path, str], dst_img_path: Union[Path, str],
+        bands: List[int], window: Window, window_transform: Affine
+    ) -> Tuple[Tuple[float, float, float, float], CRS]:
+        """Write window from source GeoTiff to new GeoTiff.
 
         Args:
             src_img_path (Union[Path, str]): path of source GeoTiff
@@ -263,18 +263,18 @@ class SingleImgCutter(ABC):
 
             # and destination ...
             with rio.open(Path(dst_img_path),
-                            'w',
-                            driver='GTiff',
-                            height=window.height,
-                            width=window.width,
-                            count=len(bands),
-                            dtype=src.profile["dtype"],
-                            crs=src.crs,
-                            transform=window_transform) as dst:
+                          'w',
+                          driver='GTiff',
+                          height=window.height,
+                          width=window.width,
+                          count=len(bands),
+                          dtype=src.profile["dtype"],
+                          crs=src.crs,
+                          transform=window_transform) as dst:
 
                 # ... and go through the bands.
                 for target_band, source_band in enumerate(bands, start=1):
-                            
+
                     # Read window for that band from source ...
                     new_img_band_raster = src.read(source_band, window=window)
 
@@ -284,8 +284,7 @@ class SingleImgCutter(ABC):
         return dst.bounds, dst.crs
 
     def _get_all_band_indices(self, mode: str) -> List[int]:
-        """
-        Return list of all band indices of GeoTiffs. 
+        """Return list of all band indices of GeoTiffs.
 
         It is assumed all images (or labels) in the data directory have the same number of bands.
 
@@ -293,13 +292,16 @@ class SingleImgCutter(ABC):
             mode (str): 'images' or 'labels'
 
         Returns:
-            List[int]: list of indices of all bands in GeoTiff 
+            List[int]: list of indices of all bands in GeoTiff
         """
 
         assert mode in {'images', 'labels'}
 
-        img_or_label_dir = self.source_assoc._images_dir if mode =='images' else self.source_assoc._labels_dir
-        img_or_label_path = [filepath for filepath in img_or_label_dir.iterdir() if filepath.suffix == '.tif'][0]
+        img_or_label_dir = self.source_assoc._images_dir if mode == 'images' else self.source_assoc._labels_dir
+        img_or_label_path = [
+            filepath for filepath in img_or_label_dir.iterdir()
+            if filepath.suffix == '.tif'
+        ][0]
 
         with rio.open(img_or_label_path) as src:
             bands = list(range(1, src.count + 1))
