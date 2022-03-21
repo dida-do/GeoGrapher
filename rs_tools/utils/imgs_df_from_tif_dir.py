@@ -1,27 +1,26 @@
-""" 
-Create associator imgs_df from a directory containing GeoTiff images.
-"""
+"""Create associator imgs_df from a directory containing GeoTiff images."""
 
 import pathlib
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
-from tqdm import tqdm
 
 import rasterio as rio
 from geopandas import GeoDataFrame
-from rs_tools.utils.utils import transform_shapely_geometry
 from shapely.geometry import Polygon, box
+from tqdm import tqdm
+
+from rs_tools.utils.utils import transform_shapely_geometry
 
 
 def default_read_in_img_for_img_df_function(
         img_path: Path) -> Tuple[int, Polygon]:
-    """
-    Read in the crs code and the bounding rectangle that defines a GeoTIFF image.
+    """Read in the crs code and the bounding rectangle that defines a GeoTIFF
+    image.
 
     ..note::
 
     Args:
-        img_path (Path): location of the image 
+        img_path (Path): location of the image
 
     Returns:
         int: crs code of the image
@@ -53,17 +52,21 @@ def imgs_df_from_imgs_dir(
     read_in_img_for_img_df_function: Callable[[Path], Tuple[
         int, Polygon]] = default_read_in_img_for_img_df_function
 ) -> GeoDataFrame:
-    """
-    Builds and returns an associator imgs_df from a directory of images (or from a data directory). Only the index (imgs_df_index_name, defaults to img_name), geometry column (coordinates of the img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the image is in) columns will be populated, custom columns will have to be populated by a custom written function.
+    """Builds and returns an associator imgs_df from a directory of images (or
+    from a data directory). Only the index (imgs_df_index_name, defaults to
+    img_name), geometry column (coordinates of the img_bounding_rectangle, and
+    orig_crs_epsg_code (epsg code of crs the image is in) columns will be
+    populated, custom columns will have to be populated by a custom written
+    function.
 
     Args:
         - images_dir (Union[pathlib.Path, str]): path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.
-        - imgs_df_crs_epsg_code (int): epsg code of imgs_df crs to be returned. 
+        - imgs_df_crs_epsg_code (int): epsg code of imgs_df crs to be returned.
         - image_names (List[str], optional): optional list of image names. Defaults to None, i.e. all images in images_dir.
         - imgs_datatype (str): datatype suffix of the images
         - read_in_img_for_img_df_function (Callable[[Path], Tuple[
         int, Polygon]]): function that reads in the crs code and the bounding rectangle for the images
-    
+
     Returns:
         GeoDataFrame: imgs_df conforming to the associator imgs_df format with index imgs_df_index_name and columns geometry and orig_crs_epsg_code
     """
