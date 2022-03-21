@@ -213,7 +213,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
 
     @staticmethod
     def _filter_out_previously_cut_imgs(
-            polygon_name : str,
+            polygon_name : Union[str, int],
             src_imgs_containing_polygon : Set[str],
             target_assoc : ImgPolygonAssociator
             ) -> List[str]:
@@ -221,7 +221,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
         Filter out source images from which cutouts containing a polygon have already been created.
 
         Args:
-            polygon_name (str): name/id of polygon
+            polygon_name (Union[str, int]): name/id of polygon
             src_imgs_containing_polygon (Set[str]): set of images in source dataset containing the polygon
             target_assoc (ImgPolygonAssociator): associator of target dataset
 

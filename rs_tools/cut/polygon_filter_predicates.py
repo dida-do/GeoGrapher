@@ -21,7 +21,7 @@ class PolygonFilterPredicate(Callable):
 
     @abstractmethod
     def __call__(self, 
-            polygon_name : str, 
+            polygon_name : Union[str, int],
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict, 
             source_assoc : ImgPolygonAssociator, 
@@ -29,7 +29,7 @@ class PolygonFilterPredicate(Callable):
             ) -> bool:
         """
         Args:
-            polygon_name (str): polygon identifier
+            polygon_name (Union[str, int]): polygon identifier
             target_assoc (ImgPolygonAssociator): associator of target dataset. 
             new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
             source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from 
@@ -58,7 +58,7 @@ class IsPolygonMissingImgs(PolygonFilterPredicate):
         super().__init__()
 
     def __call__(self, 
-            polygon_name : str, 
+            polygon_name : Union[str, int],
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict, 
             source_assoc : ImgPolygonAssociator, 
@@ -68,7 +68,7 @@ class IsPolygonMissingImgs(PolygonFilterPredicate):
         Return True if the image count of the polygon under consideration is strictly less than target_img_count, False otherwise. 
 
         Args:
-            polygon_name (str): polygon identifier
+            polygon_name (Union[str, int]): polygon identifier
             target_assoc (ImgPolygonAssociator): associator of target dataset. 
             new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
             source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from 
@@ -90,7 +90,7 @@ class AlwaysTrue(PolygonFilterPredicate):
         super().__init__()
 
     def __call__(self,
-            polygon_name : str, 
+            polygon_name : Union[str, int], 
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict, 
             source_assoc : ImgPolygonAssociator, 
@@ -104,7 +104,7 @@ class OnlyThisPolygon(PolygonFilterPredicate):
     """
     Simple polygon filter initialized with a polygon this_polygon_name. Returns True if and only if the polygon under consideration is equal to this_polygon_name. 
     """
-    def __init__(self, this_polygon_name: str) -> None:
+    def __init__(self, this_polygon_name: Union[str, int]) -> None:
         """
         Args:
             this_polygon (str): (name of) polygon to be compared to.
@@ -113,7 +113,7 @@ class OnlyThisPolygon(PolygonFilterPredicate):
         self.this_polygon_name = this_polygon_name
     
     def __call__(self, 
-            polygon_name : str, 
+            polygon_name : Union[str, int], 
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict, 
             source_assoc : ImgPolygonAssociator, 
@@ -145,7 +145,7 @@ class PolygonFilterRowCondition(PolygonFilterPredicate):
         self.mode = mode
 
     def __call__(self, 
-            polygon_name : str, 
+            polygon_name : Union[str, int], 
             target_assoc : ImgPolygonAssociator,
             new_imgs_dict : dict, 
             source_assoc : ImgPolygonAssociator, 
