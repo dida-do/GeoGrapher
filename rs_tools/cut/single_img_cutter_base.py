@@ -230,11 +230,10 @@ class SingleImgCutter(ABC):
                                                     self.label_bands, 
                                                     window, 
                                                     window_transform)    
+            assert img_crs == label_crs, "source image and label crs disagree!"
+            assert label_bounds_in_img_crs == img_bounds_in_img_crs, "source image and label bounds disagree"
         else:
             logger.info('No label cut for img {source_img_path.name} since it has no label.')
-
-        assert img_crs == label_crs, "source image and label crs disagree!"
-        assert label_bounds_in_img_crs == img_bounds_in_img_crs, "source image and label bounds disagree"
 
         return img_bounds_in_img_crs, img_crs
 
