@@ -1,22 +1,26 @@
-"""
-Utilites used in the ImgPolygonAssociator class.
-"""
+"""Utilites used in the ImgPolygonAssociator class."""
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Union, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame, GeoSeries
 
 from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE
+
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
-from rs_tools.graph.bipartite_graph import BipartiteGraph, empty_bipartite_graph
+
+from rs_tools.graph.bipartite_graph import (BipartiteGraph,
+                                            empty_bipartite_graph)
+
 
 def empty_gdf(index_name,
               cols_and_types,
               crs_epsg_code=STANDARD_CRS_EPSG_CODE):
-    """Return a empty GeoDataFrame with specified index and column names and types and crs.
+    """Return a empty GeoDataFrame with specified index and column names and
+    types and crs.
 
     Args:
         - index_name: name of the index of the new empty GeoDataFrame
@@ -27,17 +31,16 @@ def empty_gdf(index_name,
     """
 
     new_empty_gdf_dict = {
-        index_name : str,
+        index_name: str,
         'geometry': GeoSeries([]),
         **{
             index_or_col_name: pd.Series([], dtype=index_or_col_type)
-            for index_or_col_name, index_or_col_type in cols_and_types.items(
-            ) if index_or_col_name != 'geometry'
+            for index_or_col_name, index_or_col_type in cols_and_types.items() if index_or_col_name != 'geometry'
         }
     }
 
     new_empty_gdf = GeoDataFrame(new_empty_gdf_dict,
-                                     crs=f"EPSG:{crs_epsg_code}")
+                                 crs=f"EPSG:{crs_epsg_code}")
     new_empty_gdf.set_index(index_name, inplace=True)
     return new_empty_gdf
 
@@ -63,7 +66,6 @@ def empty_gdf(index_name,
 
 #     return new_empty_gdf
 
-
 # def empty_imgs_df(
 #         imgs_df_index_name : str,
 #         imgs_df_cols : List[str],
@@ -80,7 +82,6 @@ def empty_gdf(index_name,
 #     """
 
 #     return empty_gdf(imgs_df_index_name, imgs_df_cols, crs_epsg_code=crs_epsg_code)
-
 
 # def empty_polygons_df(
 #         polygons_df_index_name : str,
@@ -100,10 +101,10 @@ def empty_gdf(index_name,
 
 #     return empty_gdf(polygons_df_index_name, polygons_df_cols, crs_epsg_code=crs_epsg_code)
 
+
 def empty_gdf_same_format_as(df):
-    """
-    Creates an empty df of the same format (index name, columns, column types) as the df argument.
-    """
+    """Creates an empty df of the same format (index name, columns, column
+    types) as the df argument."""
     df_index_name = df.index.name
 
     df_cols_and_index_types = {
@@ -113,10 +114,9 @@ def empty_gdf_same_format_as(df):
 
     crs_epsg_code = df.crs.to_epsg()
 
-    new_empty_df = empty_gdf(
-                    df_index_name,
-                    df_cols_and_index_types,
-                    crs_epsg_code=crs_epsg_code)
+    new_empty_df = empty_gdf(df_index_name,
+                             df_cols_and_index_types,
+                             crs_epsg_code=crs_epsg_code)
 
     return new_empty_df
 
@@ -140,9 +140,10 @@ def empty_gdf_same_format_as(df):
 #     return new_empty_df
 
 
-def empty_polygons_df_same_format_as(polygons_df: GeoDataFrame) -> GeoDataFrame:
-    """
-    Creates an empty polygons_df of the same format (index name, columns, column types) as the polygons_df argument.
+def empty_polygons_df_same_format_as(
+        polygons_df: GeoDataFrame) -> GeoDataFrame:
+    """Creates an empty polygons_df of the same format (index name, columns,
+    column types) as the polygons_df argument.
 
     :param polygons_df: Example polygon dataframe
 
@@ -153,8 +154,8 @@ def empty_polygons_df_same_format_as(polygons_df: GeoDataFrame) -> GeoDataFrame:
 
 
 def empty_imgs_df_same_format_as(imgs_df: GeoDataFrame) -> GeoDataFrame:
-    """
-    Creates an empty imgs_df of the same format (index name, columns, column types) as the imgs_df argument.
+    """Creates an empty imgs_df of the same format (index name, columns, column
+    types) as the imgs_df argument.
 
     :param imgs_df: Example images dataframe
 
@@ -165,8 +166,7 @@ def empty_imgs_df_same_format_as(imgs_df: GeoDataFrame) -> GeoDataFrame:
 
 
 def empty_graph() -> BipartiteGraph:
-    """
-    Return an empty bipartite graph to be used by ImgPolygonAssociator.
+    """Return an empty bipartite graph to be used by ImgPolygonAssociator.
 
     :returns: empty graph
     """

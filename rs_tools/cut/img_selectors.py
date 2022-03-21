@@ -1,34 +1,34 @@
-"""
-Callable classes for selecting a sublist from a list of images used by cutting functions.
-"""
+"""Callable classes for selecting a sublist from a list of images used by
+cutting functions."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Any, Union
+
 import random
-from geopandas import GeoDataFrame
-from collections.abc import Callable
 from abc import abstractmethod
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, List, Union
+
+from geopandas import GeoDataFrame
+
 if TYPE_CHECKING:
     from rs_tools import ImgPolygonAssociator
 
 
 class ImgSelector(Callable):
-    """
-    Abstract base class for selecting from a list of images. Subclasses are used by create_or_update_dataset_from_iter_over_polygons.
+    """Abstract base class for selecting from a list of images. Subclasses are
+    used by create_or_update_dataset_from_iter_over_polygons.
 
-    Subclasses should implement a __call__method that has the arguments and behavior given below.
+    Subclasses should implement a __call__method that has the arguments
+    and behavior given below.
     """
 
     @abstractmethod
-    def __call__(self,
-            img_names_list: List[str],
-            target_assoc : ImgPolygonAssociator,
-            new_imgs_dict : dict,
-            source_assoc : ImgPolygonAssociator,
-            **kwargs : Any
-            ) -> List[str]:
-        """
-        Override to subclass. If img_names_list is empty an empty list should be returned.
+    def __call__(self, img_names_list: List[str],
+                 target_assoc: ImgPolygonAssociator, new_imgs_dict: dict,
+                 source_assoc: ImgPolygonAssociator,
+                 **kwargs: Any) -> List[str]:
+        """Override to subclass. If img_names_list is empty an empty list
+        should be returned.
 
         The new_polygons_df and new_graph arguments contain all the information available to decide which images to select. They should not be modified by this method.
 
@@ -49,22 +49,17 @@ class ImgSelector(Callable):
 
 
 class RandomImgSelector(ImgSelector):
-    """
-    ImgSelector that randomly selects randomly from a list of images.
-    """
-    def __init__(self,
-        target_img_count : int = 1):
+    """ImgSelector that randomly selects randomly from a list of images."""
+
+    def __init__(self, target_img_count: int = 1):
 
         super().__init__()
         self.target_img_count = target_img_count
 
-    def __call__(self,
-            polygon_name : Union[str, int],
-            img_names_list: List[str],
-            target_assoc : ImgPolygonAssociator,
-            new_imgs_dict : dict,
-            source_assoc : ImgPolygonAssociator
-            ) -> List[str]:
+    def __call__(self, polygon_name: Union[str,
+                                           int], img_names_list: List[str],
+                 target_assoc: ImgPolygonAssociator, new_imgs_dict: dict,
+                 source_assoc: ImgPolygonAssociator) -> List[str]:
         """
         Select target_img_count - #{img_count of polygon in target_assoc} images (or if not possible less) from img_names_list.
         """
@@ -77,11 +72,10 @@ class RandomImgSelector(ImgSelector):
         target_num_imgs_to_sample = max(0, target_num_imgs_to_sample)
 
         # can only sample from img_names_list
-        num_imgs_to_sample = min(
-                                len(img_names_list),
-                                target_num_imgs_to_sample
-                            )
+        num_imgs_to_sample = min(len(img_names_list),
+                                 target_num_imgs_to_sample)
 
         return random.sample(img_names_list, num_imgs_to_sample)
+
 
 random_img_selector = RandomImgSelector()

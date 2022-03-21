@@ -1,48 +1,44 @@
-"""
-The ImgPolygonAssociator class organizes and handles remote sensing datasets.
-"""
+"""The ImgPolygonAssociator class organizes and handles remote sensing
+datasets."""
 
 from __future__ import annotations
-import rs_tools
-from rs_tools.labels.label_type_conversion_utils import convert_polygons_df_soft_cat_to_cat
-from typing import Dict, Tuple, Type, Any, List, TypeVar, Union, Optional, Sequence
-from json.decoder import JSONDecodeError
-import pathlib
-import logging
+
 import json
+import logging
+import pathlib
+from json.decoder import JSONDecodeError
 from pathlib import Path
+from typing import (Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar,
+                    Union)
+
 import geopandas as gpd
 from geopandas import GeoDataFrame
 
-from rs_tools.global_constants import (
-    STANDARD_CRS_EPSG_CODE,
-    IMGS_DF_INDEX_NAME,
-    POLYGONS_DF_INDEX_NAME,
-)
-from rs_tools.graph import BipartiteGraph
-from rs_tools.utils.associator_utils import empty_gdf, empty_gdf_same_format_as, empty_graph
-
-# Base class:
-from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-
+import rs_tools
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
-from rs_tools.labels.labels_mixin import LabelsMixIn
-from rs_tools.img_download.download_imgs_mixin import DownloadImgsBaseMixIn
-from rs_tools.img_download import Sentinel2DownloaderMixIn, JAXADownloaderMixIn
 from rs_tools.convert import (
-    CreateDSCombineRemoveSegClassesMixIn,
-    CreateDSTiffToNpyMixIn,
     CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
-)
-from rs_tools.cut import (
-    CreateDSCutImgsAroundEveryPolygonMixIn,
-    CreateDSCutEveryImgToGridMixIn,
-    CreateDSCutIterOverImgsMixIn,
-    CreateDSCutIterOverPolygonsMixIn,
-)
+    CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn)
+from rs_tools.cut import (CreateDSCutEveryImgToGridMixIn,
+                          CreateDSCutImgsAroundEveryPolygonMixIn,
+                          CreateDSCutIterOverImgsMixIn,
+                          CreateDSCutIterOverPolygonsMixIn)
+from rs_tools.global_constants import (IMGS_DF_INDEX_NAME,
+                                       POLYGONS_DF_INDEX_NAME,
+                                       STANDARD_CRS_EPSG_CODE)
+from rs_tools.graph import BipartiteGraph
+# Base class:
+from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
+from rs_tools.img_download import JAXADownloaderMixIn, Sentinel2DownloaderMixIn
+from rs_tools.img_download.download_imgs_mixin import DownloadImgsBaseMixIn
+from rs_tools.labels.label_type_conversion_utils import \
+    convert_polygons_df_soft_cat_to_cat
+from rs_tools.labels.labels_mixin import LabelsMixIn
 from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDSMixIn
-
+from rs_tools.utils.associator_utils import (empty_gdf,
+                                             empty_gdf_same_format_as,
+                                             empty_graph)
 
 INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self._json_path / val
     "_polygons_df_path": "polygons_df.geojson",
@@ -59,9 +55,7 @@ NON_SEGMENTATION_POLYGON_CLASSES = [
     "background_class"
 ]  # polygon types that are not segmentation classes (e.g. polygons that define background regions or masks)
 
-
 IPAType = TypeVar("IPAType", bound="ImgPolygonAssociator")
-
 
 # logger
 log = logging.getLogger(__name__)
@@ -71,23 +65,23 @@ log = logging.getLogger(__name__)
 
 
 class ImgPolygonAssociator(
-    AddDropImgsPolygonsMixIn,
-    DownloadImgsBaseMixIn,  # needs to before any Downloader mix ins
-    Sentinel2DownloaderMixIn,
-    JAXADownloaderMixIn,
-    UpdateFromSourceDSMixIn,  # Needs to be before any of the CreateDS mix ins
-    CreateDSCombineRemoveSegClassesMixIn,
-    CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
-    CreateDSTiffToNpyMixIn,
-    CreateDSCutImgsAroundEveryPolygonMixIn,
-    CreateDSCutEveryImgToGridMixIn,
-    CreateDSCutIterOverImgsMixIn,
-    CreateDSCutIterOverPolygonsMixIn,
-    LabelsMixIn,
-    BipartiteGraphMixIn,
-):  # needs to be last
-    """
-    Organize, build up and handle remote sensing datasets consisting of shapely polygons and images/labels.
+        AddDropImgsPolygonsMixIn,
+        DownloadImgsBaseMixIn,  # needs to before any Downloader mix ins
+        Sentinel2DownloaderMixIn,
+        JAXADownloaderMixIn,
+        UpdateFromSourceDSMixIn,  # Needs to be before any of the CreateDS mix ins
+        CreateDSCombineRemoveSegClassesMixIn,
+        CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
+        CreateDSTiffToNpyMixIn,
+        CreateDSCutImgsAroundEveryPolygonMixIn,
+        CreateDSCutEveryImgToGridMixIn,
+        CreateDSCutIterOverImgsMixIn,
+        CreateDSCutIterOverPolygonsMixIn,
+        LabelsMixIn,
+        BipartiteGraphMixIn,  # Needs to be last
+):
+    """Organize, build up and handle remote sensing datasets consisting of
+    shapely polygons and images/labels.
 
     The ImgPolygonAssociator class can build up, handle, and organize datasets consisting of shapely vector polygon labels (as well as tabular information about them in the form of a GeoDataFrame) and remote sensing raster images and potentially (semantic) segmentation pixel labels (e.g. GeoTiffs or .npy files) (as well as tabular information about the images and pixel labels in the form of a GeoDataFrame) by providing a two-way linkage between the polygons and the images/pixel labels automatically keeping track of which polygons are contained in which images/pixel labels.
 
@@ -107,6 +101,7 @@ class ImgPolygonAssociator(
     - crs_epsg_code: EPSG code of the coordinate reference system (crs) the associator (i.e. the associator's imgs_df and polygons_df) is in. Defaults to 4326 (WGS84). Setting this attribute will automatically set the associator's imgs_df and polygons_df crs's.
     """
 
+    # yapf: disable
     def __init__(
         self,
         load_from_disk: bool,
@@ -133,11 +128,12 @@ class ImgPolygonAssociator(
 
         # optional kwargs
         **kwargs: Any,
+
+        # yapf: enable
     ):
-        """
-        To initialize a new associator use either the from_scratch class method
-        or the empty_assoc_same_format_as method. To initialize an existing
-        associator use the from_data_dir or from_paths class methods.
+        """To initialize a new associator use either the from_scratch class
+        method or the empty_assoc_same_format_as method. To initialize an
+        existing associator use the from_data_dir or from_paths class methods.
 
         Warning:
             Note that many methods that create new dataset from existing ones
@@ -213,9 +209,9 @@ class ImgPolygonAssociator(
         self._standardize_df_crs(df=polygons_df, df_name="polygons_df")
         self._standardize_df_crs(df=imgs_df, df_name="imgs_df")
 
-        # run safety checks on polygons_df, imgs_df and adjust format if necessary
-        self._check_and_adjust_df_format(mode="polygons_df", df=polygons_df)
-        self._check_and_adjust_df_format(mode="imgs_df", df=imgs_df)
+        # # run safety checks on polygons_df, imgs_df and adjust format if necessary
+        # self._check_and_adjust_df_format(mode="polygons_df", df=polygons_df)
+        # self._check_and_adjust_df_format(mode="imgs_df", df=imgs_df)
 
         # set self.polygons_df, self.imgs_df, self._update_from_source_dataset_dict
         self._set_remaining_assoc_components(
@@ -277,7 +273,7 @@ class ImgPolygonAssociator(
         cls: Type[IPAType],
         data_dir: Union[Path, str],
     ) -> IPAType:
-        """Initialize and return an associator from a data directory
+        """Initialize and return an associator from a data directory.
 
         Args:
             data_dir (Union[Path, str]): data directory containing 'associator_files', 'images', and 'labels' subdirectories
@@ -303,8 +299,7 @@ class ImgPolygonAssociator(
 
     @classmethod
     def from_scratch(cls, **kwargs: Any) -> ImgPolygonAssociator:
-        """
-        Initialize and return a new associator from keyword arguments.
+        """Initialize and return a new associator from keyword arguments.
 
         Ars:
             **kwargs (Any): keyword arguments (except load_from_disk), see docstring for __init__
@@ -351,13 +346,12 @@ class ImgPolygonAssociator(
 
     @property
     def label_type(self) -> str:
-        """Return label type"""
+        """Return label type."""
         return self._params_dict["label_type"]
 
     @label_type.setter
     def label_type(self, new_label_type: str):
-        """
-        Set label type.
+        """Set label type.
 
         Warning:
             Does not delete old labels and create new ones.
@@ -406,7 +400,8 @@ class ImgPolygonAssociator(
 
     @property
     def all_polygon_classes(self):
-        """Should include not just the segmentation classes but also e.g. mask or background classes."""
+        """Should include not just the segmentation classes but also e.g. mask
+        or background classes."""
 
         answer = self.segmentation_classes.copy()
         for class_name in NON_SEGMENTATION_POLYGON_CLASSES:
@@ -421,9 +416,7 @@ class ImgPolygonAssociator(
         return self._image_data_dirs
 
     def save(self):
-        """
-        Save associator to disk.
-        """
+        """Save associator to disk."""
 
         log.info(f"Saving associator to disk...")
 
@@ -465,8 +458,9 @@ class ImgPolygonAssociator(
         download_dir: Optional[Union[Path, str]] = None,
         copy_update_from_source_dataset_dict: bool = False,
     ) -> ImgPolygonAssociator:
-        """
-        Factory method that returns an empty associator of the same format (i.e. columns in polygons_df and imgs_df) as self with data_dir target_data_dir.
+        """Factory method that returns an empty associator of the same format
+        (i.e. columns in polygons_df and imgs_df) as self with data_dir
+        target_data_dir.
 
         Args:
             data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, assoc_dir.
@@ -518,9 +512,7 @@ class ImgPolygonAssociator(
         return new_empty_assoc
 
     def print_graph(self):
-        """
-        Print the associator's internal graph.
-        """
+        """Print the associator's internal graph."""
         print(self._graph)
 
     def _get_empty_df(self, df_name: str) -> GeoDataFrame:
@@ -612,30 +604,29 @@ class ImgPolygonAssociator(
                 )
                 self._update_from_source_dataset_dict = {}
 
-    def _check_and_adjust_df_format(self, mode: str, df: GeoDataFrame):
-        """
-        Check if a dataframe df (polygons_df or imgs_df) has the format required for an associator to work, if not either make adjustments if possible or raise a ValueError.
+    # def _check_and_adjust_df_format(self, mode: str, df: GeoDataFrame):
+    #     """
+    #     Check if a dataframe df (polygons_df or imgs_df) has the format required for an associator to work, if not either make adjustments if possible or raise a ValueError.
 
-        Args:
-            mode (str): One of "polygons_df" or "imgs_df"
-            df (GeoDataFrame): polygons_df
+    #     Args:
+    #         mode (str): One of "polygons_df" or "imgs_df"
+    #         df (GeoDataFrame): polygons_df
 
-        Raises:
-            ValueError: If the df doesn't have the right index name
-        """
+    #     Raises:
+    #         ValueError: If the df doesn't have the right index name
+    #     """
 
-        if mode == "polygons_df" and df.index.name != POLYGONS_DF_INDEX_NAME:
-            raise ValueError(
-                f"polygons_df.index.name is {df.index.name}, should be {POLYGONS_DF_INDEX_NAME}"
-            )
-        if mode == "imgs_df" and df.index.name != IMGS_DF_INDEX_NAME:
-            raise ValueError(
-                f"imgs_df.index.name is {df.index.name}, should be {IMGS_DF_INDEX_NAME}"
-            )
+    #     if mode == "polygons_df" and df.index.name != POLYGONS_DF_INDEX_NAME:
+    #         raise ValueError(
+    #             f"polygons_df.index.name is {df.index.name}, should be {POLYGONS_DF_INDEX_NAME}"
+    #         )
+    #     if mode == "imgs_df" and df.index.name != IMGS_DF_INDEX_NAME:
+    #         raise ValueError(
+    #             f"imgs_df.index.name is {df.index.name}, should be {IMGS_DF_INDEX_NAME}"
+    #         )
 
     def _standardize_df_crs(self, df: GeoDataFrame, df_name: str):
-        """
-        Standardize CRS of dataframe (i.e. set to CRS of associator).
+        """Standardize CRS of dataframe (i.e. set to CRS of associator).
 
         Args:
             polygons_df (GeoDataFrame): polygons_df
@@ -647,7 +638,7 @@ class ImgPolygonAssociator(
             df = df.to_crs(epsg=self.crs_epsg_code)
 
     def _load_df_from_disk(self, df_name: str) -> GeoDataFrame:
-        """Load polygons_df or imgs_df from disk"""
+        """Load polygons_df or imgs_df from disk."""
 
         if df_name == "polygons_df":
             df_index_name = POLYGONS_DF_INDEX_NAME
@@ -689,7 +680,10 @@ class ImgPolygonAssociator(
         assoc_dir: Union[Path, str],
         download_dir: Union[Path, str],
     ):
-        """Set paths to image/label data and associator component files. Used during initialization."""
+        """Set paths to image/label data and associator component files.
+
+        Used during initialization.
+        """
 
         if data_dir is not None:
             (
@@ -722,8 +716,7 @@ class ImgPolygonAssociator(
 
     @staticmethod
     def _make_dict_json_serializable(input_dict: dict) -> dict:
-        """
-        Make dict serializable as JSON by replacing Path with strings
+        """Make dict serializable as JSON by replacing Path with strings.
 
         Args:
             input_dict (dict): input dict with keys strings and values of arbitrary type
@@ -744,8 +737,7 @@ class ImgPolygonAssociator(
         segmentation_classes: List[str],
         background_class: str, **kwargs
     ):
-        """
-        TODO
+        """TODO.
 
         Args:
             segmentation_classes (List[str]): [description]
@@ -779,7 +771,7 @@ class ImgPolygonAssociator(
         polygons_df: Optional[GeoDataFrame] = None,
         polygons_df_name: Optional[str] = None
     ):
-        """Check TODO"""
+        """Check TODO."""
 
         if polygons_df is None:
             polygons_df = self.polygons_df
