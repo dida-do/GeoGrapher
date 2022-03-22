@@ -1,5 +1,6 @@
 """MixIn that implements downloading sentinel-2 images."""
 
+import configparser
 import itertools
 import logging
 import os
@@ -76,12 +77,19 @@ class Sentinel2DownloaderMixIn:
         Optional[
             Any] = None,  # See here for type https://sentinelsat.readthedocs.io/en/latest/api_reference.html
             area_relation: Optional[str] = None,
+            username: Optional[str] = None,
+            password: Optional[str] = None,
             **kwargs) -> dict:
         """Downloads a sentinel-2 image fully containing the polygon, returns a
         dict in the format needed by the associator.
 
+        Note:
+            If not given, the username and password for the Copernicus Sentinel-2 OpenAPI
+            will be read from an s2_copernicus_credentials.ini in self.associator_dir.
+            TODO::::
+
         Args:
-            polygon_name: The name of the polygon, only relevant for print statements and errors.  #TODO: I'd make that one optional
+            polygon_name: The name of the polygon, only relevant for print statements and errors.
             polygon_geometry: The areas the images shall be downloaded for.
             download_dir: Directory to save the downloaded Sentinel-2 products.
             previously_downloaded_imgs_set: A list of already downloaded products, will be used prevent double downloads.
@@ -90,6 +98,8 @@ class Sentinel2DownloaderMixIn:
             max_percent_cloud_coverage (int): Integer between 0 and 100.
             date (Any):  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
             area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+            username: Username for Sentinel-2 API. Defaults to None, i.e. read from case s2_copernicus_credentials.inis2_copernicus_credentials.ini (see note).
+            password: Password for Sentinel-2 API. Defaults to None, i.e. read from case s2_copernicus_credentials.ini (see note).
 
         Returns:
             info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict], 'polygon_info_dict': polygon_info_dict})
@@ -137,15 +147,26 @@ class Sentinel2DownloaderMixIn:
         if producttype == 'L2A':
             producttype = 'S2MSI2A'
 
-        # To set up sentinel API, ...
-        # ... load environment variables ...
-        load_dotenv()
-
-        # ... extract username and password ...
-        username = os.environ.get("sentinelAPIusername")
-        password = os.environ.get("sentinelAPIpassword")
-        if username is None or password is None:
-            log.error(f"sentinelAPI: missing username or password")
+        # Get username and password to set up the sentinel API ...
+        try:
+            if None in {username, password}:
+                config = configparser.ConfigParser()
+                config_path = self.assoc_dir / "sentinel_scihub.ini"
+                if not config_path.is_file():
+                    raise FileNotFoundError
+                config.read(self.assoc_dir / "sentinel_scihub.ini")
+            if username is None:
+                username = config["login"]["username"]
+            if password is None:
+                password = config["login"]["password"]
+        except FileNotFoundError:
+            log.error(
+                f"Missing 'sentinel_scihub.ini' file in {self.assoc_dir}. Need API credentials (username and password)"
+            )
+        except KeyError as e:
+            log.error(
+                f"{e}: Missing entry in 'sentinel_scihub.ini' file. Need API credentials."
+            )
 
         # ... and instantiate the API.
         api = SentinelAPI(username, password)
@@ -289,129 +310,3 @@ class Sentinel2DownloaderMixIn:
         }
 
         return return_dict
-
-    # def _safe_to_geotif_L2A(
-    #         self,
-    #         safe_root : Union[Path, str],
-    #         resolution : Union[int, str],
-    #         outdir : Optional[Union[Path, str]] = None,
-    #         TCI : bool = True,
-    #         bands_order : List[str] = ["B01", "B02", "B03", "B04", "B05", "B06",
-    #                     "B07","B8A","B08", "B09", "B11", "B12", "WVP", "AOT"],
-    #         jp2_masks_order : List[str] = ["CLDPRB"],
-    #         gml_mask_order : List[str] = [("CLOUDS", "B00")]
-    #         ) -> dict:
-    #     """
-    #     Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a dict
-    #     with the crs epsg code and a shapely polygon defined by the image bounds.
-
-    #     band structure of final geotif:
-    #         if TCI: 1-3 TCI RGB
-    #         else bands_order (only the available ones will be stored though) , jp2_masks_order, gml_mask_order
-
-    #     resolution: the desired resolution
-
-    #     jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
-
-    #     safe_root is the safe folder root
-
-    #     TCI = true color image
-
-    #     bands_order and jp2_masks_order are lists of strings
-    #     gml_mask_order is a list of tuples -> [0] mask name as string, [1] band for which to get the mask
-    #     """
-
-    #     #assert resolution is within available
-    #     assert resolution in [10, 20, 60, "10", "20", "60"]
-
-    #     #define output file
-    #     if outdir and os.path.isdir(outdir):
-    #         outfile = os.path.join(outdir, os.path.split(safe_root)[-1][:-4]+"tif")
-    #     else:
-    #         outfile = safe_root[:-4] + "tif"
-
-    #     granule_dir = os.path.join(safe_root, "GRANULE")
-    #     masks_dir = os.path.join(
-    #         granule_dir, "{}/QI_DATA/".format(os.listdir(granule_dir)[0]))
-
-    #     if resolution in [10, "10"]:
-    #         jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
-    #                         and f.split("_")[-1][:2] == "20"]
-    #     else:
-    #         jp2_masks_paths = [masks_dir+f for f in os.listdir(masks_dir) if f.split("_")[-2] in jp2_masks_order
-    #                         and f.split("_")[-1][:2] == str(resolution)]
-
-    #     jp2_path = os.path.join(
-    #         granule_dir, "{}/IMG_DATA/R{}m/".format(os.listdir(granule_dir)[0], resolution))
-    #     img_data_bands = [
-    #         jp2_path + f for f in os.listdir(jp2_path) if not f.split("_")[-2] in ["TCI", "SCL"]]
-
-    #     tci_path = [
-    #         jp2_path + f for f in os.listdir(jp2_path) if f.split("_")[-2] == "TCI"][0]
-
-    #     #set up rasterio loaders
-    #     bands = {}
-    #     max_width = 0
-    #     max_height = 0
-    #     for file in img_data_bands+jp2_masks_paths:
-
-    #         band = rio.open(file, driver="JP2OpenJPEG")
-    #         max_width = max(max_width, band.width)
-    #         max_height = max(max_height, band.height)
-    #         bands[file.split("_")[-2]] = band
-
-    #     gml_mask_paths = {(f.split("_")[-2], f.split(
-    #         "_")[-1].split(".")[-2]): masks_dir+f for f in os.listdir(masks_dir) if (f.split("_")[-2], f.split(
-    #             "_")[-1].split(".")[-2]) in gml_mask_order and f.split(".")[-1] == "gml"}
-
-    #     #reader for tci
-    #     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
-
-    #     #number of bands in final geotif
-    #     count = len([b for b in bands if b in bands_order or b in jp2_masks_order] +
-    #                 [g for g in gml_mask_paths if g in gml_mask_order])+3*TCI
-
-    #     #write geotif
-    #     with rio.open(outfile,
-    #                 "w",
-    #                 driver="GTiff",
-    #                 width=max_width,
-    #                 height=max_width,
-    #                 count=count,
-    #                 crs=bands["B02"].crs,
-    #                 transform=bands["B02"].transform,
-    #                 dtype=bands["B02"].dtypes[0]) as dst:
-
-    #         dst.nodata = NO_DATA_VAL
-
-    #         #write gml masks
-    #         for idx, (_, gml_path) in enumerate(gml_mask_paths.items()):
-    #             try:
-    #                 shapes = gpd.read_file(gml_path)["geometry"].values
-    #                 mask, _, _ = rio.mask.raster_geometry_mask(
-    #                     bands["B02"], shapes, crop=False, invert=True)
-    #             except ValueError:
-    #                 mask = np.full(shape=bands["B02"].read(1).shape,fill_value=0.0,dtype=np.uint16)
-
-    #             dst.write(mask.astype(np.uint16), len(bands)+3*TCI+idx+1)
-
-    #         #write jp2 bands
-    #         for idx, dst_reader in enumerate([bands[b] for b in bands_order+jp2_masks_order if b in bands]):
-
-    #             img = dst_reader.read(1)
-    #             if not dst_reader.dtypes[0] == bands["B02"].dtypes[0]:
-    #                 img = (img*(65535.0/255.0)).astype(np.uint16)
-    #             dst.write(img, 3*TCI+idx+1)
-
-    #             dst_reader.close()
-
-    #         #write tci
-    #         if TCI:
-    #             for i in range(3):
-    #                 img = (tci_band.read(i+1)*(65535.0/255.0)).astype(np.uint16)
-    #                 dst.write(img, i+1)
-
-    #         crs_epsg_code = dst.crs.to_epsg()
-    #         img_bounding_rectangle = box(*dst.bounds)
-
-    #         return {'crs_epsg_code': crs_epsg_code, 'img_bounding_rectangle': img_bounding_rectangle}
