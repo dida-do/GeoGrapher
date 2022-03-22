@@ -1,5 +1,7 @@
-"""The ImgPolygonAssociator class organizes and handles remote sensing
-datasets."""
+"""
+The ImgPolygonAssociator class organizes and handles remote sensing
+datasets.
+"""
 
 from __future__ import annotations
 
@@ -83,22 +85,33 @@ class ImgPolygonAssociator(
     """Organize, build up and handle remote sensing datasets consisting of
     shapely polygons and images/labels.
 
-    The ImgPolygonAssociator class can build up, handle, and organize datasets consisting of shapely vector polygon labels (as well as tabular information about them in the form of a GeoDataFrame) and remote sensing raster images and potentially (semantic) segmentation pixel labels (e.g. GeoTiffs or .npy files) (as well as tabular information about the images and pixel labels in the form of a GeoDataFrame) by providing a two-way linkage between the polygons and the images/pixel labels automatically keeping track of which polygons are contained in which images/pixel labels.
+    The ImgPolygonAssociator class can build up, handle, and organize datasets
+    consisting of shapely vector polygon labels (as well as tabular information
+    about them in the form of a GeoDataFrame) and remote sensing raster images
+    and potentially (semantic) segmentation pixel labels (e.g. GeoTiffs
+    or .npy files) (as well as tabular information about the images and pixel labels
+    in the form of a GeoDataFrame) by providing a two-way linkage between
+    the polygons and the images/pixel labels automatically keeping track of which polygons
+     are contained in which images/pixel labels.
 
     Attributes:
 
-    - polygons_df: A GeoDataFrame containing the vector polygon labels. Should have index name 'polygon_name' giving the unique identifier for the vector polygon (which usually should be a string or an int) and columns
+    - polygons_df: GeoDataFrame containing the vector polygon labels. Should be indexed
+        by unique identifiers (str or int) for the polygons and contain the following columns:
         - 'geometry': shapely.geometry.Polygon. The vector polygon label (in a standard crs)
         - 'img_count': int. Number of images in the dataset that fully contain the polygon.
         - If the label_type argument is 'categorical' or 'onehot' there should be a 'type' column whose entries are the segmenation class (one of the entries in the segmentation_classes list) the polygon belongs to. If the label_type argument is "soft-categorical" there should be columns prob_seg_class_[class] for each segmentation class.
         - other columns as needed for one's application.
 
-    - imgs_df: A GeoDatFrame containing tabular information about the images. Should have index name 'img_name' and indices of type str giving the unique identifier of an image and columns
+    - imgs_df: GeoDatFrame containing tabular information about the images. Should be indexed
+        by the image names and contain the following columns:
         - 'geometry': shapely.geometry.Polygon. Polygon defining the image bounds (in the associator's standardized crs)
         - 'orig_crs_epsg_code': int. The EPSG code of the crs the georeferenced image is in.
         - other columns as needed for one's application.
 
-    - crs_epsg_code: EPSG code of the coordinate reference system (crs) the associator (i.e. the associator's imgs_df and polygons_df) is in. Defaults to 4326 (WGS84). Setting this attribute will automatically set the associator's imgs_df and polygons_df crs's.
+    - crs_epsg_code: EPSG code of the coordinate reference system (crs) the associator
+    (i.e. the associator's imgs_df and polygons_df) is in. Defaults to 4326 (WGS84). Setting
+    this attribute will automatically set the associator's imgs_df and polygons_df crs's.
     """
 
     # yapf: disable
@@ -141,7 +154,8 @@ class ImgPolygonAssociator(
             images_dir, labels_dir, assoc_dir, download_dir from hand instead
             of setting the data_dir arg).
 
-        Either all four of the images_dir, labels_dir, assoc_dir, and download_dir args or the data_dir arg should be given (i.e. not None).
+        Either all four of the images_dir, labels_dir, assoc_dir, and download_dir args
+        or the data_dir arg should be given (i.e. not None).
 
         Args:
 
