@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 from geopandas import GeoDataFrame
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from rs_tools.utils.utils import deepcopy_gdf
 

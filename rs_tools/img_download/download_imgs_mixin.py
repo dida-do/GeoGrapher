@@ -9,7 +9,7 @@ import pandas as pd
 from geopandas import GeoDataFrame
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from rs_tools.errors import (ImgAlreadyExistsError, ImgDownloadError,
                              NoImgsForPolygonFoundError)
