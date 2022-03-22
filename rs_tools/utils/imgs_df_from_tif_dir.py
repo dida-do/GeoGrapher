@@ -7,7 +7,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import rasterio as rio
 from geopandas import GeoDataFrame
 from shapely.geometry import Polygon, box
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from rs_tools.utils.utils import transform_shapely_geometry
 
