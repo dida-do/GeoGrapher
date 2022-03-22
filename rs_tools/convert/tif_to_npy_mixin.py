@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np
 import rasterio as rio
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from rs_tools import ImgPolygonAssociator
