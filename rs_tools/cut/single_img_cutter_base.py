@@ -18,7 +18,7 @@ from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 from shapely.geometry.polygon import Polygon
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator

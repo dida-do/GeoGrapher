@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from rs_tools import ImgPolygonAssociator

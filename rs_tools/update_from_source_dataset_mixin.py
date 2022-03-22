@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union
 
 from geopandas import GeoDataFrame
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
