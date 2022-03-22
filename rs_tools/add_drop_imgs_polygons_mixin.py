@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Sequence, Union
+from typing import Literal, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -46,11 +46,14 @@ class AddDropImgsPolygonsMixIn(object):
             )
 
         self._standardize_df_crs(df=new_polygons_df, df_name='new_polygons_df')
-
-        self._check_df_cols(df=new_polygons_df,
-                            df_name='new_polygons_df',
-                            self_df=self.polygons_df,
-                            self_df_name='self.polygons_df')
+        self._check_required_df_cols_exist(df=new_polygons_df,
+                                           df_name='new_polygons_df',
+                                           mode='polygons_df')
+        self._check_df_cols_agree(self,
+                                  df=new_polygons_df,
+                                  df_name='new_polygons_df',
+                                  self_df=self.polygons_df,
+                                  self_df_name='self.polygons_df')
 
         self._check_classes_in_polygons_df_contained_in_all_classes(
             new_polygons_df, 'new_polygons_df')
@@ -137,11 +140,14 @@ class AddDropImgsPolygonsMixIn(object):
             )
 
         self._standardize_df_crs(df=new_imgs_df, df_name='new_imgs_df')
-
-        self._check_df_cols(df=new_imgs_df,
-                            df_name='new_imgs_df',
-                            self_df=self.imgs_df,
-                            self_df_name='self.imgs_df')
+        self._check_required_df_cols_exist(df=new_imgs_df,
+                                           df_name='new_imgs_df',
+                                           mode='imgs_df')
+        self._check_df_cols_agree(self,
+                                  df=new_imgs_df,
+                                  df_name='new_imgs_df',
+                                  self_df=self.imgs_df,
+                                  self_df_name='self.imgs_df')
 
         # go through all new imgs...
         for img_name in new_imgs_df.index:
@@ -240,19 +246,9 @@ class AddDropImgsPolygonsMixIn(object):
 
         df = df.to_crs(epsg=self.crs_epsg_code)
 
-    def _check_df_cols(self, df: GeoDataFrame, df_name: str,
-                       self_df: GeoDataFrame, self_df_name: str) -> bool:
-        """Check if required columns exist and if columns agree."""
-
-        required_cols = self._get_required_df_cols(self_df_name.split(".")[1])
-
-        if not set(required_cols) <= set(df.columns):
-
-            missing_cols = set(required_cols) - set(df.columns)
-            raise ValueError(
-                f"{df_name} is missing required columns: {', '.join(missing_cols)}"
-            )
-
+    def _check_df_cols_agree(self, df: GeoDataFrame, df_name: str,
+                             self_df: GeoDataFrame, self_df_name: str):
+        """Log if column names don't agree."""
         if set(df.columns) != set(self_df.columns) and len(self_df) > 0:
 
             df1_cols_not_in_df2 = set(df.columns) - set(self_df.columns)
