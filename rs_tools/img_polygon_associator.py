@@ -10,8 +10,8 @@ import logging
 import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import (Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar,
-                    Union)
+from typing import (Any, Dict, List, Literal, Optional, Sequence, Tuple, Type,
+                    TypeVar, Union)
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
@@ -223,16 +223,14 @@ class ImgPolygonAssociator(
         self._standardize_df_crs(df=polygons_df, df_name="polygons_df")
         self._standardize_df_crs(df=imgs_df, df_name="imgs_df")
 
-        # # run safety checks on polygons_df, imgs_df and adjust format if necessary
-        # self._check_and_adjust_df_format(mode="polygons_df", df=polygons_df)
-        # self._check_and_adjust_df_format(mode="imgs_df", df=imgs_df)
-
         # set self.polygons_df, self.imgs_df, self._update_from_source_dataset_dict
         self._set_remaining_assoc_components(
             load_from_disk=load_from_disk, polygons_df=polygons_df, imgs_df=imgs_df
         )
 
-        # safety check
+        # safety checks
+        self._check_required_df_cols_exist(df=imgs_df, df_name='self.imgs_df', mode='imgs_df')
+        self._check_required_df_cols_exist(df=polygons_df, df_name='self.polygons_df', mode='polygons_df')
         self._check_classes_in_polygons_df_contained_in_all_classes()
 
         # directories containing image data
@@ -618,26 +616,19 @@ class ImgPolygonAssociator(
                 )
                 self._update_from_source_dataset_dict = {}
 
-    # def _check_and_adjust_df_format(self, mode: str, df: GeoDataFrame):
-    #     """
-    #     Check if a dataframe df (polygons_df or imgs_df) has the format required for an associator to work, if not either make adjustments if possible or raise a ValueError.
+    def _check_required_df_cols_exist(
+            self, df: GeoDataFrame, df_name: str,
+            mode: Literal["polygons_df", "imgs_df"]) -> bool:
+        """Check if required columns exist."""
 
-    #     Args:
-    #         mode (str): One of "polygons_df" or "imgs_df"
-    #         df (GeoDataFrame): polygons_df
+        required_cols = self._get_required_df_cols(mode)
 
-    #     Raises:
-    #         ValueError: If the df doesn't have the right index name
-    #     """
+        if not set(required_cols) <= set(df.columns):
 
-    #     if mode == "polygons_df" and df.index.name != POLYGONS_DF_INDEX_NAME:
-    #         raise ValueError(
-    #             f"polygons_df.index.name is {df.index.name}, should be {POLYGONS_DF_INDEX_NAME}"
-    #         )
-    #     if mode == "imgs_df" and df.index.name != IMGS_DF_INDEX_NAME:
-    #         raise ValueError(
-    #             f"imgs_df.index.name is {df.index.name}, should be {IMGS_DF_INDEX_NAME}"
-    #         )
+            missing_cols = set(required_cols) - set(df.columns)
+            raise ValueError(
+                f"{df_name} is missing required columns: {', '.join(missing_cols)}"
+            )
 
     def _standardize_df_crs(self, df: GeoDataFrame, df_name: str):
         """Standardize CRS of dataframe (i.e. set to CRS of associator).
