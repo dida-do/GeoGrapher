@@ -12,10 +12,10 @@ from zipfile import ZipFile
 import geopandas as gpd
 import numpy as np
 import rasterio as rio
-from dotenv import load_dotenv
 from geopandas import GeoSeries
 from scipy.ndimage import zoom
 from sentinelsat import SentinelAPI
+from sentinelsat.exceptions import UnauthorizedError, ServerError, QueryLengthError, QuerySyntaxError
 from shapely import wkt
 from shapely.geometry import box
 
@@ -200,9 +200,11 @@ class Sentinel2DownloaderMixIn:
 
             products = {k: v for k, v in products.items() if api.is_online(k)}
 
+        except (UnauthorizedError, ServerError, QueryLengthError, QuerySyntaxError) as e:
+            log.exception(str(e))
+            raise
         # The sentinelsat API can throw an exception if there are no results for a query instead of returning an empty dict ...
-        except:
-
+        except Exception as e:
             # ... so in that case we set the result by hand:
             products = {}
 
