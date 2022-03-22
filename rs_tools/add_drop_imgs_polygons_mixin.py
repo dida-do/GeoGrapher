@@ -47,10 +47,10 @@ class AddDropImgsPolygonsMixIn(object):
 
         self._standardize_df_crs(df=new_polygons_df, df_name='new_polygons_df')
 
-        self._check_df_cols_index_name(df=new_polygons_df,
-                                       df_name='new_polygons_df',
-                                       self_df=self.polygons_df,
-                                       self_df_name='self.polygons_df')
+        self._check_df_cols(df=new_polygons_df,
+                            df_name='new_polygons_df',
+                            self_df=self.polygons_df,
+                            self_df_name='self.polygons_df')
 
         self._check_classes_in_polygons_df_contained_in_all_classes(
             new_polygons_df, 'new_polygons_df')
@@ -138,10 +138,10 @@ class AddDropImgsPolygonsMixIn(object):
 
         self._standardize_df_crs(df=new_imgs_df, df_name='new_imgs_df')
 
-        self._check_df_cols_index_name(df=new_imgs_df,
-                                       df_name='new_imgs_df',
-                                       self_df=self.imgs_df,
-                                       self_df_name='self.imgs_df')
+        self._check_df_cols(df=new_imgs_df,
+                            df_name='new_imgs_df',
+                            self_df=self.imgs_df,
+                            self_df_name='self.imgs_df')
 
         # go through all new imgs...
         for img_name in new_imgs_df.index:
@@ -240,10 +240,9 @@ class AddDropImgsPolygonsMixIn(object):
 
         df = df.to_crs(epsg=self.crs_epsg_code)
 
-    def _check_df_cols_index_name(self, df: GeoDataFrame, df_name: str,
-                                  self_df: GeoDataFrame,
-                                  self_df_name: str) -> bool:
-        """Check if column and index names of df1 and df2 agree."""
+    def _check_df_cols(self, df: GeoDataFrame, df_name: str,
+                       self_df: GeoDataFrame, self_df_name: str) -> bool:
+        """Check if required columns exist and if columns agree."""
 
         required_cols = self._get_required_df_cols(self_df_name.split(".")[1])
 
@@ -269,8 +268,3 @@ class AddDropImgsPolygonsMixIn(object):
                 )
 
             log.debug(f"columns of {df_name} and {df_name} don't agree.")
-
-        if df.index.name != self_df.index.name:
-            raise ValueError(
-                f"Index names for {df_name} and {self_df_name} disagree: {df.index.name} and {self_df.index.name}"
-            )
