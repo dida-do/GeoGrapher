@@ -25,7 +25,8 @@ from rs_tools.convert import (
 from rs_tools.cut import (CreateDSCutEveryImgToGridMixIn,
                           CreateDSCutImgsAroundEveryPolygonMixIn,
                           CreateDSCutIterOverImgsMixIn,
-                          CreateDSCutIterOverPolygonsMixIn)
+                          CreateDSCutIterOverPolygonsMixIn,
+                          CreateDSCutIterBaseMixIn)
 from rs_tools.global_constants import (IMGS_DF_INDEX_NAME,
                                        POLYGONS_DF_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
@@ -79,6 +80,7 @@ class ImgPolygonAssociator(
         CreateDSCutEveryImgToGridMixIn,
         CreateDSCutIterOverImgsMixIn,
         CreateDSCutIterOverPolygonsMixIn,
+        CreateDSCutIterBaseMixIn,
         LabelsMixIn,
         BipartiteGraphMixIn,  # Needs to be last
 ):
