@@ -69,56 +69,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
             ImgPolygonAssociator: associator of newly created or updated dataset
         """
 
-        # TODO factor out, code same for iter over imgs
-        if not create_or_update in {'create', 'update'}:
-            raise ValueError(
-                f"Unknown create_or_update arg {create_or_update}, should be one of 'create', 'update'."
-            )
-
-        if create_or_update == 'create':
-
-            # Check args
-            if source_data_dir is not None:
-                raise ValueError(f"TODOTODO")
-            if target_data_dir is None:
-                raise ValueError("TODOTODO")
-
-            # Create source_assoc
-            source_assoc = self
-
-            # Create target assoc, ...
-            target_assoc = self.empty_assoc_same_format_as(target_data_dir)
-            target_assoc._update_from_source_dataset_dict[
-                'cut_imgs'] = defaultdict(list)
-
-            # ..., image data dirs, ...
-            for dir in target_assoc.image_data_dirs:
-                dir.mkdir(parents=True, exist_ok=True)
-
-            # ... and the associator dir.
-            target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
-
-            # Make sure no associator files already exist.
-            if list(target_assoc.assoc_dir.iterdir()) != []:
-                raise Exception(
-                    f"The assoc_dir in {target_assoc.assoc_dir} should be empty!"
-                )
-
-        elif create_or_update == 'update':
-
-            # Check args
-            if target_data_dir is not None:
-                raise ValueError(f"TODOTODO")
-            if source_data_dir is None:
-                raise ValueError("TODOTODO")
-
-            target_assoc = self
-            source_assoc = self.__class__.from_data_dir(source_data_dir)
-
-            target_assoc._update_from_source_dataset_dict[
-                'cut_imgs'] = defaultdict(
-                    list,
-                    target_assoc._update_from_source_dataset_dict['cut_imgs'])
+        source_assoc, target_assoc = self._get_source_and_target_assocs(create_or_update, source_data_dir, target_data_dir)
 
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
@@ -243,6 +194,24 @@ class CreateDSCutIterOverPolygonsMixIn(object):
         target_assoc.save()
 
         return target_assoc
+
+
+        elif create_or_update == 'update':
+            # Check args
+            if target_data_dir is not None:
+                raise ValueError(f"update mode: target_data_dir needs to be None")
+            if source_data_dir is None:
+                raise ValueError(f"update mode: need source_data_dir")
+
+            target_assoc = self
+            source_assoc = self.__class__.from_data_dir(source_data_dir)
+
+            target_assoc._update_from_source_dataset_dict[
+                'cut_imgs'] = defaultdict(
+                    list,
+                    target_assoc._update_from_source_dataset_dict['cut_imgs'])
+
+        return source_assoc,target_assoc
 
     @staticmethod
     def _filter_out_previously_cut_imgs(

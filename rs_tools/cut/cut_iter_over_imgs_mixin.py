@@ -60,49 +60,8 @@ class CreateDSCutIterOverImgsMixIn(object):
                 predicate to filter images. Defaults to AlwaysTrue().
         """
 
-        if not create_or_update in {'create', 'update'}:
-            raise ValueError(
-                f"Unknown create_or_update arg {create_or_update}, should be one of 'create', 'update'."
-            )
-
-        if create_or_update == 'create':
-
-            # Check args
-            if source_data_dir is not None:
-                raise ValueError(f"TODOTODO")
-            if target_data_dir is None:
-                raise ValueError("TODOTODO")
-
-            # Create source_assoc
-            source_assoc = self
-
-            # Create target assoc, ...
-            target_assoc = self.empty_assoc_same_format_as(target_data_dir)
-            target_assoc._update_from_source_dataset_dict['cut_imgs'] = []
-
-            # ..., image data dirs, ...
-            for dir in target_assoc.image_data_dirs:
-                dir.mkdir(parents=True, exist_ok=True)
-
-            # ... and the associator dir.
-            target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
-
-            # Make sure no associator files already exist.
-            if list(target_assoc.assoc_dir.iterdir()) != []:
-                raise Exception(
-                    f"The assoc_dir in {target_assoc.assoc_dir} should be empty!"
-                )
-
-        elif create_or_update == 'update':
-
-            # Check args
-            if target_data_dir is not None:
-                raise ValueError(f"TODOTODO")
-            if source_data_dir is None:
-                raise ValueError("TODOTODO")
-
-            target_assoc = self
-            source_assoc = self.__class__.from_data_dir(source_data_dir)
+        source_assoc, target_assoc = self._get_source_and_target_assocs(
+            create_or_update, source_data_dir, target_data_dir)
 
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
@@ -141,7 +100,9 @@ class CreateDSCutIterOverImgsMixIn(object):
                     new_graph=target_assoc._graph)
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
-                assert {IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'} <= set(
+                assert {
+                    IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
+                } <= set(
                     imgs_from_single_cut_dict.keys()
                 ), f"dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
 
