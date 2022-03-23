@@ -134,18 +134,24 @@ def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
     return gdf_copy
 
 
-# def concat_gdfs(
-#         objs: List[Union[GeoDataFrame],
-#         **kwargs: Any
-#     ) -> GeoDataFrame:
+def concat_gdfs(objs: List[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
+    """
+    Return concatentation of a list of GeoDataFrames.
 
-#     for obj in objs:
-#         if isinstance(obj, GeoDataFrame) and not obj.crs == objs[0].crs:
-#             raise ValueError('all geodataframes should have the same crs')
-#         elif not isinstance(pd.DataFrame):
-#             raise ValueError('all geodataframes should have the same crs')
+    The crs and index name of the returned concatenated GeoDataFrames will be
+    the crs and index name of the first GeoDataFrame in the list.
+    """
 
-#     return GeoDataFrame(pd.concat(objs, **kwargs), crs=objs[0].crs)
+    for obj in objs:
+        if isinstance(obj, GeoDataFrame) and obj.crs != objs[0].crs:
+            raise ValueError('all geodataframes should have the same crs')
+        elif not isinstance(obj, GeoDataFrame):
+            raise ValueError('all objs should be GeoDataFrames')
+
+    concatenated_gdf = GeoDataFrame(pd.concat(objs, **kwargs), crs=objs[0].crs)
+    concatenated_gdf.index.name = objs[0].index.name
+
+    return concatenated_gdf
 
 
 def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
