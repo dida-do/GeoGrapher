@@ -3,7 +3,7 @@ import logging
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Set, Tuple, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -13,6 +13,8 @@ from tqdm.auto import tqdm
 
 from rs_tools.errors import (ImgAlreadyExistsError, ImgDownloadError,
                              NoImgsForPolygonFoundError)
+from rs_tools.global_constants import IMGS_DF_INDEX_NAME
+from rs_tools.utils.utils import concat_gdfs
 
 # logger
 log = logging.getLogger(__name__)
@@ -22,10 +24,8 @@ log.setLevel(logging.DEBUG)
 
 
 class DownloadImgsBaseMixIn(object):
-    """Mix-in that implements a download method.
-
-    Currently supports sentinel-2 and JAXA DEM, easily extendable to
-    other sources.
+    """
+    Mix-in that implements a generic download method.
     """
 
     def download_imgs(
@@ -88,59 +88,12 @@ class DownloadImgsBaseMixIn(object):
             It's easy to come up with examples where the image count distribution (i.e. distribution of images per polygon) becomes unbalanced particularly if num_target_imgs_per_polygon is large. These scenarios are not necessarily very likely, but possible. As an example, if one wants to download say 5 images images for a polygon that is not fully contained in any image in the dataset and if there does not exist an image we can download that fully contains it but there are 20 disjoint sets of images we can download that jointly cover the polygon then these 20 disjoint sets will all be downloaded.
         """
 
-        if downloader is None:
-            try:
-                # Use saved value
-                value = getattr(self, 'downloader')
-            except AttributeError:
-                raise ValueError(
-                    "Need to set downloader keyword argument (TODO!!!).")
-        else:
-            # Remember value
-            self._params_dict['downloader'] = downloader
-
-        # Make sure images_dir and downloads_dir exists
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.download_dir.mkdir(parents=True, exist_ok=True)
 
-        if polygon_names is None:
-
-            polygons_to_download = list(self.polygons_df.loc[
-                self.polygons_df['img_count'] < target_img_count].index)
-
-        else:
-            if isinstance(polygon_names, (str, int)):
-
-                polygons_to_download = [polygon_names]
-
-            elif isinstance(polygon_names, list) and all(
-                    isinstance(element, (str, int))
-                    for element in polygon_names):
-
-                polygons_to_download = polygon_names
-
-            else:
-                raise TypeError(
-                    f"The polygon_names argument should be a list of polygon names (i.e. strings)."
-                )
-
-            if not set(polygons_to_download) <= set(self.polygons_df.index):
-                raise ValueError(
-                    f"Polygons {set(polygons_to_download) - set(self.polygons_df.index)} missing from self.polygons_df"
-                )
-
-        polygons_w_null_geometry = [
-            polygon_name for polygon_name in polygons_to_download
-            if self.polygons_df.loc[polygon_name].geometry is None
-        ]
-        if polygons_w_null_geometry != []:
-            polygons_to_download = [
-                polygon_name for polygon_name in polygons_to_download
-                if polygon_name not in polygons_w_null_geometry
-            ]
-            log.info(
-                f"download_imgs: skipping polygons with null geometry: {polygons_w_null_geometry}."
-            )
+        downloader = self._get_and_remember_downloader(downloader)
+        polygons_to_download = self._get_polygons_to_download(
+            polygon_names, target_img_count)
 
         if filter_out_polygons_contained_in_union_of_intersecting_imgs:
             polygons_to_download = [
@@ -159,207 +112,152 @@ class DownloadImgsBaseMixIn(object):
         # (Will be used to make sure no attempt is made to download an image more than once.)
 
         # Dict to keep track of imgs we've downloaded. We'll append this to self.imgs_df as a (geo)dataframe later
-        #new_imgs_dict = {index_or_col_name: [] for index_or_col_name in [self.imgs_df.index.name] + list(self.imgs_df.columns)}
         new_imgs_dict = defaultdict(list)
 
-        # Go through polygons for which not enough images have been downloaded yet.
-        for count, polygon_name in tqdm(enumerate(polygons_to_download)):
+        pbar = tqdm(
+            enumerate(self.polygons_df[["geometry"
+                                        ]].loc[polygons_to_download]))
+        for count, polygon_name, polygon_geometry in pbar:
 
-            polygon_geometry = self.polygons_df.loc[polygon_name, 'geometry']
+            # polygon_geometry = self.polygons_df.loc[polygon_name, 'geometry']
 
+            pbar.set_description(
+                f"Polygon {count}/{len(polygons_to_download)}")
             log.debug(
                 f"download_missing_imgs_for_polygons_df: considering polygon {polygon_name}."
             )
-            log.info(f"Polygon {count}/{len(polygons_to_download)}")
 
             # Since we process and connect each image after downloading it, we might not need to download
-            # an image for a polygon that earlier was lacking an image if it is now contained in one of the already downloaded images, so need to check again that there are not enough images for the polygon (since the iterator above is set when it is called and won't know if the "img_count" column value has been changed in the meanwhile).
+            # an image for a polygon that earlier was lacking an image if it is now contained in one of the already downloaded images,
+            # so need to check again that there are not enough images for the polygon (since the iterator above is set when it is called
+            # and won't know if the "img_count" column value has been changed in the meanwhile).
             num_img_series_to_download = target_img_count - self.polygons_df.loc[
                 polygon_name, "img_count"]
             if num_img_series_to_download <= 0:
                 log.debug(
-                    f"download_missing_imgs_for_polygons_df: skipping polygon {polygon_name} since there enough images fully containing it."
+                    f"Skipping polygon {polygon_name} since there now enough images fully containing it."
                 )
+                continue
 
-                pass
+            while num_img_series_to_download > 0:
 
-            else:
+                # Try downloading an image series and save returned dict (of dicts)
+                # containing information for polygons_df, self.imgs_df...
+                try:
 
-                # Dict of possible keyword args for download function.
-                # We use deepcopy here so that a call to download_missing_imgs_for_polygons_df
-                # can not modify self._params_dict.
-                temporary_params_dict = copy.deepcopy(self._params_dict)
-                temporary_params_dict.update(kwargs)
+                    # DEBUG INFO
+                    log.debug(
+                        f"attempting to download image for polygon {polygon_name}."
+                    )
 
-                while num_img_series_to_download > 0:
+                    download_method = getattr(
+                        self, f"_download_imgs_for_polygon_{downloader}")
+                    temporary_params_dict = copy.deepcopy(self._params_dict)
+                    temporary_params_dict.update(kwargs)
+                    return_dict = download_method(
+                        polygon_name,
+                        polygon_geometry,
+                        self.download_dir,
+                        previously_downloaded_imgs_set,  # _download_imgs_for_polygon should use this to make sure no attempt at downloading an already downloaded image is made.
+                        **temporary_params_dict,
+                    )
 
-                    # Try downloading an image and save returned dict (of dicts) containing information for polygons_df, self.imgs_df...
-                    try:
+                # ... unless either no images could be found ...
+                except NoImgsForPolygonFoundError as e:
 
-                        # DEBUG INFO
-                        log.debug(
-                            f"attempting to download image for polygon {polygon_name}."
-                        )
+                    # ... in which case we save it in self.polygons_df, ...
+                    self.polygons_df.loc[polygon_name,
+                                         'download_exception'] = repr(e)
 
-                        download_method = getattr(
-                            self, f"_download_imgs_for_polygon_{downloader}")
-                        return_dict = download_method(
-                            polygon_name,
-                            polygon_geometry,
-                            self.download_dir,
-                            previously_downloaded_imgs_set,  # _download_imgs_for_polygon should use this to make sure no attempt at downloading an already downloaded image is made.
-                            **temporary_params_dict,
-                        )
+                    # ... log a warning, ...
+                    log.warning(e, exc_info=True)
 
-                    # ... unless either no images could be found or a download error occured, ...
-                    except NoImgsForPolygonFoundError as e:
+                    # ... and break the while loop, ...
+                    break
 
-                        # ... in which case we save it in self.polygons_df, ...
-                        self.polygons_df.loc[polygon_name,
-                                             'download_exception'] = repr(e)
+                # ... or a download error occured, ...
+                except ImgDownloadError as e:
 
-                        # ... log a warning, ...
-                        log.warning(e, exc_info=True)
+                    self.polygons_df.loc[polygon_name,
+                                         'download_exception'] = repr(e)
+                    log.warning(e, exc_info=True)
 
-                        # ... and break the while loop.
+                # ... or _download_imgs_for_polygon tried downloading a previously downloaded image.
+                except ImgAlreadyExistsError as e:
+
+                    log.exception(
+                        f"_download_imgs_for_polygon tried downloading a previously downloaded image!"
+                    )
+
+                # If the download_method call was successful ...
+                else:
+
+                    # ... we first extract the information to be appended to self.imgs_df.
+                    list_img_info_dicts = return_dict['list_img_info_dicts']
+                    # (each img_info_dict contains the information for a new row of self.imgs_df)
+
+                    # DEBUG INFO
+                    log.debug(
+                        f"\nimg_polygon_associator: list_img_info_dicts is {list_img_info_dicts}\n\n"
+                    )
+
+                    # If no images were downloaded, ...
+                    if list_img_info_dicts == []:
+                        # ... we break the loop, since no further imgs can be found
                         break
-
-                    except ImgDownloadError as e:
-
-                        self.polygons_df.loc[polygon_name,
-                                             'download_exception'] = repr(e)
-                        log.warning(e, exc_info=True)
-
-                    # ... or _download_imgs_for_polygon tried downloading a previously downloaded image ...
-                    except ImgAlreadyExistsError as e:
-
-                        # ... in which case we log the exception.
-                        log.exception(
-                            f"_download_imgs_for_polygon tried downloading a previously downloaded image!"
-                        )
-
-                    # If nothing went wrong ...
+                    # ... else ...
                     else:
 
-                        # ... we first extract the information to be appended to self.imgs_df.
-                        list_img_info_dicts = return_dict[
-                            'list_img_info_dicts']
-                        # (each img_info_dict contains the information for a new row of self.imgs_df)
+                        self._run_safety_checks_on_downloaded_imgs(
+                            previously_downloaded_imgs_set, polygon_name,
+                            list_img_info_dicts)
 
-                        # DEBUG INFO
-                        log.debug(
-                            f"\nimg_polygon_associator: list_img_info_dicts is {list_img_info_dicts}\n\n"
-                        )
+                        # For each download ...
+                        for count, img_info_dict in enumerate(
+                                list_img_info_dicts):
 
-                        # If at least one image was downloaded, ...
-                        # if list_img_info_dicts != [{}]:
-                        if list_img_info_dicts != []:
+                            # ... process it to an image ...
+                            img_name = img_info_dict["img_name"]
+                            single_download_processor = getattr(
+                                self,
+                                f"_process_downloaded_img_file_{downloader}")
+                            single_img_processed_return_dict = single_download_processor(
+                                img_name, self.download_dir, self.images_dir,
+                                self._params_dict['crs_epsg_code'],
+                                **temporary_params_dict)
 
-                            # ... extract the new image names ...
-                            new_img_names_list = [
-                                img_info_dict[self.imgs_df.index.name]
-                                for img_info_dict in list_img_info_dicts
-                            ]
+                            # ... and update the img_info_dict with the returned information from processing. (This modifies list_img_info_dicts, too).
+                            img_info_dict.update(
+                                single_img_processed_return_dict)
 
-                            # ... and make sure we have not downloaded an image twice for the same polygon.
-                            if len(new_img_names_list) != len(
-                                    set(new_img_names_list)):
+                            # Connect the image: Add an image vertex to the graph, connect to all polygon vertices for which the intersection is non-empty and modify self.polygons_df where necessary ...
+                            self._add_img_to_graph_modify_polygons_df(
+                                img_name=img_name,
+                                img_bounding_rectangle=img_info_dict[
+                                    'geometry'])
 
-                                duplicate_imgs_dict = {
-                                    img_name: img_count
-                                    for img_name, img_count in Counter(
-                                        new_img_names_list).items()
-                                    if img_count > 1
-                                }
+                            # Finally, remember we downloaded the image.
+                            previously_downloaded_imgs_set.add(img_name)
+                        """
+                        # Check the polygon is fully contained in the union of the downloaded images
+                        # THIS MADE SENSE WHEN I WAS JUST DOWNLOADING ONE IMAGE PER POLYGON, BUT DOESN'T MAKE SENSE ANYMORE SINCE WE'RE SKIPPING IMAGES THAT WE'D LIKE TO USE FOR A POLYGON THAT ALREADY HAVE BEEN DOWNLOADED, SO WILL GET UNNECESSARY WARNINGS FOR THOSE POLYGONS. BUT COULD MODIFY DOWNLOAD FUNCTION TO RETURN A SET OF THOSE IMAGES SO WE CAN CHECK THIS IF WE WANT...
+                        list_downloaded_img_bounding_rectangles = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
+                        union_area_of_downloaded_images = unary_union(list_downloaded_img_bounding_rectangles)
+                        if not polygon_geometry.within(union_area_of_downloaded_images):
 
-                                log.error(
-                                    f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}"
-                                )
+                            downloaded_img_names = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
 
-                                raise Exception(
-                                    f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}"
-                                )
+                            log.warning(f"Polygon {polygon_name} not fully contained in the union of the images that were downloaded for it!")
 
-                            # Make sure we haven't downloaded an image that's already in the dataset.
-                            # (the _download_imgs_for_polygon method should have thrown an ImgAlreadyExistsError exception in this case, but we're checking again ourselves that this hasn't happened. )
-                            if set(new_img_names_list
-                                   ) & previously_downloaded_imgs_set:
+                            self.polygons_df.loc[polygon_name, "download_exception"] += f" Polygon {polygon_name} not fully contained in images downloaded for it: {downloaded_img_names}"
+                        """
 
-                                log.error(
-                                    f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}"
-                                )
+                        # update new_imgs_dict
+                        for img_info_dict in list_img_info_dicts:
+                            for key in img_info_dict:
+                                new_imgs_dict[key].append(img_info_dict[key])
 
-                                raise Exception(
-                                    f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}"
-                                )
-
-                            # For each download ...
-                            for count, img_info_dict in enumerate(
-                                    list_img_info_dicts):
-
-                                # ... process it to an image ...
-                                img_name = img_info_dict[
-                                    self.imgs_df.index.name]
-                                single_download_processor = getattr(
-                                    self,
-                                    f"_process_downloaded_img_file_{downloader}"
-                                )
-                                single_img_processed_return_dict = single_download_processor(
-                                    img_name, self.download_dir,
-                                    self.images_dir,
-                                    self._params_dict['crs_epsg_code'],
-                                    **temporary_params_dict)
-
-                                # ... and update the img_info_dict with the returned information from processing. (This modifies list_img_info_dicts, too).
-                                img_info_dict.update(
-                                    single_img_processed_return_dict)
-
-                                # Connect the image: Add an image vertex to the graph, connect to all polygon vertices for which the intersection is non-empty and modify self.polygons_df where necessary ...
-                                self._add_img_to_graph_modify_polygons_df(
-                                    img_name=img_name,
-                                    img_bounding_rectangle=img_info_dict[
-                                        'geometry'])
-
-                                # Finally, remember we downloaded the image.
-                                previously_downloaded_imgs_set.add(img_name)
-                            """
-                            # Check the polygon is fully contained in the union of the downloaded images
-                            # THIS MADE SENSE WHEN I WAS JUST DOWNLOADING ONE IMAGE PER POLYGON, BUT DOESN'T MAKE SENSE ANYMORE SINCE WE'RE SKIPPING IMAGES THAT WE'D LIKE TO USE FOR A POLYGON THAT ALREADY HAVE BEEN DOWNLOADED, SO WILL GET UNNECESSARY WARNINGS FOR THOSE POLYGONS. BUT COULD MODIFY DOWNLOAD FUNCTION TO RETURN A SET OF THOSE IMAGES SO WE CAN CHECK THIS IF WE WANT...
-                            list_downloaded_img_bounding_rectangles = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
-                            union_area_of_downloaded_images = unary_union(list_downloaded_img_bounding_rectangles)
-                            if not polygon_geometry.within(union_area_of_downloaded_images):
-
-                                downloaded_img_names = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
-
-                                log.warning(f"Polygon {polygon_name} not fully contained in the union of the images that were downloaded for it!")
-
-                                self.polygons_df.loc[polygon_name, "download_exception"] += f" Polygon {polygon_name} not fully contained in images downloaded for it: {downloaded_img_names}"
-                            """
-
-                            # Go through all images downloaded/processed for this polygon.
-                            for img_info_dict in list_img_info_dicts:
-
-                                # # After checking img_info_dict contains the columns/index we want
-                                # # (so we don't for example fill in missing columns with nonsensical default values)...
-                                # if set(img_info_dict.keys()) != set(self.imgs_df.columns) | {self.imgs_df.index.name}:
-
-                                #     keys_not_in_cols_or_index = {key for key in img_info_dict.keys() if key not in set(self.imgs_df.columns) | {self.imgs_df.index.name}}
-
-                                #     cols_or_index_not_in_keys = {x for x in set(self.imgs_df.columns) | {self.imgs_df.index.name} if x not in img_info_dict}
-
-                                #     raise Exception(f"img_info_dict keys not equal to imgs_df columns and index name. \n Keys not in cols or index name {keys_not_in_cols_or_index} \n Columns or index not in keys: {cols_or_index_not_in_keys}")
-
-                                # ... accumulate the information in new_imgs_dict, which we will convert to a dataframe and append to imgs_df after we've gone through all new polygons.
-
-                                #for key in new_imgs_dict:
-                                for key in img_info_dict:
-
-                                    new_imgs_dict[key].append(
-                                        img_info_dict[key])
-
-                            num_img_series_to_download -= 1
-                        else:
-                            num_img_series_to_download = 0  # no further imgs to be found
+                        num_img_series_to_download -= 1
 
         if len(new_imgs_dict) > 0:
             # Extract accumulated information about the imgs we've downloaded from new_imgs into a dataframe ...
@@ -374,12 +272,97 @@ class DownloadImgsBaseMixIn(object):
                                                      convert_floating=False)
 
             # ... and append it to self.imgs_df:
-            data_frames_list = [self.imgs_df, new_imgs_df]
-            self.imgs_df = GeoDataFrame(pd.concat(data_frames_list),
-                                        crs=data_frames_list[0].crs)
+            self.imgs_df = concat_gdfs([self.imgs_df, new_imgs_df])
 
             self.save()
 
             # Create the label, if necessary.
-            if add_labels == True:
+            if add_labels:
                 self.make_labels()
+
+    def _run_safety_checks_on_downloaded_imgs(
+            self, previously_downloaded_imgs_set: Set[Union[str, int]],
+            polygon_name: Union[str, int], list_img_info_dicts: List[dict]):
+        """Check no images have been downloaded more than once"""
+
+        # Extract the new image names ...
+        new_img_names_list = [
+            img_info_dict["img_name"] for img_info_dict in list_img_info_dicts
+        ]
+
+        # ... and make sure we have not downloaded an image twice for the same polygon.
+        if len(new_img_names_list) != len(set(new_img_names_list)):
+            duplicate_imgs_dict = {
+                img_name: img_count
+                for img_name, img_count in Counter(new_img_names_list).items()
+                if img_count > 1
+            }
+
+            log.error(
+                f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}"
+            )
+
+            raise Exception(
+                f"Something is wrong with _download_imgs_for_polygon: it attempted to download the following images multiple times for polygon {polygon_name}: {duplicate_imgs_dict}"
+            )
+
+            # Make sure we haven't downloaded an image that's already in the dataset.
+            # (the _download_imgs_for_polygon method should have thrown an ImgAlreadyExistsError exception in this case, but we're checking again ourselves that this hasn't happened. )
+        if set(new_img_names_list) & previously_downloaded_imgs_set:
+            log.error(
+                f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}"
+            )
+
+            raise Exception(
+                f"Something is wrong with _download_imgs_for_polygon: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}"
+            )
+
+    def _get_polygons_to_download(
+            self, polygon_names: Union[str, int, List[int], List[str]],
+            target_img_count: int) -> List[Union[int, str]]:
+
+        if polygon_names is None:
+            polygons_to_download = list(self.polygons_df.loc[
+                self.polygons_df['img_count'] < target_img_count].index)
+        elif isinstance(polygon_names, (str, int)):
+            polygons_to_download = [polygon_names]
+        elif isinstance(polygon_names, list) and all(
+                isinstance(element, (str, int)) for element in polygon_names):
+            polygons_to_download = polygon_names
+        else:
+            raise TypeError(
+                f"The polygon_names argument should be a list of polygon names"
+            )
+
+        if not set(polygons_to_download) <= set(self.polygons_df.index):
+            raise ValueError(
+                f"Polygons {set(polygons_to_download) - set(self.polygons_df.index)} missing from self.polygons_df"
+            )
+
+        # Remove polygons with null geometry
+        polygons_w_null_geometry_mask = self.polygons_df.geometry.values == None
+        polygons_w_null_geometry = self.polygons_df[
+            polygons_w_null_geometry_mask].index.tolist()
+        if polygons_w_null_geometry != []:
+            polygons_to_download = [
+                polygon_name for polygon_name in polygons_to_download
+                if polygon_name not in polygons_w_null_geometry
+            ]
+            log.info(
+                f"download_imgs: skipping polygons with null geometry: {polygons_w_null_geometry}."
+            )
+
+        return polygons_to_download
+
+    def _get_and_remember_downloader(self, downloader):
+        if downloader is None:
+            try:
+                # Use saved value
+                downloader = getattr(self, 'downloader')
+            except AttributeError:
+                raise ValueError(
+                    "Need to set downloader keyword argument (TODO!!!).")
+        else:
+            # Remember value
+            self._params_dict['downloader'] = downloader
+        return downloader
