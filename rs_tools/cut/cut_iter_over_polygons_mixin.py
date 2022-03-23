@@ -17,6 +17,8 @@ import pandas as pd
 from geopandas import GeoDataFrame
 from tqdm.auto import tqdm
 
+from rs_tools.global_constants import IMGS_DF_INDEX_NAME
+
 if TYPE_CHECKING:
     from rs_tools import ImgPolygonAssociator
 
@@ -24,7 +26,7 @@ from rs_tools.cut.img_selectors import ImgSelector
 from rs_tools.cut.polygon_filter_predicates import (AlwaysTrue,
                                                     PolygonFilterPredicate)
 from rs_tools.cut.single_img_cutter_base import SingleImgCutter
-from rs_tools.utils.utils import map_dict_values
+from rs_tools.utils.utils import concat_gdfs, map_dict_values
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +127,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
         # dict to temporarily store information which will be appended to target_assoc's imgs_df after cutting
         new_imgs_dict = {
             index_or_col_name: []
-            for index_or_col_name in [source_assoc.imgs_df.index.name] +
+            for index_or_col_name in [IMGS_DF_INDEX_NAME] +
             list(source_assoc.imgs_df.columns)
         }
 
@@ -172,18 +174,17 @@ class CreateDSCutIterOverPolygonsMixIn(object):
 
                     # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                     assert {
-                        'img_name', 'geometry', 'orig_crs_epsg_code'
+                        IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
                     } <= set(
                         imgs_from_single_cut_dict.keys()
-                    ), f"dict returned by img_cutter needs the following keys: 'img_name', 'geometry', 'orig_crs_epsg_code'."
-                    # if not set(imgs_from_single_cut_dict.keys()) == set(target_assoc.imgs_df.columns) | {target_assoc.imgs_df.index.name}, f"dict returned by img_cutter doesn't contain the same keys as needed by new_imgs_dict!"
+                    ), f"dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
 
                     # Accumulate information for the new imgs in new_imgs_dict.
                     for key in new_imgs_dict.keys():
                         new_imgs_dict[key] += (imgs_from_single_cut_dict[key])
 
                     new_img_names = imgs_from_single_cut_dict[
-                        source_assoc.imgs_df.index.name]
+                        IMGS_DF_INDEX_NAME]
                     img_bounding_rectangles = imgs_from_single_cut_dict[
                         'geometry']
                     for new_img_name, img_bounding_rectangle in zip(
@@ -208,7 +209,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
 
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
         new_imgs_df = GeoDataFrame(new_imgs_dict, crs=target_assoc.imgs_df.crs)
-        new_imgs_df.set_index(target_assoc.imgs_df.index.name, inplace=True)
+        new_imgs_df.set_index(IMGS_DF_INDEX_NAME, inplace=True)
 
         # log warning if columns don't agree
         if set(new_imgs_df.columns) - set(target_assoc.imgs_df.columns) != set(
@@ -217,9 +218,7 @@ class CreateDSCutIterOverPolygonsMixIn(object):
             logger.warning("columns of source and target datasets don't agree")
 
         # ... and append it to self.imgs_df.
-        data_frames_list = [target_assoc.imgs_df, new_imgs_df]
-        target_assoc.imgs_df = GeoDataFrame(pd.concat(data_frames_list),
-                                            crs=data_frames_list[0].crs)
+        target_assoc.imgs_df = concat_gdfs([target_assoc.imgs_df, new_imgs_df])
 
         # For those images that existed before the update and now intersect with newly added polygons ...
         imgs_w_new_polygons = [
