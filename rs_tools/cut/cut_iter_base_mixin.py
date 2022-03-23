@@ -13,9 +13,10 @@ class CreateDSCutIterBaseMixIn:
     CreateDSCutIterOverPolygonsMixIn and CreateDSCutIterOverImgsMixIn
     """
 
-    def _get_source_and_target_assocs(self, create_or_update: str,
-                                      source_data_dir: Path,
-                                      target_data_dir: Path) -> Tuple[ImgPolygonAssociator, ImgPolygonAssociator]:
+    def _get_source_and_target_assocs(
+        self, create_or_update: str, source_data_dir: Path,
+        target_data_dir: Path
+    ) -> Tuple[ImgPolygonAssociator, ImgPolygonAssociator]:
         """Return source and target associators"""
 
         if not create_or_update in {'create', 'update'}:
@@ -51,3 +52,21 @@ class CreateDSCutIterBaseMixIn:
                 raise Exception(
                     f"The assoc_dir in {target_assoc.assoc_dir} should be empty!"
                 )
+
+        elif create_or_update == 'update':
+            # Check args
+            if target_data_dir is not None:
+                raise ValueError(
+                    f"update mode: target_data_dir needs to be None")
+            if source_data_dir is None:
+                raise ValueError(f"update mode: need source_data_dir")
+
+            target_assoc = self
+            source_assoc = self.__class__.from_data_dir(source_data_dir)
+
+            target_assoc._update_from_source_dataset_dict[
+                'cut_imgs'] = defaultdict(
+                    list,
+                    target_assoc._update_from_source_dataset_dict['cut_imgs'])
+
+        return source_assoc, target_assoc
