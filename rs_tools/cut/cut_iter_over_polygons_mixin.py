@@ -195,24 +195,6 @@ class CreateDSCutIterOverPolygonsMixIn(object):
 
         return target_assoc
 
-
-        elif create_or_update == 'update':
-            # Check args
-            if target_data_dir is not None:
-                raise ValueError(f"update mode: target_data_dir needs to be None")
-            if source_data_dir is None:
-                raise ValueError(f"update mode: need source_data_dir")
-
-            target_assoc = self
-            source_assoc = self.__class__.from_data_dir(source_data_dir)
-
-            target_assoc._update_from_source_dataset_dict[
-                'cut_imgs'] = defaultdict(
-                    list,
-                    target_assoc._update_from_source_dataset_dict['cut_imgs'])
-
-        return source_assoc,target_assoc
-
     @staticmethod
     def _filter_out_previously_cut_imgs(
             polygon_name: Union[str,
