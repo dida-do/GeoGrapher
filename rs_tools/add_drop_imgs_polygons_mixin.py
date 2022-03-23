@@ -4,7 +4,7 @@ from typing import Literal, Optional, Sequence, Union
 import pandas as pd
 from geopandas import GeoDataFrame
 
-from rs_tools.utils.utils import deepcopy_gdf
+from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
 
 # logger
 log = logging.getLogger(__name__)
@@ -49,8 +49,7 @@ class AddDropImgsPolygonsMixIn(object):
         self._check_required_df_cols_exist(df=new_polygons_df,
                                            df_name='new_polygons_df',
                                            mode='polygons_df')
-        self._check_df_cols_agree(self,
-                                  df=new_polygons_df,
+        self._check_df_cols_agree(df=new_polygons_df,
                                   df_name='new_polygons_df',
                                   self_df=self.polygons_df,
                                   self_df_name='self.polygons_df')
@@ -99,9 +98,7 @@ class AddDropImgsPolygonsMixIn(object):
                                            polygons_df=new_polygons_df)
 
         # Finally, append new_polygons_df to the associator's (self.)polygons_df.
-        data_frames_list = [self.polygons_df, new_polygons_df]
-        self.polygons_df = GeoDataFrame(pd.concat(data_frames_list),
-                                        crs=data_frames_list[0].crs)
+        self.polygons_df = concat_gdfs([self.polygons_df, new_polygons_df])
         #self.polygons_df = self.polygons_df.convert_dtypes()
 
         if generate_labels == True:
@@ -143,8 +140,7 @@ class AddDropImgsPolygonsMixIn(object):
         self._check_required_df_cols_exist(df=new_imgs_df,
                                            df_name='new_imgs_df',
                                            mode='imgs_df')
-        self._check_df_cols_agree(self,
-                                  df=new_imgs_df,
+        self._check_df_cols_agree(df=new_imgs_df,
                                   df_name='new_imgs_df',
                                   self_df=self.imgs_df,
                                   self_df_name='self.imgs_df')
@@ -170,9 +166,7 @@ class AddDropImgsPolygonsMixIn(object):
                     img_name, img_bounding_rectangle=img_bounding_rectangle)
 
         # append new_imgs_df
-        data_frames_list = [self.imgs_df, new_imgs_df]
-        self.imgs_df = GeoDataFrame(pd.concat(data_frames_list),
-                                    crs=data_frames_list[0].crs)
+        self.imgs_df = concat_gdfs([self.imgs_df, new_imgs_df])
         #self.imgs_df = self.imgs_df.convert_dtypes()
 
     def drop_polygons(self,
