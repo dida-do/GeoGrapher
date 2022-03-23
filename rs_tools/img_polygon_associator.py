@@ -445,7 +445,9 @@ class ImgPolygonAssociator(
             convert_boolean=True,
             convert_floating=False,
         )
+        self.imgs_df.index.name = IMGS_DF_INDEX_NAME
         self.imgs_df.to_file(Path(self._imgs_df_path), driver="GeoJSON")
+        self.polygons_df.index.name = POLYGONS_DF_INDEX_NAME
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
