@@ -20,6 +20,8 @@ from shapely.geometry import box
 from shapely.geometry.polygon import Polygon
 from tqdm.auto import tqdm
 
+from rs_tools.global_constants import IMGS_DF_INDEX_NAME
+
 if TYPE_CHECKING:
     from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
@@ -123,7 +125,7 @@ class SingleImgCutter(ABC):
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {
             index_or_col_name: []
-            for index_or_col_name in [self.source_assoc.imgs_df.index.name] +
+            for index_or_col_name in [IMGS_DF_INDEX_NAME] +
             list(self.source_assoc.imgs_df.columns)
         }
 
@@ -181,7 +183,7 @@ class SingleImgCutter(ABC):
             img_crs, self.source_assoc.imgs_df.crs, *img_bounds_in_img_crs))
 
         single_new_img_info_dict = {
-            'img_name': new_img_name,
+            IMGS_DF_INDEX_NAME: new_img_name,
             'geometry': img_bounding_rectangle_in_imgs_df_crs,
             'orig_crs_epsg_code': img_crs.to_epsg(),
             'img_processed?': True
@@ -189,7 +191,8 @@ class SingleImgCutter(ABC):
 
         # Copy over any remaining information about the img from self.source_assoc.imgs_df.
         for col in set(self.source_assoc.imgs_df.columns) - {
-                'img_name', 'geometry', 'orig_crs_epsg_code', 'img_processed?'
+                IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
+                'img_processed?'
         }:
             single_new_img_info_dict[col] = self.source_assoc.imgs_df.loc[
                 source_img_name, col]
