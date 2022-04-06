@@ -39,8 +39,8 @@ class Sentinel2Processor(ImgDownloadProcessor):
 
         filename_no_extension = Path(img_name).stem
         zip_filename = filename_no_extension + ".zip"
-        safe_path = Path(download_dir) / f"safe_files/{filename_no_extension}.SAFE"
-        zip_path = Path(download_dir) / zip_filename
+        safe_path = download_dir / f"safe_files/{filename_no_extension}.SAFE"
+        zip_path = download_dir / zip_filename
 
         # extract zip to SAFE
         with ZipFile(zip_path) as zip_ref:
