@@ -17,24 +17,18 @@ import geopandas as gpd
 from geopandas import GeoDataFrame
 
 import rs_tools
+
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
 from rs_tools.convert import (
     CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
     CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn)
-from rs_tools.cut import (CreateDSCutEveryImgToGridMixIn,
-                          CreateDSCutImgsAroundEveryPolygonMixIn,
-                          CreateDSCutIterOverImgsMixIn,
-                          CreateDSCutIterOverPolygonsMixIn,
-                          CreateDSCutIterBaseMixIn)
 from rs_tools.global_constants import (IMGS_DF_INDEX_NAME,
                                        POLYGONS_DF_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
 from rs_tools.graph import BipartiteGraph
 # Base class:
 from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-from rs_tools.img_download import JAXADownloaderMixIn, Sentinel2DownloaderMixIn
-from rs_tools.img_download.download_imgs_mixin import DownloadImgsBaseMixIn
 from rs_tools.labels.label_type_conversion_utils import \
     convert_polygons_df_soft_cat_to_cat
 from rs_tools.labels.labels_mixin import LabelsMixIn
@@ -69,18 +63,10 @@ log = logging.getLogger(__name__)
 
 class ImgPolygonAssociator(
         AddDropImgsPolygonsMixIn,
-        DownloadImgsBaseMixIn,  # needs to before any Downloader mix ins
-        Sentinel2DownloaderMixIn,
-        JAXADownloaderMixIn,
         UpdateFromSourceDSMixIn,  # Needs to be before any of the CreateDS mix ins
         CreateDSCombineRemoveSegClassesMixIn,
         CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
         CreateDSTiffToNpyMixIn,
-        CreateDSCutImgsAroundEveryPolygonMixIn,
-        CreateDSCutEveryImgToGridMixIn,
-        CreateDSCutIterOverImgsMixIn,
-        CreateDSCutIterOverPolygonsMixIn,
-        CreateDSCutIterBaseMixIn,
         LabelsMixIn,
         BipartiteGraphMixIn,  # Needs to be last
 ):
