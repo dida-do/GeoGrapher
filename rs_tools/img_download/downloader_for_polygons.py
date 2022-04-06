@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
 from rs_tools import ImgPolygonAssociator
-from rs_tools.base_model_dict_conversion.save_base_model import \
+from rs_tools.base_model_dict_conversion.save_base_model_mixin import \
     SaveAndLoadBaseModelMixIn
 from rs_tools.errors import (
     ImgAlreadyExistsError,
