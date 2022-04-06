@@ -1,24 +1,11 @@
-"""REWRITE DOCSTRINGS.
-
-TODO: Do we need the random_seed field here? Should it be in the subclass.
-TODO: bands!
-
-Mixin that implements creating or updating a dataset of GeoTiffs by
-cutting images around polygons from a source dataset.
+"""
+Dataset cutter that cuts out images around polygons.
 """
 
-from __future__ import annotations
-
 import logging
-from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
-from rs_tools.cut.cut_iter_over_polygons_mixin import DSCutterIterOverPolygons
-
+from typing import Optional, Union
 from rs_tools.cut.type_aliases import ImgSize
-
-if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
-
+from rs_tools.cut.cut_iter_over_polygons import DSCutterIterOverPolygons
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector
 from rs_tools.cut.polygon_filter_predicates import IsPolygonMissingImgs, PolygonFilterPredicate
 from rs_tools.cut.single_img_cutter_around_polygon import \
@@ -28,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
+    """Dataset cutter that cuts out images around polygons."""
 
     new_img_size: Optional[ImgSize]
     min_new_img_size: Optional[ImgSize]
@@ -44,6 +32,16 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
                  mode: str = 'random',
                  random_seed: int = 10,
                  **data):
+        """Dataset cutter that cuts out images around polygons.
+
+        Args:
+            new_img_size (Optional[ImgSize], optional): size of cutouts in 'centered' or 'random' mode. Defaults to 512.
+            min_new_img_size (Optional[ImgSize], optional): Min size of cutouts for 'variable' mode. Defaults to 64.
+            scaling_factor (Union[None, float], optional): Scaling factor for 'variable' mode. Defaults to 1.2.
+            target_img_count (int, optional): Targetted number of images per polygon. Defaults to 1.
+            mode (str, optional): One of 'random', 'centered', or 'variable'. Defaults to 'random'.
+            random_seed (int, optional): Random seed. Defaults to 10.
+        """
 
         is_polygon_missing_imgs: PolygonFilterPredicate = IsPolygonMissingImgs(
             target_img_count)
