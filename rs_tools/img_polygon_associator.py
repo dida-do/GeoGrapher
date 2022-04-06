@@ -10,13 +10,11 @@ import logging
 import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import (Any, Dict, List, Literal, Optional, Sequence, Tuple, Type,
+from typing import (Any, List, Literal, Optional, Sequence, Tuple, Type,
                     TypeVar, Union)
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
-
-import rs_tools
 
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
@@ -54,10 +52,7 @@ NON_SEGMENTATION_POLYGON_CLASSES = [
 
 IPAType = TypeVar("IPAType", bound="ImgPolygonAssociator")
 
-# logger
 log = logging.getLogger(__name__)
-
-# log level (e.g. 'DEBUG')
 # log.setLevel(logging.DEBUG)
 
 
