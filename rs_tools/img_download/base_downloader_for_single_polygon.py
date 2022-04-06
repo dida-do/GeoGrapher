@@ -1,6 +1,8 @@
+"""Base class for downloaders for a single polygon"""
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Set, Union
+from typing import Any, Dict, Literal, Set, Union
 from shapely.geometry import Polygon
 from pydantic import BaseModel
 
