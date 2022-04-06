@@ -1,72 +1,91 @@
-from __future__ import annotations
 from pathlib import Path
-from collections import defaultdict
-from typing import TYPE_CHECKING, Tuple
+from abc import ABC, abstractmethod
+from typing import TypeVar
+from pydantic import BaseModel, Field
+from rs_tools import ImgPolygonAssociator
+from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 
-if TYPE_CHECKING:
-    from rs_tools import ImgPolygonAssociator
+DSCutterType = TypeVar("DSCutterType", bound="DSCutterBase")
 
 
-class CreateDSCutIterBaseMixIn:
+class DSCutterBase(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     """
-    Mixin that implements methods common to both
-    CreateDSCutIterOverPolygonsMixIn and CreateDSCutIterOverImgsMixIn
+    Base class for dataset cutters.
     """
 
-    def _get_source_and_target_assocs(
-        self, create_or_update: str, source_data_dir: Path,
-        target_data_dir: Path
-    ) -> Tuple[ImgPolygonAssociator, ImgPolygonAssociator]:
-        """Return source and target associators"""
+    source_data_dir: Path
+    target_data_dir: Path
+    name: str = Field(
+        title="Name",
+        description=
+        "Name of dataset cutter. Used as part of filename when saving the cutter."
+    )
 
-        if not create_or_update in {'create', 'update'}:
-            raise ValueError(
-                f"Unknown create_or_update arg {create_or_update}, should be one of 'create', 'update'."
-            )
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._source_assoc = None
+        self._target_assoc = None
+        self._set_source_assoc()
+        self._set_target_assoc()
 
-        if create_or_update == 'create':
-            # Check args
-            if source_data_dir is not None:
-                raise ValueError(
-                    f"create mode: source_data_dir needs to be None")
-            if target_data_dir is None:
-                raise ValueError(f"create mode: need target_data_dir")
+    @abstractmethod
+    def _create(self, *args, **kwargs) -> ImgPolygonAssociator:
+        """Create a new dataset by cutting the source dataset"""
 
-            # Create source_assoc
-            source_assoc = self
+    @abstractmethod
+    def _update(self, *args, **kwargs) -> ImgPolygonAssociator:
+        """Update the target dataset from the source dataset"""
 
-            # Create target assoc, ...
-            target_assoc = self.empty_assoc_same_format_as(target_data_dir)
-            target_assoc._update_from_source_dataset_dict[
-                'cut_imgs'] = defaultdict(list)
+    def create(self, *args, **kwargs) -> ImgPolygonAssociator:
+        """Create a new dataset by cutting the source dataset"""
+        self._create(*args, **kwargs)
+        self._after_cutting()
 
-            # ..., image data dirs, ...
-            for dir in target_assoc.image_data_dirs:
-                dir.mkdir(parents=True, exist_ok=True)
+    def update(self, *args, **kwargs) -> ImgPolygonAssociator:
+        """Update the target dataset from the source dataset"""
+        self._update(*args, **kwargs)
+        self._after_cutting()
 
-            # ... and the associator dir.
-            target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
+    def save(self):
+        """Save cutter to update folder in source_data_dir"""
+        json_file_path = self.target_assoc.assoc_dir / self.name
+        self._save(json_file_path)
 
-            # Make sure no associator files already exist.
-            if list(target_assoc.assoc_dir.iterdir()) != []:
-                raise Exception(
-                    f"The assoc_dir in {target_assoc.assoc_dir} should be empty!"
-                )
+    @property
+    def source_assoc(self):
+        """Associator in source_data_dir"""
+        if self._source_assoc is None or self._source_assoc.images_dir.parent != self.source_data_dir:
+            self._set_source_assoc()
+        return self._source_assoc
 
-        elif create_or_update == 'update':
-            # Check args
-            if target_data_dir is not None:
-                raise ValueError(
-                    f"update mode: target_data_dir needs to be None")
-            if source_data_dir is None:
-                raise ValueError(f"update mode: need source_data_dir")
+    @property
+    def target_assoc(self):
+        """Associator in target_data_dir"""
+        if self._target_assoc is None or self._target_assoc.images_dir.parent != self.target_data_dir:
+            self._set_target_assoc()
+        return self._target_assoc
 
-            target_assoc = self
-            source_assoc = self.__class__.from_data_dir(source_data_dir)
+    def _after_cutting(self):
+        """Can be used in a subclass to e.g. save parameters to the target_assoc"""
 
-            target_assoc._update_from_source_dataset_dict[
-                'cut_imgs'] = defaultdict(
-                    list,
-                    target_assoc._update_from_source_dataset_dict['cut_imgs'])
+    def _set_source_assoc(self):
+        """Set source associator"""
+        self._source_assoc = ImgPolygonAssociator.from_data_dir(
+            self.source_data_dir)
 
-        return source_assoc, target_assoc
+    def _set_target_assoc(self):
+        """Set target associator"""
+        try:
+            target_assoc = ImgPolygonAssociator.from_data_dir(
+                self.target_data_dir)
+        except FileNotFoundError:
+            target_assoc = self.empty_assoc_same_format_as(
+                self.target_data_dir)
+        finally:
+            self._target_assoc = target_assoc
+
+    def _create_target_dirs(self):
+        """Create target_data_dir and subdirectories"""
+        self.target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
+        for dir_ in self.target_assoc.image_data_dirs:
+            dir_.mkdir(parents=True, exist_ok=True)
