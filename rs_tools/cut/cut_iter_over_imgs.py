@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, Union
+from abc import ABC, abstractmethod
+from pydantic import BaseModel, Field
+import json
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -16,24 +19,35 @@ from rs_tools.utils.utils import concat_gdfs
 if TYPE_CHECKING:
     from rs_tools import ImgPolygonAssociator
 
+from rs_tools.cut.cut_base import DSCutterBase
 from rs_tools.cut.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
 from rs_tools.cut.img_filter_predicates import ImgFilterPredicate
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 from rs_tools.global_constants import DATA_DIR_SUBDIRS, IMGS_DF_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class CreateDSCutIterOverImgsMixIn(object):
+class DSCutterIterOverImgs(DSCutterBase):
+    """Dataset cutter that iterates over images"""
 
-    def create_or_update_dataset_iter_over_imgs(
-        self,
-        create_or_update: str,
-        img_cutter: SingleImgCutter,
-        source_data_dir: Optional[Union[str, Path]] = None,
-        target_data_dir: Optional[Union[str, Path]] = None,
-        img_filter_predicate: ImgFilterPredicate = AlwaysTrueImgs()
-    ) -> ImgPolygonAssociator:
+    img_cutter: SingleImgCutterBase
+    img_filter_predicate: ImgFilterPredicate = AlwaysTrueImgs()
+    cut_imgs: List[str] = Field(
+        default_factory=list,
+        description=
+        "Names of cut images in source_data_dir. Usually not to be set by hand!"
+    )
+
+    def _create(self):
+        """Create a new dataset. See create_or_update for more details."""
+        return self.create_or_update()
+
+    def _update_from_source(self) -> ImgPolygonAssociator:
+        """Update target dataset."""
+        return self.create_or_update()
+
+    def create_or_update(self) -> ImgPolygonAssociator:
         """Higher order method to create or update a data set of GeoTiffs by
         iterating over images in the source dataset.
 
@@ -49,38 +63,27 @@ class CreateDSCutIterOverImgsMixIn(object):
 
         Args:
             create_or_update (str) : One of 'create' or 'update'.
-            source_data_dir (Union[str, Path]): data directory (images, labels,
-                associator) containing the GeoTiffs to be cut from.
-                Use only if updating a dataset.
-            target_data_dir (Union[str, Path]): data directory of target
-                dataset. Use only if creating a dataset.
-            img_cutter (SingleImgCutter): single image cutter used to cut
-                selected images in the source dataset.
-            img_filter_predicate (ImgFilterPredicate, optional):
-                predicate to filter images. Defaults to AlwaysTrue().
         """
 
-        source_assoc, target_assoc = self._get_source_and_target_assocs(
-            create_or_update, source_data_dir, target_data_dir)
-
         # Remember information to determine for which images to generate new labels
-        imgs_in_target_dataset_before_update = set(target_assoc.imgs_df.index)
+        imgs_in_target_dataset_before_update = set(
+            self.target_assoc.imgs_df.index)
         added_polygons = []  # updated as we iterate
 
         # dict to temporarily store information which will be appended to target_assoc's imgs_df after cutting
         new_imgs_dict = {
             index_or_col_name: []
             for index_or_col_name in [IMGS_DF_INDEX_NAME] +
-            list(source_assoc.imgs_df.columns)
+            list(self.source_assoc.imgs_df.columns)
         }
 
-        target_assoc.add_to_polygons_df(source_assoc.polygons_df)
+        self.target_assoc.add_to_polygons_df(self.source_assoc.polygons_df)
 
-        imgs_in_src_that_have_been_cut = target_assoc._update_from_source_dataset_dict[
-            'cut_imgs']
-        mask_imgs_in_src_that_have_not_been_cut = ~source_assoc.imgs_df.index.isin(
+        # Get names of imgs in src that have not been cut
+        imgs_in_src_that_have_been_cut = self.cut_imgs
+        mask_imgs_in_src_that_have_not_been_cut = ~self.source_assoc.imgs_df.index.isin(
             imgs_in_src_that_have_been_cut)
-        names_of_imgs_in_src_that_have_not_been_cut = source_assoc.imgs_df.loc[
+        names_of_imgs_in_src_that_have_not_been_cut = self.source_assoc.imgs_df.loc[
             mask_imgs_in_src_that_have_not_been_cut].index
 
         # Iterate over all images in source dataset that have not been cut.
@@ -88,23 +91,23 @@ class CreateDSCutIterOverImgsMixIn(object):
                              desc='Cutting dataset: '):
 
             # If filter condition is satisfied, (if not, don't do anything) ...
-            if img_filter_predicate(img_name,
-                                    target_assoc=target_assoc,
-                                    new_img_dict=new_imgs_dict,
-                                    source_assoc=source_assoc):
+            if self.img_filter_predicate(img_name,
+                                         target_assoc=self.target_assoc,
+                                         new_img_dict=new_imgs_dict,
+                                         source_assoc=self.source_assoc):
 
-                # ... cut the images (and their labels) and remember information to be appended to target_assoc imgs_df in return dict
-                imgs_from_single_cut_dict = img_cutter(
+                # ... cut the images (and their labels) and remember information to be appended to self.target_assoc imgs_df in return dict
+                imgs_from_single_cut_dict = self.img_cutter(
                     img_name=img_name,
-                    new_polygons_df=target_assoc.polygons_df,
-                    new_graph=target_assoc._graph)
+                    new_polygons_df=self.target_assoc.polygons_df,
+                    new_graph=self.target_assoc._graph)
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                 assert {
                     IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
                 } <= set(
                     imgs_from_single_cut_dict.keys()
-                ), f"dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
+                ), "dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
 
                 # Accumulate information for the new imgs in new_imgs_dict.
                 for key in new_imgs_dict.keys():
@@ -115,36 +118,37 @@ class CreateDSCutIterOverImgsMixIn(object):
                 for new_img_name, img_bounding_rectangle in zip(
                         new_img_names, img_bounding_rectangles):
 
-                    # Update target_assoc._update_from_source_dataset_dict
-                    target_assoc._update_from_source_dataset_dict[
-                        'cut_imgs'].append(img_name)
+                    self.cut_imgs.append(img_name)
 
-                    # Update graph and modify polygons_df in target_assoc
-                    target_assoc._add_img_to_graph_modify_polygons_df(
+                    # Update graph and modify polygons_df in self.target_assoc
+                    self.target_assoc._add_img_to_graph_modify_polygons_df(
                         img_name=new_img_name,
                         img_bounding_rectangle=img_bounding_rectangle)
 
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
-        new_imgs_df = GeoDataFrame(new_imgs_dict, crs=target_assoc.imgs_df.crs)
+        new_imgs_df = GeoDataFrame(new_imgs_dict,
+                                   crs=self.target_assoc.imgs_df.crs)
         new_imgs_df.set_index(IMGS_DF_INDEX_NAME, inplace=True)
 
         # ... and append it to self.imgs_df.
-        target_assoc.imgs_df = concat_gdfs([target_assoc.imgs_df, new_imgs_df])
+        self.target_assoc.imgs_df = concat_gdfs(
+            [self.target_assoc.imgs_df, new_imgs_df])
 
         # For those images that existed before the update and now intersect with newly added polygons ...
         imgs_w_new_polygons = [
             img_name for polygon_name in added_polygons for img_name in
-            target_assoc.imgs_intersecting_polygon(polygon_name)
+            self.target_assoc.imgs_intersecting_polygon(polygon_name)
             if img_name in imgs_in_target_dataset_before_update
         ]
         # Delete the old labels (since they won't show the new polygons)...
         for img_name in imgs_w_new_polygons:
-            label_path = target_assoc.labels_dir / img_name
+            label_path = self.target_assoc.labels_dir / img_name
             label_path.unlink(missing_ok=True)
         # ... and generate new ones.
-        target_assoc.make_labels(img_names=imgs_w_new_polygons)
+        self.target_assoc.make_labels(img_names=imgs_w_new_polygons)
 
-        # Finally, save associator to disk.
-        target_assoc.save()
+        # Finally, save associator and cutter to disk.
+        self.target_assoc.save()
+        self.save()
 
-        return target_assoc
+        return self.target_assoc
