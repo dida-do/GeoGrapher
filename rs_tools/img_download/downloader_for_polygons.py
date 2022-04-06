@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
 from rs_tools import ImgPolygonAssociator
-from rs_tools.base_model_dict_conversion.save_base_model_mixin import \
+from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import \
     SaveAndLoadBaseModelMixIn
 from rs_tools.errors import (
     ImgAlreadyExistsError,
@@ -283,6 +283,13 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
             # Create labels, if necessary.
             if add_labels:
                 assoc.make_labels()
+
+    def save(self, file_path: Union[Path, str]):
+        """
+        Save downloader. By convention, the downloader should be saved to the
+        associator subdirectory of the data directory it is supposed to operate on.
+        """
+        self._save(file_path)
 
     @staticmethod
     def _run_safety_checks_on_downloaded_imgs(
