@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class JAXADownloaderForSinglePolygon(ImgDownloadProcessor):
+class JAXADownloadProcessor(ImgDownloadProcessor):
     """ImgDownloadProcessor for JAXA downloads."""
 
     def process(
