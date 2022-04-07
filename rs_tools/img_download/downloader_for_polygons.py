@@ -82,19 +82,6 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
         Note:
             Any kwargs given will be saved to self.default_kwargs and become default values.
 
-        # TODO: move description?
-        Kwargs (downloader='jaxa'):
-            data_version (str): One of '1804', '1903', '2003', or '2012'.
-                Defaults if possible to whichever choice you made last time,
-                else to '1804'.
-            download_mode (str): One of 'bboxvertices' (download images for
-                vertices of the bbox of the polygon, preferred for
-                small polygons, but will miss inbetween if the polygon spans
-                more than two images in each axis), 'bboxgrid' (download images
-                for each point on a grid defined by the bbox. Overshoots for
-                small polygons, but works for large polygons). Defaults if possible
-                to whichever choice you made last time, else to 'bboxvertices'.
-
         Returns:
             None
 
