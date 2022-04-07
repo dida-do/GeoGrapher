@@ -1,64 +1,41 @@
 """SingleImgCutter that cuts an image to a grid of images."""
 
-from __future__ import annotations
-
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
+from pydantic import validator
 import rasterio as rio
 from affine import Affine
 from rasterio.windows import Window
 
+from rs_tools import ImgPolygonAssociator
 from rs_tools.cut.type_aliases import ImgSize
-
-if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
-
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 
 logger = logging.getLogger(__name__)
 
 
-class ImgToGridCutter(SingleImgCutter):
+class ImgToGridCutter(SingleImgCutterBase):
     """SingleImgCutter that cuts an image into a grid of images."""
 
-    def __init__(self, source_assoc: ImgPolygonAssociator,
-                 target_images_dir: Union[Path,
-                                          str], target_labels_dir: Union[Path,
-                                                                         str],
-                 new_img_size: ImgSize, img_bands: Optional[List[int]],
-                 label_bands: Optional[List[int]]) -> None:
-        """
-        Args:
-            source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
-            target_images_dir (Union[Path, str): images directory of target dataset
-            target_labels_dir (Union[Path, str): labels directory of target dataset
-            new_img_size (Union[int, Tuple[int, int]]): size (side length of square or rows, cols)
-            img_bands (Optional[List[int]], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands (Optional[List[int]], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        """
+    new_img_size: ImgSize
 
-        super().__init__(source_assoc=source_assoc,
-                         target_images_dir=target_images_dir,
-                         target_labels_dir=target_labels_dir,
-                         img_bands=img_bands,
-                         label_bands=label_bands)
-
-        # Check new_img_size arg type
-        if not isinstance(new_img_size, int) or (
-                isinstance(new_img_size, tuple) and len(new_img_size) == 2
-                and all(isinstance(entry, int) for entry in new_img_size)):
+    @validator("new_img_size")
+    def type_correctness(self, value: ImgSize) -> ImgSize:
+        """Check value has correct type"""
+        is_int: bool = isinstance(value, int)
+        is_pair_of_ints: bool = isinstance(
+            value, tuple) and len(value) == 2 and all(
+                isinstance(entry, int) for entry in value)
+        if not (is_int or is_pair_of_ints):
             raise TypeError(
                 "new_img_size needs to be an integer or a pair of integers!")
+        return value
 
-        if isinstance(new_img_size, tuple):
-            self.new_img_size_rows = new_img_size[0]
-            self.new_img_size_cols = new_img_size[1]
-        else:
-            self.new_img_size_rows = new_img_size
-            self.new_img_size_cols = new_img_size
-
+    @validator("new_img_size")
+    def side_lengths_must_be_positive(self, value: ImgSize) -> ImgSize:
+        """Check side lengths are positive"""
         if not self.new_img_size_rows > 0:
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
@@ -67,15 +44,33 @@ class ImgToGridCutter(SingleImgCutter):
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
                 "new_img_size needs to have positive side length(s)")
+        return value
+
+    @property
+    def new_img_size_rows(self) -> int:
+        """Return number of rows of new image size"""
+        if isinstance(self.new_img_size, tuple):
+            return self.new_img_size[0]
+        else:
+            return self.new_img_size
+
+    @property
+    def new_img_size_cols(self) -> int:
+        """Return number of columns of new image size"""
+        if isinstance(self.new_img_size, tuple):
+            return self.new_img_size[1]
+        else:
+            return self.new_img_size
 
     def _get_windows_transforms_img_names(
             self,
             source_img_name: str,
+            source_assoc: ImgPolygonAssociator,
             target_assoc: Optional[ImgPolygonAssociator] = None,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
 
-        source_img_path = self.source_assoc._images_dir / source_img_name
+        source_img_path = source_assoc.images_dir / source_img_name
 
         with rio.open(source_img_path) as src:
 
