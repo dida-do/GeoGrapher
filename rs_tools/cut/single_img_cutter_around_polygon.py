@@ -112,11 +112,11 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
         img_size_rows, img_size_cols = self._get_size_rows_cols(img_size)
 
         if not img_size_rows > 0:
-            logger.error("{arg_name} need to have positive side length(s)")
+            logger.error("%s need to have positive side length(s)", arg_name)
             raise ValueError(
                 "{arg_name} needs to have positive side length(s)")
         if not img_size_cols > 0:
-            logger.error("{arg_name} needs to have positive side length(s)")
+            logger.error("%s needs to have positive side length(s)", arg_name)
             raise ValueError(
                 "{arg_name} needs to have positive side length(s)")
 
@@ -174,9 +174,8 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
             assert source_assoc.polygons_df.loc[polygon_name].geometry.within(
                 source_assoc.imgs_df.loc[source_img_name].geometry)
             if not transformed_polygon_geometry.within(img_bbox):
-                logger.debug(
-                    f"img {source_img_name} doesn't contain polygon {polygon_name} in img crs"
-                )
+                logger.debug("img %s doesn't contain polygon %s in img crs",
+                             source_img_name, polygon_name)
                 transformed_polygon_geometry = img_bbox.intersection(
                     transformed_polygon_geometry)
 
