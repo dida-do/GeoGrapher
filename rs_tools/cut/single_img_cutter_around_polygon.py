@@ -1,61 +1,60 @@
 """
 ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
 given polygon from a source image.
-
-transformed_polygon_geometry.bounds
-(702447.9249869362, 5488515.894993714, 725881.4386058747, 5500023.0914324345)
-img_bbox.bounds
-(699960.0, 5390200.0, 809760.0, 5500000.0)
 """
-
-from __future__ import annotations
 
 import logging
 import math
 import random
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
+from pydantic import Field
 
-import rasterio as rio
 from affine import Affine
-from geopandas import GeoDataFrame
+import rasterio as rio
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
 from shapely.geometry import Polygon, box
 
 from rs_tools.cut.type_aliases import ImgSize
-
-if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
-
-from rs_tools.cut.polygon_filter_predicates import PolygonFilterPredicate
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 from rs_tools.utils.utils import transform_shapely_geometry
+from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 logger = logging.getLogger(__name__)
 
 
-class ImgsAroundPolygonCutter(SingleImgCutter):
+class ImgsAroundPolygonCutter(SingleImgCutterBase):
     """SingleImgCutter that cuts a small image (or several contiguous such
     images if the polygon does not fit into a single one) around each polygon
     in the image accepted by the polygon filter predicate."""
 
-    def __init__(self,
-                 source_assoc: ImgPolygonAssociator,
-                 target_images_dir: Union[Path, str],
-                 target_labels_dir: Union[Path, str],
-                 mode: str,
-                 new_img_size: Optional[ImgSize] = None,
-                 scaling_factor: Optional[float] = 1.2,
-                 min_new_img_size: Optional[ImgSize] = None,
-                 img_bands: Optional[List[int]] = None,
-                 label_bands: Optional[List[int]] = None,
-                 random_seed: int = 42) -> None:
+    mode: Literal["random", "centered", "variable"]
+    new_img_size: Optional[ImgSize] = None
+    scaling_factor: Optional[float] = 1.2
+    min_new_img_size: Optional[ImgSize] = None
+    img_bands: Optional[List[int]] = None
+    label_bands: Optional[List[int]] = None
+    random_seed: int = 42
+
+    _rows: Optional[int] = Field(
+        None, description="Do not set by hand. If None, will be inferred.")
+    _cols: Optional[int] = Field(
+        None, description="Do not set by hand. If None, will be inferred.")
+
+    def __init__(
+        self,
+        mode: str,
+        new_img_size: Optional[ImgSize] = None,
+        scaling_factor: Optional[float] = 1.2,
+        min_new_img_size: Optional[ImgSize] = None,
+        img_bands: Optional[List[int]] = None,
+        label_bands: Optional[List[int]] = None,
+        random_seed: int = 42,
+        **kwargs,
+    ) -> None:
         """
         Args:
-            source_assoc (ImgPolygonAssociator): associator of dataset images are to be cut from.
-            target_images_dir (Union[Path, str): images directory of target dataset
-            target_labels_dir (Union[Path, str): labels directory of target dataset
             mode (str, optional): One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
             new_img_size (Optional[ImgSize]): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
             scaling factor (Optional[float]): factor to scale the bounding rectangle of the polygon by to get the image size.
@@ -68,41 +67,41 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             ValueError: If the mode is unknown.
         """
 
-        super().__init__(source_assoc=source_assoc,
-                         target_images_dir=target_images_dir,
-                         target_labels_dir=target_labels_dir,
-                         img_bands=img_bands,
-                         label_bands=label_bands,
-                         mode=mode)
-
         if mode in {'random', 'centered'}:
-            required_img_size_attr_name = "new_img_size"
-            assert new_img_size is not None, "if mode is {mode}, new_img_size should not be None"
+            if new_img_size is None:
+                raise ValueError(
+                    f"if mode is {mode}, new_img_size should not be None")
+            self._check_img_size_type_and_value(new_img_size)
+            self._rows, self._cols = self._get_size_rows_cols(new_img_size)
         elif mode in {'variable'}:
-            required_img_size_attr_name = "min_new_img_size"
-            assert scaling_factor is not None, "if mode is {mode}, scaling_factor should not be None"
-            assert min_new_img_size is not None, "if mode is {mode}, min_new_img_size should not be None"
-            self.scaling_factor = scaling_factor
+            if scaling_factor is None:
+                raise ValueError(
+                    f"if mode is {mode}, scaling_factor should not be None")
+            if min_new_img_size is None:
+                raise ValueError(
+                    f"if mode is {mode}, min_new_img_size should not be None")
+            self._check_img_size_type_and_value(min_new_img_size)
+            self._rows, self._cols = self._get_size_rows_cols(min_new_img_size)
         else:
-            logger.error(f"unknown mode: {mode}")
+            logger.error("unknown mode: %s", mode)
             raise ValueError(f"unknown mode: {mode}")
-
-        self._check_img_size_type_and_value(new_img_size,
-                                            required_img_size_attr_name)
-
-        if mode in {'random', 'centered'}:
-            rows, cols = self._get_size_rows_cols(new_img_size)
-        elif mode in {'variable'}:
-            rows, cols = self._get_size_rows_cols(min_new_img_size)
-        setattr(self, f"{required_img_size_attr_name}_rows", rows)
-        setattr(self, f"{required_img_size_attr_name}_cols", cols)
-
-        self.mode = mode
 
         random.seed(random_seed)
 
-    def _check_img_size_type_and_value(self, img_size: ImgSize, arg_name: str):
-        # Check new_img_size arg type
+        super().__init__(
+            mode=mode,
+            new_img_size=new_img_size,
+            scaling_factor=scaling_factor,
+            min_new_img_size=min_new_img_size,
+            img_bands=img_bands,
+            label_bands=label_bands,
+            random_seed=random_seed,
+            **kwargs,
+        )
+
+    @staticmethod
+    def _check_img_size_type_and_value(img_size: ImgSize):
+        """Check type and value of arg"""
         if not isinstance(img_size, int) or (isinstance(img_size, tuple)
                                              and len(img_size) == 2 and all(
                                                  isinstance(entry, int)
@@ -121,8 +120,9 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             raise ValueError(
                 "{arg_name} needs to have positive side length(s)")
 
+    @staticmethod
     def _get_size_rows_cols(
-            self, img_size: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
+            img_size: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
 
         if isinstance(img_size, tuple):
             new_img_size_rows = img_size[0]
@@ -137,6 +137,7 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             self,
             polygon_name: Union[str, int],
             source_img_name: str,
+            source_assoc: ImgPolygonAssociator,
             target_assoc: ImgPolygonAssociator,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
@@ -155,7 +156,7 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
 
-        source_img_path = self.source_assoc._images_dir / source_img_name
+        source_img_path = source_assoc.images_dir / source_img_name
 
         polygon_geometry = target_assoc.polygons_df.loc[polygon_name,
                                                         "geometry"]
@@ -165,14 +166,13 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             # transform polygon from assoc's crs to image source crs
             transformed_polygon_geometry = transform_shapely_geometry(
                 polygon_geometry,
-                from_epsg=self.source_assoc.polygons_df.crs.to_epsg(),
+                from_epsg=source_assoc.polygons_df.crs.to_epsg(),
                 to_epsg=src.crs.to_epsg())
 
             # FOR DEBUGGING:
             img_bbox = box(*src.bounds)
-            assert self.source_assoc.polygons_df.loc[
-                polygon_name].geometry.within(
-                    self.source_assoc.imgs_df.loc[source_img_name].geometry)
+            assert source_assoc.polygons_df.loc[polygon_name].geometry.within(
+                source_assoc.imgs_df.loc[source_img_name].geometry)
             if not transformed_polygon_geometry.within(img_bbox):
                 logger.debug(
                     f"img {source_img_name} doesn't contain polygon {polygon_name} in img crs"
@@ -189,15 +189,13 @@ class ImgsAroundPolygonCutter(SingleImgCutter):
             ) >= 0, f'nonsensical negative max/min row/col values. sth went wrong cutting {source_img_name} for {polygon_name}'
 
             if self.mode in {'centered', 'random'}:
-                new_img_size_rows = self.new_img_size_rows
-                new_img_size_cols = self.new_img_size_cols
+                new_img_size_rows = self._rows
+                new_img_size_cols = self._cols
             elif self.mode == 'variable':
                 new_img_size_rows = max(
-                    self.scaling_factor * (max_row - min_row),
-                    self.min_new_img_size_rows)
+                    self.scaling_factor * (max_row - min_row), self._rows)
                 new_img_size_cols = max(
-                    self.scaling_factor * (max_col - min_col),
-                    self.min_new_img_size_cols)
+                    self.scaling_factor * (max_col - min_col), self._cols)
 
             row_off, col_off, num_small_imgs_in_row_direction, num_small_imgs_in_col_direction = \
                 self._get_grid_row_col_offsets_num_windows_row_col_direction(
