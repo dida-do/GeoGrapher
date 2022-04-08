@@ -27,8 +27,11 @@ def _correct_window_offset(offset: Union[int, float], size: Union[int, float],
 
 
 class ToImgBBoxCutter(SingleImgCutterBase):
-    """SingleImgCutter that cuts an image using a predefined GeoDataFrame of
-    bounding boxes."""
+    """
+    A SingleImgCutter to extract a pre defined bounding box from an image.
+    The new size of the images must be specified as it is used to ensure a
+    standardised output.
+    """
 
     new_img_size: ImgSize
     bbox_geojson_path: Path
@@ -36,26 +39,10 @@ class ToImgBBoxCutter(SingleImgCutterBase):
     _bboxes_df: GeoDataFrame
 
     def __init__(self, **data) -> None:
-        """TODO
-
-        An image cutter to extract a pre defined bounding box from an image.
-        The new size of the images must be specified as it is used to ensure a
-        standardised output.
-
-        :param source_assoc: associator of dataset images are to be cut from.
-        :type source_assoc: ImgPolygonAssociator
-        :param target_images_dir: images directory of target dataset
-        :type target_images_dir: Union[Path, str]
-        :param target_labels_dir: labels directory of target dataset
-        :type target_labels_dir: Union[Path, str]
-        :param new_img_size: size (side length of square or rows, cols)
-        :type new_img_size: Union[int, Tuple[int, int]]
-        :param bounding_boxes: Bounding boxes to cut from imahe
-        :type bounding_boxes: GeoDataFrame
-        :param img_bands: list of bands to extract from source images. Defaults to None (i.e. all bands).
-        :type img_bands: Optional[List[int]]
-        :param label_bands: list of bands to extract from source labels. Defaults to None (i.e. all bands).
-        :type label_bands: Optional[List[int]]
+        """
+        Args:
+            new_img_size (ImgSize): size of new image
+            bbox_geojson_path (Path): path to geojson file containing the bboxes
         """
 
         super().__init__(**data)
