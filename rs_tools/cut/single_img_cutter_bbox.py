@@ -51,6 +51,7 @@ class ToImgBBoxCutter(SingleImgCutterBase):
 
     @validator('bbox_geojson_path')
     def path_points_to_geojson(self, value: Path):
+        """Validator: Make sure path exists and points to geojson"""
         if Path.stem != ".geojson":
             raise ValueError("Path should point to .geojson file")
         if not value.is_file():
@@ -59,7 +60,7 @@ class ToImgBBoxCutter(SingleImgCutterBase):
 
     @validator("new_img_size")
     def new_img_size_type_correctness(self, value: ImgSize) -> ImgSize:
-        """Validate new_img_size has correct type"""
+        """Validator: make sure new_img_size has correct type"""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = isinstance(
             value, tuple) and len(value) == 2 and all(
@@ -72,7 +73,7 @@ class ToImgBBoxCutter(SingleImgCutterBase):
     @validator("new_img_size")
     def new_img_size_side_lengths_must_be_positive(self,
                                                    value: ImgSize) -> ImgSize:
-        """Validate new_img_size side lengths are positive"""
+        """Validator: Make sure new_img_size side lengths are positive"""
         if not self.new_img_size_rows > 0:
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
