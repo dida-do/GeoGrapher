@@ -22,8 +22,8 @@ class ImgToGridCutter(SingleImgCutterBase):
     new_img_size: ImgSize
 
     @validator("new_img_size")
-    def type_correctness(self, value: ImgSize) -> ImgSize:
-        """Check value has correct type"""
+    def new_img_size_type_correctness(self, value: ImgSize) -> ImgSize:
+        """Validate new_img_size has correct type"""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = isinstance(
             value, tuple) and len(value) == 2 and all(
@@ -34,8 +34,8 @@ class ImgToGridCutter(SingleImgCutterBase):
         return value
 
     @validator("new_img_size")
-    def side_lengths_must_be_positive(self, value: ImgSize) -> ImgSize:
-        """Check side lengths are positive"""
+    def new_img_size_side_lengths_must_be_positive(self, value: ImgSize) -> ImgSize:
+        """Validate new_img_size side lengths are positive"""
         if not self.new_img_size_rows > 0:
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
