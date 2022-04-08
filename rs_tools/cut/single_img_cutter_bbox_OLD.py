@@ -1,20 +1,21 @@
-"""
-SingleImgCutter that cuts a small image from a predefined bounding box on
+"""SingleImgCutter that cuts a small image from a predefined bounding box on
 the image accepted by the polygon filter predicate."""
+from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
-from pydantic import validator
 import rasterio as rio
-import geopandas as gpd
 from geopandas import GeoDataFrame
 from rasterio.windows import Window, from_bounds
-from shapely.geometry import box
+from shapely.geometry import Polygon, box
 
 from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+
+if TYPE_CHECKING:
+    from rs_tools.img_polygon_associator import ImgPolygonAssociator
+
 from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 
 logger = logging.getLogger(__name__)
@@ -30,15 +31,15 @@ class ToImgBBoxCutter(SingleImgCutterBase):
     """SingleImgCutter that cuts an image using a predefined GeoDataFrame of
     bounding boxes."""
 
-    new_img_size: ImgSize
-    bbox_geojson_path: Path
-
-    _bboxes_df: GeoDataFrame
-
-    def __init__(self, **data) -> None:
-        """TODO
-
-        An image cutter to extract a pre defined bounding box from an image.
+    def __init__(self,
+                 source_assoc: ImgPolygonAssociator,
+                 target_images_dir: Union[Path, str],
+                 target_labels_dir: Union[Path, str],
+                 new_img_size: Optional[ImgSize],
+                 bounding_boxes: GeoDataFrame,
+                 img_bands: Optional[List[int]] = None,
+                 label_bands: Optional[List[int]] = None) -> None:
+        """An image cutter to extract a pre defined bounding box from an image.
         The new size of the images must be specified as it is used to ensure a
         standardised output.
 
@@ -58,34 +59,29 @@ class ToImgBBoxCutter(SingleImgCutterBase):
         :type label_bands: Optional[List[int]]
         """
 
-        super().__init__(**data)
-        self._bboxes_df = gpd.read_file(self.bbox_geojson_path,
-                                        driver="GeoJSON")
+        super().__init__(source_assoc=source_assoc,
+                         target_images_dir=target_images_dir,
+                         target_labels_dir=target_labels_dir,
+                         img_bands=img_bands,
+                         label_bands=label_bands)
 
-    @validator('bbox_geojson_path')
-    def path_points_to_geojson(self, value: Path):
-        if Path.stem != ".geojson":
-            raise ValueError("Path should point to .geojson file")
-        if not value.is_file():
-            raise FileNotFoundError(f".geojson file does not exist: {value}")
-        return value
+        # Save bounding boxes
+        self.bounding_boxes = bounding_boxes
 
-    @validator("new_img_size")
-    def new_img_size_type_correctness(self, value: ImgSize) -> ImgSize:
-        """Validate new_img_size has correct type"""
-        is_int: bool = isinstance(value, int)
-        is_pair_of_ints: bool = isinstance(
-            value, tuple) and len(value) == 2 and all(
-                isinstance(entry, int) for entry in value)
-        if not (is_int or is_pair_of_ints):
+        # Check new_img_size arg type
+        if not isinstance(new_img_size, int) or (
+                isinstance(new_img_size, tuple) and len(new_img_size) == 2
+                and all(isinstance(entry, int) for entry in new_img_size)):
             raise TypeError(
                 "new_img_size needs to be an integer or a pair of integers!")
-        return value
 
-    @validator("new_img_size")
-    def new_img_size_side_lengths_must_be_positive(self,
-                                                   value: ImgSize) -> ImgSize:
-        """Validate new_img_size side lengths are positive"""
+        if isinstance(new_img_size, tuple):
+            self.new_img_size_rows = new_img_size[0]
+            self.new_img_size_cols = new_img_size[1]
+        else:
+            self.new_img_size_rows = new_img_size
+            self.new_img_size_cols = new_img_size
+
         if not self.new_img_size_rows > 0:
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
@@ -94,34 +90,15 @@ class ToImgBBoxCutter(SingleImgCutterBase):
             logger.error("new_img_size needs to have positive side length(s)")
             raise ValueError(
                 "new_img_size needs to have positive side length(s)")
-        return value
-
-    @property
-    def new_img_size_rows(self) -> int:
-        """Return number of rows of new image size"""
-        if isinstance(self.new_img_size, tuple):
-            return self.new_img_size[0]
-        else:
-            return self.new_img_size
-
-    @property
-    def new_img_size_cols(self) -> int:
-        """Return number of columns of new image size"""
-        if isinstance(self.new_img_size, tuple):
-            return self.new_img_size[1]
-        else:
-            return self.new_img_size
 
     def _get_windows_transforms_img_names(
-        self,
-        source_img_name: str,
-        source_assoc: ImgPolygonAssociator,
-        target_assoc: Optional[ImgPolygonAssociator] = None,
-        new_imgs_dict: Optional[dict] = None,
-        **kwargs: Any,
-    ) -> List[str]:
+            self,
+            source_img_name: str,
+            target_assoc: Optional[ImgPolygonAssociator] = None,
+            new_imgs_dict: Optional[dict] = None,
+            **kwargs: Any) -> List[str]:
 
-        source_img_path = source_assoc.images_dir / source_img_name
+        source_img_path = self.source_assoc._images_dir / source_img_name
 
         with rio.open(source_img_path) as src:
             img_bounds = box(*src.bounds)

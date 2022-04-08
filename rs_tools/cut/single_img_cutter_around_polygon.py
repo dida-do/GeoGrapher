@@ -99,8 +99,7 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
             **kwargs,
         )
 
-    @staticmethod
-    def _check_img_size_type_and_value(img_size: ImgSize):
+    def _check_img_size_type_and_value(self, img_size: ImgSize):
         """Check type and value of arg"""
         if not isinstance(img_size, int) or (isinstance(img_size, tuple)
                                              and len(img_size) == 2 and all(
