@@ -52,7 +52,7 @@ class ToImgBBoxCutter(SingleImgCutterBase):
     @validator('bbox_geojson_path')
     def path_points_to_geojson(self, value: Path):
         """Validator: Make sure path exists and points to geojson"""
-        if Path.stem != ".geojson":
+        if value.stem != ".geojson":
             raise ValueError("Path should point to .geojson file")
         if not value.is_file():
             raise FileNotFoundError(f".geojson file does not exist: {value}")
