@@ -3,7 +3,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel
 
 import rasterio as rio
@@ -13,18 +13,13 @@ from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 
-from rs_tools import ImgPolygonAssociator
 from rs_tools.global_constants import IMGS_DF_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class SingleImgCutter(ABC, BaseModel):
+class SingleImgCutterBase(ABC, BaseModel, Callable):
     """Base class for SingleImgCUtter"""
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self._check_crs_agree()
 
     @abstractmethod
     def _get_windows_transforms_img_names(
@@ -41,22 +36,22 @@ class SingleImgCutter(ABC, BaseModel):
         Args:
             source_img_name (str): name of img in source dataset to be cut.
             target_assoc (ImgPolygonAssociator): associator of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df
-            and values lists of entries correspondong to images containing information about
-            cut images not yet appended to target_assoc.imgs_df
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.imgs_df
             kwargs (Any): keyword arguments to be used in subclass implementations.
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names.
         """
 
-    def __call__(self,
-                 img_name: str,
-                 source_assoc: ImgPolygonAssociator,
-                 target_assoc: Optional[ImgPolygonAssociator] = None,
-                 new_imgs_dict: Optional[dict] = None,
-                 bands: Optional[Dict[str, Optional[List[int]]]] = None,
-                 **kwargs: Any) -> dict:
+    def __call__(
+            self,
+            img_name: str,
+            source_assoc: ImgPolygonAssociator,
+            target_assoc: Optional[ImgPolygonAssociator] = None,
+            new_imgs_dict: Optional[dict] = None,
+            bands: Optional[Dict[str, Optional[List[
+                int]]]] = None,  # TODO: not an attribute, move to __call__?
+            **kwargs: Any) -> dict:
         """Cut new images from source image and return a dict with keys the
         index and column names of the imgs_df to be created by the calling
         dataset cutter and values lists containing the new image names and
@@ -66,29 +61,14 @@ class SingleImgCutter(ABC, BaseModel):
         Args:
             img_name (str): name of img in source dataset to be cut.
             target_assoc (ImgPolygonAssociator): associator of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df
-            and values lists of entries correspondong to images containing information
-            about cut images not yet appended to target_assoc.imgs_df
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.imgs_df
             kwargs (Any): optional keyword arguments for _get_windows_transforms_img_names
 
         Returns:
-            dict of lists that containing the data to be put in the imgs_df of the
-            associator to be constructed for the created images.
+            dict of lists that containing the data to be put in the imgs_df of the associator to be constructed for the created images.
 
         Note:
-            The __call__ function should be able to access the information
-            contained in the target (and source) associator but should *not*
-            modify its arguments! Since create_or_update_dataset_from_iter_over_polygons
-            and create_or_update_dataset_from_iter_over_imgs do not concatenate
-            the information about the new images that have been cut to the
-            target_assoc.imgs_df until after all polygons or images
-            have been iterated over and we want to be able to use ImgSelectors
-            _during_ such an iteration, we allow the call function to also depend
-            on a new_imgs_dict argument which contains the information about the new
-            images that have been cut. Unlike the target_assoc.imgs_df, the
-            target_assoc.polygons_df and graph are updated during the iteration.
-            One should thus think of the target_assoc and new_imgs_dict
-            arguments together as the actual the target associator argument.
+            The __call__ function should be able to access the information contained in the target (and source) associator but should *not* modify its arguments! Since create_or_update_dataset_from_iter_over_polygons and create_or_update_dataset_from_iter_over_imgs do not concatenate the information about the new images that have been cut to the target_assoc.imgs_df until after all polygons or images have been iterated over and we want to be able to use ImgSelectors _during_ such an iteration, we allow the call function to also depend on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike the target_assoc.imgs_df, the target_assoc.polygons_df and graph are updated during the iteration. One should thus think of the target_assoc and new_imgs_dict arguments together as the actual the target associator argument.
         """
 
         # dict to accumulate information about the newly created images
@@ -100,7 +80,6 @@ class SingleImgCutter(ABC, BaseModel):
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(
             source_img_name=img_name,
-            source_assoc=source_assoc,
             target_assoc=target_assoc,
             new_imgs_dict=new_imgs_dict,
             **kwargs)
@@ -181,10 +160,10 @@ class SingleImgCutter(ABC, BaseModel):
 
     def _make_new_img_and_label(
         self,
-        new_img_name: str,
-        source_img_name: str,
-        source_assoc: ImgPolygonAssociator,
-        target_assoc: ImgPolygonAssociator,
+        new_img_name: str,  #OLD
+        source_img_name: str,  #OLD
+        source_assoc: ImgPolygonAssociator,  #NEW
+        target_assoc: ImgPolygonAssociator,  #NEW
         window: Window,
         window_transform: Affine,
         bands: Optional[Dict[str, Optional[List[int]]]],
@@ -199,8 +178,7 @@ class SingleImgCutter(ABC, BaseModel):
             window_transform (Affine):
 
         Returns:
-            Tuple[Tuple[float, float, float, float], CRS]: tuple of bounds
-            (in image CRS) and CRS of new image
+            Tuple[Tuple[float, float, float, float], CRS]: tuple of bounds (in image CRS) and CRS of new image
         """
 
         for (source_images_dir, target_images_dir), count in enumerate(
@@ -260,19 +238,15 @@ class SingleImgCutter(ABC, BaseModel):
             raise ValueError(f"Missing bands key: {img_type}")
 
     def _write_window_to_geotif(
-        self,
-        src_img_path: Union[Path, str],
-        dst_img_path: Union[Path, str],
-        img_bands: List[int],
-        window: Window,
-        window_transform: Affine,
+        self, src_img_path: Union[Path, str], dst_img_path: Union[Path, str],
+        bands: List[int], window: Window, window_transform: Affine
     ) -> Tuple[Tuple[float, float, float, float], CRS]:
         """Write window from source GeoTiff to new GeoTiff.
 
         Args:
             src_img_path (Union[Path, str]): path of source GeoTiff
             dst_img_path (Union[Path, str]): path to GeoTiff to be created
-            img_bands (List[int]): bands to extract from source GeoTiff
+            bands (List[int]): bands to extract from source GeoTiff
             window (Window): window to cut out from source GeoTiff
             window_transform (Affine): window transform of window
 
@@ -289,13 +263,13 @@ class SingleImgCutter(ABC, BaseModel):
                           driver='GTiff',
                           height=window.height,
                           width=window.width,
-                          count=len(img_bands),
+                          count=len(bands),
                           dtype=src.profile["dtype"],
                           crs=src.crs,
                           transform=window_transform) as dst:
 
                 # ... and go through the bands.
-                for target_band, source_band in enumerate(img_bands, start=1):
+                for target_band, source_band in enumerate(bands, start=1):
 
                     # Read window for that band from source ...
                     new_img_band_raster = src.read(source_band, window=window)
@@ -319,10 +293,3 @@ class SingleImgCutter(ABC, BaseModel):
             bands = list(range(1, src.count + 1))
 
         return bands
-
-    def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and target agree"""
-        if self.source_assoc.crs_epsg_code != self.target_assoc.crs_epsg_code:
-            raise ValueError(
-                "Coordinate systems of source and target associators do not agree"
-            )
