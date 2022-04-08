@@ -1,21 +1,22 @@
 """
 SingleImgCutter that cuts a small image from a predefined bounding box on
-the image accepted by the polygon filter predicate."""
+the image accepted by the polygon filter predicate.
+"""
 
 import logging
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-from pydantic import validator
-import rasterio as rio
 import geopandas as gpd
+import rasterio as rio
 from geopandas import GeoDataFrame
+from pydantic import validator
 from rasterio.windows import Window, from_bounds
 from shapely.geometry import box
 
+from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 from rs_tools.cut.type_aliases import ImgSize
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 
 logger = logging.getLogger(__name__)
 
