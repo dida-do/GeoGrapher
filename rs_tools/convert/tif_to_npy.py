@@ -77,8 +77,10 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
                     # ... convert the tif: Open the tif file ...
                     with rio.open(tif_dir / tif_img_name) as src:
 
-                        img_bands = self._get_bands_for_img(tif_dir /
-                                                            tif_img_name)
+                        img_bands = self._get_bands_for_img(
+                            self.bands,
+                            tif_dir / tif_img_name,
+                        )
 
                         # extract bands to list of arrays
                         seq_extracted_np_bands = [
