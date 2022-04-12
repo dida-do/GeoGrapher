@@ -14,7 +14,7 @@ from rs_tools.cut.img_bands_getter_mixin import ImgBandsGetterMixIn
 log = logging.Logger(__name__)
 
 
-class DSConverterTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
+class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
     """Convert a dataset of GeoTiffs to NPYs."""
 
     bands: dict  #TODO
@@ -111,6 +111,8 @@ class DSConverterTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
         # ... and save the associator.
         self.target_assoc.save()
         self.save()
+
+        return self.target_assoc
 
     def _get_npy_imgs_df(self):
         npy_imgs_df = self.source_assoc.imgs_df
