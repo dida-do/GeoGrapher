@@ -6,7 +6,7 @@ import logging
 import shutil
 from tqdm.auto import tqdm
 
-from rs_tools.convert.convert_base import DSCreatorFromSource
+from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
 from rs_tools.cut.img_bands_getter_mixin import ImgBandsGetterMixIn
 from rs_tools.labels.label_type_conversion_utils import \
     convert_polygons_df_soft_cat_to_cat
