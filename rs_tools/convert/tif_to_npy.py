@@ -9,7 +9,7 @@ import rasterio as rio
 from tqdm.auto import tqdm
 
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.cut.img_bands_getter_mixin import ImgBandsGetterMixIn
+from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
 
 log = logging.Logger(__name__)
 
