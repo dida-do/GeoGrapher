@@ -1,5 +1,5 @@
 """
-Convert a dataset of GeoTiffs to NPYs.
+Create a dataset with soft-categorical labels from one with categorical labels.
 """
 
 import logging
@@ -7,7 +7,7 @@ import shutil
 from tqdm.auto import tqdm
 
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.cut.img_bands_getter_mixin import ImgBandsGetterMixIn
+from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
 from rs_tools.labels.label_type_conversion_utils import \
     convert_polygons_df_soft_cat_to_cat
 from rs_tools import ImgPolygonAssociator
@@ -15,8 +15,8 @@ from rs_tools import ImgPolygonAssociator
 log = logging.Logger(__name__)
 
 
-class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
-    """Convert a dataset of GeoTiffs to NPYs."""
+class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
+    """Create a dataset with soft-categorical labels from one with categorical labels."""
 
     def _create(self):
         self._create_or_update()
@@ -79,9 +79,5 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
         # Finally, we make all missing categorical labels in target dataset.
         self.target_assoc.make_labels()
         self.target_assoc.save()
-
-        log.info(
-            "_convert_or_update_dataset_soft_categorical_to_categorical: done!"
-        )
 
         return self.target_assoc
