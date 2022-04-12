@@ -21,11 +21,6 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         title="Name",
         description=
         "Name of dataset creator. Used as part of filename when saving.")
-    bands: Optional[Dict[str, Optional[List[int]]]] = Field(
-        default=None,
-        title="Dict of band indices",
-        description=
-        "keys: image directory names, values: list of band indices to keep")
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -95,3 +90,12 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         self.target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
         for dir_ in self.target_assoc.image_data_dirs:
             dir_.mkdir(parents=True, exist_ok=True)
+
+class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
+
+    bands: Optional[Dict[str, Optional[List[int]]]] = Field(
+        default=None,
+        title="Dict of band indices",
+        description=
+        "keys: image directory names, values: list of band indices starting at 1 to keep"
+    )
