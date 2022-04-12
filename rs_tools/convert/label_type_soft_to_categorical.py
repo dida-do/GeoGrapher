@@ -15,7 +15,7 @@ from rs_tools import ImgPolygonAssociator
 log = logging.Logger(__name__)
 
 
-class DSConverterCatToSoftCat(DSCreatorFromSource, ImgBandsGetterMixIn):
+class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
     """Convert a dataset of GeoTiffs to NPYs."""
 
     def _create(self):
