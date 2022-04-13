@@ -14,17 +14,14 @@ from rasterio.windows import Window
 from shapely.geometry import box
 
 from rs_tools import ImgPolygonAssociator
+from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
 from rs_tools.global_constants import IMGS_DF_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class SingleImgCutter(ABC, BaseModel):
+class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
     """Base class for SingleImgCUtter"""
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self._check_crs_agree()
 
     @abstractmethod
     def _get_windows_transforms_img_names(
@@ -215,7 +212,8 @@ class SingleImgCutter(ABC, BaseModel):
                 continue
             else:
                 img_bands = self._get_bands_for_img_type(
-                    source_img_path, bands)
+                    bands, source_img_path)
+
                 # write img window to destination img geotif
                 bounds_in_img_crs, crs = self._write_window_to_geotif(
                     source_img_path, dst_img_path, img_bands, window,
@@ -229,35 +227,6 @@ class SingleImgCutter(ABC, BaseModel):
                 assert bounds_in_img_crs == img_bounds_in_img_crs, f"new image and {target_images_dir.name} bounds disagree"
 
         return img_bounds_in_img_crs, img_crs
-
-    def _get_bands_for_img_type(
-        self,
-        source_img_path: Path,
-        bands: Optional[Dict[str, Optional[List[int]]]],
-    ) -> List[int]:
-        """
-        Return list of bands indices in the source image to use in the target image.
-
-        Args:
-            source_img_path (Path): path to source image.
-            bands (Optional[Dict[str, Optional[List[int]]]]): dict of band indices
-
-        Raises:
-            ValueError: If the optional bands dict is not None
-            and the image type (source_img_path.parent.name) is not in the bands dict.
-
-        Returns:
-            List[int]: list of band indices
-        """
-        img_type = source_img_path.parent.name
-        if bands is None:
-            return self._get_all_band_indices(source_img_path)
-        elif img_type in bands and bands[img_type] is None:
-            return self._get_all_band_indices(source_img_path)
-        elif img_type in bands and bands[img_type] is not None:
-            return bands[img_type]
-        else:
-            raise ValueError(f"Missing bands key: {img_type}")
 
     def _write_window_to_geotif(
         self,
@@ -304,25 +273,3 @@ class SingleImgCutter(ABC, BaseModel):
                     dst.write(new_img_band_raster, target_band)
 
         return dst.bounds, dst.crs
-
-    def _get_all_band_indices(self, source_img_path: Path) -> List[int]:
-        """Return list of all band indices of source GeoTiff.
-
-        Args:
-            source_img_path (Path): path to source image (or label etc)
-
-        Returns:
-            List[int]: list of indices of all bands in GeoTiff
-        """
-
-        with rio.open(source_img_path) as src:
-            bands = list(range(1, src.count + 1))
-
-        return bands
-
-    def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and target agree"""
-        if self.source_assoc.crs_epsg_code != self.target_assoc.crs_epsg_code:
-            raise ValueError(
-                "Coordinate systems of source and target associators do not agree"
-            )
