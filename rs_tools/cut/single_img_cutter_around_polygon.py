@@ -8,7 +8,7 @@ import math
 import random
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
-from pydantic import Field
+from pydantic import Field, PrivateAttr
 
 from affine import Affine
 import rasterio as rio
@@ -17,14 +17,14 @@ from rasterio.windows import Window
 from shapely.geometry import Polygon, box
 
 from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 logger = logging.getLogger(__name__)
 
 
-class ImgsAroundPolygonCutter(SingleImgCutterBase):
+class SingleImgCutterAroundPolygon(SingleImgCutter):
     """SingleImgCutter that cuts a small image (or several contiguous such
     images if the polygon does not fit into a single one) around each polygon
     in the image accepted by the polygon filter predicate."""
@@ -33,14 +33,10 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
     new_img_size: Optional[ImgSize] = None
     scaling_factor: Optional[float] = 1.2
     min_new_img_size: Optional[ImgSize] = None
-    img_bands: Optional[List[int]] = None
-    label_bands: Optional[List[int]] = None
     random_seed: int = 42
 
-    _rows: Optional[int] = Field(
-        None, description="Do not set by hand. If None, will be inferred.")
-    _cols: Optional[int] = Field(
-        None, description="Do not set by hand. If None, will be inferred.")
+    _rows: Optional[int] = PrivateAttr(default=None)  # Do not set by hand.
+    _cols: Optional[int] = PrivateAttr(default=None)  # Do not set by hand.
 
     def __init__(
         self,
@@ -48,24 +44,36 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
         new_img_size: Optional[ImgSize] = None,
         scaling_factor: Optional[float] = 1.2,
         min_new_img_size: Optional[ImgSize] = None,
-        img_bands: Optional[List[int]] = None,
-        label_bands: Optional[List[int]] = None,
         random_seed: int = 42,
         **kwargs,
     ) -> None:
         """
         Args:
-            mode (str, optional): One of 'random', 'centered', 'variable'. If 'random' images (or minimal image grids) will be randomly chosen subject to constraint that they fully contain the polygons, if 'centered' will be centered on the polygons. If 'variable' the image size will be the max of some minimum size and a multiple of the bounding rectangle of the polygon. Defaults to 'random'.
-            new_img_size (Optional[ImgSize]): size (side length of square or rows, cols). Only needed if mode is 'centered' or 'random'.
-            scaling factor (Optional[float]): factor to scale the bounding rectangle of the polygon by to get the image size.
+            mode (str, optional): One of 'random', 'centered', 'variable'.
+                If 'random' images (or minimal image grids) will be randomly chosen
+                subject to constraint that they fully contain the polygons, if 'centered'
+                will be centered on the polygons. If 'variable' the image size will be
+                the max of some minimum size and a multiple of the bounding rectangle
+                of the polygon. Defaults to 'random'.
+            new_img_size (Optional[ImgSize]): size (side length of square or rows, cols).
+                Only needed if mode is 'centered' or 'random'.
+            scaling factor (Optional[float]): factor to scale the bounding rectangle
+                of the polygon by to get the image size.
             min_new_img_size (Optional[ImgSize]): minimum size of new image in 'variable' mode.
-            img_bands (Optional[List[int]], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands (Optional[List[int]], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
             random_seed (int, optional). random seed. Defaults to 42.
 
         Raises:
             ValueError: If the mode is unknown.
         """
+
+        super().__init__(
+            mode=mode,
+            new_img_size=new_img_size,
+            scaling_factor=scaling_factor,
+            min_new_img_size=min_new_img_size,
+            random_seed=random_seed,
+            **kwargs,
+        )
 
         if mode in {'random', 'centered'}:
             if new_img_size is None:
@@ -88,17 +96,6 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
 
         random.seed(random_seed)
 
-        super().__init__(
-            mode=mode,
-            new_img_size=new_img_size,
-            scaling_factor=scaling_factor,
-            min_new_img_size=min_new_img_size,
-            img_bands=img_bands,
-            label_bands=label_bands,
-            random_seed=random_seed,
-            **kwargs,
-        )
-
     def _check_img_size_type_and_value(self, img_size: ImgSize):
         """Check type and value of arg"""
         if not isinstance(img_size, int) or (isinstance(img_size, tuple)
@@ -111,13 +108,17 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
         img_size_rows, img_size_cols = self._get_size_rows_cols(img_size)
 
         if not img_size_rows > 0:
-            logger.error("%s need to have positive side length(s)", arg_name)
+            logger.error(
+                "new_img_size is %s, need to have positive side length(s)",
+                img_size)
             raise ValueError(
-                "{arg_name} needs to have positive side length(s)")
+                "{img_size} needs to have positive side length(s)")
         if not img_size_cols > 0:
-            logger.error("%s needs to have positive side length(s)", arg_name)
+            logger.error(
+                "new_img_size is %s, need to have positive side length(s)",
+                img_size)
             raise ValueError(
-                "{arg_name} needs to have positive side length(s)")
+                "{img_size} needs to have positive side length(s)")
 
     @staticmethod
     def _get_size_rows_cols(
@@ -134,7 +135,6 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
 
     def _get_windows_transforms_img_names(
             self,
-            polygon_name: Union[str, int],
             source_img_name: str,
             source_assoc: ImgPolygonAssociator,
             target_assoc: ImgPolygonAssociator,
@@ -154,6 +154,9 @@ class ImgsAroundPolygonCutter(SingleImgCutterBase):
         Returns:
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
+        if 'polygon_name' not in kwargs['polygon_name']:
+            raise ValueError("Need polygon name")
+        polygon_name = kwargs['polygon_name']
 
         source_img_path = source_assoc.images_dir / source_img_name
 
