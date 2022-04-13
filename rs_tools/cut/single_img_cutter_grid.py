@@ -4,25 +4,25 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-from pydantic import validator
+from pydantic import validator, BaseModel
 import rasterio as rio
 from affine import Affine
 from rasterio.windows import Window
 
 from rs_tools import ImgPolygonAssociator
 from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 
 logger = logging.getLogger(__name__)
 
 
-class ImgToGridCutter(SingleImgCutterBase):
+class ImgToGridCutter(SingleImgCutter):
     """SingleImgCutter that cuts an image into a grid of images."""
 
     new_img_size: ImgSize
 
     @validator("new_img_size")
-    def new_img_size_type_correctness(self, value: ImgSize) -> ImgSize:
+    def new_img_size_type_correctness(cls, value: ImgSize) -> ImgSize:
         """Validate new_img_size has correct type"""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = isinstance(
@@ -34,16 +34,15 @@ class ImgToGridCutter(SingleImgCutterBase):
         return value
 
     @validator("new_img_size")
-    def new_img_size_side_lengths_must_be_positive(self, value: ImgSize) -> ImgSize:
+    def new_img_size_side_lengths_must_be_positive(cls,
+                                                   value: ImgSize) -> ImgSize:
         """Validate new_img_size side lengths are positive"""
-        if not self.new_img_size_rows > 0:
-            logger.error("new_img_size needs to have positive side length(s)")
-            raise ValueError(
-                "new_img_size needs to have positive side length(s)")
-        if not self.new_img_size_cols > 0:
-            logger.error("new_img_size needs to have positive side length(s)")
-            raise ValueError(
-                "new_img_size needs to have positive side length(s)")
+        if isinstance(value, tuple) and not all(val > 0 for val in value):
+            logger.error("new_img_size: need positive side length(s)")
+            raise ValueError("new_img_size: need positive side length(s)")
+        elif isinstance(value, int) and value <= 0:
+            logger.error("new_img_size: need positive side length(s)")
+            raise ValueError("new_img_size: need positive side length(s)")
         return value
 
     @property
@@ -80,8 +79,8 @@ class ImgToGridCutter(SingleImgCutterBase):
                 )
             if not src.width % self.new_img_size_cols == 0:
                 logger.warning(
-                    "number of columns in source image not divisible by number of columns in new images"
-                )
+                    "number of columns in source image not divisible \
+                        by number of columns in new images")
 
         windows_transforms_img_names = []
 
