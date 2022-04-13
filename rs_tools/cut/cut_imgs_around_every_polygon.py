@@ -9,7 +9,7 @@ from rs_tools.cut.cut_iter_over_polygons import DSCutterIterOverPolygons
 from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector
 from rs_tools.cut.polygon_filter_predicates import IsPolygonMissingImgs, PolygonFilterPredicate
 from rs_tools.cut.single_img_cutter_around_polygon import \
-    ImgsAroundPolygonCutter
+    SingleImgCutterAroundPolygon
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
         is_polygon_missing_imgs: PolygonFilterPredicate = IsPolygonMissingImgs(
             target_img_count)
         random_img_selector: ImgSelector = RandomImgSelector(target_img_count)
-        small_imgs_around_polygons_cutter = ImgsAroundPolygonCutter(
+        small_imgs_around_polygons_cutter = SingleImgCutterAroundPolygon(
             mode=mode,
             new_img_size=new_img_size,
             min_new_img_size=min_new_img_size,
