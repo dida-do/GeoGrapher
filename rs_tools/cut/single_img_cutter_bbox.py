@@ -27,7 +27,7 @@ def _correct_window_offset(offset: Union[int, float], size: Union[int, float],
     return int(center - new_size / 2)
 
 
-class ToImgBBoxCutter(SingleImgCutter):
+class SingleImgCutterFromBBoxes(SingleImgCutter):
     """
     A SingleImgCutter to extract a pre defined bounding box from an image.
     The new size of the images must be specified as it is used to ensure a
