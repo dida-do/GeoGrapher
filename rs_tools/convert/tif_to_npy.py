@@ -8,20 +8,20 @@ from pydantic import Field
 import rasterio as rio
 from tqdm.auto import tqdm
 
-from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
+from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
 
 log = logging.Logger(__name__)
 
 
-class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
+class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
+                              ImgBandsGetterMixIn):
     """Convert a dataset of GeoTiffs to NPYs."""
 
-    bands: dict  #TODO
     squeeze_label_channel_dim_if_single_channel: bool = Field(
         default=True,
         description=
-        "whether to squeeze the label channel dim/axis if possible if single channel"
+        "whether to squeeze the label channel dim/axis if possible"
     )
     channels_first_or_last_in_npy: Literal['last', 'first'] = Field(
         default='last',
@@ -30,12 +30,12 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSource, ImgBandsGetterMixIn):
     )
 
     def _create(self):
-        self._convert_or_update_dataset_from_tif_to_npy()
+        self._create_or_update()
 
     def _update(self):
-        self._convert_or_update_dataset_from_tif_to_npy()
+        self._create_or_update()
 
-    def _convert_or_update_dataset_from_tif_to_npy(self) -> None:
+    def _create_or_update(self) -> None:
 
         # need this later
         polygons_that_will_be_added_to_target_dataset = set(
