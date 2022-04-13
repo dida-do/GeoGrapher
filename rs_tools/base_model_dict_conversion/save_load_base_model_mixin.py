@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any, Dict, Optional, Union
 from pathlib import Path
 import json
@@ -12,23 +13,26 @@ class SaveAndLoadBaseModelMixIn:
     Assumes the BaseModel has a data_dir field.
     """
 
-    def _save(self, file_path: Union[str, Path]) -> None:
-        """Use to implement save method with file_path determined by use case"""
-        file_path = Path(file_path)
-        if file_path.suffix != '.json':
+    @abstractmethod
+    def save(self):
+
+    def _save(self, json_file_path: Union[str, Path]) -> None:
+        """Save to json_file"""
+        #Use to implement save method with file_path determined by use case
+        json_file_path = Path(json_file_path)
+        if json_file_path.suffix != '.json':
             raise ValueError("Need file path to .json file")
-        with open(file_path, 'w') as file:
+        with open(json_file_path, 'w') as file:
             base_model_dict = get_nested_base_model_dict(self)
             json.dump(base_model_dict, file)
 
     @classmethod
-    def from_file(
+    def from_json_file(
         cls,
         json_file_path: Union[Path, str],
         constructor_symbol_table: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """Load and return saved BaseModel"""
-
         with open(json_file_path) as file:
             saved_base_model_dict = json.load(file)
             loaded_base_model = eval_nested_base_model_dict(
