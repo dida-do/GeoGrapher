@@ -2,7 +2,7 @@
 Create a new dataset from an existing one
 by combining and/or removing segmentation classes.
 
-TODO: IS THIS DONE? MAYBE TEST AGAIN...
+TODO: TEST!
 """
 
 import logging
