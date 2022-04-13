@@ -14,18 +14,18 @@ from pydantic import Field
 from tqdm.auto import tqdm
 
 from rs_tools import ImgPolygonAssociator
-from rs_tools.cut.cut_base import DSCutterBase
+from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from rs_tools.global_constants import IMGS_DF_INDEX_NAME
 from rs_tools.cut.img_selectors import ImgSelector
 from rs_tools.cut.polygon_filter_predicates import (AlwaysTrue,
                                                     PolygonFilterPredicate)
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.utils.utils import concat_gdfs, map_dict_values
 
 logger = logging.getLogger(__name__)
 
 
-class DSCutterIterOverPolygons(DSCutterBase):
+class DSCutterIterOverPolygons(DSCreatorFromSourceWithBands):
     """
     Dataset cutter that iterates over polygons.
 
@@ -33,7 +33,7 @@ class DSCutterIterOverPolygons(DSCutterBase):
     datasets of GeoTiffs from existing ones by iterating over polygons.
     """
 
-    img_cutter: SingleImgCutterBase = Field(title="Single image cutter")
+    img_cutter: SingleImgCutter = Field(title="Single image cutter")
     img_selector: ImgSelector = Field(
         title="Image selector",
         description="Selects images from source to cut for a given polygon")
@@ -44,10 +44,13 @@ class DSCutterIterOverPolygons(DSCutterBase):
     cut_imgs: Dict[str, List[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut images dictionary",
-        description=
-        "Normally, should not be set by hand! Dict with polygons\
-        as keys and lists of images cut for each polygon as values"
-    )
+        description="Normally, should not be set by hand! Dict with polygons\
+        as keys and lists of images cut for each polygon as values")
+
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        self._check_crs_agree()
+
 
     def _create(self) -> ImgPolygonAssociator:
         """Create a new dataset. See create_or_update for more details."""
@@ -81,7 +84,8 @@ class DSCutterIterOverPolygons(DSCutterBase):
             self.target_assoc.imgs_df.index)
         added_polygons = []  # updated as we iterate
 
-        # dict to temporarily store information which will be appended to self.target_assoc's imgs_df after cutting
+        # dict to temporarily store information which will be
+        # appended to self.target_assoc's imgs_df after cutting
         new_imgs_dict = {
             index_or_col_name: []
             for index_or_col_name in [IMGS_DF_INDEX_NAME] +
@@ -136,8 +140,11 @@ class DSCutterIterOverPolygons(DSCutterBase):
                     imgs_from_single_cut_dict = self.img_cutter(
                         img_name=img_name,
                         polygon_name=polygon_name,
+                        source_assoc=self.source_assoc,
                         target_assoc=self.target_assoc,
-                        new_imgs_dict=new_imgs_dict)
+                        new_imgs_dict=new_imgs_dict,
+                        bands=self.bands,
+                    )
 
                     # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                     assert {
@@ -229,6 +236,13 @@ class DSCutterIterOverPolygons(DSCutterBase):
                       src_imgs_previously_cut_for_this_polygon)
 
         return answer
+
+    def _check_crs_agree(self):
+    """Simple safety check: make sure coordinate systems of source and target agree"""
+    if self.source_assoc.crs_epsg_code != self.target_assoc.crs_epsg_code:
+        raise ValueError(
+            "Coordinate systems of source and target associators do not agree"
+        )
 
 
 def remove_duplicates(from_list: list) -> list:
