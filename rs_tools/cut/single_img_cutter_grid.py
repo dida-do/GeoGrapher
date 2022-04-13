@@ -16,7 +16,7 @@ from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 logger = logging.getLogger(__name__)
 
 
-class ImgToGridCutter(SingleImgCutter):
+class SingleImgCutterToGrid(SingleImgCutter):
     """SingleImgCutter that cuts an image into a grid of images."""
 
     new_img_size: ImgSize
