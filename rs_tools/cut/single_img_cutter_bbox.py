@@ -10,11 +10,11 @@ from typing import Any, List, Optional, Union
 import geopandas as gpd
 import rasterio as rio
 from geopandas import GeoDataFrame
-from pydantic import validator
+from pydantic import PrivateAttr, validator
 from rasterio.windows import Window, from_bounds
 from shapely.geometry import box
 
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
 from rs_tools.cut.type_aliases import ImgSize
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
@@ -27,7 +27,7 @@ def _correct_window_offset(offset: Union[int, float], size: Union[int, float],
     return int(center - new_size / 2)
 
 
-class ToImgBBoxCutter(SingleImgCutterBase):
+class ToImgBBoxCutter(SingleImgCutter):
     """
     A SingleImgCutter to extract a pre defined bounding box from an image.
     The new size of the images must be specified as it is used to ensure a
@@ -37,7 +37,7 @@ class ToImgBBoxCutter(SingleImgCutterBase):
     new_img_size: ImgSize
     bbox_geojson_path: Path
 
-    _bboxes_df: GeoDataFrame
+    _bboxes_df: GeoDataFrame = PrivateAttr()
 
     def __init__(self, **data) -> None:
         """
@@ -51,16 +51,16 @@ class ToImgBBoxCutter(SingleImgCutterBase):
                                         driver="GeoJSON")
 
     @validator('bbox_geojson_path')
-    def path_points_to_geojson(self, value: Path):
+    def path_points_to_geojson(cls, value: Path):
         """Validator: Make sure path exists and points to geojson"""
-        if value.stem != ".geojson":
+        if value.suffix != ".geojson":
             raise ValueError("Path should point to .geojson file")
         if not value.is_file():
             raise FileNotFoundError(f".geojson file does not exist: {value}")
         return value
 
     @validator("new_img_size")
-    def new_img_size_type_correctness(self, value: ImgSize) -> ImgSize:
+    def new_img_size_type_correctness(cls, value: ImgSize) -> ImgSize:
         """Validator: make sure new_img_size has correct type"""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = isinstance(
@@ -72,17 +72,15 @@ class ToImgBBoxCutter(SingleImgCutterBase):
         return value
 
     @validator("new_img_size")
-    def new_img_size_side_lengths_must_be_positive(self,
+    def new_img_size_side_lengths_must_be_positive(cls,
                                                    value: ImgSize) -> ImgSize:
-        """Validator: Make sure new_img_size side lengths are positive"""
-        if not self.new_img_size_rows > 0:
-            logger.error("new_img_size needs to have positive side length(s)")
-            raise ValueError(
-                "new_img_size needs to have positive side length(s)")
-        if not self.new_img_size_cols > 0:
-            logger.error("new_img_size needs to have positive side length(s)")
-            raise ValueError(
-                "new_img_size needs to have positive side length(s)")
+        """Validate new_img_size side lengths are positive"""
+        if isinstance(value, tuple) and not all(val > 0 for val in value):
+            logger.error("new_img_size: need positive side length(s)")
+            raise ValueError("new_img_size: need positive side length(s)")
+        elif isinstance(value, int) and value <= 0:
+            logger.error("new_img_size: need positive side length(s)")
+            raise ValueError("new_img_size: need positive side length(s)")
         return value
 
     @property
