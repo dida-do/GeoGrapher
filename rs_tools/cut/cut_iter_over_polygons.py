@@ -134,7 +134,8 @@ class DSCutterIterOverPolygons(DSCreatorFromSourceWithBands):
                         img_names_list=potential_source_images,
                         target_assoc=self.target_assoc,
                         new_imgs_dict=new_imgs_dict,
-                        source_assoc=self.source_assoc):
+                        source_assoc=self.source_assoc,
+                        cut_imgs=self.cut_imgs):
 
                     # Cut each image (and label) and remember the information to be appended to self.target_assoc imgs_df in return dict
                     imgs_from_single_cut_dict = self.img_cutter(
