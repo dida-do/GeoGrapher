@@ -1,19 +1,17 @@
 """Predicates for filtering polygons."""
 
-from __future__ import annotations
-
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Callable, Union
+from typing import Any, Union
+from pydantic import BaseModel
 
-from geopandas import GeoDataFrame, GeoSeries
+from geopandas import GeoSeries
 from pandas import Series
 
-if TYPE_CHECKING:
-    from rs_tools import ImgPolygonAssociator
+from rs_tools import ImgPolygonAssociator
 
 
-class PolygonFilterPredicate(Callable):
+class PolygonFilterPredicate(BaseModel, Callable):
     """Abstract base class for predicates used to filter polygons in cutting
     functions.
 
@@ -28,9 +26,9 @@ class PolygonFilterPredicate(Callable):
         """
         Args:
             polygon_name (Union[str, int]): polygon identifier
-            target_assoc (ImgPolygonAssociator): associator of target dataset. 
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
-            source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from 
+            target_assoc (ImgPolygonAssociator): associator of target dataset.
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images
+            source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from
             kwargs (Any): Optional keyword arguments
 
         Returns:
@@ -46,13 +44,7 @@ class IsPolygonMissingImgs(PolygonFilterPredicate):
     """Simple polygon filter predicate that tests whether a polygon has fewer
     images than a specified target image count."""
 
-    def __init__(self, target_img_count: int = 1) -> None:
-        """
-        Args:
-            target_img_count (int, optional): Target image count. Defaults to 1.
-        """
-        self.target_img_count = target_img_count
-        super().__init__()
+    target_img_count: int = 1
 
     def __call__(self, polygon_name: Union[str, int],
                  target_assoc: ImgPolygonAssociator, new_imgs_dict: dict,
@@ -77,9 +69,6 @@ class IsPolygonMissingImgs(PolygonFilterPredicate):
 
 class AlwaysTrue(PolygonFilterPredicate):
     """Simple polygon filter predicate that always returns True."""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def __call__(self, polygon_name: Union[str, int],
                  target_assoc: ImgPolygonAssociator, new_imgs_dict: dict,
