@@ -40,15 +40,15 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     def create(self, *args, **kwargs) -> ImgPolygonAssociator:
         """Create a new dataset by cutting the source dataset"""
         self._create(*args, **kwargs)
-        self._after_converting()
+        self._after_creating_or_updating()
 
     def update(self, *args, **kwargs) -> ImgPolygonAssociator:
         """Update the target dataset from the source dataset"""
         self._update(*args, **kwargs)
-        self._after_converting()
+        self._after_creating_or_updating()
 
     def save(self):
-        """Save converter to update folder in source_data_dir"""
+        """Save to update folder in source_data_dir"""
         json_file_path = self.target_assoc.assoc_dir / self.name
         self._save(json_file_path)
 
@@ -66,7 +66,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
             self._set_target_assoc()
         return self._target_assoc
 
-    def _after_converting(self):
+    def _after_creating_or_updating(self):
         """Can be used in a subclass to e.g. save parameters to the target_assoc"""
 
     def _set_source_assoc(self):
@@ -91,7 +91,12 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         for dir_ in self.target_assoc.image_data_dirs:
             dir_.mkdir(parents=True, exist_ok=True)
 
+
 class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
+    """
+    Base class for Creating or updating a dataset from
+    an existing source dataset that includes a bands field.
+    """
 
     bands: Optional[Dict[str, Optional[List[int]]]] = Field(
         default=None,
