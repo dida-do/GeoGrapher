@@ -1,9 +1,12 @@
+"""Mix-in that provides methods to get image bands"""
+
 from pathlib import Path
 from typing import Dict, List, Optional
 import rasterio as rio
 
 
 class ImgBandsGetterMixIn:
+    """Mix-in that provides methods to get image bands"""
 
     def _get_bands_for_img(
         self,
