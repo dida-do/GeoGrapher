@@ -1,43 +1,43 @@
-"""Mixin that implements a general-purpose higher order function to create or
-update datasets of GeoTiffs from existing ones by iterating over images."""
-
-from __future__ import annotations
+"""
+Dataset cutter that iterates over images. Implements a general-purpose higher order function
+to create or update datasets of GeoTiffs from existing ones by iterating over images.
+"""
 
 import logging
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Literal, Optional, Union
-from abc import ABC, abstractmethod
-from pydantic import BaseModel, Field
-import json
+from typing import List
+from pydantic import Field
 
-import pandas as pd
 from geopandas import GeoDataFrame
 from tqdm.auto import tqdm
+from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
+from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 from rs_tools.utils.utils import concat_gdfs
-
-if TYPE_CHECKING:
-    from rs_tools import ImgPolygonAssociator
-
-from rs_tools.cut.cut_base import DSCutterBase
 from rs_tools.cut.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
 from rs_tools.cut.img_filter_predicates import ImgFilterPredicate
-from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
-from rs_tools.global_constants import DATA_DIR_SUBDIRS, IMGS_DF_INDEX_NAME
+from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.global_constants import IMGS_DF_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class DSCutterIterOverImgs(DSCutterBase):
-    """Dataset cutter that iterates over images"""
+class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
+    """
+    Dataset cutter that iterates over images. Implements a general-purpose higher order function
+    to create or update datasets of GeoTiffs from existing ones by iterating over images.
+    """
 
-    img_cutter: SingleImgCutterBase
+    img_cutter: SingleImgCutter
     img_filter_predicate: ImgFilterPredicate = AlwaysTrueImgs()
     cut_imgs: List[str] = Field(
         default_factory=list,
         description=
         "Names of cut images in source_data_dir. Usually not to be set by hand!"
     )
+
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        self._check_crs_agree()
 
     def _create(self):
         """Create a new dataset. See create_or_update for more details."""
@@ -59,10 +59,10 @@ class DSCutterIterOverImgs(DSCutterBase):
         using the img_filter_predicate, and then cutting using an img_cutter.
 
         Warning:
-            Make sure this does exactly what you want when updating an existing data_dir (e.g. if new polygons have been addded to the source_data_dir that overlap with existing labels in the target_data_dir these labels will not be updated. This should be fixed!). It might be safer to just recut the source_data_dir.
-
-        Args:
-            create_or_update (str) : One of 'create' or 'update'.
+            Make sure this does exactly what you want when updating an existing data_dir
+            (e.g. if new polygons have been addded to the source_data_dir that overlap
+            with existing labels in the target_data_dir these labels will not be updated.
+            This should be fixed!). It might be safer to just recut the source_data_dir.
         """
 
         # Remember information to determine for which images to generate new labels
@@ -70,7 +70,8 @@ class DSCutterIterOverImgs(DSCutterBase):
             self.target_assoc.imgs_df.index)
         added_polygons = []  # updated as we iterate
 
-        # dict to temporarily store information which will be appended to target_assoc's imgs_df after cutting
+        # dict to temporarily store information which will be appended
+        # to target_assoc's imgs_df after cutting
         new_imgs_dict = {
             index_or_col_name: []
             for index_or_col_name in [IMGS_DF_INDEX_NAME] +
@@ -96,11 +97,15 @@ class DSCutterIterOverImgs(DSCutterBase):
                                          new_img_dict=new_imgs_dict,
                                          source_assoc=self.source_assoc):
 
-                # ... cut the images (and their labels) and remember information to be appended to self.target_assoc imgs_df in return dict
+                # ... cut the images (and their labels) and remember information to be appended
+                # to self.target_assoc imgs_df in return dict
                 imgs_from_single_cut_dict = self.img_cutter(
                     img_name=img_name,
-                    new_polygons_df=self.target_assoc.polygons_df,
-                    new_graph=self.target_assoc._graph)
+                    source_assoc=self.source_assoc,
+                    target_assoc=self.target_assoc,
+                    new_imgs_dict=new_imgs_dict,
+                    bands=self.bands,
+                )
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                 assert {
@@ -152,3 +157,10 @@ class DSCutterIterOverImgs(DSCutterBase):
         self.save()
 
         return self.target_assoc
+
+    def _check_crs_agree(self):
+    """Simple safety check: make sure coordinate systems of source and target agree"""
+    if self.source_assoc.crs_epsg_code != self.target_assoc.crs_epsg_code:
+        raise ValueError(
+            "Coordinate systems of source and target associators do not agree"
+        )
