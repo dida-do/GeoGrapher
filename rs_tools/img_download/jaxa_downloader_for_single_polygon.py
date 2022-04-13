@@ -24,12 +24,8 @@ from pathlib import Path
 from typing import Optional, Set, Union
 
 import numpy as np
-import rasterio as rio
-from shapely.geometry import box
 from shapely.geometry.polygon import Polygon
 from rs_tools.img_download.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
-
-from rs_tools.utils.utils import transform_shapely_geometry
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
