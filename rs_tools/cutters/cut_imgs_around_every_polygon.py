@@ -4,11 +4,11 @@ Dataset cutter that cuts out images around polygons.
 
 import logging
 from typing import Optional, Union
-from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.cut_iter_over_polygons import DSCutterIterOverPolygons
-from rs_tools.cut.img_selectors import ImgSelector, RandomImgSelector
-from rs_tools.cut.polygon_filter_predicates import IsPolygonMissingImgs, PolygonFilterPredicate
-from rs_tools.cut.single_img_cutter_around_polygon import \
+from rs_tools.cutters.type_aliases import ImgSize
+from rs_tools.cutters.cut_iter_over_polygons import DSCutterIterOverPolygons
+from rs_tools.cutters.img_selectors import ImgSelector, RandomImgSelector
+from rs_tools.cutters.polygon_filter_predicates import IsPolygonMissingImgs, PolygonFilterPredicate
+from rs_tools.cutters.single_img_cutter_around_polygon import \
     SingleImgCutterAroundPolygon
 
 logger = logging.getLogger(__name__)
