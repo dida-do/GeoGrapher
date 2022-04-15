@@ -20,8 +20,8 @@ from rs_tools.errors import (
     ImgDownloadError,
     NoImgsForPolygonFoundError,
 )
-from rs_tools.img_download.base_download_processor import ImgDownloadProcessor
-from rs_tools.img_download.base_downloader_for_single_polygon import \
+from rs_tools.downloaders.base_download_processor import ImgDownloadProcessor
+from rs_tools.downloaders.base_downloader_for_single_polygon import \
     ImgDownloaderForSinglePolygon
 from rs_tools.utils.utils import concat_gdfs
 

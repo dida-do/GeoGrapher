@@ -25,7 +25,7 @@ from typing import Optional, Set, Union
 
 import numpy as np
 from shapely.geometry.polygon import Polygon
-from rs_tools.img_download.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
+from rs_tools.downloaders.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -36,14 +36,6 @@ JAXA_DATA_VERSIONS = ['1804', '1903', '2003',
 
 class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
     """Download JAXA DEM (digital elevation) data."""
-
-    # @property
-    # def jaxa_data_version(self):
-    #     return self._params_dict['jaxa_data_version']
-
-    # @jaxa_data_version.setter
-    # def jaxa_data_version(self, new_jaxa_version: str):
-    #     self._params_dict['jaxa_data_version'] = new_jaxa_version
 
     def _download_imgs_for_polygon_jaxa(
             self,
