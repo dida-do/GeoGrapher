@@ -13,9 +13,9 @@ from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBan
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 from rs_tools.utils.utils import concat_gdfs
-from rs_tools.cut.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
-from rs_tools.cut.img_filter_predicates import ImgFilterPredicate
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cutters.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
+from rs_tools.cutters.img_filter_predicates import ImgFilterPredicate
+from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.global_constants import IMGS_DF_INDEX_NAME
 
 logger = logging.getLogger(__name__)
