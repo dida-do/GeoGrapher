@@ -4,7 +4,7 @@ import configparser
 import logging
 import os
 from pathlib import Path
-from typing import Any, Optional, Set, Union
+from typing import Any, Set, Union
 from zipfile import ZipFile
 
 from sentinelsat import SentinelAPI
@@ -13,8 +13,8 @@ from shapely import wkt
 from shapely.geometry import Polygon
 
 from rs_tools.errors import NoImgsForPolygonFoundError
-from rs_tools.img_download.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
-from rs_tools.img_download.sentinel2_safe_unpacking import safe_to_geotif_L2A
+from rs_tools.downloaders.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
+from rs_tools.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
 from rs_tools.utils.utils import transform_shapely_geometry
 
 # logger
