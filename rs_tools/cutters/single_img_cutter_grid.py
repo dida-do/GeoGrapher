@@ -10,8 +10,8 @@ from affine import Affine
 from rasterio.windows import Window
 
 from rs_tools import ImgPolygonAssociator
-from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cutters.type_aliases import ImgSize
+from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 
 logger = logging.getLogger(__name__)
 
