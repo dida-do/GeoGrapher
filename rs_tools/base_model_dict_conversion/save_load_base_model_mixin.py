@@ -9,8 +9,6 @@ from rs_tools.base_model_dict_conversion.base_model_dict_conversion_functional i
 class SaveAndLoadBaseModelMixIn:
     """
     Mix-in class to save and load BaseModels.
-
-    Assumes the BaseModel has a data_dir field.
     """
 
     @abstractmethod
