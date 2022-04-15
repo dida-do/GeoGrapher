@@ -1,179 +1,164 @@
-"""Label maker for soft-categorical (i.e. probabilistic multi-class) (pixel)
-labels."""
-from __future__ import annotations
+"""
+Label maker for soft-categorical (i.e. probabilistic multi-class) (pixel)
+labels.
+"""
 
-from functools import partial
-from logging import Logger
-from pathlib import Path
-from typing import TYPE_CHECKING
+import logging
 
 import numpy as np
 import rasterio as rio
 
+from rs_tools.label_makers.seg_label_maker_base import SegLabelMaker
 from rs_tools.utils.utils import transform_shapely_geometry
+from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
-if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
+log = logging.getLogger(__name__)
 
 
-def _make_geotif_label_soft_categorical_onehot(mode: str,
-                                               assoc: ImgPolygonAssociator,
-                                               img_name: str,
-                                               logger: Logger) -> None:
-    """Create a soft-categorical or onehot GeoTiff (pixel) label for an image.
+class SegLabelMakerSoftCategorical(SegLabelMaker):
 
-    Args:
-        mode (str): One of 'soft-categorical' or 'onehot'
-        assoc (ImgPolygonAssociator): calling ImgPolygonAssociator
-        img_name (str): name of image for which a label should be created
-        logger (Logger): logger of calling associator
+    @property
+    def label_type(self):
+        return 'soft-categorical'
 
-    Returns:
-        None:
-    """
+    def _make_label_for_img(
+        self,
+        assoc: ImgPolygonAssociator,
+        img_name: str,
+    ) -> None:
+        """Create a soft-categorical or onehot GeoTiff (pixel) label for an image.
 
-    # check mode
-    if mode not in {'soft-categorical', 'onehot'}:
-        raise ValueError(f'Unknown mode: {mode}')
+        Args:
+            assoc (ImgPolygonAssociator): calling ImgPolygonAssociator
+            img_name (str): name of image for which a label should be created
 
-    # paths
-    img_path = assoc.images_dir / img_name
-    label_path = assoc.labels_dir / img_name
 
-    # If the image does not exist ...
-    if not img_path.is_file():
+        Returns:
+            None:
+        """
 
-        # ... log error to file.
-        logger.error(
-            f"_make_geotif_label_soft_categorical: input image {img_path} does not exist!"
-        )
+        # paths
+        img_path = assoc.images_dir / img_name
+        label_path = assoc.labels_dir / img_name
 
-    # Else, if the label already exists ...
-    elif label_path.is_file():
+        # If the image does not exist ...
+        if not img_path.is_file():
 
-        # ... log error to file.
-        logger.error(
-            f"_make_geotif_label_soft_categorical: label {label_path} already exists!"
-        )
+            # ... log error to file.
+            log.error(
+                "_make_geotif_label_soft_categorical: input image %s does not exist!",
+                img_path)
 
-    # Else, ...
-    else:
+        # Else, if the label already exists ...
+        elif label_path.is_file():
 
-        label_bands_count = _get_label_bands_count(assoc)
+            # ... log error to file.
+            log.error(
+                "_make_geotif_label_soft_categorical: label %s already exists!",
+                label_path)
 
-        # ...open the image, ...
-        with rio.open(img_path) as src:
+        # Else, ...
+        else:
 
-            # Create profile for the label.
-            profile = src.profile
-            profile.update({"count": label_bands_count, "dtype": rio.float32})
+            label_bands_count = self._get_label_bands_count(assoc)
 
-            # Open the label ...
-            with rio.open(label_path, 'w+', **profile) as dst:
+            # ...open the image, ...
+            with rio.open(img_path) as src:
 
-                # ... and create one band in the label for each segmentation class.
+                # Create profile for the label.
+                profile = src.profile
+                profile.update({
+                    "count": label_bands_count,
+                    "dtype": rio.float32
+                })
 
-                # (if an implicit background band is to be included, it will go in band/channel 1.)
-                start_band = 1 if not assoc._params_dict[
-                    'add_background_band_in_labels'] else 2
+                # Open the label ...
+                with rio.open(label_path, 'w+', **profile) as dst:
 
-                for count, seg_class in enumerate(assoc.segmentation_classes,
-                                                  start=start_band):
+                    # ... and create one band in the label for each segmentation class.
 
-                    # To do that, first find (the df of) the polygons intersecting the image ...
-                    polygons_intersecting_img_df = assoc.polygons_df.loc[
-                        assoc.polygons_intersecting_img(img_name)]
+                    # (if an implicit background band is to be included, it will go in band/channel 1.)
+                    start_band = 1 if not self.add_background_band else 2
 
-                    # ... in the onehot case restrict to (the subdf of) polygons
-                    # with the given segmentation class.
-                    if mode == 'onehot':
-                        polygons_intersecting_img_df = polygons_intersecting_img_df.loc[
-                            polygons_intersecting_img_df['type'] == seg_class]
+                    for count, seg_class in enumerate(
+                            assoc.segmentation_classes, start=start_band):
 
-                    # Extract the polygon geometries of these polygons ...
-                    polygon_geometries_in_std_crs = list(
-                        polygons_intersecting_img_df['geometry'])
+                        # To do that, first find (the df of) the polygons intersecting the image ...
+                        polygons_intersecting_img_df = assoc.polygons_df.loc[
+                            assoc.polygons_intersecting_img(img_name)]
 
-                    # ... and convert them to the crs of the source image.
-                    polygon_geometries_in_src_crs = list(
-                        map(
-                            lambda geom: transform_shapely_geometry(
-                                geom, assoc.polygons_df.crs.to_epsg(),
-                                src.crs.to_epsg()),
-                            polygon_geometries_in_std_crs))
+                        # Extract the polygon geometries of these polygons ...
+                        polygon_geometries_in_std_crs = list(
+                            polygons_intersecting_img_df['geometry'])
 
-                    # Extract the class probabilities ...
-                    if mode == 'soft-categorical':
+                        # ... and convert them to the crs of the source image.
+                        polygon_geometries_in_src_crs = list(
+                            map(
+                                lambda geom: transform_shapely_geometry(
+                                    geom, assoc.polygons_df.crs.to_epsg(),
+                                    src.crs.to_epsg()),
+                                polygon_geometries_in_std_crs))
+
+                        # Extract the class probabilities ...
                         class_probabilities = list(
                             polygons_intersecting_img_df[
                                 f"prob_seg_class_{seg_class}"])
-                    elif mode == 'onehot':
-                        class_probabilities = [
-                            1.0
-                        ] * len(polygon_geometries_in_src_crs)
 
-                    # .. and combine with the polygon geometries
-                    # to a list of (polygon, value) pairs.
-                    polygon_value_pairs = list(
-                        zip(polygon_geometries_in_src_crs,
-                            class_probabilities))
+                        # .. and combine with the polygon geometries
+                        # to a list of (polygon, value) pairs.
+                        polygon_value_pairs = list(
+                            zip(polygon_geometries_in_src_crs,
+                                class_probabilities))
 
-                    # If there are no polygons of seg_type intersecting the image ...
-                    if len(polygon_geometries_in_src_crs) == 0:
-                        # ... the label raster is empty.
-                        mask = np.zeros((src.height, src.width),
-                                        dtype=np.uint8)
-                    # Else, burn the values for those polygons into the band.
-                    else:
-                        mask = rio.features.rasterize(
-                            shapes=polygon_value_pairs,
-                            # or the other way around?
-                            out_shape=(src.height, src.width),
-                            fill=0.0,  #
-                            transform=src.transform,
-                            dtype=rio.float32)
+                        # If there are no polygons of seg_type intersecting the image ...
+                        if len(polygon_geometries_in_src_crs) == 0:
+                            # ... the label raster is empty.
+                            mask = np.zeros((src.height, src.width),
+                                            dtype=np.uint8)
+                        # Else, burn the values for those polygons into the band.
+                        else:
+                            mask = rio.features.rasterize(
+                                shapes=polygon_value_pairs,
+                                # or the other way around?
+                                out_shape=(src.height, src.width),
+                                fill=0.0,  #
+                                transform=src.transform,
+                                dtype=rio.float32)
 
-                    # Write the band to the label file.
-                    dst.write(mask, count)
+                        # Write the band to the label file.
+                        dst.write(mask, count)
 
-                # If the background is not included in the segmentation classes ...
-                if assoc._params_dict['add_background_band_in_labels']:
+                    # If the background is not included in the segmentation classes ...
+                    if self.add_background_band:
 
-                    # ... add background band.
+                        # ... add background band.
 
-                    non_background_band_indices = list(
-                        range(start_band, 2 + len(assoc.segmentation_classes)))
+                        non_background_band_indices = list(
+                            range(start_band,
+                                  2 + len(assoc.segmentation_classes)))
 
-                    # The probability of a pixel belonging to
-                    # the background is the complement of it
-                    # belonging to some segmentation class.
-                    background_band = 1 - np.add.reduce([
-                        dst.read(band_index)
-                        for band_index in non_background_band_indices
-                    ])
+                        # The probability of a pixel belonging to
+                        # the background is the complement of it
+                        # belonging to some segmentation class.
+                        background_band = 1 - np.add.reduce([
+                            dst.read(band_index)
+                            for band_index in non_background_band_indices
+                        ])
 
-                    dst.write(background_band, 1)
+                        dst.write(background_band, 1)
 
+    def _get_label_bands_count(self, assoc: ImgPolygonAssociator) -> bool:
 
-_make_geotif_label_soft_categorical = partial(
-    _make_geotif_label_soft_categorical_onehot, mode='soft-categorical')
+        # If the background is not included in the segmentation classes (default) ...
+        if self.add_background_band:
 
-_make_geotif_label_onehot = partial(_make_geotif_label_soft_categorical_onehot,
-                                    mode='onehot')
+            # ... add a band for the implicit background segmentation class, ...
+            label_bands_count = 1 + len(assoc.segmentation_classes)
 
+        # ... if the background *is* included, ...
+        elif not self.add_background_band:
 
-def _get_label_bands_count(assoc: ImgPolygonAssociator) -> bool:
+            # ... don't.
+            label_bands_count = len(assoc.segmentation_classes)
 
-    # If the background is not included in the segmentation classes (default) ...
-    if assoc._params_dict['add_background_band_in_labels']:
-
-        # ... add a band for the implicit background segmentation class, ...
-        label_bands_count = 1 + len(assoc.segmentation_classes)
-
-    # ... if the background *is* included, ...
-    elif not assoc._params_dict['add_background_band_in_labels']:
-
-        # ... don't.
-        label_bands_count = len(assoc.segmentation_classes)
-
-    return label_bands_count
+        return label_bands_count
