@@ -16,8 +16,8 @@ from rasterio.io import DatasetReader
 from rasterio.windows import Window
 from shapely.geometry import Polygon, box
 
-from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cutters.type_aliases import ImgSize
+from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.utils.utils import transform_shapely_geometry
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
