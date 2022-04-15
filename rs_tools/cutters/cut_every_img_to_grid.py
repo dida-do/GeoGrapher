@@ -4,10 +4,10 @@ from typing import List, Optional
 import logging
 
 from pydantic import Field
-from rs_tools.cut.cut_iter_over_imgs import DSCutterIterOverImgs
-from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.cut.img_filter_predicates import AlwaysTrue, ImgFilterPredicate
-from rs_tools.cut.single_img_cutter_grid import SingleImgCutterToGrid
+from rs_tools.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
+from rs_tools.cutters.type_aliases import ImgSize
+from rs_tools.cutters.img_filter_predicates import AlwaysTrue, ImgFilterPredicate
+from rs_tools.cutters.single_img_cutter_grid import SingleImgCutterToGrid
 
 logger = logging.getLogger(__name__)
 
