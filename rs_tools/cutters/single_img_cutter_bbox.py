@@ -14,8 +14,8 @@ from pydantic import PrivateAttr, validator
 from rasterio.windows import Window, from_bounds
 from shapely.geometry import box
 
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
-from rs_tools.cut.type_aliases import ImgSize
+from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
+from rs_tools.cutters.type_aliases import ImgSize
 from rs_tools.img_polygon_associator import ImgPolygonAssociator
 
 logger = logging.getLogger(__name__)

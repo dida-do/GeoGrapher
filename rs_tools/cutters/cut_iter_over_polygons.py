@@ -16,10 +16,10 @@ from tqdm.auto import tqdm
 from rs_tools import ImgPolygonAssociator
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from rs_tools.global_constants import IMGS_DF_INDEX_NAME
-from rs_tools.cut.img_selectors import ImgSelector
-from rs_tools.cut.polygon_filter_predicates import (AlwaysTrue,
+from rs_tools.cutters.img_selectors import ImgSelector
+from rs_tools.cutters.polygon_filter_predicates import (AlwaysTrue,
                                                     PolygonFilterPredicate)
-from rs_tools.cut.single_img_cutter_base import SingleImgCutter
+from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.utils.utils import concat_gdfs, map_dict_values
 
 logger = logging.getLogger(__name__)
