@@ -75,7 +75,7 @@ class SegLabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         for img_name in tqdm(img_names, desc='Making labels: '):
             self._make_label_for_img(assoc=self, img_name=img_name)
 
-        assoc._params_dict['label_type'] = self.label_type
+        assoc.attrs['label_type'] = self.label_type
         self._after_make_labels(assoc)
         assoc.save()
 
