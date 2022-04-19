@@ -34,6 +34,10 @@ class SegLabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         """Override this hook in subclass to apply custom logic after making labels"""
         pass
 
+    def _run_safety_checks(self, assoc: ImgPolygonAssociator):
+        """Override to check e.g. if existing classes in polygons_df contained in assoc.all_classes"""
+        pass
+
     def make_labels(
         self,
         assoc: ImgPolygonAssociator,
@@ -48,7 +52,7 @@ class SegLabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         """
 
         # safety checks
-        assoc._check_classes_in_polygons_df_contained_in_all_classes()
+        self._run_safety_checks(assoc)
         self._compare_existing_imgs_to_imgs_df(assoc)
 
         assoc.labels_dir.mkdir(parents=True, exist_ok=True)
