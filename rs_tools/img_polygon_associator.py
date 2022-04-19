@@ -30,7 +30,7 @@ from rs_tools.utils.associator_utils import (empty_gdf,
                                              empty_gdf_same_format_as,
                                              empty_graph)
 
-INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self._json_path / val
+INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self.assoc_dir / val
     "_polygons_df_path": "polygons_df.geojson",
     "_imgs_df_path": "imgs_df.geojson",
     "attrs_path": "attrs.json",
@@ -39,7 +39,6 @@ INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self._json_path /
 DEFAULT_ASSOC_DIR_NAME = "associator"
 DEFAULT_IMAGES_DIR_NAME = "images"
 DEFAULT_LABELS_DIR_NAME = "labels"
-DEFAULT_DOWNLOAD_DIR_NAME = "downloads"
 NON_SEGMENTATION_POLYGON_CLASSES = [
     "background_class"
 ]  # polygon types that are not segmentation classes (e.g. polygons that define background regions or masks)
@@ -106,7 +105,6 @@ class ImgPolygonAssociator(
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
         assoc_dir: Optional[Union[Path, str]] = None,
-        download_dir: Optional[Union[Path, str]] = None,
 
         # optional kwargs
         **kwargs: Any,
@@ -120,10 +118,10 @@ class ImgPolygonAssociator(
         Warning:
             Note that many methods that create new dataset from existing ones
             won't work if you use a nonstandard directory format (i.e. set the
-            images_dir, labels_dir, assoc_dir, download_dir from hand instead
+            images_dir, labels_dir, assoc_dir from hand instead
             of setting the data_dir arg).
 
-        Either all four of the images_dir, labels_dir, assoc_dir, and download_dir args
+        Either all four of the images_dir, labels_dir, and assoc_dir args
         or the data_dir arg should be given (i.e. not None).
 
         Args:
@@ -132,13 +130,11 @@ class ImgPolygonAssociator(
             segmentation_classes (Sequence[str]): list of segmentation classes (excluding mask and background classes)
             polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None, i.e. (if not loading from disk) an empty polygons_df.
             imgs_df (Optional[GeoDataFrame], optional): imgs_df. Defaults to None, i.e. (if not loading from disk) an empty imgs_df.
-            add_background_band_in_labels (bool, optional): Whether to add a background segmentation class band when creating labels. Only relevant for 'one-hot' or 'soft-categorical' labels. Defaults to False.
             crs_epsg_code (int, optional): EPSG code associator works with. Defaults to STANDARD_CRS_EPSG_CODE
             data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, assoc_dir.
             images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
             labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
             assoc_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json associator component files.
-            download_dir (Optional[Union[Path, str]], optional): path to directory files are downloaded to. Can be used to store e.g. SAFE files for sentinel-2 data.
             **kwargs (Any): optional keyword args for subclass implementations.
         """
 
@@ -153,7 +149,6 @@ class ImgPolygonAssociator(
             images_dir=images_dir,
             labels_dir=labels_dir,
             assoc_dir=assoc_dir,
-            download_dir=download_dir,
         )
 
         # set paths
@@ -162,7 +157,6 @@ class ImgPolygonAssociator(
             images_dir=images_dir,
             labels_dir=labels_dir,
             assoc_dir=assoc_dir,
-            download_dir=download_dir,
         )
 
         # build attrs from all args except for imgs_df, polygons_df, the corresponding column args, and the path/dir args
@@ -197,7 +191,6 @@ class ImgPolygonAssociator(
         # safety checks
         self._check_required_df_cols_exist(df=imgs_df, df_name='self.imgs_df', mode='imgs_df')
         self._check_required_df_cols_exist(df=polygons_df, df_name='self.polygons_df', mode='polygons_df')
-        self._check_classes_in_polygons_df_contained_in_all_classes()
 
         # directories containing image data
         self._image_data_dirs = [
@@ -217,7 +210,6 @@ class ImgPolygonAssociator(
         assoc_dir: Union[Path, str],
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
-        download_dir: Union[Path, str],
     ) -> IPAType:
         """Initialize from paths"""
 
@@ -239,7 +231,6 @@ class ImgPolygonAssociator(
             assoc_dir=assoc_dir,
             images_dir=images_dir,
             labels_dir=labels_dir,
-            download_dir=download_dir,
             **kwargs,
         )
 
@@ -261,7 +252,7 @@ class ImgPolygonAssociator(
 
         data_dir = Path(data_dir)
 
-        images_dir, labels_dir, assoc_dir, download_dir = cls._get_default_dirs_from_data_dir(
+        images_dir, labels_dir, assoc_dir = cls._get_default_dirs_from_data_dir(
             data_dir
         )
 
@@ -269,7 +260,6 @@ class ImgPolygonAssociator(
             images_dir=images_dir,
             labels_dir=labels_dir,
             assoc_dir=assoc_dir,
-            download_dir=download_dir,
         )
 
         return assoc
@@ -300,10 +290,6 @@ class ImgPolygonAssociator(
         return self._assoc_dir
 
     @property
-    def download_dir(self):
-        return self._download_dir
-
-    @property
     def crs_epsg_code(self) -> int:
         """
         int: EPSG code of associator's crs.
@@ -330,10 +316,6 @@ class ImgPolygonAssociator(
         if not len(new_segmentation_classes) == len(set(new_segmentation_classes)):
             raise ValueError("no duplicates in list of segmentation_classes allowed")
         self.attrs["segmentation_classes"] = new_segmentation_classes
-        if getattr(self, "label_type", None) not in {"categorical", None}:
-            log.warning(
-                "segmentation_classes changed. You might want to add a column in polygons_df and recompute the labels!"
-            )
 
     @property
     def all_polygon_classes(self):
@@ -388,7 +370,6 @@ class ImgPolygonAssociator(
         assoc_dir: Optional[Union[Path, str]] = None,
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
-        download_dir: Optional[Union[Path, str]] = None,
     ) -> ImgPolygonAssociator:
         """Factory method that returns an empty associator of the same format
         (i.e. columns in polygons_df and imgs_df) as self with data_dir
@@ -399,7 +380,6 @@ class ImgPolygonAssociator(
             images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
             labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
             assoc_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json associator component files.
-            download_dir (Optional[Union[Path, str]], optional): path to download directory.
 
         Returns:
             new empty associator
@@ -410,7 +390,6 @@ class ImgPolygonAssociator(
             assoc_dir=assoc_dir,
             images_dir=images_dir,
             labels_dir=labels_dir,
-            download_dir=download_dir,
         )
 
         if data_dir is not None:
@@ -418,7 +397,6 @@ class ImgPolygonAssociator(
                 images_dir,
                 labels_dir,
                 assoc_dir,
-                download_dir,
             ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
         new_empty_polygons_df = empty_gdf_same_format_as(self.polygons_df)
@@ -429,7 +407,6 @@ class ImgPolygonAssociator(
             images_dir=images_dir,
             labels_dir=labels_dir,
             assoc_dir=assoc_dir,
-            download_dir=download_dir,
             # empty dataframes
             polygons_df=new_empty_polygons_df,
             imgs_df=new_empty_imgs_df,
@@ -460,26 +437,13 @@ class ImgPolygonAssociator(
 
     def _get_required_df_cols_and_types(self, df_name: str) -> dict:
 
+        # type of "geometry" column is ignored
         if df_name == "polygons_df":
-
-            if "label_type" not in self.attrs or self.label_type is None:
-                cols_and_types = {"geometry": None, "img_count": int}
-            elif self.label_type in {"categorical", "onehot"}:
-                cols_and_types = {"geometry": None, "img_count": int, "type": str}  # not used
-            elif self.label_type == "soft-categorical":
-                cols_and_types = {
-                    "geometry": None,  # type ignored by empty_gdf
-                    "img_count": int,
-                    **{f"prob_seg_class_{class_}": float for class_ in self.all_polygon_classes},
-                }
-
+            cols_and_types = {"geometry": None, "img_count": int}
         elif df_name == "imgs_df":
-            cols_and_types = {"geometry": None}  # type ignored by empty_gdf
+            cols_and_types = {"geometry": None}
 
         return cols_and_types
-
-    def _get_required_df_cols(self, df_name: str) -> List[str]:
-        return list(self._get_required_df_cols_and_types(df_name).keys())
 
     def _set_remaining_assoc_components(
         self, load_from_disk: bool, polygons_df: GeoDataFrame, imgs_df: GeoDataFrame
@@ -506,7 +470,7 @@ class ImgPolygonAssociator(
             mode: Literal["polygons_df", "imgs_df"]) -> bool:
         """Check if required columns exist."""
 
-        required_cols = self._get_required_df_cols(mode)
+        required_cols = list(self._get_required_df_cols_and_types(df_name).keys())
 
         if not set(required_cols) <= set(df.columns):
 
@@ -547,19 +511,17 @@ class ImgPolygonAssociator(
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
         assoc_dir: Union[Path, str],
-        download_dir: Union[Path, str],
     ):
 
         component_dirs_all_not_None = (
             images_dir is not None
             and labels_dir is not None
             and assoc_dir is not None
-            and download_dir is not None
         )
 
         if not (component_dirs_all_not_None ^ (data_dir is not None)):
             raise ValueError(
-                "Either the data_dir arg must be given (i.e. not None) or all of the images_dir, labels_dir, assoc_dir args, download_dir."
+                "Either the data_dir arg must be given (i.e. not None) or all of the images_dir, labels_dir, and assoc_dir args."
             )
 
     def _init_set_paths(
@@ -568,7 +530,6 @@ class ImgPolygonAssociator(
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
         assoc_dir: Union[Path, str],
-        download_dir: Union[Path, str],
     ):
         """Set paths to image/label data and associator component files.
 
@@ -580,13 +541,11 @@ class ImgPolygonAssociator(
                 images_dir,
                 labels_dir,
                 assoc_dir,
-                download_dir,
             ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
         self._images_dir = Path(images_dir)
         self._labels_dir = Path(labels_dir)
         self._assoc_dir = Path(assoc_dir)
-        self._download_dir = Path(download_dir)
 
         # set inferred paths
         for path_attr, filename in INFERRED_PATH_ATTR_FILENAMES.items():
@@ -600,9 +559,8 @@ class ImgPolygonAssociator(
         images_dir = data_dir / DEFAULT_IMAGES_DIR_NAME
         labels_dir = data_dir / DEFAULT_LABELS_DIR_NAME
         assoc_dir = data_dir / DEFAULT_ASSOC_DIR_NAME
-        download_dir = data_dir / DEFAULT_DOWNLOAD_DIR_NAME
 
-        return images_dir, labels_dir, assoc_dir, download_dir
+        return images_dir, labels_dir, assoc_dir
 
     @staticmethod
     def _make_dict_json_serializable(input_dict: dict) -> dict:
@@ -654,35 +612,4 @@ class ImgPolygonAssociator(
             }
             raise ValueError(
                 f"No non-segmentation polygon classes should be segmentation classes, but the following are: {bad_values}"
-            )
-
-    def _check_classes_in_polygons_df_contained_in_all_classes(
-        self,
-        polygons_df: Optional[GeoDataFrame] = None,
-        polygons_df_name: Optional[str] = None
-    ):
-        """Check TODO."""
-
-        if polygons_df is None:
-            polygons_df = self.polygons_df
-            polygons_df_name = "self.polygons_df"
-        elif polygons_df_name is None:
-            ValueError("If the polygons_df argument is given, so should the polygons_df_name.")
-
-        if "label_type" not in self.attrs or self.label_type is None:
-            polygon_classes_in_polygons_df = set()
-        elif self.label_type in {"categorical", "onehot"}:
-            polygon_classes_in_polygons_df = set(polygons_df["type"].unique())
-        elif self.label_type == "soft-categorical":
-            polygon_classes_in_polygons_df = {
-                col_name[15:]
-                for col_name in polygons_df.columns
-                if col_name.startswith("prob_seg_class_")
-            }
-        else:
-            raise Exception(f"Unknown label_type: {self.label_type}")
-
-        if not polygon_classes_in_polygons_df <= set(self.all_polygon_classes):
-            raise ValueError(
-                f"Unrecognized polygon classes in {polygons_df_name}: {polygon_classes_in_polygons_df - set(self.all_polygon_classes)}"
             )
