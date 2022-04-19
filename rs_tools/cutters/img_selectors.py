@@ -1,6 +1,4 @@
 """
-TODO: remove reference to _update_from_source_dataset_dict!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 Callable classes for selecting a sublist from a list of images.
 Used by cutting functions.
 """
