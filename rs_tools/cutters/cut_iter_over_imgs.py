@@ -39,6 +39,14 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         super().__init__(**data)
         self._check_crs_agree()
 
+    def cut(self):
+        """
+        Cut a dataset.
+
+        Alternate name for the create method. See create_or_update for docstring.
+        """
+        return self.create()
+
     def _create(self):
         """Create a new dataset. See create_or_update for more details."""
         return self.create_or_update()
