@@ -1,6 +1,5 @@
 """
-Label maker for soft-categorical (i.e. probabilistic multi-class) (pixel)
-labels.
+Label maker for soft-categorical (i.e. probabilistic multi-class) segmentation labels.
 """
 
 import logging
@@ -16,6 +15,14 @@ log = logging.getLogger(__name__)
 
 
 class SegLabelMakerSoftCategorical(SegLabelMaker):
+    """
+    Label maker for soft-categorical (i.e. probabilistic multi-class) segmentation labels.
+
+    Assumes the associator's polygons_df contains for each segmentation class
+    a "prob_seg_class<seg_class>" column containing the probabilities for that class.
+    """
+
+    add_background_band: bool
 
     @property
     def label_type(self):
@@ -162,3 +169,30 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
             label_bands_count = len(assoc.segmentation_classes)
 
         return label_bands_count
+
+    def _run_safety_checks(self, assoc: ImgPolygonAssociator):
+        """Check existence of 'prob_seg_class_<class name>' columns in assoc.polygons_df."""
+
+        # check required columns exist
+        required_cols = {
+            f"prob_seg_class_{class_}"
+            for class_ in assoc.all_polygon_classes
+        }
+        if not set(required_cols) <= set(assoc.polygons_df.columns):
+            missing_cols = set(required_cols) - set(assoc.polygons_df.columns)
+            raise ValueError(
+                f"assoc.polygons_df.columns is missing required columns: {', '.join(missing_cols)}"
+            )
+
+        # check no other columns will be mistaken for
+        polygon_classes_in_polygons_df = {
+            col_name[15:]
+            for col_name in assoc.polygons_df.columns
+            if col_name.startswith("prob_seg_class_")
+        }
+        if not polygon_classes_in_polygons_df <= set(
+                assoc.all_polygon_classes):
+            log.warning(
+                "Ignoring columns: %s. The corresponding classes are not in assoc.all_segmentation_classes",
+                polygon_classes_in_polygons_df -
+                set(assoc.all_polygon_classes))

@@ -125,3 +125,19 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
                     # Write label to file.
                     dst.write(label, 1)
+
+    def _run_safety_checks(self, assoc: ImgPolygonAssociator):
+        """Check existence of 'type' column in assoc.polygons_df and make sure entries are allowed."""
+
+        if "type" not in assoc.polygons_df.columns:
+            raise ValueError(
+                "assoc.polygons_df needs a 'type' column containing the (e.g. segmentation or object detection) class of the geometries"
+            )
+
+        polygon_classes_in_polygons_df = set(
+            assoc.polygons_df["type"].unique())
+        if not polygon_classes_in_polygons_df <= set(
+                assoc.all_polygon_classes):
+            raise ValueError(
+                f"Unrecognized polygon classes in assoc.polygons_df: {polygon_classes_in_polygons_df - set(self.all_polygon_classes)}"
+            )
