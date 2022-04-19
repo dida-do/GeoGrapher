@@ -34,6 +34,7 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
     Download images for polygons targeting a given number of images per polygon.
     """
 
+    download_dir: Path
     downloader_for_single_polygon: ImgDownloaderForSinglePolygon
     download_processor: ImgDownloadProcessor
     kwarg_defaults: dict = Field(default_factory=dict)
@@ -43,7 +44,6 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
                  polygon_names: Optional[Union[str, int, List[int],
                                                List[str]]] = None,
                  target_img_count: int = 1,
-                 add_labels: bool = True,
                  filter_out_polygons_contained_in_union_of_intersecting_imgs:
                  bool = False,
                  shuffle_polygons: bool = True,
@@ -54,8 +54,7 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
         containing a given polygon) is less than num_target_imgs_per_polygon images in the associator's
         internal polygons_df or the optional polygons_df argument (if given), for each such polygon
         attempts to download num_target_imgs_per_polygon - image_count images fully containing the polygon
-        (or several images jointly containing the polygon), creates the associated label(s) for the image(s)
-        (assuming the default value True of add_labels is not changed), and integrates the new image(s)
+        (or several images jointly containing the polygon), and integrates the new image(s)
         into the dataset/associator. Integrates images downloaded for a polygon into the dataset/associator
         immediately after downloading them and before downloading images for the next polygon. In particular,
         the image count is updated immediately after each download.
@@ -74,7 +73,6 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
             downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
             target_img_count (int): target for number of images per polygon in the dataset after downloading. The actual number of images for each polygon P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_polygon images for P P is also contained in images downloaded for other polygons.
             polygons_df (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of polygons conforming to the associator's format for polygon_df, defaults to the associator's internal polygons_df (i.e. assoc.polygons_df). If provided and not equal to assoc.polygons_df will download images for only those polygons and integrate the polygons in polygons_df into the associator after the images have been downloaded.
-            add_labels (bool, optional): bool. Whether to add labels for the downloaded images. Defaults to True.
             filter_out_polygons_contained_in_union_of_intersecting_imgs (bool): Useful when dealing with 'large' polygons. Defaults to False.
             shuffle_polygons (bool): Whether to shuffle order of polygons for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
             kwargs (dict, optional): additional keyword arguments passed to downloader_for_single_polygon and download_processor. Defaults to self.kwarg_defaults.
@@ -94,7 +92,7 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
         if not isinstance(assoc, ImgPolygonAssociator):
             assoc = ImgPolygonAssociator.from_data_dir(assoc)
         assoc.images_dir.mkdir(parents=True, exist_ok=True)
-        assoc.download_dir.mkdir(
+        self.download_dir.mkdir(
             parents=True,
             exist_ok=True)  #TODO: assoc.data_dir / 'downloads' or whatever
 
@@ -155,7 +153,7 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
                     return_dict = self.downloader_for_single_polygon.download(
                         polygon_name,
                         polygon_geometry,
-                        assoc.download_dir,
+                        self.download_dir,
                         previously_downloaded_imgs_set,  # _download_imgs_for_polygon should use this to make sure no attempt at downloading an already downloaded image is made.
                         **self.kwarg_defaults,
                     )
@@ -222,7 +220,7 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
                             img_name = img_info_dict["img_name"]
                             single_img_processed_return_dict = self.download_processor.process(
                                 img_name,
-                                assoc.download_dir,
+                                self.download_dir,
                                 assoc.images_dir,
                                 assoc.crs_epsg_code,
                                 **self.kwarg_defaults,
@@ -266,10 +264,6 @@ class ImgDownloaderForPolygons(BaseModel, SaveAndLoadBaseModelMixIn):
                                                 assoc.crs_epsg_code)
             assoc.imgs_df = concat_gdfs([assoc.imgs_df, new_imgs_df])
             assoc.save()
-
-            # Create labels, if necessary.
-            if add_labels:
-                assoc.make_labels()
 
     def save(self, file_path: Union[Path, str]):
         """
