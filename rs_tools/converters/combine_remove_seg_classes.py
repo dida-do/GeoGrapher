@@ -84,7 +84,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         if self.new_background_class is not None:
             self.target_assoc.background_class = self.new_background_class
         elif self.source_assoc.background_class not in new_seg_classes:
-            self.target_assoc._params_dict['background_class'] = None
+            self.target_assoc.attrs['background_class'] = None
         # ... and segmentation classes in self.target_assoc.
         self.target_assoc.segmentation_classes = [
             class_ for class_ in new_seg_classes
