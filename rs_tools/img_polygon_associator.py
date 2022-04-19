@@ -1,4 +1,6 @@
 """
+TODO: docstring: labels
+
 The ImgPolygonAssociator class organizes and handles remote sensing
 datasets.
 """
@@ -18,19 +20,12 @@ from geopandas import GeoDataFrame
 
 # Mix-in classes:
 from rs_tools.add_drop_imgs_polygons_mixin import AddDropImgsPolygonsMixIn
-from rs_tools.convert import (
-    CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
-    CreateDSCombineRemoveSegClassesMixIn, CreateDSTiffToNpyMixIn)
+from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
+
 from rs_tools.global_constants import (IMGS_DF_INDEX_NAME,
                                        POLYGONS_DF_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
 from rs_tools.graph import BipartiteGraph
-# Base class:
-from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-from rs_tools.labels.label_type_conversion_utils import \
-    convert_polygons_df_soft_cat_to_cat
-from rs_tools.labels.labels_mixin import LabelsMixIn
-from rs_tools.update_from_source_dataset_mixin import UpdateFromSourceDSMixIn
 from rs_tools.utils.associator_utils import (empty_gdf,
                                              empty_gdf_same_format_as,
                                              empty_graph)
@@ -38,9 +33,8 @@ from rs_tools.utils.associator_utils import (empty_gdf,
 INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self._json_path / val
     "_polygons_df_path": "polygons_df.geojson",
     "_imgs_df_path": "imgs_df.geojson",
-    "_params_dict_path": "params_dict.json",
+    "attrs_path": "attrs.json",
     "_graph_path": "graph.json",
-    "_update_from_source_dataset_dict_path": "update_from_source_dataset_dict.json",
 }
 DEFAULT_ASSOC_DIR_NAME = "associator"
 DEFAULT_IMAGES_DIR_NAME = "images"
@@ -58,11 +52,6 @@ log = logging.getLogger(__name__)
 
 class ImgPolygonAssociator(
         AddDropImgsPolygonsMixIn,
-        UpdateFromSourceDSMixIn,  # Needs to be before any of the CreateDS mix ins
-        CreateDSCombineRemoveSegClassesMixIn,
-        CreateDSCategoricalFromSoftCategoricalDatasetMixIn,
-        CreateDSTiffToNpyMixIn,
-        LabelsMixIn,
         BipartiteGraphMixIn,  # Needs to be last
 ):
     """Organize, build up and handle remote sensing datasets consisting of
@@ -83,7 +72,6 @@ class ImgPolygonAssociator(
         by unique identifiers (str or int) for the polygons and contain the following columns:
         - 'geometry': shapely.geometry.Polygon. The vector polygon label (in a standard crs)
         - 'img_count': int. Number of images in the dataset that fully contain the polygon.
-        - If the label_type argument is 'categorical' or 'onehot' there should be a 'type' column whose entries are the segmenation class (one of the entries in the segmentation_classes list) the polygon belongs to. If the label_type argument is "soft-categorical" there should be columns prob_seg_class_[class] for each segmentation class.
         - other columns as needed for one's application.
 
     - imgs_df: GeoDatFrame containing tabular information about the images. Should be indexed
@@ -104,13 +92,11 @@ class ImgPolygonAssociator(
 
         # args w/o default values
         segmentation_classes: Sequence[str],
-        label_type: str,
         polygons_df: Optional[GeoDataFrame] = None,
         imgs_df: Optional[GeoDataFrame] = None,
 
         # remaining non-path args w/ default values
         background_class: Optional[str] = None,
-        add_background_band_in_labels: bool = True,
         crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
 
         # path args
@@ -144,7 +130,6 @@ class ImgPolygonAssociator(
 
             load_from_disk (bool): whether to load an existing associator from disk or create a new one.
             segmentation_classes (Sequence[str]): list of segmentation classes (excluding mask and background classes)
-            label_type (str): Label type. One of 'categorical' (default), 'onehot', or 'soft-categorical'
             polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None, i.e. (if not loading from disk) an empty polygons_df.
             imgs_df (Optional[GeoDataFrame], optional): imgs_df. Defaults to None, i.e. (if not loading from disk) an empty imgs_df.
             add_background_band_in_labels (bool, optional): Whether to add a background segmentation class band when creating labels. Only relevant for 'one-hot' or 'soft-categorical' labels. Defaults to False.
@@ -180,14 +165,12 @@ class ImgPolygonAssociator(
             download_dir=download_dir,
         )
 
-        # build _params_dict from all args except for imgs_df, polygons_df, the corresponding column args, and the path/dir args
-        self._params_dict = {}
-        self._params_dict.update(
+        # build attrs from all args except for imgs_df, polygons_df, the corresponding column args, and the path/dir args
+        self.attrs = {}
+        self.attrs.update(
             {
                 "segmentation_classes": segmentation_classes,
-                "label_type": label_type,
                 "background_class": background_class,
-                "add_background_band_in_labels": add_background_band_in_labels,
                 "crs_epsg_code": crs_epsg_code,
                 **kwargs,
             }
@@ -206,7 +189,7 @@ class ImgPolygonAssociator(
         self._standardize_df_crs(df=polygons_df, df_name="polygons_df")
         self._standardize_df_crs(df=imgs_df, df_name="imgs_df")
 
-        # set self.polygons_df, self.imgs_df, self._update_from_source_dataset_dict
+        # set self.polygons_df, self.imgs_df
         self._set_remaining_assoc_components(
             load_from_disk=load_from_disk, polygons_df=polygons_df, imgs_df=imgs_df
         )
@@ -223,8 +206,8 @@ class ImgPolygonAssociator(
         ]  # in subclass implementation, can add e.g. mask_dir
 
     def __getattr__(self, key):
-        if key in self.__dict__["_params_dict"]:
-            return self.__dict__["_params_dict"][key]
+        if key in self.__dict__["attrs"]:
+            return self.__dict__["attrs"][key]
         else:
             raise AttributeError(f"No such attribute: {key}")
 
@@ -236,21 +219,20 @@ class ImgPolygonAssociator(
         labels_dir: Union[Path, str],
         download_dir: Union[Path, str],
     ) -> IPAType:
+        """Initialize from paths"""
 
         # read args from json
         try:
-            params_dict_path = Path(assoc_dir) / INFERRED_PATH_ATTR_FILENAMES["_params_dict_path"]
-            with open(params_dict_path, "r") as read_file:
+            attrs_path = Path(assoc_dir) / INFERRED_PATH_ATTR_FILENAMES["attrs_path"]
+            with open(attrs_path, "r") as read_file:
                 kwargs = json.load(read_file)
-        except FileNotFoundError as e:
+        except FileNotFoundError as exc:
             log.exception(
-                f"Missing associator file {INFERRED_PATH_ATTR_FILENAMES['_params_dict_path']} found in {assoc_dir}!"
-            )
-            raise e
+                "Missing associator file %s found in %s", INFERRED_PATH_ATTR_FILENAMES['attrs_path'], assoc_dir)
+            raise exc
         except JSONDecodeError:
             log.exception(
-                f"The {INFERRED_PATH_ATTR_FILENAMES['_params_dict_path']} file in {assoc_dir} is corrupted!"
-            )
+                "The %s file in %s is corrupted!", INFERRED_PATH_ATTR_FILENAMES['attrs_path'], assoc_dir)
 
         new_assoc = cls(
             load_from_disk=True,
@@ -328,67 +310,27 @@ class ImgPolygonAssociator(
 
         Setting will set associator's imgs_df and polygons_df crs automatically.
         """
-        return self._params_dict["crs_epsg_code"]
+        return self.attrs["crs_epsg_code"]
 
     @crs_epsg_code.setter
     def crs_epsg_code(self, epsg_code: int):
         # set value in params dict
-        self._params_dict["crs_epsg_code"] = epsg_code
+        self.attrs["crs_epsg_code"] = epsg_code
 
         # reproject imgs_df and polygons_df GeoDataFrames
         self.polygons_df = self.polygons_df.to_crs(epsg=epsg_code)
         self.imgs_df = self.imgs_df.to_crs(epsg=epsg_code)
 
     @property
-    def label_type(self) -> str:
-        """Return label type."""
-        return self._params_dict["label_type"]
-
-    @label_type.setter
-    def label_type(self, new_label_type: str):
-        """Set label type.
-
-        Warning:
-            Does not delete old labels and create new ones.
-        """
-
-        self._check_label_type(new_label_type)
-
-        old_label_type = self._params_dict["label_type"]
-        if old_label_type == new_label_type:
-            pass
-        else:
-            if old_label_type == "soft-categorical" and new_label_type == "categorical":
-                self.polygons_df = convert_polygons_df_soft_cat_to_cat(self.polygons_df)
-            elif old_label_type == "categorical" and new_label_type == "soft-categorical":
-                needed_cols = {f"prob_seg_class_{class_}" for class_ in self.all_polygon_classes}
-                existing_cols = set(self.polygons_df.columns)
-                if not needed_cols <= existing_cols:
-                    message = f"Can't convert to soft-categorical label_type: Missing columns {existing_cols - needed_cols}"
-                    log.error(message)
-                    raise ValueError(message)
-            elif {old_label_type, new_label_type} == {"categorical", "onehot"}:
-                pass
-            else:
-                raise ValueError(
-                    f"Conversion from label_type from {old_label_type} to {new_label_type} not implemented."
-                )
-
-            log.warning(
-                f"label_type has been changed to {new_label_type}. You might want to delete the old labels and create new ones!"
-            )
-            self._params_dict["label_type"] = new_label_type
-
-    @property
     def segmentation_classes(self):
-        return self._params_dict["segmentation_classes"]
+        return self.attrs["segmentation_classes"]
 
     @segmentation_classes.setter
     def segmentation_classes(self, new_segmentation_classes: List[str]):
         if not len(new_segmentation_classes) == len(set(new_segmentation_classes)):
             raise ValueError("no duplicates in list of segmentation_classes allowed")
-        self._params_dict["segmentation_classes"] = new_segmentation_classes
-        if self.label_type != "categorical":
+        self.attrs["segmentation_classes"] = new_segmentation_classes
+        if getattr(self, "label_type", None) not in {"categorical", None}:
             log.warning(
                 "segmentation_classes changed. You might want to add a column in polygons_df and recompute the labels!"
             )
@@ -413,7 +355,7 @@ class ImgPolygonAssociator(
     def save(self):
         """Save associator to disk."""
 
-        log.info(f"Saving associator to disk...")
+        log.info("Saving associator to disk...")
 
         # Make sure assoc_dir exists.
         self._assoc_dir.mkdir(parents=True, exist_ok=True)
@@ -434,15 +376,9 @@ class ImgPolygonAssociator(
         self.polygons_df.to_file(Path(self._polygons_df_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
-        with open(self._params_dict_path, "w") as write_file:
-            save_params_dict = self._make_dict_json_serializable(self._params_dict)
-            json.dump(save_params_dict, write_file)
-        # Save update_from_source_dict
-        with open(self._update_from_source_dataset_dict_path, "w") as write_file:
-            save_update_dict = self._make_dict_json_serializable(
-                self._update_from_source_dataset_dict
-            )
-            json.dump(save_update_dict, write_file)
+        with open(self.attrs_path, "w") as write_file:
+            saveattrs = self._make_dict_json_serializable(self.attrs)
+            json.dump(saveattrs, write_file)
 
     def empty_assoc_same_format_as(
         self,
@@ -453,7 +389,6 @@ class ImgPolygonAssociator(
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
         download_dir: Optional[Union[Path, str]] = None,
-        copy_update_from_source_dataset_dict: bool = False,
     ) -> ImgPolygonAssociator:
         """Factory method that returns an empty associator of the same format
         (i.e. columns in polygons_df and imgs_df) as self with data_dir
@@ -465,7 +400,6 @@ class ImgPolygonAssociator(
             labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
             assoc_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json associator component files.
             download_dir (Optional[Union[Path, str]], optional): path to download directory.
-            copy_update_from_source_dataset_dict (bool): Whether to copy self._update_from_source_dataset_dict. Defaults to False
 
         Returns:
             new empty associator
@@ -500,11 +434,8 @@ class ImgPolygonAssociator(
             polygons_df=new_empty_polygons_df,
             imgs_df=new_empty_imgs_df,
             # remaining kwargs
-            **self._params_dict,
+            **self.attrs,
         )
-
-        if copy_update_from_source_dataset_dict:
-            new_empty_assoc._update_from_source_dataset_dict = self._update_from_source_dataset_dict
 
         return new_empty_assoc
 
@@ -531,7 +462,9 @@ class ImgPolygonAssociator(
 
         if df_name == "polygons_df":
 
-            if self.label_type in {"categorical", "onehot"}:
+            if "label_type" not in self.attrs or self.label_type is None:
+                cols_and_types = {"geometry": None, "img_count": int}
+            elif self.label_type in {"categorical", "onehot"}:
                 cols_and_types = {"geometry": None, "img_count": int, "type": str}  # not used
             elif self.label_type == "soft-categorical":
                 cols_and_types = {
@@ -552,54 +485,21 @@ class ImgPolygonAssociator(
         self, load_from_disk: bool, polygons_df: GeoDataFrame, imgs_df: GeoDataFrame
     ):
 
-        # First, set self.polygons_df, self.imgs_df, self._graph. If loading from disk ...
         if load_from_disk:
 
-            # ... read graph from disk ...
-            try:
-                with open(self._graph_path, "r") as read_file:
-                    graph = json.load(read_file)
-            except JSONDecodeError:
-                log.exception(f"graph.json file in {self._graph_path.parent} corrupted.")
-            except FileNotFoundError:
-                log.exception(f"Couldn't find graph.json in {self._graph_path.parent}.")
-
-            # ... and set remaining components.
             self._graph = BipartiteGraph(file_path=self._graph_path)
             self.polygons_df = polygons_df
             self.imgs_df = imgs_df
 
         else:
 
-            # Else, start with an empty associator ...
             self._graph = empty_graph()
             self.polygons_df = empty_gdf_same_format_as(polygons_df)
             self.imgs_df = empty_gdf_same_format_as(imgs_df)
 
-            # ... and build it up.
             self.add_to_polygons_df(polygons_df)
             self.add_to_imgs_df(imgs_df)
 
-        # Set cut_params_dict
-        cut_params_path = self._update_from_source_dataset_dict_path
-        if cut_params_path is None:
-            self._update_from_source_dataset_dict = {}
-        else:
-            # read cut_params_dict from disk
-            try:
-                with open(cut_params_path, "r") as read_file:
-                    self._update_from_source_dataset_dict = json.load(read_file)
-            except FileNotFoundError:
-                log.info(f"No cut_params.json file in {cut_params_path.parent} found!")
-                self._update_from_source_dataset_dict = {}
-            except JSONDecodeError:
-                log.exception(f"JSON file in {cut_params_path} corrupted!")
-                self._update_from_source_dataset_dict = {}
-            except:
-                log.exception(
-                    "An exception occured while reading the cut_params.json file in {cut_params_path.parent}."
-                )
-                self._update_from_source_dataset_dict = {}
 
     def _check_required_df_cols_exist(
             self, df: GeoDataFrame, df_name: str,
@@ -624,7 +524,7 @@ class ImgPolygonAssociator(
         """
 
         if df.crs.to_epsg() != self.crs_epsg_code:  # standard crs
-            log.warning(f"Transforming {df_name} to crs: EPSG={self.crs_epsg_code}")
+            log.warning("Transforming %s to crs: EPSG=%s", df_name, self.crs_epsg_code)
             df = df.to_crs(epsg=self.crs_epsg_code)
 
     def _load_df_from_disk(self, df_name: str) -> GeoDataFrame:
@@ -659,7 +559,7 @@ class ImgPolygonAssociator(
 
         if not (component_dirs_all_not_None ^ (data_dir is not None)):
             raise ValueError(
-                f"Either the data_dir arg must be given (i.e. not None) or all of the images_dir, labels_dir, assoc_dir args, download_dir."
+                "Either the data_dir arg must be given (i.e. not None) or all of the images_dir, labels_dir, assoc_dir args, download_dir."
             )
 
     def _init_set_paths(
@@ -767,9 +667,11 @@ class ImgPolygonAssociator(
             polygons_df = self.polygons_df
             polygons_df_name = "self.polygons_df"
         elif polygons_df_name is None:
-            ValueError(f"If the polygons_df argument is given, so should the polygons_df_name.")
+            ValueError("If the polygons_df argument is given, so should the polygons_df_name.")
 
-        if self.label_type in {"categorical", "onehot"}:
+        if "label_type" not in self.attrs or self.label_type is None:
+            polygon_classes_in_polygons_df = set()
+        elif self.label_type in {"categorical", "onehot"}:
             polygon_classes_in_polygons_df = set(polygons_df["type"].unique())
         elif self.label_type == "soft-categorical":
             polygon_classes_in_polygons_df = {
