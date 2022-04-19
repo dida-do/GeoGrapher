@@ -72,5 +72,5 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
 
     def _after_creating_or_updating(self):
         if self.mode in {'random', 'centered'}:
-            self.target_assoc._params_dict["img_size"] = self.new_img_size
+            self.target_assoc.attrs["img_size"] = self.new_img_size
             self.target_assoc.save()
