@@ -9,7 +9,7 @@ from geopandas import GeoSeries
 from pandas import Series
 from pydantic import BaseModel
 
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 
 
 class ImgFilterPredicate(ABC, Callable, BaseModel):
@@ -24,22 +24,22 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
     def __call__(
         self,
         img_name: str,
-        target_assoc: ImgPolygonAssociator,
+        target_assoc: Connector,
         new_img_dict: dict,
-        source_assoc: ImgPolygonAssociator,
+        source_assoc: Connector,
     ) -> bool:
         """
         Args:
             img_name (str): img identifier
-            target_assoc (ImgPolygonAssociator): associator of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images 
-            source_assoc (ImgPolygonAssociator): associator of source dataset that new images are being cut out from
+            target_assoc (Connector): associator of target dataset.
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.raster_imgs and values lists of entries correspondong to images 
+            source_assoc (Connector): associator of source dataset that new images are being cut out from
 
         Returns:
             bool: True should mean image is to be kept, False that it is to be filtered out
 
         Note:
-            The new_imgs_dict should be viewed as part of the target associator. See polygon_filter_predicates.py for an explanation.
+            The new_imgs_dict should be viewed as part of the target associator. See feature_filter_predicates.py for an explanation.
         """
         raise NotImplementedError
 
@@ -59,9 +59,9 @@ class AlwaysTrue(ImgFilterPredicate):
     def __call__(
         self,
         img_name: str,
-        target_assoc: ImgPolygonAssociator,
+        target_assoc: Connector,
         new_img_dict: dict,
-        source_assoc: ImgPolygonAssociator,
+        source_assoc: Connector,
     ) -> bool:
         """Return True."""
         return True
@@ -69,7 +69,7 @@ class AlwaysTrue(ImgFilterPredicate):
 
 class ImgFilterRowCondition(ImgFilterPredicate):
     """Simple ImgFilter that applies a given predicate to the row in
-    source_assoc.imgs_df corresponding to the image name in question."""
+    source_assoc.raster_imgs corresponding to the image name in question."""
 
     row_series_predicate: RowSeriesPredicate
 
@@ -78,7 +78,7 @@ class ImgFilterRowCondition(ImgFilterPredicate):
                                              bool]) -> None:
         """
         Args:
-            row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to an image (i.e. source_assoc.imgs_df.loc[img_name])
+            row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to an image (i.e. source_assoc.raster_imgs.loc[img_name])
         """
 
         super().__init__()
@@ -87,25 +87,25 @@ class ImgFilterRowCondition(ImgFilterPredicate):
     def __call__(
         self,
         img_name: str,
-        target_assoc: ImgPolygonAssociator,
+        target_assoc: Connector,
         new_img_dict: dict,
-        source_assoc: ImgPolygonAssociator,
+        source_assoc: Connector,
     ) -> bool:
-        """Apply self.row_series_predicate to source_assoc.imgs_df[img_name]
+        """Apply self.row_series_predicate to source_assoc.raster_imgs[img_name]
 
         Args:
 
             img_name (str): image name
-            target_assoc (ImgPolygonAssociator): associator of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images
-            source_assoc (ImgPolygonAssociator): source associator
+            target_assoc (Connector): associator of target dataset.
+            new_imgs_dict (dict): dict with keys index or column names of target_assoc.raster_imgs and values lists of entries correspondong to images
+            source_assoc (Connector): source associator
 
         Returns:
-            bool: result of aplying self.row_series_predicate to source_assoc.imgs_df[img_name]
+            bool: result of aplying self.row_series_predicate to source_assoc.raster_imgs[img_name]
         """
 
         row_series: Union[GeoSeries,
-                          Series] = source_assoc.imgs_df.loc[img_name]
+                          Series] = source_assoc.raster_imgs.loc[img_name]
         answer = self.row_series_predicate(row_series)
 
         return answer

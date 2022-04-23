@@ -18,9 +18,9 @@ def test_graph_vertices_counts(assoc):
     'img_count' column.
     """
 
-    img_vertices_not_in_imgs_df = set(assoc._graph.vertices('imgs')) - set(
-        assoc.imgs_df.index)
-    imgs_in_imgs_df_not_in_graph = set(assoc.imgs_df.index) - set(
+    img_vertices_not_in_img_data = set(assoc._graph.vertices('imgs')) - set(
+        assoc.img_data.index)
+    imgs_in_img_data_not_in_graph = set(assoc.img_data.index) - set(
         assoc._graph.vertices('imgs'))
     polygon_vertices_not_in_polygons_df = set(
         assoc._graph.vertices('polygons')) - set(assoc.polygons_df.index)
@@ -29,12 +29,12 @@ def test_graph_vertices_counts(assoc):
 
     set_descriptions_and_differences = \
         zip(
-            [('image', 'in the associator\'s graph not in imgs_df'),
-                ('image', 'in the associator\'s imgs_df not in the graph'),
+            [('image', 'in the associator\'s graph not in img_data'),
+                ('image', 'in the associator\'s img_data not in the graph'),
                 ('polygon', 'in the associator\'s graph not in polygons_df'),
                 ('polygon', 'in the associator\'s polygons_df not in graph')], \
-            [img_vertices_not_in_imgs_df,
-                imgs_in_imgs_df_not_in_graph,
+            [img_vertices_not_in_img_data,
+                imgs_in_img_data_not_in_graph,
                 polygon_vertices_not_in_polygons_df,
                 polygons_in_polygons_df_not_in_graph])
 

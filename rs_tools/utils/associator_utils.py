@@ -66,22 +66,22 @@ def empty_gdf(index_name,
 
 #     return new_empty_gdf
 
-# def empty_imgs_df(
-#         imgs_df_index_name : str,
-#         imgs_df_cols : List[str],
+# def empty_img_data(
+#         img_data_index_name : str,
+#         img_data_cols : List[str],
 #         crs_epsg_code : int=STANDARD_CRS_EPSG_CODE
 #         ) -> GeoDataFrame:
 #     """
-#     Return a generic empty imgs_df GeoDataFrame conforming to the ImgPolygonAssociator format.
+#     Return a generic empty img_data GeoDataFrame conforming to the ImgPolygonAssociator format.
 
-#     :param imgs_df_index_name: index name of the new empty imgs_df
-#     :param imgs_df_cols_and_index_types: dict with keys the names of the index and columns of the new empty imgs_df and values the types of the index/column entries.
-#     :param crs_epsg_code: EPSG code of the crs the empty imgs_df should have.
+#     :param img_data_index_name: index name of the new empty img_data
+#     :param img_data_cols_and_index_types: dict with keys the names of the index and columns of the new empty img_data and values the types of the index/column entries.
+#     :param crs_epsg_code: EPSG code of the crs the empty img_data should have.
 
-#     :return: new_imgs_df: the empty imgs_df GeoDataFrame.
+#     :return: new_img_data: the empty img_data GeoDataFrame.
 #     """
 
-#     return empty_gdf(imgs_df_index_name, imgs_df_cols, crs_epsg_code=crs_epsg_code)
+#     return empty_gdf(img_data_index_name, img_data_cols, crs_epsg_code=crs_epsg_code)
 
 # def empty_polygons_df(
 #         polygons_df_index_name : str,
@@ -153,16 +153,16 @@ def empty_polygons_df_same_format_as(
     return empty_gdf_same_format_as(polygons_df)
 
 
-def empty_imgs_df_same_format_as(imgs_df: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty imgs_df of the same format (index name, columns, column
-    types) as the imgs_df argument.
+def empty_img_data_same_format_as(img_data: GeoDataFrame) -> GeoDataFrame:
+    """Creates an empty img_data of the same format (index name, columns, column
+    types) as the img_data argument.
 
-    :param imgs_df: Example images dataframe
+    :param img_data: Example images dataframe
 
     :return: New empty images datagrame
     """
 
-    return empty_gdf_same_format_as(imgs_df)
+    return empty_gdf_same_format_as(img_data)
 
 
 def empty_graph() -> BipartiteGraph:
@@ -171,3 +171,25 @@ def empty_graph() -> BipartiteGraph:
     :returns: empty graph
     """
     return empty_bipartite_graph(red='polygons', black='imgs')
+
+
+def _check_df_cols_agree(
+    df: GeoDataFrame,
+    df_name: str,
+    self_df: GeoDataFrame,
+    self_df_name: str,
+):
+    """Log if column names don't agree."""
+    if set(df.columns) != set(self_df.columns) and len(self_df) > 0:
+
+        df1_cols_not_in_df2 = set(df.columns) - set(self_df.columns)
+        df2_cols_not_in_df1 = set(self_df.columns) - set(df.columns)
+
+        if df1_cols_not_in_df2 != {}:
+            log.debug("columns that are in %s but not in %s: %s", df_name,
+                      self_df_name, df1_cols_not_in_df2)
+        if df2_cols_not_in_df1 != {}:
+            log.debug("columns that are in %s but not in %s: %s", self_df_name,
+                      df_name, df2_cols_not_in_df1)
+
+        log.debug("columns of %s and %s don't agree.", df_name, df_name)

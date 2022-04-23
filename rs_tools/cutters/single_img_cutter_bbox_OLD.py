@@ -14,7 +14,7 @@ from shapely.geometry import Polygon, box
 from rs_tools.cut.type_aliases import ImgSize
 
 if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
+    from rs_tools.img_geom_associator import ImgPolygonAssociator
 
 from rs_tools.cut.single_img_cutter_base import SingleImgCutterBase
 

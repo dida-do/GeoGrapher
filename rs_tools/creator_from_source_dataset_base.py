@@ -6,7 +6,7 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 
 
@@ -24,71 +24,71 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self._source_assoc = None
-        self._target_assoc = None
-        self._set_source_assoc()
-        self._set_target_assoc()
+        self._source_connector = None
+        self._target_connector = None
+        self._set_source_connector()
+        self._set_target_connector()
 
     @abstractmethod
-    def _create(self, *args, **kwargs) -> ImgPolygonAssociator:
+    def _create(self, *args, **kwargs) -> Connector:
         """Create a new dataset from source dataset"""
 
     @abstractmethod
-    def _update(self, *args, **kwargs) -> ImgPolygonAssociator:
+    def _update(self, *args, **kwargs) -> Connector:
         """Update the target dataset from the source dataset"""
 
-    def create(self, *args, **kwargs) -> ImgPolygonAssociator:
+    def create(self, *args, **kwargs) -> Connector:
         """Create a new dataset by cutting the source dataset"""
         self._create(*args, **kwargs)
         self._after_creating_or_updating()
 
-    def update(self, *args, **kwargs) -> ImgPolygonAssociator:
+    def update(self, *args, **kwargs) -> Connector:
         """Update the target dataset from the source dataset"""
         self._update(*args, **kwargs)
         self._after_creating_or_updating()
 
     def save(self):
         """Save to update folder in source_data_dir"""
-        json_file_path = self.target_assoc.assoc_dir / self.name
+        json_file_path = self.target_connector.connector_dir / self.name
         self._save(json_file_path)
 
     @property
-    def source_assoc(self):
-        """Associator in source_data_dir"""
-        if self._source_assoc is None or self._source_assoc.images_dir.parent != self.source_data_dir:
-            self._set_source_assoc()
-        return self._source_assoc
+    def source_connector(self):
+        """Connector in source_data_dir"""
+        if self._source_connector is None or self._source_connector.images_dir.parent != self.source_data_dir:
+            self._set_source_connector()
+        return self._source_connector
 
     @property
-    def target_assoc(self):
-        """Associator in target_data_dir"""
-        if self._target_assoc is None or self._target_assoc.images_dir.parent != self.target_data_dir:
-            self._set_target_assoc()
-        return self._target_assoc
+    def target_connector(self):
+        """Connector in target_data_dir"""
+        if self._target_connector is None or self._target_connector.images_dir.parent != self.target_data_dir:
+            self._set_target_connector()
+        return self._target_connector
 
     def _after_creating_or_updating(self):
-        """Can be used in a subclass to e.g. save parameters to the target_assoc"""
+        """Can be used in a subclass to e.g. save parameters to the target_connector"""
 
-    def _set_source_assoc(self):
-        """Set source associator"""
-        self._source_assoc = ImgPolygonAssociator.from_data_dir(
+    def _set_source_connector(self):
+        """Set source connector"""
+        self._source_connector = Connector.from_data_dir(
             self.source_data_dir)
 
-    def _set_target_assoc(self):
-        """Set target associator"""
+    def _set_target_connector(self):
+        """Set target connector"""
         try:
-            target_assoc = ImgPolygonAssociator.from_data_dir(
+            target_connector = Connector.from_data_dir(
                 self.target_data_dir)
         except FileNotFoundError:
-            target_assoc = self.empty_assoc_same_format_as(
+            target_connector = self.empty_connector_same_format_as(
                 self.target_data_dir)
         finally:
-            self._target_assoc = target_assoc
+            self._target_connector = target_connector
 
     def _create_target_dirs(self):
         """Create target_data_dir and subdirectories"""
-        self.target_assoc.assoc_dir.mkdir(parents=True, exist_ok=True)
-        for dir_ in self.target_assoc.image_data_dirs:
+        self.target_connector.connector_dir.mkdir(parents=True, exist_ok=True)
+        for dir_ in self.target_connector.image_data_dirs:
             dir_.mkdir(parents=True, exist_ok=True)
 
 

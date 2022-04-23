@@ -9,7 +9,7 @@ import rasterio as rio
 from affine import Affine
 from rasterio.windows import Window
 
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 from rs_tools.cutters.type_aliases import ImgSize
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 
@@ -64,12 +64,12 @@ class SingleImgCutterToGrid(SingleImgCutter):
     def _get_windows_transforms_img_names(
             self,
             source_img_name: str,
-            source_assoc: ImgPolygonAssociator,
-            target_assoc: Optional[ImgPolygonAssociator] = None,
+            source_connector: Connector,
+            target_connector: Optional[Connector] = None,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
 
-        source_img_path = source_assoc.images_dir / source_img_name
+        source_img_path = source_connector.images_dir / source_img_name
 
         with rio.open(source_img_path) as src:
 
