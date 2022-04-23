@@ -1,4 +1,4 @@
 from rs_tools.cutters.cut_every_img_to_grid import DSCutterEveryImgToGrid
-from rs_tools.cutters.cut_imgs_around_every_polygon import DSCutterImgsAroundEveryPolygon
+from rs_tools.cutters.cut_imgs_around_every_geom import DSCutterImgsAroundEveryFeature
 from rs_tools.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
-from rs_tools.cutters.cut_iter_over_polygons import DSCutterIterOverPolygons
+from rs_tools.cutters.cut_iter_over_geoms import DSCutterIterOverFeatures

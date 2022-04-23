@@ -9,16 +9,17 @@ import rasterio as rio
 
 from rs_tools.label_makers.seg_label_maker_base import SegLabelMaker
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+from rs_tools import Connector
 
 log = logging.getLogger(__name__)
 
 
 class SegLabelMakerSoftCategorical(SegLabelMaker):
     """
-    Label maker for soft-categorical (i.e. probabilistic multi-class) segmentation labels.
+    Label maker that generates soft-categorical (i.e. probabilistic multi-class)
+    segmentation labels from a connector's vector_features.
 
-    Assumes the associator's polygons_df contains for each segmentation class
+    Assumes the connector's vector_features contains for each segmentation class
     a "prob_seg_class<seg_class>" column containing the probabilities for that class.
     """
 
@@ -30,13 +31,13 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
     def _make_label_for_img(
         self,
-        assoc: ImgPolygonAssociator,
+        connector: Connector,
         img_name: str,
     ) -> None:
         """Create a soft-categorical or onehot GeoTiff (pixel) label for an image.
 
         Args:
-            assoc (ImgPolygonAssociator): calling ImgPolygonAssociator
+            connector (Connector): calling Connector
             img_name (str): name of image for which a label should be created
 
 
@@ -45,8 +46,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         """
 
         # paths
-        img_path = assoc.images_dir / img_name
-        label_path = assoc.labels_dir / img_name
+        img_path = connector.images_dir / img_name
+        label_path = connector.labels_dir / img_name
 
         # If the image does not exist ...
         if not img_path.is_file():
@@ -67,7 +68,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         # Else, ...
         else:
 
-            label_bands_count = self._get_label_bands_count(assoc)
+            label_bands_count = self._get_label_bands_count(connector)
 
             # ...open the image, ...
             with rio.open(img_path) as src:
@@ -88,44 +89,44 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                     start_band = 1 if not self.add_background_band else 2
 
                     for count, seg_class in enumerate(
-                            assoc.segmentation_classes, start=start_band):
+                            connector.segmentation_classes, start=start_band):
 
-                        # To do that, first find (the df of) the polygons intersecting the image ...
-                        polygons_intersecting_img_df = assoc.polygons_df.loc[
-                            assoc.polygons_intersecting_img(img_name)]
+                        # To do that, first find (the df of) the geoms intersecting the image ...
+                        features_intersecting_img_df = connector.vector_features.loc[
+                            connector.features_intersecting_img(img_name)]
 
-                        # Extract the polygon geometries of these polygons ...
-                        polygon_geometries_in_std_crs = list(
-                            polygons_intersecting_img_df['geometry'])
+                        # ... extract the geometries ...
+                        feature_geoms_in_std_crs = list(
+                            features_intersecting_img_df['geometry'])
 
                         # ... and convert them to the crs of the source image.
-                        polygon_geometries_in_src_crs = list(
+                        feature_geoms_in_src_crs = list(
                             map(
                                 lambda geom: transform_shapely_geometry(
-                                    geom, assoc.polygons_df.crs.to_epsg(),
+                                    geom,
+                                    connector.vector_features.crs.to_epsg(),
                                     src.crs.to_epsg()),
-                                polygon_geometries_in_std_crs))
+                                feature_geoms_in_std_crs))
 
                         # Extract the class probabilities ...
                         class_probabilities = list(
-                            polygons_intersecting_img_df[
+                            features_intersecting_img_df[
                                 f"prob_seg_class_{seg_class}"])
 
-                        # .. and combine with the polygon geometries
-                        # to a list of (polygon, value) pairs.
-                        polygon_value_pairs = list(
-                            zip(polygon_geometries_in_src_crs,
-                                class_probabilities))
+                        # .. and combine with the geometries
+                        # to a list of (geometry, value) pairs.
+                        geom_value_pairs = list(
+                            zip(feature_geoms_in_src_crs, class_probabilities))
 
-                        # If there are no polygons of seg_type intersecting the image ...
-                        if len(polygon_geometries_in_src_crs) == 0:
+                        # If there are no geoms of seg_type intersecting the image ...
+                        if len(feature_geoms_in_src_crs) == 0:
                             # ... the label raster is empty.
                             mask = np.zeros((src.height, src.width),
                                             dtype=np.uint8)
-                        # Else, burn the values for those polygons into the band.
+                        # Else, burn the values for those geoms into the band.
                         else:
                             mask = rio.features.rasterize(
-                                shapes=polygon_value_pairs,
+                                shapes=geom_value_pairs,
                                 # or the other way around?
                                 out_shape=(src.height, src.width),
                                 fill=0.0,  #
@@ -142,7 +143,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                         non_background_band_indices = list(
                             range(start_band,
-                                  2 + len(assoc.segmentation_classes)))
+                                  2 + len(connector.segmentation_classes)))
 
                         # The probability of a pixel belonging to
                         # the background is the complement of it
@@ -154,45 +155,46 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                         dst.write(background_band, 1)
 
-    def _get_label_bands_count(self, assoc: ImgPolygonAssociator) -> bool:
+    def _get_label_bands_count(self, connector: Connector) -> bool:
 
         # If the background is not included in the segmentation classes (default) ...
         if self.add_background_band:
 
             # ... add a band for the implicit background segmentation class, ...
-            label_bands_count = 1 + len(assoc.segmentation_classes)
+            label_bands_count = 1 + len(connector.segmentation_classes)
 
         # ... if the background *is* included, ...
         elif not self.add_background_band:
 
             # ... don't.
-            label_bands_count = len(assoc.segmentation_classes)
+            label_bands_count = len(connector.segmentation_classes)
 
         return label_bands_count
 
-    def _run_safety_checks(self, assoc: ImgPolygonAssociator):
-        """Check existence of 'prob_seg_class_<class name>' columns in assoc.polygons_df."""
+    def _run_safety_checks(self, connector: Connector):
+        """Check existence of 'prob_seg_class_<class name>' columns in connector.vector_features."""
 
         # check required columns exist
         required_cols = {
             f"prob_seg_class_{class_}"
-            for class_ in assoc.all_polygon_classes
+            for class_ in connector.all_classes
         }
-        if not set(required_cols) <= set(assoc.polygons_df.columns):
-            missing_cols = set(required_cols) - set(assoc.polygons_df.columns)
+        if not set(required_cols) <= set(connector.vector_features.columns):
+            missing_cols = set(required_cols) - set(
+                connector.vector_features.columns)
             raise ValueError(
-                f"assoc.polygons_df.columns is missing required columns: {', '.join(missing_cols)}"
+                f"connector.vector_features.columns is missing required columns: {', '.join(missing_cols)}"
             )
 
         # check no other columns will be mistaken for
-        polygon_classes_in_polygons_df = {
+        feature_classes_in_vector_features = {
             col_name[15:]
-            for col_name in assoc.polygons_df.columns
+            for col_name in connector.vector_features.columns
             if col_name.startswith("prob_seg_class_")
         }
-        if not polygon_classes_in_polygons_df <= set(
-                assoc.all_polygon_classes):
+        if not feature_classes_in_vector_features <= set(
+                connector.all_classes):
             log.warning(
-                "Ignoring columns: %s. The corresponding classes are not in assoc.all_segmentation_classes",
-                polygon_classes_in_polygons_df -
-                set(assoc.all_polygon_classes))
+                "Ignoring columns: %s. The corresponding classes are not in connector.all_segmentation_classes",
+                feature_classes_in_vector_features -
+                set(connector.all_classes))

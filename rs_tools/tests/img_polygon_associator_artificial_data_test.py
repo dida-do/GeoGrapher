@@ -1,7 +1,7 @@
 """
 TODO: Doesn't work at the moment. Update to work with rs_tools associator. 
 
-Simple pytest test suite of rstoolsImgPolygonAssociator using artificial data (i.e. we write a polygons_df and an imgs_df by hand and don't test any methods (e.g. add/download missing images, create labels) that deal with the actual images.)
+Simple pytest test suite of rstoolsImgPolygonAssociator using artificial data (i.e. we write a polygons_df and an img_data by hand and don't test any methods (e.g. add/download missing images, create labels) that deal with the actual images.)
 
 See img_polygon_associator_artificial_data_test for a visualization of the test data (polygons and images). 
 """
@@ -33,7 +33,7 @@ IMGS_DF_COLS_AND_INDEX_TYPES = {
     **IMGS_DF_COLS_AND_TYPES
 }
 
-# column and index names for the internal imgs_df geodataframe of the associator
+# column and index names for the internal img_data geodataframe of the associator
 POLYGONS_DF_INDEX_NAME_AND_TYPE = {'polygon_name': str}
 POLYGONS_DF_INDEX_NAME = list(POLYGONS_DF_INDEX_NAME_AND_TYPE)[0]
 POLYGONS_DF_COLS_AND_TYPES = {
@@ -57,20 +57,20 @@ SEGMENTATION_CLASSES = ["h", "t"]
 
 def test_img_polygon_associator_rstools():
 
-    # Create associator from empty polygons_df, imgs_df, graph:
+    # Create associator from empty polygons_df, img_data, graph:
     empty_polygons_df = ipa.empty_polygons_df(
         polygons_df_index_name=POLYGONS_DF_INDEX_NAME,
         polygons_df_cols_and_index_types=POLYGONS_DF_COLS_AND_INDEX_TYPES)
-    empty_imgs_df = ipa.empty_imgs_df(
-        imgs_df_index_name=IMGS_DF_INDEX_NAME,
-        imgs_df_cols_and_index_types=IMGS_DF_COLS_AND_INDEX_TYPES)
+    empty_img_data = ipa.empty_img_data(
+        img_data_index_name=IMGS_DF_INDEX_NAME,
+        img_data_cols_and_index_types=IMGS_DF_COLS_AND_INDEX_TYPES)
     data_dir = Path(
         "/whatever/"
     )  # We need a data_dir argument to create the associator, but the actual value is irrelevant since we're dealing with artificial data and writing or reading anythin from disk.
 
     assoc = ipa.ImgPolygonAssociator(data_dir=data_dir,
                                      polygons_df=empty_polygons_df,
-                                     imgs_df=empty_imgs_df,
+                                     img_data=empty_img_data,
                                      segmentation_classes=SEGMENTATION_CLASSES)
     """
     Toy polygons_df
@@ -112,12 +112,12 @@ def test_img_polygon_associator_rstools():
     #assert assoc.polygons_df == new_polygons_df
     pd.testing.assert_frame_equal(assoc.polygons_df, new_polygons_df)
     """
-    Toy imgs_df
+    Toy img_data
     """
 
     # empty GeoDataFrame with right index name
-    new_imgs_df = gpd.GeoDataFrame()
-    new_imgs_df.rename_axis('img_name', inplace=True)
+    new_img_data = gpd.GeoDataFrame()
+    new_img_data.rename_axis('img_name', inplace=True)
 
     # the geometries will be the img bounding rectangles
 
@@ -128,22 +128,22 @@ def test_img_polygon_associator_rstools():
         -1.5, -1.5, 0.5, 0.5
     )  # has non-empty intersection with p1 and p3, but does not contain either, no intersection with p2
 
-    # add them to new_imgs_df
+    # add them to new_img_data
     for img_name, bounding_rectangle in zip(
         ['img1', 'img2'], [bounding_rectangle1, bounding_rectangle2]):
-        new_imgs_df.loc[img_name, 'geometry'] = bounding_rectangle
+        new_img_data.loc[img_name, 'geometry'] = bounding_rectangle
 
     # add values for the missing columns 'img_processed?' (bool), and 'orig_crs_epsg_code' (int):
-    new_imgs_df['img_processed?'] = True
-    new_imgs_df['orig_crs_epsg_code'] = 4326
-    new_imgs_df['timestamp'] = "some timestamp, whatever..."
+    new_img_data['img_processed?'] = True
+    new_img_data['orig_crs_epsg_code'] = 4326
+    new_img_data['timestamp'] = "some timestamp, whatever..."
 
     # set crs
-    new_imgs_df = new_imgs_df.set_crs(epsg=4326)
+    new_img_data = new_img_data.set_crs(epsg=4326)
     """
-    Test integrate_new_imgs_df
+    Test integrate_new_img_data
     """
-    assoc.integrate_new_imgs_df(new_imgs_df)
+    assoc.integrate_new_img_data(new_img_data)
 
     assert assoc._graph._graph_dict == {
         "polygons": {
@@ -175,24 +175,24 @@ def test_img_polygon_associator_rstools():
     assert assoc.have_img_for_polygon('polygon1') == True
     assert assoc.have_img_for_polygon('polygon3') == False
     assert (assoc.rectangle_bounding_img('img1')).equals(box(-0.5, -0.5, 6, 6))
-    assert list(assoc.imgs_containing_polygon('polygon1')) == ['img1']
-    assert list(assoc.polygons_contained_in_img('img2')) == []
+    assert list(assoc.imgs_containing_geom('polygon1')) == ['img1']
+    assert list(assoc.geoms_contained_in_img('img2')) == []
     assert list(
-        assoc.polygons_intersecting_img('img2')) == ['polygon1', 'polygon3']
+        assoc.geoms_intersecting_img('img2')) == ['polygon1', 'polygon3']
     assert list(
-        assoc.polygons_intersecting_img('img1')) == ['polygon1', 'polygon2']
+        assoc.geoms_intersecting_img('img1')) == ['polygon1', 'polygon2']
 
     assert assoc.polygons_df.loc['polygon1', 'have_img?'] == True
     assert assoc.polygons_df.loc['polygon2', 'have_img?'] == True
     assert assoc.polygons_df.loc['polygon3', 'have_img?'] == False
     """
-    Integrate another img_df with a row that already exists in assoc.imgs_df 
+    Integrate another img_df with a row that already exists in assoc.img_data 
     """
     # empty GeoDataFrame with right index name
-    new_imgs_df2 = gpd.GeoDataFrame()
-    new_imgs_df2.rename_axis('img_name', inplace=True)
+    new_img_data2 = gpd.GeoDataFrame()
+    new_img_data2.rename_axis('img_name', inplace=True)
 
-    # the new_imgs_df2 geometries will be the img bounding rectangles here:
+    # the new_img_data2 geometries will be the img bounding rectangles here:
     bounding_rectangle1 = box(
         -10, -10, 10, 10
     )  # contains all polygons, but an polygon with that name already exists in associator, so should be ignored by integrate_new_polygons_df
@@ -202,22 +202,22 @@ def test_img_polygon_associator_rstools():
         -1.5, -1.5, 2, 2
     )  # contains p1 and p4 (to be defined below), has non-empty intersection with p3, but does not intersect p2
 
-    # add them to new_imgs_df2
+    # add them to new_img_data2
     for img_name, bounding_rectangle in zip(
         ['img1', 'img3', 'img4'],
         [bounding_rectangle1, bounding_rectangle3, bounding_rectangle4]):
-        new_imgs_df2.loc[img_name, 'geometry'] = bounding_rectangle
+        new_img_data2.loc[img_name, 'geometry'] = bounding_rectangle
 
     # add values for the missing columns 'img_processed?' (bool), and 'orig_crs_epsg_code' (int):
-    new_imgs_df2['img_processed?'] = True
-    new_imgs_df2['orig_crs_epsg_code'] = 4326
-    new_imgs_df2['timestamp'] = "some timestamp, whatever..."
+    new_img_data2['img_processed?'] = True
+    new_img_data2['orig_crs_epsg_code'] = 4326
+    new_img_data2['timestamp'] = "some timestamp, whatever..."
 
     # set crs
-    new_imgs_df2 = new_imgs_df2.set_crs(epsg=4326)
+    new_img_data2 = new_img_data2.set_crs(epsg=4326)
 
-    # integrate new_imgs_df2
-    assoc.integrate_new_imgs_df(new_imgs_df2)
+    # integrate new_img_data2
+    assoc.integrate_new_img_data(new_img_data2)
 
     # test containment/intersection relations, i.e. graph structure
     assert assoc._graph._graph_dict == {
@@ -339,7 +339,7 @@ def test_img_polygon_associator_rstools():
     }
 
     # assert we have no duplicate entries
-    assert len(assoc.imgs_df) == 4
+    assert len(assoc.img_data) == 4
     assert len(assoc.polygons_df) == 4
 
     # test 'have_img?' column in assoc.polygons_df
@@ -352,7 +352,7 @@ def test_img_polygon_associator_rstools():
     """
     assoc.drop_imgs(['img2', 'img3'])
 
-    assert len(assoc.imgs_df) == 2
+    assert len(assoc.img_data) == 2
 
     assert assoc._graph._graph_dict == {
         "polygons": {
@@ -413,6 +413,6 @@ def test_img_polygon_associator_rstools():
     """
     assoc.drop_imgs("img4")
 
-    assert len(assoc.imgs_df) == 1
+    assert len(assoc.img_data) == 1
 
     assert assoc.polygons_df.loc['polygon4', 'have_img?'] == False

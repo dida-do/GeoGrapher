@@ -13,9 +13,9 @@ from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
-from rs_tools.global_constants import IMGS_DF_INDEX_NAME
+from rs_tools.global_constants import RASTER_FEATURES_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
     def _get_windows_transforms_img_names(
             self,
             source_img_name: str,
-            source_assoc: ImgPolygonAssociator,
-            target_assoc: Optional[ImgPolygonAssociator] = None,
+            source_connector: Connector,
+            target_connector: Optional[Connector] = None,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
         """Return a list of rasterio windows, window transformations, and new
@@ -37,10 +37,10 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
 
         Args:
             source_img_name (str): name of img in source dataset to be cut.
-            target_assoc (ImgPolygonAssociator): associator of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df
+            target_connector (Connector): connector of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs
             and values lists of entries correspondong to images containing information about
-            cut images not yet appended to target_assoc.imgs_df
+            cut images not yet appended to target_connector.raster_imgs
             kwargs (Any): keyword arguments to be used in subclass implementations.
 
         Returns:
@@ -49,56 +49,54 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
 
     def __call__(self,
                  img_name: str,
-                 source_assoc: ImgPolygonAssociator,
-                 target_assoc: Optional[ImgPolygonAssociator] = None,
+                 source_connector: Connector,
+                 target_connector: Optional[Connector] = None,
                  new_imgs_dict: Optional[dict] = None,
                  bands: Optional[Dict[str, Optional[List[int]]]] = None,
                  **kwargs: Any) -> dict:
         """Cut new images from source image and return a dict with keys the
-        index and column names of the imgs_df to be created by the calling
+        index and column names of the raster_imgs to be created by the calling
         dataset cutter and values lists containing the new image names and
-        corresponding entries for the new images. See
-        small_imgs_around_polygons_cutter for an example.
+        corresponding entries for the new images.
 
         Args:
             img_name (str): name of img in source dataset to be cut.
-            target_assoc (ImgPolygonAssociator): associator of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df
+            target_connector (Connector): connector of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs
             and values lists of entries correspondong to images containing information
-            about cut images not yet appended to target_assoc.imgs_df
+            about cut images not yet appended to target_connector.raster_imgs
             kwargs (Any): optional keyword arguments for _get_windows_transforms_img_names
 
         Returns:
-            dict of lists that containing the data to be put in the imgs_df of the
-            associator to be constructed for the created images.
+            dict of lists that containing the data to be put in the raster_imgs of the
+            connector to be constructed for the created images.
 
         Note:
             The __call__ function should be able to access the information
-            contained in the target (and source) associator but should *not*
-            modify its arguments! Since create_or_update_dataset_from_iter_over_polygons
-            and create_or_update_dataset_from_iter_over_imgs do not concatenate
+            contained in the target (and source) connector but should *not*
+            modify its arguments! Since create_or_update does not concatenate
             the information about the new images that have been cut to the
-            target_assoc.imgs_df until after all polygons or images
+            target_connector.raster_imgs until after all features or images
             have been iterated over and we want to be able to use ImgSelectors
             _during_ such an iteration, we allow the call function to also depend
             on a new_imgs_dict argument which contains the information about the new
-            images that have been cut. Unlike the target_assoc.imgs_df, the
-            target_assoc.polygons_df and graph are updated during the iteration.
-            One should thus think of the target_assoc and new_imgs_dict
-            arguments together as the actual the target associator argument.
+            images that have been cut. Unlike the target_connector.raster_imgs, the
+            target_connector.vector_data and graph are updated during the iteration.
+            One should thus think of the target_connector and new_imgs_dict
+            arguments together as the actual the target connector argument.
         """
 
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {
             index_or_col_name: []
-            for index_or_col_name in [IMGS_DF_INDEX_NAME] +
-            list(source_assoc.imgs_df.columns)
+            for index_or_col_name in [RASTER_FEATURES_INDEX_NAME] +
+            list(source_connector.raster_imgs.columns)
         }
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(
             source_img_name=img_name,
-            source_assoc=source_assoc,
-            target_assoc=target_assoc,
+            source_connector=source_connector,
+            target_connector=target_connector,
             new_imgs_dict=new_imgs_dict,
             **kwargs)
 
@@ -108,8 +106,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             img_bounds_in_img_crs, img_crs = self._make_new_img_and_label(
                 new_img_name=new_img_name,
                 source_img_name=img_name,
-                source_assoc=source_assoc,
-                target_assoc=target_assoc,
+                source_connector=source_connector,
+                target_connector=target_connector,
                 window=window,
                 window_transform=window_transform,
                 bands=bands,
@@ -119,7 +117,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             single_new_img_info_dict = self._make_img_info_dict(
                 new_img_name=new_img_name,
                 source_img_name=img_name,
-                source_assoc=source_assoc,
+                source_connector=source_connector,
                 img_bounds_in_img_crs=img_bounds_in_img_crs,
                 img_crs=img_crs,
             )
@@ -134,16 +132,16 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         self,
         new_img_name: str,
         source_img_name: str,
-        source_assoc: ImgPolygonAssociator,
+        source_connector: Connector,
         img_bounds_in_img_crs: Tuple[float, float, float, float],
         img_crs: CRS,
     ) -> dict:
         """Return an img info dict for a single new image.
 
         An img info dict contains the following key/value pairs:
-            - key: the index name of the imgs_df to be created by calling dataset cutter,
+            - key: the index name of the raster_imgs to be created by calling dataset cutter,
                 value: the image name of the new image.
-            - keys: the columns names of the imgs_df to be created by calling dataset cutter,
+            - keys: the columns names of the raster_imgs to be created by calling dataset cutter,
                 value: the entries to be written in those columns for the new image.
 
         Args:
@@ -156,22 +154,22 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             dict: img info dict (see above)
         """
 
-        img_bounding_rectangle_in_imgs_df_crs = box(*transform_bounds(
-            img_crs, source_assoc.imgs_df.crs, *img_bounds_in_img_crs))
+        img_bounding_rectangle_in_raster_imgs_crs = box(*transform_bounds(
+            img_crs, source_connector.raster_imgs.crs, *img_bounds_in_img_crs))
 
         single_new_img_info_dict = {
-            IMGS_DF_INDEX_NAME: new_img_name,
-            'geometry': img_bounding_rectangle_in_imgs_df_crs,
+            RASTER_FEATURES_INDEX_NAME: new_img_name,
+            'geometry': img_bounding_rectangle_in_raster_imgs_crs,
             'orig_crs_epsg_code': img_crs.to_epsg(),
             'img_processed?': True
         }
 
-        # Copy over any remaining information about the img from source_assoc.imgs_df.
-        for col in set(source_assoc.imgs_df.columns) - {
-                IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
+        # Copy over any remaining information about the img from source_connector.raster_imgs.
+        for col in set(source_connector.raster_imgs.columns) - {
+                RASTER_FEATURES_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
                 'img_processed?'
         }:
-            single_new_img_info_dict[col] = source_assoc.imgs_df.loc[
+            single_new_img_info_dict[col] = source_connector.raster_imgs.loc[
                 source_img_name, col]
 
         return single_new_img_info_dict
@@ -180,8 +178,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         self,
         new_img_name: str,
         source_img_name: str,
-        source_assoc: ImgPolygonAssociator,
-        target_assoc: ImgPolygonAssociator,
+        source_connector: Connector,
+        target_connector: Connector,
         window: Window,
         window_transform: Affine,
         bands: Optional[Dict[str, Optional[List[int]]]],
@@ -201,8 +199,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         """
 
         for (source_images_dir, target_images_dir), count in enumerate(
-                zip(source_assoc.image_data_dirs,
-                    target_assoc.image_data_dirs)):
+                zip(source_connector.image_data_dirs,
+                    target_connector.image_data_dirs)):
 
             source_img_path = source_images_dir / source_img_name
             dst_img_path = target_images_dir / new_img_name

@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
 from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
 from rs_tools.labels.label_type_conversion_utils import \
-    convert_polygons_df_soft_cat_to_cat
+    convert_geoms_df_soft_cat_to_cat
 from rs_tools import ImgPolygonAssociator
 
 log = logging.Logger(__name__)
@@ -32,28 +32,28 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
                 f"Current label type: {self.source_assoc.label_type}")
 
         # need this later
-        polygons_that_will_be_added_to_target_dataset = set(
-            self.source_assoc.polygons_df.index) - set(
-                self.target_assoc.polygons_df.index)
+        geoms_that_will_be_added_to_target_dataset = set(
+            self.source_assoc.geoms_df.index) - set(
+                self.target_assoc.geoms_df.index)
 
-        # add polygons to target dataset
-        source_polygons_df_converted_to_soft_categorical_format = convert_polygons_df_soft_cat_to_cat(
-            self.source_assoc.polygons_df)
-        self.target_assoc.add_to_polygons_df(
-            source_polygons_df_converted_to_soft_categorical_format)
+        # add geometriess to target dataset
+        source_geoms_df_converted_to_soft_categorical_format = convert_geoms_df_soft_cat_to_cat(
+            self.source_assoc.geoms_df)
+        self.target_assoc.add_to_geoms_df(
+            source_geoms_df_converted_to_soft_categorical_format)
 
         # add images to target dataset
-        self.target_assoc.add_to_imgs_df(self.source_assoc.imgs_df)
+        self.target_assoc.add_to_img_data(self.source_assoc.img_data)
 
         # Determine which images to copy to target dataset
         imgs_that_already_existed_in_target_dataset = {
             img_name
-            for img_name in self.target_assoc.imgs_df.index
+            for img_name in self.target_assoc.img_data.index
             if (self.target_assoc.images_dir / img_name).is_file()
         }
         imgs_in_source_images_dir = {
             img_name
-            for img_name in self.source_assoc.imgs_df.index
+            for img_name in self.source_assoc.img_data.index
         }
         imgs_in_source_that_are_not_in_target = imgs_in_source_images_dir - imgs_that_already_existed_in_target_dataset
 
@@ -66,11 +66,11 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
 
         # For each image that already existed in the target dataset ...
         for img_name in imgs_that_already_existed_in_target_dataset:
-            # ... if among the polygons intersecting it in the target dataset ...
-            polygons_intersecting_img = set(
-                self.target_assoc.polygons_intersecting_img(img_name))
-            # ... there is a *new* polygon ...
-            if polygons_intersecting_img & polygons_that_will_be_added_to_target_dataset != set(
+            # ... if among the geometries intersecting it in the target dataset ...
+            geoms_intersecting_img = set(
+                self.target_assoc.geoms_intersecting_img(img_name))
+            # ... there is a *new* geometry ...
+            if geoms_intersecting_img & geoms_that_will_be_added_to_target_dataset != set(
             ):
                 # ... then we need to update the label for it, so we delete the current label.
                 (self.target_assoc.labels_dir /
