@@ -1,1 +1,1 @@
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+from rs_tools.connector import Connector

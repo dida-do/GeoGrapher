@@ -1,6 +1,6 @@
 """
 ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
-given polygon from a source image.
+given vector feature from a source image.
 """
 
 import logging
@@ -14,20 +14,20 @@ from affine import Affine
 import rasterio as rio
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
-from shapely.geometry import Polygon, box
+from shapely.geometry import BaseGeometry, box
 
 from rs_tools.cutters.type_aliases import ImgSize
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+from rs_tools import Connector
 
 logger = logging.getLogger(__name__)
 
 
-class SingleImgCutterAroundPolygon(SingleImgCutter):
+class SingleImgCutterAroundFeature(SingleImgCutter):
     """SingleImgCutter that cuts a small image (or several contiguous such
-    images if the polygon does not fit into a single one) around each polygon
-    in the image accepted by the polygon filter predicate."""
+    images if the vector feature does not fit into a single one) around each vector feature
+    in the image accepted by the feature filter predicate."""
 
     mode: Literal["random", "centered", "variable"]
     new_img_size: Optional[ImgSize] = None
@@ -51,14 +51,14 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
         Args:
             mode (str, optional): One of 'random', 'centered', 'variable'.
                 If 'random' images (or minimal image grids) will be randomly chosen
-                subject to constraint that they fully contain the polygons, if 'centered'
-                will be centered on the polygons. If 'variable' the image size will be
+                subject to constraint that they fully contain the vector features, if 'centered'
+                will be centered on the vector features. If 'variable' the image size will be
                 the max of some minimum size and a multiple of the bounding rectangle
-                of the polygon. Defaults to 'random'.
+                of the vector feature. Defaults to 'random'.
             new_img_size (Optional[ImgSize]): size (side length of square or rows, cols).
                 Only needed if mode is 'centered' or 'random'.
             scaling factor (Optional[float]): factor to scale the bounding rectangle
-                of the polygon by to get the image size.
+                of the vector feature by to get the image size.
             min_new_img_size (Optional[ImgSize]): minimum size of new image in 'variable' mode.
             random_seed (int, optional). random seed. Defaults to 42.
 
@@ -136,58 +136,60 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
     def _get_windows_transforms_img_names(
             self,
             source_img_name: str,
-            source_assoc: ImgPolygonAssociator,
-            target_assoc: ImgPolygonAssociator,
+            source_connector: Connector,
+            target_connector: Connector,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
-        """Given a polygon and a GeoTiff image fully containing it return a
+        """Given a vector feature and a GeoTiff image fully containing it return a
         list of windows, window transforms, and new img_names defining a
-        minimal rectangular grid in the image covering the polygon.
+        minimal rectangular grid in the image covering the feature.
 
         Args:
-            polygon_name (Union[str, int]): polygon identifier
+            feature_name (Union[str, int]): feature identifier
             source_img_name (str): name of source image
-            target_assoc (ImgPolygonAssociator): associator of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_assoc.imgs_df and values lists of entries correspondong to images containing information about cut images not yet appended to target_assoc.            polygon_crs_epsg_code (int): EPSG code of the polygon crs
+            target_connector (Connector): connector of target dataset
+            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images containing information about cut images not yet appended to target_connector.
+            feature_crs_epsg_code (int): EPSG code of the vector feature crs
             **kwargs (Any): keyword arguments
 
         Returns:
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
-        if 'polygon_name' not in kwargs['polygon_name']:
-            raise ValueError("Need polygon name")
-        polygon_name = kwargs['polygon_name']
+        if 'feature_name' not in kwargs['feature_name']:
+            raise ValueError("Need vector feature name")
+        feature_name = kwargs['feature_name']
 
-        source_img_path = source_assoc.images_dir / source_img_name
+        source_img_path = source_connector.images_dir / source_img_name
 
-        polygon_geometry = target_assoc.polygons_df.loc[polygon_name,
-                                                        "geometry"]
+        feature_geom = target_connector.vector_features.loc[feature_name,
+                                                            "geometry"]
 
         with rio.open(source_img_path) as src:
 
-            # transform polygon from assoc's crs to image source crs
-            transformed_polygon_geometry = transform_shapely_geometry(
-                polygon_geometry,
-                from_epsg=source_assoc.polygons_df.crs.to_epsg(),
+            # transform vector feature from connector's crs to image source crs
+            transformed_feature_geom = transform_shapely_geometry(
+                feature_geom,
+                from_epsg=source_connector.vector_features.crs.to_epsg(),
                 to_epsg=src.crs.to_epsg())
 
             # FOR DEBUGGING:
             img_bbox = box(*src.bounds)
-            assert source_assoc.polygons_df.loc[polygon_name].geometry.within(
-                source_assoc.imgs_df.loc[source_img_name].geometry)
-            if not transformed_polygon_geometry.within(img_bbox):
-                logger.debug("img %s doesn't contain polygon %s in img crs",
-                             source_img_name, polygon_name)
-                transformed_polygon_geometry = img_bbox.intersection(
-                    transformed_polygon_geometry)
+            assert source_connector.vector_features.loc[
+                feature_name].geometry.within(
+                    source_connector.raster_imgs.loc[source_img_name].geometry)
+            if not transformed_feature_geom.within(img_bbox):
+                logger.debug(
+                    "img %s doesn't contain vector feature %s in img crs",
+                    source_img_name, feature_name)
+                transformed_feature_geom = img_bbox.intersection(
+                    transformed_feature_geom)
 
             min_row, max_row, min_col, max_col = self._get_min_max_row_col(
-                img=src,
-                transformed_polygon_geometry=transformed_polygon_geometry)
+                img=src, transformed_feature_geom=transformed_feature_geom)
 
             assert min(
                 min_row, max_row, min_col, max_col
-            ) >= 0, f'nonsensical negative max/min row/col values. sth went wrong cutting {source_img_name} for {polygon_name}'
+            ) >= 0, f'nonsensical negative max/min row/col values. sth went wrong cutting {source_img_name} for {feature_name}'
 
             if self.mode in {'centered', 'random'}:
                 new_img_size_rows = self._rows
@@ -207,11 +209,11 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
                     max_row=max_row,
                     min_col=min_col,
                     max_col=max_col,
-                    transformed_polygon_geometry=transformed_polygon_geometry)
+                    transformed_feature_geom=transformed_feature_geom)
 
             # The row and col offs and number of images in row and col direction define a grid. Iterate through the grid and accumulate windows, transforms, and img_names in a list:
 
-            windows_transforms_img_names_single_polygon = []
+            windows_transforms_img_names_single_geom = []
 
             for img_row in range(num_small_imgs_in_row_direction):
                 for img_col in range(num_small_imgs_in_col_direction):
@@ -231,31 +233,31 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
 
                     # (if there is only one window in the grid)
                     if num_small_imgs_in_row_direction == 1 and num_small_imgs_in_col_direction == 1:
-                        new_img_name = f"{img_name_no_extension}_{polygon_name}.tif"
+                        new_img_name = f"{img_name_no_extension}_{feature_name}.tif"
                     else:
-                        new_img_name = f"{img_name_no_extension}_{polygon_name}_{img_row}_{img_col}.tif"
+                        new_img_name = f"{img_name_no_extension}_{feature_name}_{img_row}_{img_col}.tif"
 
                     window_bounding_rectangle = box(
                         *rio.windows.bounds(window, src.transform))
 
-                    # append window if it intersects the polygon
+                    # append window if it intersects the vector feature
                     if window_bounding_rectangle.intersects(
-                            transformed_polygon_geometry):
+                            transformed_feature_geom):
 
-                        windows_transforms_img_names_single_polygon.append(
+                        windows_transforms_img_names_single_geom.append(
                             (window, window_transform, new_img_name))
 
-            return windows_transforms_img_names_single_polygon
+            return windows_transforms_img_names_single_geom
 
     def _get_min_max_row_col(
-            self, img: DatasetReader, transformed_polygon_geometry: Polygon
+            self, img: DatasetReader, transformed_feature_geom: BaseGeometry
     ) -> Tuple[int, int, int, int]:
         """Return min_row, max_row, min_col, max_col of enveloping rectangle of
-        polygon."""
+        vector feature."""
 
-        # Find min and max row of rectangular envelope of polygon
+        # Find min and max row of rectangular envelope of vector feature
         list_of_rectangle_corner_coords = list(
-            transformed_polygon_geometry.envelope.exterior.coords)[:5]
+            transformed_feature_geom.envelope.exterior.coords)[:5]
         list_of_enveloping_rectangle_row_col_pairs = list(
             map(lambda pair: img.index(*pair),
                 list_of_rectangle_corner_coords))
@@ -273,13 +275,19 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
         return min_row, max_row, min_col, max_col
 
     def _get_grid_row_col_offsets_num_windows_row_col_direction(
-            self, img: DatasetReader, transformed_polygon_geometry: Polygon,
-            new_img_size_rows: int, new_img_size_cols: int, min_row: int,
-            max_row: int, min_col: int,
-            max_col: int) -> Tuple[int, int, int, int]:
+        self,
+        img: DatasetReader,
+        transformed_feature_geom: BaseGeometry,
+        new_img_size_rows: int,
+        new_img_size_cols: int,
+        min_row: int,
+        max_row: int,
+        min_col: int,
+        max_col: int,
+    ) -> Tuple[int, int, int, int]:
         """Return row and col offsets and number of windows in row and in col
         direction such that the resulting grid is minimal grid fully covering
-        the polygon."""
+        the vector feature."""
 
         num_small_imgs_in_row_direction = math.ceil(
             float(max_row - min_row) / new_img_size_rows)
@@ -290,7 +298,7 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
         # Choose row and col offset
         if self.mode == 'random':
 
-            # ... choose row and col offsets randomly subject to constraint that the grid of image windows contains rectangular envelope of polygon.
+            # ... choose row and col offsets randomly subject to constraint that the grid of image windows contains rectangular envelope of vector feature.
             row_off = random.randint(
                 max(
                     0, max_row -
@@ -309,16 +317,16 @@ class SingleImgCutterAroundPolygon(SingleImgCutter):
 
         elif self.mode in {'centered', 'variable'}:
 
-            # ... to find the row, col offsets to center the polygon ...
+            # ... to find the row, col offsets to center the vector feature ...
 
-            # ...we first find the centroid of the polygon in the img crs ...
-            polygon_centroid_coords = transformed_polygon_geometry.envelope.centroid.coords[
+            # ...we first find the centroid of the vector feature in the img crs ...
+            feature_centroid_coords = transformed_feature_geom.envelope.centroid.coords[
                 0]
 
             # ... extract the row, col of the centroid ...
-            centroid_row, centroid_col = img.index(*polygon_centroid_coords)
+            centroid_row, centroid_col = img.index(*feature_centroid_coords)
 
-            # and then choose offsets to center the polygon.
+            # and then choose offsets to center the vector feature.
             row_off = centroid_row - (new_img_size_rows *
                                       num_small_imgs_in_row_direction // 2)
             col_off = centroid_col - (new_img_size_cols *

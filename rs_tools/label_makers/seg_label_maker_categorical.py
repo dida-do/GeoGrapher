@@ -4,40 +4,44 @@ import logging
 import numpy as np
 import rasterio as rio
 
+from geopandas import GeoDataFrame
 from rs_tools.label_makers.seg_label_maker_base import SegLabelMaker
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.img_polygon_associator import ImgPolygonAssociator
+from rs_tools import Connector
 
 log = logging.getLogger(__name__)
 
 
 class SegLabelMakerCategorical(SegLabelMaker):
-    """Label maker for categorical segmentation labels"""
+    """
+    Label maker that generates categorical segmentation labels
+    from a connector's vector_features.
+    """
 
     @property
     def label_type(self) -> str:
         """Return label type"""
         return 'categorical'
 
-    def _make_label_for_img(self, assoc: ImgPolygonAssociator, img_name: str):
+    def _make_label_for_img(self, connector: Connector, img_name: str):
         """Create a categorical GeoTiff (pixel) label for an image.
 
         Args:
-            - assoc (ImgPolygonAssociator):
+            - connector (Connector):
             - img_name (str): Name of image for which a label should be created.
         Returns:
             - None:
         """
 
-        img_path = assoc.images_dir / img_name
-        label_path = assoc.labels_dir / img_name
+        img_path = connector.images_dir / img_name
+        label_path = connector.labels_dir / img_name
 
         classes_to_ignore = {
             class_
-            for class_ in [assoc.background_class] if class_ is not None
+            for class_ in [connector.background_class] if class_ is not None
         }
         segmentation_classes = [
-            class_ for class_ in assoc.segmentation_classes
+            class_ for class_ in connector.task_feature_vector_classes
             if class_ not in classes_to_ignore
         ]
 
@@ -78,40 +82,41 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     label = np.zeros((src.height, src.width), dtype=np.uint8)
 
                     # and build up the shapes to be burnt in
-                    shapes = []  # pairs of polygons and values to burn in
+                    shapes = []  # pairs of geometries and values to burn in
 
                     for count, seg_class in enumerate(segmentation_classes,
                                                       start=1):
 
-                        # To do that, first find (the df of) the polygons intersecting the image ...
-                        polygons_intersecting_img_df = assoc.polygons_df.loc[
-                            assoc.polygons_intersecting_img(img_name)]
+                        # To do that, first find (the df of) the geometries intersecting the image ...
+                        features_intersecting_img: GeoDataFrame = connector.vector_features.loc[
+                            connector.features_intersecting_img(img_name)]
 
-                        # ... then restrict to (the subdf of) polygons
-                        # with the given segmentation class.
-                        polygons_intersecting_img_df_of_type = polygons_intersecting_img_df.loc[
-                            polygons_intersecting_img_df['type'] == seg_class]
+                        # ... then restrict to (the subdf of) geometries
+                        # with the given class.
+                        features_intersecting_img_of_type: GeoDataFrame = features_intersecting_img.loc[
+                            features_intersecting_img['type'] == seg_class]
 
-                        # Extract the polygon geometries of these polygons ...
-                        polygon_geometries_in_std_crs = list(
-                            polygons_intersecting_img_df_of_type['geometry'])
+                        # Extract those geometries ...
+                        feature_geoms_in_std_crs = list(
+                            features_intersecting_img_of_type['geometry'])
 
                         # ... and convert them to the crs of the source image.
-                        polygon_geometries_in_src_crs = list(
+                        feature_geoms_in_src_crs = list(
                             map(
                                 lambda geom: transform_shapely_geometry(
-                                    geom, assoc.polygons_df.crs.to_epsg(),
+                                    geom,
+                                    connector.vector_features.crs.to_epsg(),
                                     src.crs.to_epsg()),
-                                polygon_geometries_in_std_crs))
+                                feature_geoms_in_std_crs))
 
                         shapes_for_seg_class = [
-                            (polygon_geom, count)
-                            for polygon_geom in polygon_geometries_in_src_crs
+                            (feature_geom, count)
+                            for feature_geom in feature_geoms_in_src_crs
                         ]
 
                         shapes += shapes_for_seg_class
 
-                    # Burn the polygon geometries into the label.
+                    # Burn the geomes into the label.
                     if len(shapes) != 0:
                         rio.features.rasterize(
                             shapes=shapes,
@@ -126,18 +131,18 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     # Write label to file.
                     dst.write(label, 1)
 
-    def _run_safety_checks(self, assoc: ImgPolygonAssociator):
-        """Check existence of 'type' column in assoc.polygons_df and make sure entries are allowed."""
+    def _run_safety_checks(self, connector: Connector):
+        """Check existence of 'type' column in connector.vector_features and make sure entries are allowed."""
 
-        if "type" not in assoc.polygons_df.columns:
+        if "type" not in connector.vector_features.columns:
             raise ValueError(
-                "assoc.polygons_df needs a 'type' column containing the (e.g. segmentation or object detection) class of the geometries"
+                "connector.vector_features needs a 'type' column containing the ML task (e.g. segmentation or object detection) class of the geometries"
             )
 
-        polygon_classes_in_polygons_df = set(
-            assoc.polygons_df["type"].unique())
-        if not polygon_classes_in_polygons_df <= set(
-                assoc.all_polygon_classes):
+        feature_classes_in_vector_features = set(
+            connector.vector_features["type"].unique())
+        if not feature_classes_in_vector_features <= set(
+                connector.all_feature_classes):
             raise ValueError(
-                f"Unrecognized polygon classes in assoc.polygons_df: {polygon_classes_in_polygons_df - set(self.all_polygon_classes)}"
+                f"Unrecognized classes in connector.vector_features: {feature_classes_in_vector_features - set(self.all_feature_classes)}"
             )
