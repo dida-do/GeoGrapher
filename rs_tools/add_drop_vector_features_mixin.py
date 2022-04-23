@@ -64,7 +64,7 @@ class AddDropVectorFeaturesMixIn(object):
         self._check_classes_in_vector_features_contained_in_all_classes(
             new_vector_features, 'new_vector_features')
 
-        # For each new polygon...
+        # For each new feature...
         for vector_feature_name in new_vector_features.index:
 
             # ... if it already is in the connector ...
@@ -101,7 +101,7 @@ class AddDropVectorFeaturesMixIn(object):
             # If it is not in the connector ...
             else:
 
-                # ... add a vertex for the new polygon to the graph and add all connections to existing images. ...
+                # ... add a vertex for the new feature to the graph and add all connections to existing images. ...
                 self._add_vector_feature_to_graph(
                     vector_feature_name, vector_features=new_vector_features)
 
@@ -142,7 +142,7 @@ class AddDropVectorFeaturesMixIn(object):
 
         names_of_imgs_with_labels_to_recompute = set()
 
-        # remove the polygon vertices (along with their edges)
+        # remove the feature vertices (along with their edges)
         for vector_feature_name in vector_feature_names:
             names_of_imgs_with_labels_to_recompute.update(
                 set(self.imgs_intersecting_vector_feature(
