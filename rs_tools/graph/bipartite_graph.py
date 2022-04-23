@@ -85,10 +85,10 @@ class BipartiteGraph(BipartiteGraphClass):
             try:
                 with open(file_path, "r") as read_file:
                     self._graph_dict = json.load(read_file)
-            except FileNotFoundError as e:
-                log.exception(f"Graph dict file {file_path} not found")
-            except JSONDecodeError as e:
-                log.exception(f"Json file {file_path} could not be decoded.")
+            except FileNotFoundError:
+                log.exception("Graph dict file %s not found", file_path)
+            except JSONDecodeError as exc:
+                log.exception("Json file %s could not be decoded.", file_path)
 
             if len(self._graph_dict) != 2:
                 raise Exception(
@@ -174,8 +174,8 @@ class BipartiteGraph(BipartiteGraphClass):
             answer = exists_color_black
         else:
             log.error(
-                f"Not a valid vertex_color: {vertex_color}. Graph vertex colors are {self.colors()}."
-            )
+                "Not a valid vertex_color: %s. Graph vertex colors are %s.",
+                vertex_color, self.colors())
 
         return answer
 
@@ -216,7 +216,7 @@ class BipartiteGraph(BipartiteGraphClass):
 
         # check if vertex already exists
         if self.exists_vertex(vertex_name):
-            log.info(f"Vertex {vertex_name} of already exists!")
+            log.info("Vertex %s of already exists!", vertex_name)
         else:
             # create vertex w/o edges
             self._graph_dict[vertex_color][vertex_name] = {}
@@ -240,23 +240,21 @@ class BipartiteGraph(BipartiteGraphClass):
         """
 
         if not self.exists_vertex(from_vertex, from_vertex_color):
-            log.info(
-                f"add_edge: vertex {from_vertex} does not exist. Creating first..."
-            )
+            log.info("add_edge: vertex %s does not exist. Creating first...",
+                     from_vertex)
             self.add_vertex(from_vertex, from_vertex_color)
             #self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
         if not self.exists_vertex(to_vertex,
                                   self._opposite_color(from_vertex_color)):
-            log.info(
-                f"add_edge: vertex {to_vertex} does not exist. Creating first..."
-            )
+            log.info("add_edge: vertex %s does not exist. Creating first...",
+                     to_vertex)
             self.add_vertex(to_vertex, self._opposite_color(from_vertex_color))
             #self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
         if force == False and self.exists_edge(from_vertex, from_vertex_color,
                                                to_vertex):
             log.error(
-                f"add_edge: an edge {from_vertex} (color: {from_vertex_color}) to {to_vertex} already exists. Set force=True to overwrite."
-            )
+                "add_edge: an edge %s (color: %s) to %s already exists. Set force=True to overwrite.",
+                from_vertex, from_vertex_color, to_vertex)
             raise Exception(
                 f"add_edge: an edge {from_vertex} (color: {from_vertex_color}) to {to_vertex} already exists. Set force=True to overwrite."
             )
@@ -289,19 +287,18 @@ class BipartiteGraph(BipartiteGraphClass):
 
         if not self.exists_vertex(vertex_name, vertex_color):
 
-            log.info(
-                f"delete_vertex: nothing to do, vertex {vertex_name} does not exist."
-            )
+            log.info("delete_vertex: nothing to do, vertex %s does not exist.",
+                     vertex_name)
 
         # if force_delete_with_edges=False check if vertex has outgoing adjacent edges
         elif self.directed == True:
 
             log.error(
-                f"Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in {vertex_name} :("
-            )
+                "Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in %s :(",
+                vertex_name)
 
             raise Exception(
-                f"Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in  a given vertex :("
+                f"Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in {vertex_name} :("
             )
 
         elif force_delete_with_edges == False and list(
@@ -337,9 +334,8 @@ class BipartiteGraph(BipartiteGraphClass):
         """
 
         if not to_vertex in self._graph_dict[from_vertex_color][from_vertex]:
-            log.info(
-                f"delete_edge({from_vertex}, {from_vertex_color}, {to_vertex}): There is no such edge."
-            )
+            log.info("delete_edge(%s, %s, %s): There is no such edge.",
+                     from_vertex, from_vertex_color, to_vertex)
         else:
             self._graph_dict[from_vertex_color][from_vertex].pop(to_vertex)
             if self.directed == False:  #delete opposite edge

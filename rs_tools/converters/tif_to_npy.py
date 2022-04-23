@@ -20,8 +20,7 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
     squeeze_label_channel_dim_if_single_channel: bool = Field(
         default=True,
-        description=
-        "whether to squeeze the label channel dim/axis if possible"
+        description="whether to squeeze the label channel dim/axis if possible"
     )
     channels_first_or_last_in_npy: Literal['last', 'first'] = Field(
         default='last',
@@ -38,14 +37,14 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
     def _create_or_update(self) -> None:
 
         # need this later
-        polygons_that_will_be_added_to_target_dataset = set(
-            self.source_assoc.polygons_df.index) - set(
-                self.target_assoc.polygons_df.index)
+        geoms_that_will_be_added_to_target_dataset = set(
+            self.source_assoc.geoms_df.index) - set(
+                self.target_assoc.geoms_df.index)
 
         # build npy associator
-        npy_imgs_df = self._get_npy_imgs_df()
-        self.target_assoc.add_to_imgs_df(npy_imgs_df)
-        self.target_assoc.add_to_polygons_df(self.source_assoc.polygons_df)
+        npy_img_data = self._get_npy_img_data()
+        self.target_assoc.add_to_img_data(npy_img_data)
+        self.target_assoc.add_to_geoms_df(self.source_assoc.geoms_df)
 
         # Determine which images to copy to target dataset
         imgs_that_already_existed_in_target_images_dir = {
@@ -55,11 +54,11 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
         # For each image that already existed in the target dataset ...
         for img_name in imgs_that_already_existed_in_target_images_dir:
-            # ... if among the polygons intersecting it in the target dataset ...
-            polygons_intersecting_img = set(
-                self.target_assoc.polygons_intersecting_img(img_name))
-            # ... there is a *new* polygon ...
-            if polygons_intersecting_img & polygons_that_will_be_added_to_target_dataset != set(
+            # ... if among the (vector) geometries intersecting it in the target dataset ...
+            geoms_intersecting_img = set(
+                self.target_assoc.geoms_intersecting_img(img_name))
+            # ... there is a *new* (vector) geometry ...
+            if geoms_intersecting_img & geoms_that_will_be_added_to_target_dataset != set(
             ):
                 # ... then we need to update the label for it, so we delete the current label.
                 (self.target_assoc.labels_dir /
@@ -69,7 +68,7 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
         for tif_dir, npy_dir in zip(self.source_assoc.image_data_dirs,
                                     self.target_assoc.image_data_dirs):
             # ... go through all tif files. ...
-            for tif_img_name in tqdm(self.source_assoc.imgs_df.index,
+            for tif_img_name in tqdm(self.source_assoc.img_data.index,
                                      desc=f"Converting {tif_dir.name}"):
                 # If the corresponding npy in the target image data dir does not exist ...
                 if not (npy_dir /
@@ -116,15 +115,15 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
         return self.target_assoc
 
-    def _get_npy_imgs_df(self):
-        npy_imgs_df = self.source_assoc.imgs_df
-        tif_assoc_imgs_df_index_name = self.source_assoc.imgs_df.index.name  # the next line destroys the index name of tif_assoc.imgs_df, so we remember it ...
-        tif_img_name_list = npy_imgs_df.index.tolist().copy(
+    def _get_npy_img_data(self):
+        npy_img_data = self.source_assoc.img_data
+        tif_assoc_img_data_index_name = self.source_assoc.img_data.index.name  # the next line destroys the index name of tif_assoc.img_data, so we remember it ...
+        tif_img_name_list = npy_img_data.index.tolist().copy(
         )  # (it's either the .tolist() or .copy() operation, don't understand why)
-        npy_imgs_df.index = list(
+        npy_img_data.index = list(
             map(self._npy_filename_from_tif, tif_img_name_list))
-        npy_imgs_df.index.name = tif_assoc_imgs_df_index_name  # ... and then set it by hand
-        return npy_imgs_df
+        npy_img_data.index.name = tif_assoc_img_data_index_name  # ... and then set it by hand
+        return npy_img_data
 
     @staticmethod
     def _npy_filename_from_tif(tif_filename: str) -> str:

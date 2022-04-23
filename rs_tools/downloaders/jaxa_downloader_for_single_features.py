@@ -12,6 +12,7 @@ ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_vXXXX/
 There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 1804 version has been tested.
 """
 
+from typing import Literal, Dict, Union, Any
 import logging
 import math
 import os
@@ -24,8 +25,9 @@ from pathlib import Path
 from typing import Optional, Set, Union
 
 import numpy as np
-from shapely.geometry.polygon import Polygon
-from rs_tools.downloaders.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
+from shapely.geometry.polygon import BaseGeometry
+from rs_tools.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
+from rs_tools import Connector
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -34,35 +36,37 @@ JAXA_DATA_VERSIONS = ['1804', '1903', '2003',
                       '2012']  # (attn: only 1804 has been tested so far)
 
 
-class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
+class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
     """Download JAXA DEM (digital elevation) data."""
 
-    def _download_imgs_for_polygon_jaxa(
-            self,
-            polygon_name: Union[str, int],
-            polygon_geometry: Polygon,
-            download_dir: Union[Path, str],
-            previously_downloaded_imgs_set: Set[str],
-            data_version: str = None,
-            download_mode: str = None,
-            **kwargs):
-        """Downloads DEM data from jaxa.jp's ftp-server for a given polygon and
-        returns dict-structure compatible with the image-polygon-associator.
+    def download(
+        self,
+        geom_name: Union[int, str],
+        geom_geometry: BaseGeometry,
+        connector: Connector,
+        download_dir: Path,
+        previously_downloaded_imgs_set: Set[Union[str, int]],
+        data_version: str = None,
+        download_mode: str = None,
+        **kwargs,
+    ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
+        """Downloads DEM data from jaxa.jp's ftp-server for a given (vector) geometry and
+        returns dict-structure compatible with the connector.
 
         Warning:
             The downloader has only been tested for the 1804 jaxa_data_version.
 
         Explanation:
             The 'bboxvertices' download_mode will download images for
-            vertices of the bbox of the polygon. This is preferred for
-            small polygons, but will miss regions inbetween if a polygon spans
+            vertices of the bbox of the (vector) geometry. This is preferred for
+            small (vector) geometries, but will miss regions inbetween if a (vector) geometry spans
             more than two images in each axis. The 'bboxgrid' mode will download
             images for each point on a grid defined by the bbox. This overshoots
-            for small polygons, but works for large polygons.
+            for small geometries, but works for large geometries.
 
         Args:
-            polygon_name (Union[str, int]): the name of the polygon
-            polygon_geometry (shapely polygon):
+            geom_name (Union[str, int]): the name of the vector geometry
+            geom_geometry (shapely geometry):
             download_dir (Path or str): directory that the image file should be downloaded to
             jaxa_data_version (str): One of '1804', '1903', '2003', or '2012'.
                 1804 is the only version that has been tested.
@@ -72,7 +76,7 @@ class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
             **kwargs (Any): other kwargs, ignored.
 
         Returns:
-            dict of dicts according to the associator convention
+            dict of dicts according to the connector convention
             (containing list_img_info_dict).
 
         Raises:
@@ -88,7 +92,7 @@ class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
         jaxa_file_and_folder_names = set()
         if download_mode == 'bboxvertices':
 
-            for (x, y) in polygon_geometry.envelope.exterior.coords:
+            for (x, y) in geom_geometry.envelope.exterior.coords:
 
                 jaxa_folder_name = '{}/'.format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
@@ -100,7 +104,7 @@ class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
 
         elif download_mode == 'bboxgrid':
 
-            minx, miny, maxx, maxy = polygon_geometry.envelope.exterior.bounds
+            minx, miny, maxx, maxy = geom_geometry.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
             deltay = math.ceil(maxy - miny)
@@ -121,7 +125,7 @@ class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
             raise ValueError(f"Unknown download_mode: {download_mode}")
 
         list_img_info_dicts = [
-        ]  # to collect information per downloaded file for associator
+        ]  # to collect information per downloaded file for connector
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
 
@@ -134,8 +138,8 @@ class JAXADownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
             # ... else, download.
             else:
                 log.info(
-                    'Downloading from ftp.eorc.jaxa.jp (v%s) for polygon %s',
-                    data_version, polygon_name)
+                    'Downloading from ftp.eorc.jaxa.jp (v%s) for geometry %s',
+                    data_version, geom_name)
                 log.info('Downloading to: %s',
                          os.path.join(download_dir, jaxa_file_name))
                 try:

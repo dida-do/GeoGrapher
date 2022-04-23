@@ -39,5 +39,5 @@ class DSCutterEveryImgToGrid(DSCutterIterOverImgs):
         )
 
     def _after_creating_or_updating(self):
-        self.target_assoc.attrs["img_size"] = self.new_img_size
-        self.target_assoc.save()
+        self.target_connector.attrs["img_size"] = self.new_img_size
+        self.target_connector.save()
