@@ -39,7 +39,7 @@ class UpdateFromSourceDSMixIn(object):
             update_method = getattr(
                 self, self._update_from_source_dataset_dict['update_method'])
         except KeyError:
-            log.info(f"Unknown or missing update method.")
+            log.info("Unknown or missing update method.")
         else:
             # (Recursively) update source dataset first.
             source_data_dir = self._update_from_source_dataset_dict[
@@ -48,7 +48,7 @@ class UpdateFromSourceDSMixIn(object):
             source_assoc = self.__class__.from_data_dir(source_data_dir)
             source_assoc.update_from_source_dataset()
             log.info(
-                f"Completed update of source dataset in {source_data_dir}")
+                "Completed update of source dataset in %s", source_data_dir)
 
             update_method()  # might return a value????
 

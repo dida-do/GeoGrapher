@@ -3,23 +3,25 @@ from geopandas import GeoDataFrame
 from rs_tools.utils.utils import deepcopy_gdf
 
 
-def convert_polygons_df_soft_cat_to_cat(
-        polygons_df: GeoDataFrame) -> GeoDataFrame:
-    """Take a polygons_df in soft-categorical format and return a copy
+def convert_vector_features_soft_cat_to_cat(
+        vector_features: GeoDataFrame) -> GeoDataFrame:
+    """Take a vector_data in soft-categorical format and return a copy
     converted to categorical format."""
 
-    new_polygons_df = deepcopy_gdf(polygons_df)
+    new_vector_features = deepcopy_gdf(vector_features)
 
     # make 'type' column
-    new_polygons_df['type'] = new_polygons_df[[
-        col for col in new_polygons_df.columns if col[:15] == 'prob_seg_class_'
+    new_vector_features['type'] = new_vector_features[[
+        col for col in new_vector_features.columns
+        if col[:15] == 'prob_seg_class_'
     ]].idxmax(axis='columns').apply(lambda x: x[15:])
 
     # drop 'prob_seg_class_[seg_class]' cols
-    new_polygons_df.drop([
-        col for col in new_polygons_df.columns if col[:15] == 'prob_seg_class_'
+    new_vector_features.drop([
+        col
+        for col in new_vector_features.columns if col[:15] == 'prob_seg_class_'
     ],
-                         axis='columns',
-                         inplace=True)
+                             axis='columns',
+                             inplace=True)
 
-    return new_polygons_df
+    return new_vector_features
