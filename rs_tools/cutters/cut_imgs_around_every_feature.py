@@ -1,21 +1,21 @@
 """
-Dataset cutter that cuts out images around polygons.
+Dataset cutter that cuts out images around vector features.
 """
 
 import logging
 from typing import Optional, Union
 from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.cut_iter_over_polygons import DSCutterIterOverPolygons
+from rs_tools.cutters.cut_iter_over_features import DSCutterIterOverFeatures
 from rs_tools.cutters.img_selectors import ImgSelector, RandomImgSelector
-from rs_tools.cutters.polygon_filter_predicates import IsPolygonMissingImgs, PolygonFilterPredicate
-from rs_tools.cutters.single_img_cutter_around_polygon import \
-    SingleImgCutterAroundPolygon
+from rs_tools.cutters.feature_filter_predicates import IsFeatureMissingImgs, FeatureFilterPredicate
+from rs_tools.cutters.single_img_cutter_around_feature import \
+    SingleImgCutterAroundFeature
 
 logger = logging.getLogger(__name__)
 
 
-class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
-    """Dataset cutter that cuts out images around polygons."""
+class DSCutterImgsAroundEveryFeature(DSCutterIterOverFeatures):
+    """Dataset cutter that cuts out images around vector features."""
 
     new_img_size: Optional[ImgSize]
     min_new_img_size: Optional[ImgSize]
@@ -32,7 +32,7 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
                  mode: str = 'random',
                  random_seed: int = 10,
                  **data):
-        """Dataset cutter that cuts out images around polygons.
+        """Dataset cutter that cuts out images around vector feature.
 
         Args:
             new_img_size (Optional[ImgSize], optional): size of cutouts in 'centered'
@@ -41,15 +41,15 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
                 for 'variable' mode. Defaults to 64.
             scaling_factor (Union[None, float], optional): Scaling factor for 'variable' mode.
                 Defaults to 1.2.
-            target_img_count (int, optional): Targetted number of images per polygon. Defaults to 1.
+            target_img_count (int, optional): Targetted number of images per vector feature. Defaults to 1.
             mode (str, optional): One of 'random', 'centered', or 'variable'. Defaults to 'random'.
             random_seed (int, optional): Random seed. Defaults to 10.
         """
 
-        is_polygon_missing_imgs: PolygonFilterPredicate = IsPolygonMissingImgs(
+        is_feature_missing_imgs: FeatureFilterPredicate = IsFeatureMissingImgs(
             target_img_count)
         random_img_selector: ImgSelector = RandomImgSelector(target_img_count)
-        small_imgs_around_polygons_cutter = SingleImgCutterAroundPolygon(
+        small_imgs_around_features_cutter = SingleImgCutterAroundFeature(
             mode=mode,
             new_img_size=new_img_size,
             min_new_img_size=min_new_img_size,
@@ -58,9 +58,9 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
         )
 
         super().__init__(
-            polygon_filter_predicate=is_polygon_missing_imgs,
+            feature_filter_predicate=is_feature_missing_imgs,
             img_selector=random_img_selector,
-            img_cutter=small_imgs_around_polygons_cutter,
+            img_cutter=small_imgs_around_features_cutter,
             new_img_size=new_img_size,
             min_new_img_size=min_new_img_size,
             scaling_factor=scaling_factor,
@@ -72,5 +72,5 @@ class DSCutterImgsAroundEveryPolygon(DSCutterIterOverPolygons):
 
     def _after_creating_or_updating(self):
         if self.mode in {'random', 'centered'}:
-            self.target_assoc.attrs["img_size"] = self.new_img_size
-            self.target_assoc.save()
+            self.target_connector.attrs["img_size"] = self.new_img_size
+            self.target_connector.save()

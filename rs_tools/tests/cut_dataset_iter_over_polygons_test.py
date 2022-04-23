@@ -75,9 +75,9 @@ def test_new_dataset_one_small_img_for_each_polygon():
     # check equality of graphs of old and new assoc
     assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict
 
-    # check equality of imgs_dfs
-    assert (target_assoc.imgs_df).equals(correct_target_assoc.imgs_df)
-    assert target_assoc.imgs_df.crs == source_assoc.imgs_df.crs
+    # check equality of img_datas
+    assert (target_assoc.img_data).equals(correct_target_assoc.img_data)
+    assert target_assoc.img_data.crs == source_assoc.img_data.crs
 
     # check equality of polygons_dfs
     assert (target_assoc.polygons_df).equals(correct_target_assoc.polygons_df)
@@ -125,9 +125,9 @@ def update_dataset_from_iter_over_polygons_test():
     # check equality of graphs of old and new assoc
     assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict
 
-    # check equality of imgs_dfs
-    assert (target_assoc.imgs_df).equals(correct_target_assoc.imgs_df)
-    assert target_assoc.imgs_df.crs == source_assoc.imgs_df.crs
+    # check equality of img_datas
+    assert (target_assoc.img_data).equals(correct_target_assoc.img_data)
+    assert target_assoc.img_data.crs == source_assoc.img_data.crs
 
     # check equality of polygons_dfs
     assert (target_assoc.polygons_df).equals(correct_target_assoc.polygons_df)

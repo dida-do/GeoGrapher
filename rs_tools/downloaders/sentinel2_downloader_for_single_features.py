@@ -13,7 +13,7 @@ from shapely import wkt
 from shapely.geometry import Polygon
 
 from rs_tools.errors import NoImgsForPolygonFoundError
-from rs_tools.downloaders.base_downloader_for_single_polygon import ImgDownloaderForSinglePolygon
+from rs_tools.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
 from rs_tools.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
 from rs_tools.utils.utils import transform_shapely_geometry
 
@@ -21,19 +21,19 @@ from rs_tools.utils.utils import transform_shapely_geometry
 log = logging.getLogger(__name__)
 
 
-class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
+class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
     """Downloader for Sentinel-2 images.
 
     Requires environment variables sentinelAPIusername and
-    sentinelAPIpassword to set up the sentinel API. Assumes imgs_df has
+    sentinelAPIpassword to set up the sentinel API. Assumes img_data has
     columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
     'img_processed?'. Subclass/modify if you need other columns.
     """
 
     def download(
         self,
-        polygon_name: Union[str, int],
-        polygon_geometry: Polygon,
+        feature_name: Union[str, int],
+        feature_geom: Polygon,
         download_dir: Path,
         previously_downloaded_imgs_set: Set[str],
         producttype: str,
@@ -45,7 +45,7 @@ class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
         credentials_ini_path: Path,
         **kwargs,
     ) -> dict:
-        """Downloads a sentinel-2 image fully containing the polygon, returns a
+        """Downloads a sentinel-2 image fully containing the vector feature, returns a
         dict in the format needed by the associator.
 
         Note:
@@ -53,8 +53,8 @@ class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
             will be read from an s2_copernicus_credentials.ini in self.associator_dir.
 
         Args:
-            polygon_name: name of polygon
-            polygon_geometry: polygon geometry
+            feature_name: name of vector feature
+            feature_geom: geometry of vector feature
             download_dir: Directory Sentinel-2 products will be downloaded to.
             previously_downloaded_imgs_set: Set of already downloaded products.
             producttype (str): One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'
@@ -65,18 +65,18 @@ class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
             credentials_ini_path (Path): Path to ini file containing API credentials.
 
         Returns:
-            info_dicts: A dictionary containing information about the images and polygons. ({'list_img_info_dicts': [img_info_dict])
+            info_dicts: A dictionary containing information about the images. ({'list_img_info_dicts': [img_info_dict])
 
         Raises:
             ValueError: Raised if an unkknown product type is given.
-            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the polygon.
+            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the vector feature.
         """
 
         self._check_args_are_valid(producttype, resolution,
                                    max_percent_cloud_coverage)
 
         # Determine missing args for the sentinel query.
-        rectangle_wkt: str = wkt.dumps(polygon_geometry.envelope)
+        rectangle_wkt: str = wkt.dumps(feature_geom.envelope)
         producttype = self._get_longform_producttype(producttype)
 
         api = self._get_api(credentials_ini_path)
@@ -100,7 +100,7 @@ class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
         # If we couldn't find anything, remember that, so we can deal with it later.
         if len(products) == 0:
             raise NoImgsForPolygonFoundError(
-                f"No images for polygon {polygon_name} found with cloud coverage less than or equal to {max_percent_cloud_coverage}!"
+                f"No images for vector feature {feature_name} found with cloud coverage less than or equal to {max_percent_cloud_coverage}!"
             )
 
         # Return dicts with values to be collected in calling associator.
@@ -143,7 +143,7 @@ class SentinelDownloaderForSinglePolygon(ImgDownloaderForSinglePolygon):
                                 product_metadata['title'], str(exc))
 
         raise NoImgsForPolygonFoundError(
-            f"All images for {polygon_name} failed to download.")
+            f"All images for {feature_name} failed to download.")
 
     def _get_longform_producttype(self, producttype):
         """Return producttype in longform as needed by the sentinel API"""

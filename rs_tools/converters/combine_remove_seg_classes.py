@@ -14,7 +14,7 @@ from geopandas.geodataframe import GeoDataFrame
 from pydantic import Field
 from tqdm.auto import tqdm
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.global_constants import POLYGONS_DF_INDEX_NAME
+from rs_tools.global_constants import VECTOR_DATA_INDEX_NAME
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
 from rs_tools import ImgPolygonAssociator
 
@@ -51,7 +51,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         soft-categorical label types.
 
         Warning:
-            Will only add images and polygons from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
+            Will only add images and (vector) geometries from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
 
         Args:
             source_data_dir (pathlib.Path or str): data_dir of source dataset/associator
@@ -60,13 +60,13 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             new_seg_class_names: (Optional[List[str]]) optional list of names of new segmentation classes corresponding to seg_classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
             class_separator: (str) used if the new_seg_class_names argument is not provided to join the names of existing segmentation classes that are to be kept. Defaults to class_separator.
             new_background_class (Optional[str]): optional new background class, defaults to None, i.e. old background class
-            remove_imgs: (bool). If True, remove images not containing polygons of the segmentation classes to be kept.
+            remove_imgs: (bool). If True, remove images not containing geometries of the segmentation classes to be kept.
 
         Returns:
             The ImgPolygonAssociator of the new dataset.
 
         Note:
-            For the purposes of this function the background classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, polygons of the background class will be lost.
+            For the purposes of this function the background classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, (vector) geometries of the background class will be lost.
         """
 
         # Determine classes
@@ -91,34 +91,34 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             if class_ != self.target_assoc.background_class
         ]
 
-        polygons_from_source_df = self._combine_or_remove_seg_classes_from_polygons_df(
+        geoms_from_source_df = self._combine_or_remove_seg_classes_from_vector_data(
             # label_type=self.source_assoc.label_type,
-            # polygons_df=self.source_assoc.polygons_df,
+            # vector_data=self.source_assoc.vector_data,
             seg_classes=seg_classes,
             new_seg_classes=new_seg_classes,
         )
-        # all_polygon_classes=self.source_assoc.all_polygon_classes)
+        # all_geom_classes=self.source_assoc.all_geom_classes)
 
         # need this later
-        polygons_to_add_to_target_dataset = set(
-            polygons_from_source_df.index) - set(
-                self.target_assoc.polygons_df.index)
+        geoms_to_add_to_target_dataset = set(
+            geoms_from_source_df.index) - set(
+                self.target_assoc.vector_data.index)
 
         # THINK ABOUT THIS!!!!
-        # if we are creating a new soft-categorical dataset adjust columns of empty self.target_assoc.polygons_df
-        if len(self.target_assoc.polygons_df
+        # if we are creating a new soft-categorical dataset adjust columns of empty self.target_assoc.vector_data
+        if len(self.target_assoc.vector_data
                ) == 0 and self.target_assoc.label_type == 'soft-categorical':
-            empty_polygons_df_with_corrected_columns = self._combine_or_remove_seg_classes_from_polygons_df(
+            empty_vector_data_with_corrected_columns = self._combine_or_remove_seg_classes_from_vector_data(
                 # label_type=self.target_assoc.label_type,
-                # polygons_df=self.target_assoc.polygons_df,
+                # vector_data=self.target_assoc.vector_data,
                 seg_classes=seg_classes,
                 new_seg_classes=new_seg_classes,
-                # all_polygon_classes=self.source_assoc.
-                # all_polygon_classes  # self, since we already set classes in self.target_assoc
+                # all_geom_classes=self.source_assoc.
+                # all_geom_classes  # self, since we already set classes in self.target_assoc
             )
-            self.target_assoc.polygons_df = empty_polygons_df_with_corrected_columns
+            self.target_assoc.vector_data = empty_vector_data_with_corrected_columns
 
-        self.target_assoc.add_to_polygons_df(polygons_from_source_df)
+        self.target_assoc.add_to_vector_data(geoms_from_source_df)
 
         # Determine which images to copy to target dataset
         imgs_in_target_dataset_before_addings_imgs_from_source_dataset = {
@@ -134,9 +134,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 # all images in the source dataset ...
                 img_name
                 for img_name in imgs_in_source_images_dir
-                # ... that intersect with the polygons that will be kept.
-                if set(self.source_assoc.polygons_intersecting_img(img_name))
-                & set(polygons_from_source_df.index) != set()
+                # ... that intersect with the (vector) geometries that will be kept.
+                if set(self.source_assoc.geoms_intersecting_img(img_name))
+                & set(geoms_from_source_df.index) != set()
             }
         else:
             imgs_in_source_that_should_be_in_target = imgs_in_source_images_dir
@@ -149,18 +149,18 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             shutil.copyfile(source_img_path, target_img_path)
 
         # add images to self.target_assoc
-        df_of_imgs_to_add_to_target_dataset = self.source_assoc.imgs_df.loc[
+        df_of_imgs_to_add_to_target_dataset = self.source_assoc.img_data.loc[
             list(imgs_to_copy_to_target_dataset)]
-        self.target_assoc.add_to_imgs_df(df_of_imgs_to_add_to_target_dataset)
+        self.target_assoc.add_to_img_data(df_of_imgs_to_add_to_target_dataset)
 
         # Determine labels to delete:
         # For each image that already existed in the target dataset ...
         for img_name in imgs_in_target_dataset_before_addings_imgs_from_source_dataset:
-            # ... if among the polygons intersecting it in the target dataset ...
-            polygons_intersecting_img = set(
-                self.target_assoc.polygons_intersecting_img(img_name))
-            # ... there is a *new* polygon ...
-            if polygons_intersecting_img & polygons_to_add_to_target_dataset != set(
+            # ... if among the (vector) geometries intersecting it in the target dataset ...
+            geoms_intersecting_img = set(
+                self.target_assoc.geoms_intersecting_img(img_name))
+            # ... there is a *new* (vector) geometry ...
+            if geoms_intersecting_img & geoms_to_add_to_target_dataset != set(
             ):
                 # ... then we need to update the label for it, so we delete the current label.
                 (self.target_assoc.labels_dir /
@@ -171,10 +171,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
         # remember original type
         if self.target_assoc.label_type == 'categorical':
-            self.target_assoc.polygons_df.loc[
-                polygons_to_add_to_target_dataset,
-                'orig_type'] = self.source_assoc.polygons_df.loc[
-                    polygons_to_add_to_target_dataset, 'type']
+            self.target_assoc.vector_data.loc[
+                geoms_to_add_to_target_dataset,
+                'orig_type'] = self.source_assoc.vector_data.loc[
+                    geoms_to_add_to_target_dataset, 'type']
 
         self.target_assoc.save()
         self.save()
@@ -199,11 +199,11 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                            new_seg_classes: List[str]):
 
         if not set(classes_to_keep) <= set(
-                self.source_assoc.all_polygon_classes):
+                self.source_assoc.all_classes):
             classes_not_in_source_dataset = set(classes_to_keep) - set(
-                self.source_assoc.all_polygon_classes)
+                self.source_assoc.all_classes)
             raise ValueError(
-                f"The following classes are not in self.source_assoc.all_polygon_classes: {classes_not_in_source_dataset}"
+                f"The following classes are not in self.source_assoc.all_geom_classes: {classes_not_in_source_dataset}"
             )
         if not len(classes_to_keep) == len(set(classes_to_keep)):
             raise ValueError(
@@ -214,21 +214,21 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             raise ValueError(
                 f"new_background_class not in {self.new_seg_classes}")
 
-    def _combine_or_remove_seg_classes_from_polygons_df(
+    def _combine_or_remove_seg_classes_from_vector_data(
         self,
         # label_type: str,
-        # polygons_df: GeoDataFrame,
+        # vector_data: GeoDataFrame,
         seg_classes: List[Union[str, List[str]]],
         new_seg_classes: List[str],
-        # all_polygon_classes: List[str],
+        # all_geom_classes: List[str],
     ) -> GeoDataFrame:
         """
         Args:
             label_type (str): [description]
-            polygons_df (GeoDataFrame): [description]
+            vector_data (GeoDataFrame): [description]
             seg_classes (List[str]):
             new_seg_classes (List[str]):
-            all_polygon_classes (List[str]):
+            all_geom_classes (List[str]):
 
         Returns:
             GeoDataFrame: [description]
@@ -239,7 +239,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             raise ValueError(
                 f"Unknown label_type: {self.source_assoc.label_type}")
 
-        polygons_df = deepcopy_gdf(self.source_assoc.polygons_df)
+        vector_data = deepcopy_gdf(self.source_assoc.vector_data)
 
         classes_to_keep = [
             class_ for list_of_classes in seg_classes
@@ -253,12 +253,12 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                     if class_ in classes_:
                         return new_seg_classes[count]
 
-            # keep only polygons belonging to segmentation we want to keep
-            polygons_df = polygons_df.loc[polygons_df['type'].apply(
+            # keep only (vector) geometries belonging to segmentation we want to keep
+            vector_data = vector_data.loc[vector_data['type'].apply(
                 lambda class_: class_ in classes_to_keep)]
             # rename to new classes
-            polygons_df.loc[:,
-                            'type'] = polygons_df['type'].apply(get_new_class)
+            vector_data.loc[:,
+                            'type'] = vector_data['type'].apply(get_new_class)
 
         elif self.source_assoc.label_type == 'soft-categorical':
 
@@ -269,34 +269,34 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
             # drop cols of classes we don't want to keep
             classes_to_drop = [
-                class_ for class_ in self.source_assoc.all_polygon_classes
+                class_ for class_ in self.source_assoc.all_classes
                 if class_ not in classes_to_keep
             ]
             cols_to_drop = prob_seg_class_names(classes_to_drop)
-            polygons_df = polygons_df.drop(columns=cols_to_drop)
+            vector_data = vector_data.drop(columns=cols_to_drop)
 
             # create temporary dataframe to avoid column name conflicts when renaming/deleting etc
-            temp_polygons_df = pd.DataFrame()
-            temp_polygons_df.index.name = polygons_df.index.name
+            temp_vector_data = pd.DataFrame()
+            temp_vector_data.index.name = vector_data.index.name
 
-            # for each row/polygon find sum of probabilities for the remaining segmentation classes
+            # for each row/(vector) geometry find sum of probabilities for the remaining segmentation classes
             cols_with_probs_of_remaining_classes = prob_seg_class_names(
                 classes_to_keep)
             sum_of_probs_of_remaining_classes = pd.DataFrame(
-                polygons_df[cols_with_probs_of_remaining_classes].sum(axis=1),
+                vector_data[cols_with_probs_of_remaining_classes].sum(axis=1),
                 columns=['sum'],
-                index=polygons_df.index)
+                index=vector_data.index)
             rows_where_sum_is_zero = (
                 sum_of_probs_of_remaining_classes['sum'] == 0)
 
-            # remove rows/polygons which do not belong to remaining classes
-            polygons_df = polygons_df.loc[~rows_where_sum_is_zero]
+            # remove rows/(vector) geometries which do not belong to remaining classes
+            vector_data = vector_data.loc[~rows_where_sum_is_zero]
             sum_of_probs_of_remaining_classes = sum_of_probs_of_remaining_classes.loc[
                 ~rows_where_sum_is_zero]
 
             # renormalize probabilities to sum to 1
-            polygons_df.loc[:,
-                            cols_with_probs_of_remaining_classes] = polygons_df[
+            vector_data.loc[:,
+                            cols_with_probs_of_remaining_classes] = vector_data[
                                 cols_with_probs_of_remaining_classes].div(
                                     sum_of_probs_of_remaining_classes['sum'],
                                     axis=0)
@@ -306,23 +306,23 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                     seg_classes, new_seg_classes):
                 cols_of_probs_to_be_added = prob_seg_class_names(
                     classes_of_new_seg_class)
-                temp_polygons_df[
-                    f"prob_seg_class_{new_seg_class_name}"] = polygons_df[
+                temp_vector_data[
+                    f"prob_seg_class_{new_seg_class_name}"] = vector_data[
                         cols_of_probs_to_be_added].sum(axis=1)
-                polygons_df = polygons_df.drop(
+                vector_data = vector_data.drop(
                     columns=cols_of_probs_to_be_added)
 
             # add new columns
-            polygons_df = concat_gdfs
-            polygons_df = pd.concat([polygons_df, temp_polygons_df],
+            vector_data = concat_gdfs
+            vector_data = pd.concat([vector_data, temp_vector_data],
                                     axis=1)  # column axis
-            polygons_df.index.name = POLYGONS_DF_INDEX_NAME
+            vector_data.index.name = VECTOR_DATA_INDEX_NAME
 
             # Recompute most likely type column.
-            polygons_df["most_likely_class"] = polygons_df[
-                temp_polygons_df.columns].apply(lambda s: ",".join(
+            vector_data["most_likely_class"] = vector_data[
+                temp_vector_data.columns].apply(lambda s: ",".join(
                     map(lambda col_name: col_name[15:], s[
                         (s == s.max()) & (s != 0)].index.values)),
                                                 axis=1)
 
-        return polygons_df
+        return vector_data
