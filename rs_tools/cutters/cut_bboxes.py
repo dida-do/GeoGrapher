@@ -2,8 +2,8 @@
 TODO: Include as method in ImgPolygonAssociator.
 
 Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cutting each image in the source dataset to a grid of images.
-    - cut_dataset_img_to_grid_of_imgs. Updates a dataset of GeoTiffs that was created with new_tif_dataset_img2grid_imgs. 
-    - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over polygons.
+    - cut_dataset_img_to_grid_of_imgs. Updates a dataset of GeoTiffs that was created with new_tif_dataset_img2grid_imgs.
+    - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over vector features.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from rs_tools.cut.type_aliases import ImgSize
 from rs_tools.global_constants import DATA_DIR_SUBDIRS
 
 if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
+    from rs_tools.img_geom_associator import ImgPolygonAssociator
 
 from rs_tools.cutteres.cut_iter_over_imgs import \
     create_or_update_dataset_iter_over_imgs
@@ -44,7 +44,7 @@ DSCutterBBoxes(TODO):
         """TODO.
 
         Warning:
-            TODO! update is not going to work because should be iter over polygons but uses iter over imgs.
+            TODO! update is not going to work because should be iter over (vector) geometries but uses iter over imgs.
 
 
         Args:
@@ -82,18 +82,18 @@ DSCutterBBoxes(TODO):
         # throw out images with duplicate bboxes:
         # First, find a subset of images without duplicate bboxes ...
         imgs_to_keep = []
-        for count, img_name in enumerate(target_assoc.imgs_df.index):
-            img_bbox = target_assoc.imgs_df.loc[img_name, 'geometry']
+        for count, img_name in enumerate(target_assoc.img_data.index):
+            img_bbox = target_assoc.img_data.loc[img_name, 'geometry']
             if {
                     img_name_
                     for img_name_ in imgs_to_keep
-                    if img_bbox.equals(target_assoc.imgs_df.loc[img_name_,
+                    if img_bbox.equals(target_assoc.img_data.loc[img_name_,
                                                                 'geometry'])
             } == set():
                 imgs_to_keep += [img_name]
         # ... and delete the remaining images, which have duplicate bboxes
         imgs_to_delete = [
-            img_name for img_name in target_assoc.imgs_df.index
+            img_name for img_name in target_assoc.img_data.index
             if img_name not in imgs_to_keep
         ]
         target_assoc.drop_imgs(imgs_to_delete, remove_imgs_from_disk=True)

@@ -10,8 +10,6 @@ import geopandas as gpd
 import numpy as np
 import rasterio as rio
 import rasterio.mask
-from rasterio.enums import Resampling
-# from fiona.errors import DriverError
 from rasterio.errors import RasterioIOError
 from scipy.ndimage import zoom
 from shapely.geometry import box
@@ -180,9 +178,8 @@ def safe_to_geotif_L2A(
                     out_default_reader, shapes, crop=False, invert=True)
             # in case mask is empty or does not exist:
             except (ValueError, AssertionError, RasterioIOError):
-                log.info(
-                    f"Using all zero band for gml mask {gml_name} for {safe_root.name}"
-                )
+                log.info("Using all zero band for gml mask %s for %s",
+                         gml_name, safe_root.name)
                 mask = np.full(shape=out_default_reader.read(1).shape,
                                fill_value=0.0,
                                dtype=np.uint16)
