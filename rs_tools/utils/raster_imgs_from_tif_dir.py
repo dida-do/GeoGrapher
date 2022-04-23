@@ -1,4 +1,4 @@
-"""Create associator img_data from a directory containing GeoTiff images."""
+"""Create associator raster_imgs from a directory containing GeoTiff images."""
 
 import pathlib
 from pathlib import Path
@@ -44,16 +44,16 @@ def default_read_in_img_for_img_df_function(
     return orig_crs_epsg_code, img_bounding_rectangle_orig_crs
 
 
-def img_data_from_imgs_dir(
+def raster_imgs_from_imgs_dir(
     images_dir: Union[pathlib.Path, str],
-    img_data_crs_epsg_code: Optional[int] = None,
-    image_names: Optional[List[str]] = None,
+    raster_imgs_crs_epsg_code: Optional[int] = None,
+    img_names: Optional[List[str]] = None,
     imgs_datatype: str = "tif",
     read_in_img_for_img_df_function: Callable[[Path], Tuple[
         int, Polygon]] = default_read_in_img_for_img_df_function
 ) -> GeoDataFrame:
-    """Builds and returns an associator img_data from a directory of images (or
-    from a data directory). Only the index (img_data_index_name, defaults to
+    """Builds and returns an associator raster_imgs from a directory of images (or
+    from a data directory). Only the index (raster_imgs_index_name, defaults to
     img_name), geometry column (coordinates of the img_bounding_rectangle, and
     orig_crs_epsg_code (epsg code of crs the image is in) columns will be
     populated, custom columns will have to be populated by a custom written
@@ -61,14 +61,14 @@ def img_data_from_imgs_dir(
 
     Args:
         - images_dir (Union[pathlib.Path, str]): path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.
-        - img_data_crs_epsg_code (int): epsg code of img_data crs to be returned.
-        - image_names (List[str], optional): optional list of image names. Defaults to None, i.e. all images in images_dir.
+        - raster_imgs_crs_epsg_code (int): epsg code of raster_imgs crs to be returned.
+        - img_names (List[str], optional): optional list of image names. Defaults to None, i.e. all images in images_dir.
         - imgs_datatype (str): datatype suffix of the images
         - read_in_img_for_img_df_function (Callable[[Path], Tuple[
         int, Polygon]]): function that reads in the crs code and the bounding rectangle for the images
 
     Returns:
-        GeoDataFrame: img_data conforming to the associator img_data format with index img_data_index_name and columns geometry and orig_crs_epsg_code
+        GeoDataFrame: raster_imgs conforming to the associator raster_imgs format with index raster_imgs_index_name and columns geometry and orig_crs_epsg_code
     """
 
     # stupid hack to avoid (not really) circular importing python can't deal with.
@@ -76,15 +76,15 @@ def img_data_from_imgs_dir(
 
     images_dir = Path(images_dir)
 
-    if img_data_crs_epsg_code == None:
-        img_data_crs_epsg_code = STANDARD_CRS_EPSG_CODE
+    if raster_imgs_crs_epsg_code == None:
+        raster_imgs_crs_epsg_code = STANDARD_CRS_EPSG_CODE
 
-    if image_names is None:
+    if img_names is None:
         image_paths = images_dir.glob(f"*.{imgs_datatype}")
     else:
-        image_paths = [images_dir / img_name for img_name in image_names]
+        image_paths = [images_dir / img_name for img_name in img_names]
 
-    # dict to keep track of information about the imgs that we will make the img_data from.
+    # dict to keep track of information about the imgs that we will make the raster_imgs from.
     new_imgs_dict = {
         index_or_col_name: []
         for index_or_col_name in
@@ -92,7 +92,7 @@ def img_data_from_imgs_dir(
     }
 
     # for all images in dir ...
-    for img_path in tqdm(image_paths, desc='building img_data'):
+    for img_path in tqdm(image_paths, desc='building raster_imgs'):
 
         orig_crs_epsg_code, img_bounding_rectangle_orig_crs = read_in_img_for_img_df_function(
             img_path=img_path)
@@ -100,14 +100,14 @@ def img_data_from_imgs_dir(
         if orig_crs_epsg_code is None or img_bounding_rectangle_orig_crs is None:
             continue
 
-        img_bounding_rectangle_img_data_crs = transform_shapely_geometry(
+        img_bounding_rectangle_raster_imgs_crs = transform_shapely_geometry(
             img_bounding_rectangle_orig_crs, orig_crs_epsg_code,
-            img_data_crs_epsg_code)
+            raster_imgs_crs_epsg_code)
 
         # and put the information into a dict.
         img_info_dict = {
             'img_name': img_path.name,
-            'geometry': img_bounding_rectangle_img_data_crs,
+            'geometry': img_bounding_rectangle_raster_imgs_crs,
             'orig_crs_epsg_code': int(orig_crs_epsg_code)
         }
 
@@ -115,9 +115,9 @@ def img_data_from_imgs_dir(
         for key in new_imgs_dict.keys():
             new_imgs_dict[key].append(img_info_dict[key])
 
-    # ... and create a img_data GeoDatFrame from new_imgs_dict:
-    new_img_data = GeoDataFrame(new_imgs_dict)
-    new_img_data.set_crs(epsg=img_data_crs_epsg_code, inplace=True)
-    new_img_data.set_index('img_name', inplace=True)
+    # ... and create a raster_imgs GeoDatFrame from new_imgs_dict:
+    new_raster_imgs = GeoDataFrame(new_imgs_dict)
+    new_raster_imgs.set_crs(epsg=raster_imgs_crs_epsg_code, inplace=True)
+    new_raster_imgs.set_index('img_name', inplace=True)
 
-    return new_img_data
+    return new_raster_imgs

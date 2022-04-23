@@ -4,7 +4,7 @@ from typing import Literal, Optional, Sequence, Union
 import pandas as pd
 from geopandas import GeoDataFrame
 from rs_tools.label_makers.label_maker_base import LabelMaker
-from rs_tools.utils.associator_utils import _check_df_cols_agree
+from rs_tools.utils.connector_utils import _check_df_cols_agree
 
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
 
