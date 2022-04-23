@@ -27,7 +27,7 @@ from rs_tools.global_constants import (raster_imgs_INDEX_NAME,
                                        vector_features_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
 from rs_tools.graph import BipartiteGraph
-from rs_tools.utils.associator_utils import (empty_gdf,
+from rs_tools.utils.connector_utils import (empty_gdf,
                                              empty_gdf_same_format_as,
                                              empty_graph)
 
