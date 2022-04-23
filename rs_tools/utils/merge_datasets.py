@@ -5,7 +5,7 @@ from typing import Union
 
 from tqdm.auto import tqdm
 
-from rs_tools import ImgPolygonAssociator as IPA
+from rs_tools import Connector
 
 
 def merge_datasets(source_data_dir: Union[Path, str],
@@ -19,12 +19,12 @@ def merge_datasets(source_data_dir: Union[Path, str],
         delete_source (bool, optional): [description]. Defaults to True.
     """
 
-    source_assoc = IPA.from_data_dir(source_data_dir)
-    target_assoc = IPA.from_data_dir(target_data_dir)
+    source_connector = Connector.from_data_dir(source_data_dir)
+    target_connector = Connector.from_data_dir(target_data_dir)
 
     # copy over image_data_dirs
-    for source_dir, target_dir in zip(source_assoc.image_data_dirs,
-                                      target_assoc.image_data_dirs):
+    for source_dir, target_dir in zip(source_connector.image_data_dirs,
+                                      target_connector.image_data_dirs):
         files_in_target_dir = {img.name for img in target_dir.iterdir()}
         pbar = tqdm(source_dir.iterdir())
         pbar.set_description(f'copying {str(source_dir.name)}')
@@ -33,11 +33,11 @@ def merge_datasets(source_data_dir: Union[Path, str],
                 shutil.copy2(img_path, target_dir)
 
     # merge/copy over downloads (e.g. safe_files)
-    merge_dirs(str(source_assoc.download_dir), str(target_assoc.download_dir))
+    merge_dirs(str(source_connector.download_dir), str(target_connector.download_dir))
 
-    target_assoc.add_to_polygons_df(source_assoc.polygons_df)
-    target_assoc.add_to_img_data(source_assoc.img_data)
-    target_assoc.save()
+    target_connector.add_to_polygons_df(source_connector.polygons_df)
+    target_connector.add_to_raster_imgs(source_connector.raster_imgs)
+    target_connector.save()
 
 
 # recursively merge two folders including subfolders
