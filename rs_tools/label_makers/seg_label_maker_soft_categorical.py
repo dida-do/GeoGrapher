@@ -93,7 +93,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                         # To do that, first find (the df of) the geoms intersecting the image ...
                         features_intersecting_img_df = connector.vector_features.loc[
-                            connector.features_intersecting_img(img_name)]
+                            connector.vector_features_intersecting_img(img_name)]
 
                         # ... extract the geometries ...
                         feature_geoms_in_std_crs = list(
