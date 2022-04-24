@@ -131,7 +131,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                 added_features += [feature_name]
 
                 # ... and then from the images in the source dataset that containing the vector feature ...
-                potential_source_images = self.source_connector.imgs_containing_feature(
+                potential_source_images = self.source_connector.imgs_containing_vector_feature(
                     feature_name)
                 # ... but from which an image for that vector feature has not yet been cut ...
                 potential_source_images = self._filter_out_previously_cut_imgs(
@@ -181,7 +181,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                             img_bounding_rectangle=img_bounding_rectangle)
 
                         # Update self.cut_imgs
-                        for feature_name_ in self.target_connector.features_contained_in_img(
+                        for feature_name_ in self.target_connector.vector_features_contained_in_img(
                                 new_img_name):
                             self.cut_imgs[feature_name_] += [img_name]
 
@@ -208,7 +208,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         # For those images that existed before the update and now intersect with newly added vector features ...
         imgs_w_new_features = [
             img_name for feature_name in added_features for img_name in
-            self.target_connector.imgs_intersecting_feature(feature_name)
+            self.target_connector.imgs_intersecting_vector_feature(feature_name)
             if img_name in imgs_in_target_dataset_before_update
         ]
         if self.label_maker is not None:

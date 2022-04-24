@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Optional, Set, Union
 
 import numpy as np
-from shapely.geometry.polygon import BaseGeometry
+from shapely.geometry.polygon.base import BaseGeometry
 from rs_tools.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
 from rs_tools import Connector
 
@@ -36,7 +36,8 @@ JAXA_DATA_VERSIONS = ['1804', '1903', '2003',
                       '2012']  # (attn: only 1804 has been tested so far)
 
 
-class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
+class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
+                                           ):
     """Download JAXA DEM (digital elevation) data."""
 
     def download(

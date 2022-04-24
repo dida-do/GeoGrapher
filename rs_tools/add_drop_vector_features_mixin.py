@@ -1,12 +1,18 @@
+"""
+TODO: _check_classes_in_vector_features_contained_in_all_classes
+"""
+
+from __future__ import annotations
 import logging
-from typing import Literal, Optional, Sequence, Union
+from typing import Optional, Sequence, Union, TYPE_CHECKING
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from rs_tools.label_makers.label_maker_base import LabelMaker
+from rs_tools.graph.bipartite_graph_mixin import VECTOR_FEATURES_COLOR
 from rs_tools.utils.connector_utils import _check_df_cols_agree
-
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
+if TYPE_CHECKING:
+    from rs_tools.label_makers.label_maker_base import LabelMaker
 
 # logger
 log = logging.getLogger(__name__)
@@ -61,15 +67,15 @@ class AddDropVectorFeaturesMixIn(object):
                              df_name='new_vector_features',
                              self_df=self.vector_features,
                              self_df_name='self.vector_features')
-        self._check_classes_in_vector_features_contained_in_all_classes(
-            new_vector_features, 'new_vector_features')
+        # self._check_classes_in_vector_features_contained_in_all_classes(
+        #     new_vector_features, 'new_vector_features')
 
         # For each new feature...
         for vector_feature_name in new_vector_features.index:
 
             # ... if it already is in the connector ...
             if self._graph.exists_vertex(
-                    vector_feature_name, 'vector_features'
+                    vector_feature_name, VECTOR_FEATURES_COLOR
             ):  # or: vector_feature_name in self.vector_features.index
 
                 # ... if necessary. ...
@@ -148,7 +154,7 @@ class AddDropVectorFeaturesMixIn(object):
                 set(self.imgs_intersecting_vector_feature(
                     vector_feature_name)))
             self._graph.delete_vertex(vector_feature_name,
-                                      'vector_features',
+                                      VECTOR_FEATURES_COLOR,
                                       force_delete_with_edges=True)
 
         # drop row from self.vector_features
