@@ -11,6 +11,9 @@ from rs_tools.graph import BipartiteGraph
 log = logging.getLogger(__name__)
 
 
+VECTOR_FEATURES_COLOR = 'vector_features'
+RASTER_IMGS_COLOR = 'raster_imgs'
+
 class BipartiteGraphMixIn:
     """Mix-in that implements the public and private interface to the internal
     bipartite graph."""
@@ -63,7 +66,7 @@ class BipartiteGraphMixIn:
         for img_name in img_names:
             try:
                 feature_names += self._graph.vertices_opposite(
-                    vertex=img_name, vertex_color='raster_imgs')
+                    vertex=img_name, vertex_color=RASTER_IMGS_COLOR)
             except KeyError:
                 raise ValueError(f"Unknown image: {img_name}")
 
@@ -94,7 +97,7 @@ class BipartiteGraphMixIn:
         for feature_name in feature_names:
             try:
                 img_names += self._graph.vertices_opposite(
-                    vertex=feature_name, vertex_color='vector_features')
+                    vertex=feature_name, vertex_color=VECTOR_FEATURES_COLOR)
             except KeyError:
                 raise ValueError(f"Unknown vector feature: {feature_name}")
 
@@ -130,7 +133,7 @@ class BipartiteGraphMixIn:
             try:
                 feature_names += self._graph.vertices_opposite(
                     vertex=img_name,
-                    vertex_color='raster_imgs',
+                    vertex_color=RASTER_IMGS_COLOR,
                     edge_data='contains')
             except KeyError:
                 raise ValueError(f"Unknown image: {img_name}")
@@ -164,7 +167,7 @@ class BipartiteGraphMixIn:
             try:
                 img_names = self._graph.vertices_opposite(
                     vertex=feature_name,
-                    vertex_color='vector_features',
+                    vertex_color=VECTOR_FEATURES_COLOR,
                     edge_data='contains')
             except KeyError:
                 raise ValueError(f"Unknown vector feature: {feature_name}")
@@ -291,7 +294,7 @@ class BipartiteGraphMixIn:
             assert contains_or_intersects == 'contains' if img_bounding_rectangle.contains(
                 feature_feature) else 'intersects'
 
-        graph.add_edge(img_name, 'raster_imgs', feature_name,
+        graph.add_edge(img_name, RASTER_IMGS_COLOR, feature_name,
                        contains_or_intersects)
 
         # if the vector feature is fully contained in the image increment the image counter in self.vector_features
@@ -314,12 +317,12 @@ class BipartiteGraphMixIn:
             vector_features = self.vector_features
 
         # add vertex if one does not yet exist
-        if not self._graph.exists_vertex(feature_name, 'vector_features'):
-            self._graph.add_vertex(feature_name, 'vector_features')
+        if not self._graph.exists_vertex(feature_name, VECTOR_FEATURES_COLOR):
+            self._graph.add_vertex(feature_name, VECTOR_FEATURES_COLOR)
 
         # raise an exception if the vector feature already has connections
         if list(self._graph.vertices_opposite(feature_name,
-                                              'vector_features')):
+                                              VECTOR_FEATURES_COLOR)):
             log.warning(
                 "_add_feature_to_graph: !!!Warning (connect_feature): vector feature %s already has connections! Probably _add_feature_to_graph is being used wrongly. Check your code!",
                 feature_name)
@@ -384,11 +387,11 @@ class BipartiteGraphMixIn:
             img_bounding_rectangle = self.raster_imgs.geometry.loc[img_name]
 
         # add vertex if it does not yet exist
-        if not graph.exists_vertex(img_name, 'raster_imgs'):
-            graph.add_vertex(img_name, 'raster_imgs')
+        if not graph.exists_vertex(img_name, RASTER_IMGS_COLOR):
+            graph.add_vertex(img_name, RASTER_IMGS_COLOR)
 
         # check if img already has connections
-        if list(graph.vertices_opposite(img_name, 'raster_imgs')) != []:
+        if list(graph.vertices_opposite(img_name, RASTER_IMGS_COLOR)) != []:
             log.warning(
                 "!!!Warning (connect_img): image %s already has connections!",
                 img_name)
@@ -436,7 +439,7 @@ class BipartiteGraphMixIn:
         """
 
         self._graph.delete_vertex(feature_name,
-                                  'vector_features',
+                                  VECTOR_FEATURES_COLOR,
                                   force_delete_with_edges=True)
 
         if set_img_count_to_zero == True:
@@ -455,5 +458,5 @@ class BipartiteGraphMixIn:
             self.vector_features.loc[feature_name, 'img_count'] -= 1
 
         self._graph.delete_vertex(img_name,
-                                  'raster_imgs',
+                                  RASTER_IMGS_COLOR,
                                   force_delete_with_edges=True)
