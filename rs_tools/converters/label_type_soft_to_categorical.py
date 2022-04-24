@@ -43,17 +43,17 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
             source_geoms_df_converted_to_soft_categorical_format)
 
         # add images to target dataset
-        self.target_assoc.add_to_img_data(self.source_assoc.img_data)
+        self.target_assoc.add_to_raster_imgs(self.source_assoc.raster_imgs)
 
         # Determine which images to copy to target dataset
         imgs_that_already_existed_in_target_dataset = {
             img_name
-            for img_name in self.target_assoc.img_data.index
+            for img_name in self.target_assoc.raster_imgs.index
             if (self.target_assoc.images_dir / img_name).is_file()
         }
         imgs_in_source_images_dir = {
             img_name
-            for img_name in self.source_assoc.img_data.index
+            for img_name in self.source_assoc.raster_imgs.index
         }
         imgs_in_source_that_are_not_in_target = imgs_in_source_images_dir - imgs_that_already_existed_in_target_dataset
 
