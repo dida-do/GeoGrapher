@@ -91,9 +91,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             if class_ != self.target_assoc.background_class
         ]
 
-        geoms_from_source_df = self._combine_or_remove_seg_classes_from_vector_data(
+        geoms_from_source_df = self._combine_or_remove_seg_classes_from_vector_features(
             # label_type=self.source_assoc.label_type,
-            # vector_data=self.source_assoc.vector_data,
+            # vector_features=self.source_assoc.vector_features,
             seg_classes=seg_classes,
             new_seg_classes=new_seg_classes,
         )
@@ -102,23 +102,23 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # need this later
         geoms_to_add_to_target_dataset = set(
             geoms_from_source_df.index) - set(
-                self.target_assoc.vector_data.index)
+                self.target_assoc.vector_features.index)
 
         # THINK ABOUT THIS!!!!
-        # if we are creating a new soft-categorical dataset adjust columns of empty self.target_assoc.vector_data
-        if len(self.target_assoc.vector_data
+        # if we are creating a new soft-categorical dataset adjust columns of empty self.target_assoc.vector_features
+        if len(self.target_assoc.vector_features
                ) == 0 and self.target_assoc.label_type == 'soft-categorical':
-            empty_vector_data_with_corrected_columns = self._combine_or_remove_seg_classes_from_vector_data(
+            empty_vector_features_with_corrected_columns = self._combine_or_remove_seg_classes_from_vector_features(
                 # label_type=self.target_assoc.label_type,
-                # vector_data=self.target_assoc.vector_data,
+                # vector_features=self.target_assoc.vector_features,
                 seg_classes=seg_classes,
                 new_seg_classes=new_seg_classes,
                 # all_geom_classes=self.source_assoc.
                 # all_geom_classes  # self, since we already set classes in self.target_assoc
             )
-            self.target_assoc.vector_data = empty_vector_data_with_corrected_columns
+            self.target_assoc.vector_features = empty_vector_features_with_corrected_columns
 
-        self.target_assoc.add_to_vector_data(geoms_from_source_df)
+        self.target_assoc.add_to_vector_features(geoms_from_source_df)
 
         # Determine which images to copy to target dataset
         imgs_in_target_dataset_before_addings_imgs_from_source_dataset = {
@@ -149,9 +149,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             shutil.copyfile(source_img_path, target_img_path)
 
         # add images to self.target_assoc
-        df_of_imgs_to_add_to_target_dataset = self.source_assoc.img_data.loc[
+        df_of_imgs_to_add_to_target_dataset = self.source_assoc.raster_imgs.loc[
             list(imgs_to_copy_to_target_dataset)]
-        self.target_assoc.add_to_img_data(df_of_imgs_to_add_to_target_dataset)
+        self.target_assoc.add_to_raster_imgs(df_of_imgs_to_add_to_target_dataset)
 
         # Determine labels to delete:
         # For each image that already existed in the target dataset ...
@@ -171,9 +171,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
         # remember original type
         if self.target_assoc.label_type == 'categorical':
-            self.target_assoc.vector_data.loc[
+            self.target_assoc.vector_features.loc[
                 geoms_to_add_to_target_dataset,
-                'orig_type'] = self.source_assoc.vector_data.loc[
+                'orig_type'] = self.source_assoc.vector_features.loc[
                     geoms_to_add_to_target_dataset, 'type']
 
         self.target_assoc.save()
@@ -214,10 +214,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             raise ValueError(
                 f"new_background_class not in {self.new_seg_classes}")
 
-    def _combine_or_remove_seg_classes_from_vector_data(
+    def _combine_or_remove_seg_classes_from_vector_features(
         self,
         # label_type: str,
-        # vector_data: GeoDataFrame,
+        # vector_features: GeoDataFrame,
         seg_classes: List[Union[str, List[str]]],
         new_seg_classes: List[str],
         # all_geom_classes: List[str],
@@ -225,7 +225,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         """
         Args:
             label_type (str): [description]
-            vector_data (GeoDataFrame): [description]
+            vector_features (GeoDataFrame): [description]
             seg_classes (List[str]):
             new_seg_classes (List[str]):
             all_geom_classes (List[str]):
@@ -239,7 +239,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             raise ValueError(
                 f"Unknown label_type: {self.source_assoc.label_type}")
 
-        vector_data = deepcopy_gdf(self.source_assoc.vector_data)
+        vector_features = deepcopy_gdf(self.source_assoc.vector_features)
 
         classes_to_keep = [
             class_ for list_of_classes in seg_classes
@@ -254,11 +254,11 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                         return new_seg_classes[count]
 
             # keep only (vector) geometries belonging to segmentation we want to keep
-            vector_data = vector_data.loc[vector_data['type'].apply(
+            vector_features = vector_features.loc[vector_features['type'].apply(
                 lambda class_: class_ in classes_to_keep)]
             # rename to new classes
-            vector_data.loc[:,
-                            'type'] = vector_data['type'].apply(get_new_class)
+            vector_features.loc[:,
+                            'type'] = vector_features['type'].apply(get_new_class)
 
         elif self.source_assoc.label_type == 'soft-categorical':
 
@@ -273,30 +273,30 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 if class_ not in classes_to_keep
             ]
             cols_to_drop = prob_seg_class_names(classes_to_drop)
-            vector_data = vector_data.drop(columns=cols_to_drop)
+            vector_features = vector_features.drop(columns=cols_to_drop)
 
             # create temporary dataframe to avoid column name conflicts when renaming/deleting etc
-            temp_vector_data = pd.DataFrame()
-            temp_vector_data.index.name = vector_data.index.name
+            temp_vector_features = pd.DataFrame()
+            temp_vector_features.index.name = vector_features.index.name
 
             # for each row/(vector) geometry find sum of probabilities for the remaining segmentation classes
             cols_with_probs_of_remaining_classes = prob_seg_class_names(
                 classes_to_keep)
             sum_of_probs_of_remaining_classes = pd.DataFrame(
-                vector_data[cols_with_probs_of_remaining_classes].sum(axis=1),
+                vector_features[cols_with_probs_of_remaining_classes].sum(axis=1),
                 columns=['sum'],
-                index=vector_data.index)
+                index=vector_features.index)
             rows_where_sum_is_zero = (
                 sum_of_probs_of_remaining_classes['sum'] == 0)
 
             # remove rows/(vector) geometries which do not belong to remaining classes
-            vector_data = vector_data.loc[~rows_where_sum_is_zero]
+            vector_features = vector_features.loc[~rows_where_sum_is_zero]
             sum_of_probs_of_remaining_classes = sum_of_probs_of_remaining_classes.loc[
                 ~rows_where_sum_is_zero]
 
             # renormalize probabilities to sum to 1
-            vector_data.loc[:,
-                            cols_with_probs_of_remaining_classes] = vector_data[
+            vector_features.loc[:,
+                            cols_with_probs_of_remaining_classes] = vector_features[
                                 cols_with_probs_of_remaining_classes].div(
                                     sum_of_probs_of_remaining_classes['sum'],
                                     axis=0)
@@ -306,23 +306,23 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                     seg_classes, new_seg_classes):
                 cols_of_probs_to_be_added = prob_seg_class_names(
                     classes_of_new_seg_class)
-                temp_vector_data[
-                    f"prob_seg_class_{new_seg_class_name}"] = vector_data[
+                temp_vector_features[
+                    f"prob_seg_class_{new_seg_class_name}"] = vector_features[
                         cols_of_probs_to_be_added].sum(axis=1)
-                vector_data = vector_data.drop(
+                vector_features = vector_features.drop(
                     columns=cols_of_probs_to_be_added)
 
             # add new columns
-            vector_data = concat_gdfs
-            vector_data = pd.concat([vector_data, temp_vector_data],
+            vector_features = concat_gdfs
+            vector_features = pd.concat([vector_features, temp_vector_features],
                                     axis=1)  # column axis
-            vector_data.index.name = VECTOR_DATA_INDEX_NAME
+            vector_features.index.name = VECTOR_DATA_INDEX_NAME
 
             # Recompute most likely type column.
-            vector_data["most_likely_class"] = vector_data[
-                temp_vector_data.columns].apply(lambda s: ",".join(
+            vector_features["most_likely_class"] = vector_features[
+                temp_vector_features.columns].apply(lambda s: ",".join(
                     map(lambda col_name: col_name[15:], s[
                         (s == s.max()) & (s != 0)].index.values)),
                                                 axis=1)
 
-        return vector_data
+        return vector_features
