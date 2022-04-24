@@ -23,13 +23,13 @@ from rs_tools.add_drop_raster_imgs import AddDropRasterImgsMixIn
 from rs_tools.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
 from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
 
-from rs_tools.global_constants import (raster_imgs_INDEX_NAME,
-                                       vector_features_INDEX_NAME,
+from rs_tools.global_constants import (RASTER_IMGS_INDEX_NAME,
+                                       VECTOR_FEATURES_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
 from rs_tools.graph import BipartiteGraph
 from rs_tools.utils.connector_utils import (empty_gdf,
-                                             empty_gdf_same_format_as,
-                                             empty_graph)
+                                            empty_gdf_same_format_as,
+                                            empty_graph)
 
 INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self.connector_dir / val
     "_vector_features_path": "vector_features.geojson",
@@ -359,9 +359,9 @@ class Connector(
             convert_boolean=True,
             convert_floating=False,
         )
-        self.raster_imgs.index.name = raster_imgs_INDEX_NAME
+        self.raster_imgs.index.name = RASTER_IMGS_INDEX_NAME
         self.raster_imgs.to_file(Path(self._raster_imgs_path), driver="GeoJSON")
-        self.vector_features.index.name = vector_features_INDEX_NAME
+        self.vector_features.index.name = VECTOR_FEATURES_INDEX_NAME
         self.vector_features.to_file(Path(self._vector_features_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
@@ -430,10 +430,10 @@ class Connector(
     def _get_empty_df(self, df_name: str) -> GeoDataFrame:
 
         if df_name == "vector_features":
-            index_name = vector_features_INDEX_NAME
+            index_name = VECTOR_FEATURES_INDEX_NAME
             cols_and_types = self._get_required_df_cols_and_types("vector_features")
         elif df_name == "raster_imgs":
-            index_name = raster_imgs_INDEX_NAME
+            index_name = RASTER_IMGS_INDEX_NAME
             cols_and_types = self._get_required_df_cols_and_types("raster_imgs")
 
         df = empty_gdf(
@@ -445,9 +445,9 @@ class Connector(
     def _get_required_df_cols_and_types(self, df_name: str) -> dict:
 
         # type of "geometry" column is ignored
-        if df_name == "vector_features":
+        if df_name.endswith("vector_features"):
             cols_and_types = {"geometry": None, "img_count": int}
-        elif df_name == "raster_imgs":
+        elif df_name.endswith("raster_imgs"):
             cols_and_types = {"geometry": None}
 
         return cols_and_types
@@ -505,9 +505,9 @@ class Connector(
         """Load vector_features or raster_imgs from disk."""
 
         if df_name == "vector_features":
-            df_index_name = vector_features_INDEX_NAME
+            df_index_name = VECTOR_FEATURES_INDEX_NAME
         elif df_name == "raster_imgs":
-            df_index_name = raster_imgs_INDEX_NAME
+            df_index_name = RASTER_IMGS_INDEX_NAME
 
         df_json_path = getattr(self, f"_{df_name}_path")
         return_df = gpd.read_file(df_json_path)

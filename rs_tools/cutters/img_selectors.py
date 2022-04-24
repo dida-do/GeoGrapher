@@ -77,7 +77,7 @@ class RandomImgSelector(ImgSelector):
         """
 
         target_num_imgs_to_sample = self.target_img_count \
-            - len(target_connector.imgs_containing_feature(feature_name)) \
+            - len(target_connector.imgs_containing_vector_feature(feature_name)) \
             - len(cut_imgs[feature_name])
 
         # can only sample a non-negative number of images
