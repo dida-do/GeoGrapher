@@ -100,7 +100,7 @@ def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
     assert rio.crs.epsg_treats_as_northingeasting(
         from_crs) == rio.crs.epsg_treats_as_northingeasting(
             to_crs
-        ), f"safety check that both crs treat as northeasting failed!"
+        ), "safety check that both crs treat as northeasting failed!"
 
     return transformed_geometry
 
