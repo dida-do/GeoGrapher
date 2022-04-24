@@ -20,7 +20,7 @@ TODO: Check we add a vertex in the graph whenever we add a polygon or an img!
             (i.e. the polygon vertices are) to all images (i.e. image vertices) they should be connected to, 
             and if there exists an image fully containing a polygon that should be reflected in that 
             polygon's entry in the "have_img?" column (what about have_img_downloaded?)
-        - rows in self.img_data correspond (bijectively) to image vertices, and all images are connected to all
+        - rows in self.raster_imgs correspond (bijectively) to image vertices, and all images are connected to all
             polygons they should be connected to.
     Another way of thinking aout this: One should never be able to manipulate the graph from outside the associator. One can only add or delete images, and the connections should be taken care of automatically.
 TODO: index names of associator dataframes can be set (is this still true?). this should be reflected in the documentation

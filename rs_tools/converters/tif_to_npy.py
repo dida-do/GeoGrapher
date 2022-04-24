@@ -42,8 +42,8 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
                 self.target_assoc.geoms_df.index)
 
         # build npy associator
-        npy_img_data = self._get_npy_img_data()
-        self.target_assoc.add_to_img_data(npy_img_data)
+        npy_raster_imgs = self._get_npy_raster_imgs()
+        self.target_assoc.add_to_raster_imgs(npy_raster_imgs)
         self.target_assoc.add_to_geoms_df(self.source_assoc.geoms_df)
 
         # Determine which images to copy to target dataset
@@ -68,7 +68,7 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
         for tif_dir, npy_dir in zip(self.source_assoc.image_data_dirs,
                                     self.target_assoc.image_data_dirs):
             # ... go through all tif files. ...
-            for tif_img_name in tqdm(self.source_assoc.img_data.index,
+            for tif_img_name in tqdm(self.source_assoc.raster_imgs.index,
                                      desc=f"Converting {tif_dir.name}"):
                 # If the corresponding npy in the target image data dir does not exist ...
                 if not (npy_dir /
@@ -115,15 +115,15 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
         return self.target_assoc
 
-    def _get_npy_img_data(self):
-        npy_img_data = self.source_assoc.img_data
-        tif_assoc_img_data_index_name = self.source_assoc.img_data.index.name  # the next line destroys the index name of tif_assoc.img_data, so we remember it ...
-        tif_img_name_list = npy_img_data.index.tolist().copy(
+    def _get_npy_raster_imgs(self):
+        npy_raster_imgs = self.source_assoc.raster_imgs
+        tif_assoc_raster_imgs_index_name = self.source_assoc.raster_imgs.index.name  # the next line destroys the index name of tif_assoc.raster_imgs, so we remember it ...
+        tif_img_name_list = npy_raster_imgs.index.tolist().copy(
         )  # (it's either the .tolist() or .copy() operation, don't understand why)
-        npy_img_data.index = list(
+        npy_raster_imgs.index = list(
             map(self._npy_filename_from_tif, tif_img_name_list))
-        npy_img_data.index.name = tif_assoc_img_data_index_name  # ... and then set it by hand
-        return npy_img_data
+        npy_raster_imgs.index.name = tif_assoc_raster_imgs_index_name  # ... and then set it by hand
+        return npy_raster_imgs
 
     @staticmethod
     def _npy_filename_from_tif(tif_filename: str) -> str:
