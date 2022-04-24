@@ -66,10 +66,10 @@ class AddDropRasterImgsMixIn(object):
             else:
 
                 # add new img vertex to the graph, add all connections to existing images,
-                # and modify self.vector_data 'img_count' value
+                # and modify self.vector_features 'img_count' value
                 img_bounding_rectangle = new_raster_imgs.loc[img_name,
                                                              'geometry']
-                self._add_img_to_graph_modify_vector_data(
+                self._add_img_to_graph_modify_vector_features(
                     img_name, img_bounding_rectangle=img_bounding_rectangle)
 
         # append new_raster_imgs
@@ -101,9 +101,9 @@ class AddDropRasterImgsMixIn(object):
         # drop row from self.raster_imgs
         self.raster_imgs.drop(img_names, inplace=True)
 
-        # remove all vertices from graph and modify vector_data if necessary
+        # remove all vertices from graph and modify vector_features if necessary
         for img_name in img_names:
-            self._remove_img_from_graph_modify_vector_data(img_name)
+            self._remove_img_from_graph_modify_vector_features(img_name)
 
         # remove imgs and labels from disk
         if remove_imgs_from_disk:
