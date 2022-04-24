@@ -81,7 +81,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             _during_ such an iteration, we allow the call function to also depend
             on a new_imgs_dict argument which contains the information about the new
             images that have been cut. Unlike the target_connector.raster_imgs, the
-            target_connector.vector_data and graph are updated during the iteration.
+            target_connector.vector_features and graph are updated during the iteration.
             One should thus think of the target_connector and new_imgs_dict
             arguments together as the actual the target connector argument.
         """
