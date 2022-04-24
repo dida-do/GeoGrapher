@@ -89,7 +89,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
                         # To do that, first find (the df of) the geometries intersecting the image ...
                         features_intersecting_img: GeoDataFrame = connector.vector_features.loc[
-                            connector.features_intersecting_img(img_name)]
+                            connector.vector_features_intersecting_img(img_name)]
 
                         # ... then restrict to (the subdf of) geometries
                         # with the given class.

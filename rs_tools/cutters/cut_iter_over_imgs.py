@@ -156,7 +156,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         # For those images that existed before the update and now intersect with newly added vector features ...
         imgs_w_new_features = [
             img_name for feature_name in added_features for img_name in
-            self.target_connector.imgs_intersecting_feature(feature_name)
+            self.target_connector.imgs_intersecting_vector_feature(feature_name)
             if img_name in imgs_in_target_dataset_before_update
         ]
         if self.label_maker is not None:
