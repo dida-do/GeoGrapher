@@ -1,12 +1,15 @@
+from __future__ import annotations
 import logging
-from typing import Literal, Optional, Sequence, Union
+from typing import Literal, Optional, Sequence, Union, TYPE_CHECKING
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from rs_tools.label_makers.label_maker_base import LabelMaker
-from rs_tools.utils.connector_utils import _check_df_cols_agree
+from rs_tools.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 
+from rs_tools.utils.connector_utils import _check_df_cols_agree
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
+if TYPE_CHECKING:
+    from rs_tools.label_makers.label_maker_base import LabelMaker
 
 # logger
 log = logging.getLogger(__name__)
@@ -55,7 +58,7 @@ class AddDropRasterImgsMixIn(object):
         for img_name in new_raster_imgs.index:
 
             # ... check if it is already in connector.
-            if self._graph.exists_vertex(img_name, 'imgs'):
+            if self._graph.exists_vertex(img_name, RASTER_IMGS_COLOR):
 
                 # drop row from new_raster_imgs, so it won't be in self.raster_imgs twice after we concat new_raster_imgs to self.raster_imgs
                 new_raster_imgs.drop(img_name, inplace=True)

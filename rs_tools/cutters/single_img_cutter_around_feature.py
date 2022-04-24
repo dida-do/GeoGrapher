@@ -14,7 +14,8 @@ from affine import Affine
 import rasterio as rio
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
-from shapely.geometry import BaseGeometry, box
+from shapely.geometry.base import BaseGeometry
+from shapely.geometry import box
 
 from rs_tools.cutters.type_aliases import ImgSize
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter

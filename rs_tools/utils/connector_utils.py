@@ -1,16 +1,15 @@
 """Utilites used in the Connector class."""
 
-from pathlib import Path
-from typing import Dict, List, Optional, Union
-
+import logging
 import pandas as pd
 from geopandas import GeoDataFrame, GeoSeries
 
 from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE
-from rs_tools import Connector
-
+from rs_tools.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
 from rs_tools.graph.bipartite_graph import (BipartiteGraph,
                                             empty_bipartite_graph)
+
+log = logging.getLogger(__name__)
 
 
 def empty_gdf(index_name,
@@ -92,7 +91,8 @@ def empty_graph() -> BipartiteGraph:
 
     :returns: empty graph
     """
-    return empty_bipartite_graph(red='polygons', black='imgs')
+    return empty_bipartite_graph(red=VECTOR_FEATURES_COLOR,
+                                 black=RASTER_IMGS_COLOR)
 
 
 def _check_df_cols_agree(
