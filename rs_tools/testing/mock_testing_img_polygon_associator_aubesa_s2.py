@@ -16,7 +16,7 @@ from assoc.errors import (ImgAlreadyExistsError, ImgDownloadError,
                           NoImgsForPolygonFoundError)
 from assoc.tests.img_polygon_associator_artificial_data_test import \
     SEGMENTATION_CLASSES
-from aubesa.aubassoc import img_data_from_s2_tif_dir as img_data_from_dir
+from aubesa.aubassoc import raster_imgs_from_s2_tif_dir as raster_imgs_from_dir
 
 # Parameters for download method of mock associator
 PROBABILITY_OF_DOWNLOAD_ERROR = 0.1
@@ -36,7 +36,7 @@ IMGS_DF_COLS_AND_TYPES = {'geometry': shapely.geometry,
                                     'timestamp': str} # YYYY-MM-DD HH:MM:SS
 IMGS_DF_COLS_AND_INDEX_TYPES = {**IMGS_DF_INDEX_NAME_AND_TYPE, **IMGS_DF_COLS_AND_TYPES}
 
-# img_data column and index names 
+# raster_imgs column and index names 
 POLYGONS_DF_INDEX_NAME_AND_TYPE = {'polygon_name': Union[str, int]}
 POLYGONS_DF_INDEX_NAME = list(POLYGONS_DF_INDEX_NAME_AND_TYPE)[0]
 POLYGONS_DF_COLS_AND_TYPES = {'geometry': shapely.geometry, 
@@ -63,7 +63,7 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
     def __init__(self,
                  data_dir: Union[Path, str],
                  source_data_dir: Union[Path, str],
-                 img_data: Optional[GeoDataFrame] = None,
+                 raster_imgs: Optional[GeoDataFrame] = None,
                  polygons_df: Optional[GeoDataFrame] = None,
                  label_type: str = LABEL_TYPE,
                  segmentation_classes: List[str] = SEGMENTATION_CLASSES,
@@ -72,7 +72,7 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
         Args:
             data_dir (Union[Path, str]): data directory
             source_data_dir (Union[Path, str]): data directory of source dataset
-            img_data (Optional[GeoDataFrame], optional): img_data. Defaults to None.
+            raster_imgs (Optional[GeoDataFrame], optional): raster_imgs. Defaults to None.
             polygons_df (Optional[GeoDataFrame], optional): polygons_df. Defaults to None.
             label_type (str, optional): label type. Defaults to LABEL_TYPE.
             segmentation_classes (List[str], optional): segmentation classes. Defaults to SEGMENTATION_CLASSES.
@@ -81,18 +81,18 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
         self.source_data_dir = source_data_dir
 
         # Create source associator from imgs in source data dir and given polygons in polygons_df.
-        source_img_data = img_data_from_dir(source_data_dir)
+        source_raster_imgs = raster_imgs_from_dir(source_data_dir)
         self.source_assoc = ImgPolygonAssociator(
             Path("/home/rustam/whatever/"
                  ),  # no files will be created, so can use fake directory
-            img_data=source_img_data,
+            raster_imgs=source_raster_imgs,
             polygons_df=polygons_df,
             segmentation_classes=segmentation_classes,
             label_type=label_type,
             **kwargs)
 
         super().__init__(data_dir,
-                         img_data=img_data,
+                         raster_imgs=raster_imgs,
                          polygons_df=polygons_df,
                          segmentation_classes=segmentation_classes,
                          label_type=label_type,
@@ -145,7 +145,7 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
             **kwargs: optional keyword arguments depending on the application.
         Returns:
              A dict with keys and values:
-                'list_img_info_dicts': a list of dicts containing the information to be included in each row in the img_data of the calling associator, one for each newly downloaded image. The keys should be the index and column names of the img_data and the values the indices or entries of those columns in row that will correspond to the new image.
+                'list_img_info_dicts': a list of dicts containing the information to be included in each row in the raster_imgs of the calling associator, one for each newly downloaded image. The keys should be the index and column names of the raster_imgs and the values the indices or entries of those columns in row that will correspond to the new image.
         """
 
         # Make sure the polygon is in self.source_assoc. This should be true by construction.
@@ -204,7 +204,7 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
                     'img_processed?':
                     False,
                     'timestamp':
-                    self.source_assoc.img_data.loc[img_name, 'timestamp']
+                    self.source_assoc.raster_imgs.loc[img_name, 'timestamp']
                 }
 
                 return {
@@ -226,22 +226,22 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
         the associator, see below for details.
 
         Args:
-            img_name (str): the image name (index identifiying the corresponding row in img_data)
+            img_name (str): the image name (index identifiying the corresponding row in raster_imgs)
             in_dir (Union[Path, str]): the directory the image file was downloaded to
             out_dir (Union[Path, str]): the directory the processed image file should be in (usually data_dir/images)
             convert_to_crs_epsg (int): EPSG code of the crs the image bounding rectangle should be converted to
             **kwargs: optional keyword arguments depending on the application
         Returns:
-            img_info_dict: a dict containing the information to be updated in the img_data of the calling associator. The keys should be the index and column names of the img_data and the values lists of indices or entries of those columns.
+            img_info_dict: a dict containing the information to be updated in the raster_imgs of the calling associator. The keys should be the index and column names of the raster_imgs and the values lists of indices or entries of those columns.
         """
 
         return {
             'img_name':
             img_name,
             'geometry':
-            self.source_assoc.img_data.loc[img_name, 'geometry'],
+            self.source_assoc.raster_imgs.loc[img_name, 'geometry'],
             'orig_crs_epsg_code':
-            self.source_assoc.img_data.loc[img_name, 'orig_crs_epsg_code'],
+            self.source_assoc.raster_imgs.loc[img_name, 'orig_crs_epsg_code'],
             'img_processed?':
             True
         }

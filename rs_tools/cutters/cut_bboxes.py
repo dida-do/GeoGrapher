@@ -82,18 +82,18 @@ DSCutterBBoxes(TODO):
         # throw out images with duplicate bboxes:
         # First, find a subset of images without duplicate bboxes ...
         imgs_to_keep = []
-        for count, img_name in enumerate(target_assoc.img_data.index):
-            img_bbox = target_assoc.img_data.loc[img_name, 'geometry']
+        for count, img_name in enumerate(target_assoc.raster_imgs.index):
+            img_bbox = target_assoc.raster_imgs.loc[img_name, 'geometry']
             if {
                     img_name_
                     for img_name_ in imgs_to_keep
-                    if img_bbox.equals(target_assoc.img_data.loc[img_name_,
+                    if img_bbox.equals(target_assoc.raster_imgs.loc[img_name_,
                                                                 'geometry'])
             } == set():
                 imgs_to_keep += [img_name]
         # ... and delete the remaining images, which have duplicate bboxes
         imgs_to_delete = [
-            img_name for img_name in target_assoc.img_data.index
+            img_name for img_name in target_assoc.raster_imgs.index
             if img_name not in imgs_to_keep
         ]
         target_assoc.drop_imgs(imgs_to_delete, remove_imgs_from_disk=True)
