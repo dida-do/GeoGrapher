@@ -25,7 +25,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
     """Downloader for Sentinel-2 images.
 
     Requires environment variables sentinelAPIusername and
-    sentinelAPIpassword to set up the sentinel API. Assumes img_data has
+    sentinelAPIpassword to set up the sentinel API. Assumes raster_imgs has
     columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
     'img_processed?'. Subclass/modify if you need other columns.
     """

@@ -60,14 +60,14 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         # safety checks
         self._run_safety_checks(connector)
-        self._compare_existing_imgs_to_img_data(connector)
+        self._compare_existing_imgs_to_raster_imgs(connector)
 
         connector.labels_dir.mkdir(parents=True, exist_ok=True)
 
         existing_images = {
             img_path.name
             for img_path in connector.images_dir.iterdir()
-            if img_path.is_file() and img_path.name in self.img_data.index
+            if img_path.is_file() and img_path.name in self.raster_imgs.index
         }
 
         if img_names is None:
@@ -75,7 +75,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             existing_labels = {
                 img_path.name
                 for img_path in connector.labels_dir.iterdir()
-                if img_path.is_file() and img_path.name in self.img_data.index
+                if img_path.is_file() and img_path.name in self.raster_imgs.index
             }
             img_names = existing_images - existing_labels
         elif not set(img_names) <= existing_images:
@@ -101,15 +101,15 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             img_names (Optional[List[str]], optional): names of images for which to delete labels. Defaults to None, i.e. all labels.
         """
         if img_names is None:
-            img_names = connector.img_data.index
+            img_names = connector.raster_imgs.index
 
         for img_name in tqdm(img_names, desc='Deleting labels: '):
             (connector.labels_dir / img_name).unlink(missing_ok=True)
 
     @staticmethod
-    def _compare_existing_imgs_to_img_data(connector: Connector):
+    def _compare_existing_imgs_to_raster_imgs(connector: Connector):
         """Safety check: compare sets of images in images_dir and in
-        self.img_data.
+        self.raster_imgs.
 
         Raises warnings if there is a discrepancy.
         """
@@ -121,17 +121,17 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             if img_path.is_file()
         }
 
-        # ... then if the set of images is a strict subset of the images in img_data ...
-        if existing_images < set(connector.img_data.index):
+        # ... then if the set of images is a strict subset of the images in raster_imgs ...
+        if existing_images < set(connector.raster_imgs.index):
 
             # ... log a warning
             log.warning(
-                "There images in self.img_data that are not in the images_dir %s.",
+                "There images in self.raster_imgs that are not in the images_dir %s.",
                 connector.images_dir)
 
         # ... and if it is not a subset, ...
-        if not existing_images <= set(connector.img_data.index):
+        if not existing_images <= set(connector.raster_imgs.index):
 
             # ... log an warning
-            message = "Warning! There are images in the dataset's images subdirectory that are not in self.img_data."
+            message = "Warning! There are images in the dataset's images subdirectory that are not in self.raster_imgs."
             log.warning(message)
