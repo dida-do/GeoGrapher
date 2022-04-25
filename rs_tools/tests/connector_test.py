@@ -1,10 +1,9 @@
 """
-TODO: Doesn't work at the moment. Update to work with rs_tools connector.
+TODO: Test save/from_data_dir with clean_up
 
 Simple pytest test suite for the Connector using dummy vector_features and raster_imgs dataframes.
 
-# TODO: change name of img_polygon_connector_artificial_data_test
-See img_polygon_connector_artificial_data_test for a visualization of the test data (polygons and images).
+See connector_test.png for a visualization of the test data (polygons as vector_features and images).
 """
 
 from pathlib import Path
@@ -18,7 +17,7 @@ from geopandas.testing import assert_geodataframe_equal
 from shapely.geometry import Polygon, box
 from rs_tools import Connector
 
-TASK_FEATURE_CLASSES = ["h", "t"]
+TASK_FEATURE_CLASSES = ["class1", "class2"]
 
 
 def test_connector():
@@ -46,7 +45,7 @@ def test_connector():
 
     # create the other columns:
     new_vector_features["some_feature_attribute"] = "foo"
-    new_vector_features["type"] = "t"
+    new_vector_features["type"] = "class1"
 
     # set crs
     new_vector_features = new_vector_features.set_crs(
@@ -345,5 +344,6 @@ def test_connector():
     assert len(connector.raster_imgs) == 1
 
 
+# TODO: remove once I get pytest to run
 if __name__ == "__main__":
     test_connector()
