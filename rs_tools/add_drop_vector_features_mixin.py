@@ -48,7 +48,7 @@ class AddDropVectorFeaturesMixIn(object):
             new_vector_features.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(
-                f"new_vector_features contains rows with duplicate vector_feature_names: {duplicates.index.tolist()}"
+                f"new_vector_features contains rows with duplicate vector_feature_names (indices): {duplicates.index.tolist()}"
             )
 
         if len(new_vector_features[new_vector_features.geometry.isna()]) > 0:
