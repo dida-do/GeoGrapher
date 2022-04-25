@@ -390,3 +390,8 @@ def test_bipartite_graph():
 
     # test really_undirected
     assert graph1.really_undirected() == True
+
+
+# TODO: remove once I get pytest to run
+if __name__ == "__main__":
+    test_bipartite_graph()
