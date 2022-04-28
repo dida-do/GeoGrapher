@@ -13,7 +13,7 @@ from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import \
     SaveAndLoadBaseModelMixIn
 from rs_tools.errors import (
@@ -41,7 +41,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     kwarg_defaults: dict = Field(default_factory=dict)
 
     def download(self,
-                 assoc: Union[Path, str, ImgPolygonAssociator],
+                 assoc: Union[Path, str, Connector],
                  feature_names: Optional[Union[str, int, List[int],
                                                List[str]]] = None,
                  target_img_count: int = 1,
@@ -96,8 +96,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
         self.kwarg_defaults.update(kwargs)
 
-        if not isinstance(assoc, ImgPolygonAssociator):
-            assoc = ImgPolygonAssociator.from_data_dir(assoc)
+        if not isinstance(assoc, Connector):
+            assoc = Connector.from_data_dir(assoc)
         assoc.images_dir.mkdir(parents=True, exist_ok=True)
         self.download_dir.mkdir(
             parents=True,
@@ -322,7 +322,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         self,
         feature_names: Union[str, int, List[int], List[str]],
         target_img_count: int,
-        assoc: ImgPolygonAssociator,
+        assoc: Connector,
         filter_out_features_contained_in_union_of_intersecting_imgs: bool,
     ) -> List[Union[int, str]]:
 
@@ -357,7 +357,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     def _filter_out_features_with_null_geometry(
         self,
         feature_names: Union[str, int, List[int], List[str]],
-        assoc: ImgPolygonAssociator,
+        assoc: Connector,
     ) -> None:
         features_w_null_geometry_mask = assoc.vector_features.geometry.values == None
         features_w_null_geometry = assoc.vector_features[
@@ -376,7 +376,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     def _filter_out_features_contained_in_union_of_intersecting_imgs(
         self,
         feature_names: Union[str, int, List[int], List[str]],
-        assoc: ImgPolygonAssociator,
+        assoc: Connector,
     ) -> None:
         feature_names = [
             feature_name for feature_name in feature_names

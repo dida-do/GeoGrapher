@@ -13,6 +13,7 @@ class SaveAndLoadBaseModelMixIn:
 
     @abstractmethod
     def save(self):
+        pass
 
     def _save(self, json_file_path: Union[str, Path]) -> None:
         """Save to json_file"""

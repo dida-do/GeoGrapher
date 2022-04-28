@@ -15,7 +15,7 @@ import pytest
 import shapely as shp
 from geopandas.testing import assert_geodataframe_equal
 from shapely.geometry import Polygon, box
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 TASK_FEATURE_CLASSES = ["class1", "class2"]
 

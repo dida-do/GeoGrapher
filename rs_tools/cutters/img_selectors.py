@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 
 class ImgSelector(Callable, BaseModel):

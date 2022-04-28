@@ -63,7 +63,7 @@ The actual images can be found in:
 
 ## Creating an (empty) connector from scratch
 
-    from rs_tools import Connector
+    from rs_tools.connector import Connector
     connector = Connector.from_scratch(
         data_dir=<DATA_DIR>)
 

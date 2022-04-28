@@ -5,7 +5,7 @@ from typing import Union
 
 from tqdm.auto import tqdm
 
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 
 def merge_datasets(source_data_dir: Union[Path, str],

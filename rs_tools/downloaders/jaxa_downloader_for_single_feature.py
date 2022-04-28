@@ -27,7 +27,7 @@ from typing import Optional, Set, Union
 import numpy as np
 from shapely.geometry.polygon.base import BaseGeometry
 from rs_tools.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

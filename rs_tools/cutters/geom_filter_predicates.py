@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from geopandas import GeoSeries
 from pandas import Series
 
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 
 class FeatureFilterPredicate(BaseModel, Callable):
