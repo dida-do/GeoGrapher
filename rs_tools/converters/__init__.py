@@ -1,3 +1,3 @@
-from rs_tools.convert.combine_remove_seg_classes import DSConverterCombineRemoveClasses
-from rs_tools.convert.label_type_soft_to_categorical import DSConverterSoftCatToCat
-from rs_tools.convert.tif_to_npy import DSConverterGeoTiffToNpy
+from rs_tools.converters.combine_remove_seg_classes import DSConverterCombineRemoveClasses
+from rs_tools.converters.label_type_soft_to_categorical import DSConverterSoftCatToCat
+from rs_tools.converters.tif_to_npy import DSConverterGeoTiffToNpy

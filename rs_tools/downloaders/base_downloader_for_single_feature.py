@@ -6,7 +6,7 @@ from typing import Any, Dict, Literal, Set, Union
 from shapely.geometry import Polygon
 from pydantic import BaseModel
 
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 
 class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):

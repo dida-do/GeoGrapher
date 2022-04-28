@@ -14,7 +14,7 @@ from geopandas.geodataframe import GeoDataFrame
 from pydantic import Field
 from tqdm.auto import tqdm
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.global_constants import VECTOR_DATA_INDEX_NAME
+from rs_tools.global_constants import VECTOR_FEATURES_INDEX_NAME
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
 from rs_tools import ImgPolygonAssociator
 

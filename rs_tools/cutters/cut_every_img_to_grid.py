@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 class DSCutterEveryImgToGrid(DSCutterIterOverImgs):
     """Dataset cutter that cuts images in the source dataset to a grid of images"""
 
-    new_img_size: Field(
-        ImgSize,
+    new_img_size: ImgSize = Field(
         description=
         "Size of cutouts. Passed to ImgToGridCutter during __init__ only.")
 
