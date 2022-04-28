@@ -15,7 +15,7 @@ from shapely.geometry import box
 
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 logger = logging.getLogger(__name__)
 

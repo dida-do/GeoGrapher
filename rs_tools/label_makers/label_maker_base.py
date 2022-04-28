@@ -9,7 +9,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from tqdm.auto import tqdm
-from rs_tools import Connector
+from rs_tools.connector import Connector
 from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 
 # logger

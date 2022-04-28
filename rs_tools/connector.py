@@ -69,17 +69,17 @@ class Connector(
     or .npy files) (as well as tabular information about the images and pixel labels
     in the form of a GeoDataFrame) by providing a two-way linkage between
     the geometries and the images/pixel labels automatically keeping track of which geometries
-     are contained in which images/pixel labels.
+    are contained in which images/pixel labels.
 
     Attributes:
 
-    - vector_features: GeoDataFrame of vector features. Should be indexed
+    - vector_features: GeoDataFrame of vector features. Should be indexed \
         by unique identifiers (str or int) and contain the following columns:
         - 'geometry': shapely geometry of vector feature (in a standard crs)
         - 'img_count': int. Number of images in the dataset that fully contain the feature geometry.
         - other columns as needed for one's application.
 
-    - raster_imgs: GeoDataFrame containing tabular information about the images. Should be indexed
+    - raster_imgs: GeoDataFrame containing tabular information about the images. Should be indexed \
         by the image names and contain the following columns:
         - 'geometry': shapely.geometry.Polygon. Polygon defining the image bounds (in the connector's standardized crs)
         - 'orig_crs_epsg_code': int. The EPSG code of the crs the georeferenced image is in.
@@ -88,6 +88,7 @@ class Connector(
     - crs_epsg_code: EPSG code of the coordinate reference system (crs) the connector
     (i.e. the connector's raster_imgs and vector_features) is in. Defaults to 4326 (WGS84). Setting
     this attribute will automatically set the connector's raster_imgs and vector_features crs's.
+
     """
 
     # yapf: disable
@@ -141,7 +142,7 @@ class Connector(
             images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
             labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
             connector_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json connector component files.
-            **kwargs (Any): optional keyword args for subclass implementations.
+            \**kwargs (Any): optional keyword args for subclass implementations.
         """
 
         super().__init__()
@@ -277,7 +278,7 @@ class Connector(
         """Initialize and return a new connector from keyword arguments.
 
         Ars:
-            **kwargs (Any): keyword arguments (except load_from_disk), see docstring for __init__
+            \**kwargs (Any): keyword arguments (except load_from_disk), see docstring for __init__
 
         Returns:
             initialized connector

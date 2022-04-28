@@ -13,9 +13,9 @@ from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 
-from rs_tools import Connector
+from rs_tools.connector import Connector
 from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
-from rs_tools.global_constants import RASTER_FEATURES_INDEX_NAME
+from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {
             index_or_col_name: []
-            for index_or_col_name in [RASTER_FEATURES_INDEX_NAME] +
+            for index_or_col_name in [RASTER_IMGS_INDEX_NAME] +
             list(source_connector.raster_imgs.columns)
         }
 
@@ -158,7 +158,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             img_crs, source_connector.raster_imgs.crs, *img_bounds_in_img_crs))
 
         single_new_img_info_dict = {
-            RASTER_FEATURES_INDEX_NAME: new_img_name,
+            RASTER_IMGS_INDEX_NAME: new_img_name,
             'geometry': img_bounding_rectangle_in_raster_imgs_crs,
             'orig_crs_epsg_code': img_crs.to_epsg(),
             'img_processed?': True
@@ -166,7 +166,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
 
         # Copy over any remaining information about the img from source_connector.raster_imgs.
         for col in set(source_connector.raster_imgs.columns) - {
-                RASTER_FEATURES_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
+                RASTER_IMGS_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
                 'img_processed?'
         }:
             single_new_img_info_dict[col] = source_connector.raster_imgs.loc[

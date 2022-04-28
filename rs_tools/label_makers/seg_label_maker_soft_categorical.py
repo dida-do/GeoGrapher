@@ -9,7 +9,7 @@ import rasterio as rio
 
 from rs_tools.label_makers.seg_label_maker_base import SegLabelMaker
 from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 log = logging.getLogger(__name__)
 

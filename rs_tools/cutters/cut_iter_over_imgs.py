@@ -12,14 +12,14 @@ from pydantic import Field
 from geopandas import GeoDataFrame
 from tqdm.auto import tqdm
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
-from rs_tools import Connector
+from rs_tools.connector import Connector
 from rs_tools.label_makers.label_maker_base import LabelMaker
 
 from rs_tools.utils.utils import concat_gdfs
 from rs_tools.cutters.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
 from rs_tools.cutters.img_filter_predicates import ImgFilterPredicate
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
-from rs_tools.global_constants import RASTER_FEATURES_INDEX_NAME
+from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         # to target_connector's raster_imgs after cutting
         new_imgs_dict = {
             index_or_col_name: []
-            for index_or_col_name in [RASTER_FEATURES_INDEX_NAME] +
+            for index_or_col_name in [RASTER_IMGS_INDEX_NAME] +
             list(self.source_connector.raster_imgs.columns)
         }
 
@@ -123,7 +123,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
 
                 # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                 assert {
-                    RASTER_FEATURES_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
+                    RASTER_IMGS_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
                 } <= set(
                     imgs_from_single_cut_dict.keys()
                 ), "dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
@@ -132,7 +132,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                 for key in new_imgs_dict.keys():
                     new_imgs_dict[key] += (imgs_from_single_cut_dict[key])
 
-                new_img_names = imgs_from_single_cut_dict[RASTER_FEATURES_INDEX_NAME]
+                new_img_names = imgs_from_single_cut_dict[RASTER_IMGS_INDEX_NAME]
                 img_bounding_rectangles = imgs_from_single_cut_dict['geometry']
                 for new_img_name, img_bounding_rectangle in zip(
                         new_img_names, img_bounding_rectangles):
@@ -147,7 +147,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
         new_raster_imgs = GeoDataFrame(new_imgs_dict,
                                    crs=self.target_connector.raster_imgs.crs)
-        new_raster_imgs.set_index(RASTER_FEATURES_INDEX_NAME, inplace=True)
+        new_raster_imgs.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
 
         # ... and append it to self.raster_imgs.
         self.target_connector.raster_imgs = concat_gdfs(
@@ -173,8 +173,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         return self.target_connector
 
     def _check_crs_agree(self):
-    """Simple safety check: make sure coordinate systems of source and target agree"""
-    if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
-        raise ValueError(
-            "Coordinate systems of source and target connectors do not agree"
-        )
+        """Simple safety check: make sure coordinate systems of source and target agree"""
+        if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
+            raise ValueError(
+                "Coordinate systems of source and target connectors do not agree"
+            )

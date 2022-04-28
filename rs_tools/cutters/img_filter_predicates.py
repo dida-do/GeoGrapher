@@ -9,7 +9,7 @@ from geopandas import GeoSeries
 from pandas import Series
 from pydantic import BaseModel
 
-from rs_tools import Connector
+from rs_tools.connector import Connector
 
 
 class ImgFilterPredicate(ABC, Callable, BaseModel):
@@ -67,6 +67,12 @@ class AlwaysTrue(ImgFilterPredicate):
         return True
 
 
+class RowSeriesPredicate(ABC, BaseModel):
+
+    @abstractmethod
+    def __call__(*args, **kwargs):
+        pass
+
 class ImgFilterRowCondition(ImgFilterPredicate):
     """Simple ImgFilter that applies a given predicate to the row in
     source_assoc.raster_imgs corresponding to the image name in question."""
@@ -109,13 +115,6 @@ class ImgFilterRowCondition(ImgFilterPredicate):
         answer = self.row_series_predicate(row_series)
 
         return answer
-
-
-class RowSeriesPredicate(ABC, BaseModel):
-
-    @abstractmethod
-    def __call__(*args, **kwargs):
-        pass
 
 
 def wrap_function_as_RowSeriesPredicate(
