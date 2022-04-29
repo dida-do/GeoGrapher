@@ -8,7 +8,7 @@ from geopandas import GeoDataFrame
 from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
-    from rs_tools.img_polygon_associator import ImgPolygonAssociator
+    from rs_tools.img_polygon_associator import Connector
 
 # logger
 log = logging.getLogger(__name__)

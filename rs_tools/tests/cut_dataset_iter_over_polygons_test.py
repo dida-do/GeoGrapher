@@ -57,8 +57,8 @@ def test_new_dataset_one_small_img_for_each_polygon():
     if target_data_dir.exists():
         shutil.rmtree(target_data_dir)
 
-    source_assoc = ipa.ImgPolygonAssociator(data_dir=source_data_dir)
-    correct_target_assoc = ipa.ImgPolygonAssociator(
+    source_assoc = ipa.Connector(data_dir=source_data_dir)
+    correct_target_assoc = ipa.Connector(
         data_dir=correct_target_dir)
 
     # make labels
@@ -70,7 +70,7 @@ def test_new_dataset_one_small_img_for_each_polygon():
                                                     img_size=1024,
                                                     centered=True)
 
-    target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
+    target_assoc = ipa.Connector(data_dir=target_data_dir)
 
     # check equality of graphs of old and new assoc
     assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict
@@ -107,8 +107,8 @@ def update_dataset_from_iter_over_polygons_test():
     # copy
     shutil.copytree(UPDATE_TARGET_DATA_DIR, target_data_dir)
 
-    source_assoc = ipa.ImgPolygonAssociator(data_dir=source_data_dir)
-    correct_target_assoc = ipa.ImgPolygonAssociator(
+    source_assoc = ipa.Connector(data_dir=source_data_dir)
+    correct_target_assoc = ipa.Connector(
         data_dir=correct_target_dir)
 
     # make labels
@@ -120,7 +120,7 @@ def update_dataset_from_iter_over_polygons_test():
                                                              img_size=1024,
                                                              centered=True)
 
-    target_assoc = ipa.ImgPolygonAssociator(data_dir=target_data_dir)
+    target_assoc = ipa.Connector(data_dir=target_data_dir)
 
     # check equality of graphs of old and new assoc
     assert target_assoc._graph._graph_dict == correct_target_assoc._graph._graph_dict

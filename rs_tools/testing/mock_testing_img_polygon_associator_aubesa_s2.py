@@ -11,7 +11,7 @@ from typing import List, Optional, Set, Union
 import shapely
 from geopandas.geodataframe import GeoDataFrame
 
-from assoc import ImgPolygonAssociator
+from assoc import Connector
 from assoc.errors import (ImgAlreadyExistsError, ImgDownloadError,
                           NoImgsForPolygonFoundError)
 from assoc.tests.img_polygon_associator_artificial_data_test import \
@@ -52,11 +52,11 @@ POLYGONS_DF_COLS_AND_INDEX_TYPES = {**POLYGONS_DF_INDEX_NAME_AND_TYPE, **POLYGON
 from aubesa.aubassoc.img_polygon_associator_aubesa_s2 import LABEL_TYPE
 
 
-class TestImgPolygonAssociator(ImgPolygonAssociator):
-    """ImgPolygonAssociator with mock download function that "downloads" images
+class TestConnector(Connector):
+    """Connector with mock download function that "downloads" images
     from an existing source dataset.
 
-    Useful for debugging the (base) ImgPolygonAssociator's
+    Useful for debugging the (base) Connector's
     download_missing_imgs_for_polygons_df method.
     """
 
@@ -82,7 +82,7 @@ class TestImgPolygonAssociator(ImgPolygonAssociator):
 
         # Create source associator from imgs in source data dir and given polygons in polygons_df.
         source_raster_imgs = raster_imgs_from_dir(source_data_dir)
-        self.source_assoc = ImgPolygonAssociator(
+        self.source_assoc = Connector(
             Path("/home/rustam/whatever/"
                  ),  # no files will be created, so can use fake directory
             raster_imgs=source_raster_imgs,
