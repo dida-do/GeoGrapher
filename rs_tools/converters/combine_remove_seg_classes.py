@@ -16,7 +16,7 @@ from tqdm.auto import tqdm
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
 from rs_tools.global_constants import VECTOR_FEATURES_INDEX_NAME
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 
 log = logging.Logger(__name__)
 
@@ -39,10 +39,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         description=
         "Whether to remove images not containing new classes from disk")
 
-    def _create(self) -> ImgPolygonAssociator:
+    def _create(self) -> Connector:
         return self._create_or_update()
 
-    def _update(self) -> ImgPolygonAssociator:
+    def _update(self) -> Connector:
         return self._create_or_update()
 
     def _create_or_update(self):
@@ -51,7 +51,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         soft-categorical label types.
 
         Warning:
-            Will only add images and (vector) geometries from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
+            Will only add images and vector features from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
 
         Args:
             source_data_dir (pathlib.Path or str): data_dir of source dataset/associator
@@ -60,13 +60,13 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             new_seg_class_names: (Optional[List[str]]) optional list of names of new segmentation classes corresponding to seg_classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
             class_separator: (str) used if the new_seg_class_names argument is not provided to join the names of existing segmentation classes that are to be kept. Defaults to class_separator.
             new_background_class (Optional[str]): optional new background class, defaults to None, i.e. old background class
-            remove_imgs: (bool). If True, remove images not containing geometries of the segmentation classes to be kept.
+            remove_imgs: (bool). If True, remove images not containing vector features belonging to the segmentation classes to be kept.
 
         Returns:
-            The ImgPolygonAssociator of the new dataset.
+            The Connector of the new dataset.
 
         Note:
-            For the purposes of this function the background classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, (vector) geometries of the background class will be lost.
+            For the purposes of this function the background classes will be treated as regular segmentation classes. In particular, if you do not include them in the seg_classes argument, vector features of the background class will be lost.
         """
 
         # Determine classes
@@ -91,7 +91,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             if class_ != self.target_assoc.background_class
         ]
 
-        geoms_from_source_df = self._combine_or_remove_seg_classes_from_vector_features(
+        features_from_source_df = self._combine_or_remove_seg_classes_from_vector_features(
             # label_type=self.source_assoc.label_type,
             # vector_features=self.source_assoc.vector_features,
             seg_classes=seg_classes,
@@ -100,8 +100,8 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # all_geom_classes=self.source_assoc.all_geom_classes)
 
         # need this later
-        geoms_to_add_to_target_dataset = set(
-            geoms_from_source_df.index) - set(
+        features_to_add_to_target_dataset = set(
+            features_from_source_df.index) - set(
                 self.target_assoc.vector_features.index)
 
         # THINK ABOUT THIS!!!!
@@ -118,7 +118,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             )
             self.target_assoc.vector_features = empty_vector_features_with_corrected_columns
 
-        self.target_assoc.add_to_vector_features(geoms_from_source_df)
+        self.target_assoc.add_to_vector_features(features_from_source_df)
 
         # Determine which images to copy to target dataset
         imgs_in_target_dataset_before_addings_imgs_from_source_dataset = {
@@ -134,9 +134,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 # all images in the source dataset ...
                 img_name
                 for img_name in imgs_in_source_images_dir
-                # ... that intersect with the (vector) geometries that will be kept.
-                if set(self.source_assoc.geoms_intersecting_img(img_name))
-                & set(geoms_from_source_df.index) != set()
+                # ... that intersect with the vector features that will be kept.
+                if set(self.source_assoc.vector_features_intersecting_img(img_name))
+                & set(features_from_source_df.index) != set()
             }
         else:
             imgs_in_source_that_should_be_in_target = imgs_in_source_images_dir
@@ -156,11 +156,11 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # Determine labels to delete:
         # For each image that already existed in the target dataset ...
         for img_name in imgs_in_target_dataset_before_addings_imgs_from_source_dataset:
-            # ... if among the (vector) geometries intersecting it in the target dataset ...
-            geoms_intersecting_img = set(
-                self.target_assoc.geoms_intersecting_img(img_name))
+            # ... if among the vector features intersecting it in the target dataset ...
+            vector_features_intersecting_img = set(
+                self.target_assoc.vector_features_intersecting_img(img_name))
             # ... there is a *new* (vector) geometry ...
-            if geoms_intersecting_img & geoms_to_add_to_target_dataset != set(
+            if vector_features_intersecting_img & features_to_add_to_target_dataset != set(
             ):
                 # ... then we need to update the label for it, so we delete the current label.
                 (self.target_assoc.labels_dir /
@@ -172,9 +172,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # remember original type
         if self.target_assoc.label_type == 'categorical':
             self.target_assoc.vector_features.loc[
-                geoms_to_add_to_target_dataset,
+                features_to_add_to_target_dataset,
                 'orig_type'] = self.source_assoc.vector_features.loc[
-                    geoms_to_add_to_target_dataset, 'type']
+                    features_to_add_to_target_dataset, 'type']
 
         self.target_assoc.save()
         self.save()
@@ -253,7 +253,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                     if class_ in classes_:
                         return new_seg_classes[count]
 
-            # keep only (vector) geometries belonging to segmentation we want to keep
+            # keep only vector features belonging to segmentation we want to keep
             vector_features = vector_features.loc[vector_features['type'].apply(
                 lambda class_: class_ in classes_to_keep)]
             # rename to new classes
@@ -289,7 +289,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             rows_where_sum_is_zero = (
                 sum_of_probs_of_remaining_classes['sum'] == 0)
 
-            # remove rows/(vector) geometries which do not belong to remaining classes
+            # remove rows/vector features which do not belong to remaining classes
             vector_features = vector_features.loc[~rows_where_sum_is_zero]
             sum_of_probs_of_remaining_classes = sum_of_probs_of_remaining_classes.loc[
                 ~rows_where_sum_is_zero]
@@ -316,7 +316,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             vector_features = concat_gdfs
             vector_features = pd.concat([vector_features, temp_vector_features],
                                     axis=1)  # column axis
-            vector_features.index.name = VECTOR_DATA_INDEX_NAME
+            vector_features.index.name = VECTOR_FEATURES_INDEX_NAME
 
             # Recompute most likely type column.
             vector_features["most_likely_class"] = vector_features[
