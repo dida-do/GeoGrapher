@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 assoc/*
 rstools/*
+rs_tools-env/
 rs_tools/cut_old_functional/
 rs_tools/playground/
 rs_tools/img_download/.ipynb_checkpoints/

@@ -7,7 +7,7 @@ TOC:
 Folder structure/overview of contents (outdated)
 
     (public API:)
-    * ImgPolygonAssociator - class to organize/handle datasets    
+    * Connector - class to organize/handle datasets    
     * convert_assoc_dataset_tif2numpy - create a new dataset/associator from an old one by converting GeoTiffs to numpy .npy files.
     * raster_imgs_from_tif_dir - create an raster_imgs from a folder of images. Useful if the associator data has been lost for some reason. 
     * empty_assoc_same_format_as - creates an empty associator of the same format (i.e. index and column names and types of the associator's raster_imgs and polygons_df GeoDataFrames)
