@@ -8,9 +8,9 @@ from tqdm.auto import tqdm
 
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
 from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
-from rs_tools.labels.label_type_conversion_utils import \
+from rs_tools.label_makers.label_type_conversion_utils import \
     convert_geoms_df_soft_cat_to_cat
-from rs_tools import ImgPolygonAssociator
+from rs_tools import Connector
 
 log = logging.Logger(__name__)
 
@@ -24,7 +24,7 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
     def _update(self):
         self._create_or_update()
 
-    def _create_or_update(self) -> ImgPolygonAssociator:
+    def _create_or_update(self) -> Connector:
 
         if self.source_assoc.label_type != 'soft-categorical':
             raise ValueError(
