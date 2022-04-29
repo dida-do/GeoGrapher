@@ -40,7 +40,7 @@ according to this specification.
 This package has two external dependencies:
 - Python 3.X or newer [where X is to be determined, possibly X=7]
 - GDAL development files.  On most Linux distros, this is provided by
-  the `gdal-devel` packages.
+  the `gdal-devel` or `libgdal-dev` packages.
 
 The package itself (and its Python dependencies) can be installed with
 
