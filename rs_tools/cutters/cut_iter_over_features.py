@@ -17,7 +17,7 @@ from rs_tools.connector import Connector
 from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME
 from rs_tools.cutters.img_selectors import ImgSelector
-from rs_tools.cutters.geom_filter_predicates import (AlwaysTrue, FeatureFilterPredicate)
+from rs_tools.cutters.feature_filter_predicates import (AlwaysTrue, FeatureFilterPredicate)
 from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
 from rs_tools.label_makers.label_maker_base import LabelMaker
 from rs_tools.utils.utils import concat_gdfs, map_dict_values
