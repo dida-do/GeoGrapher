@@ -22,7 +22,9 @@ class AddDropRasterImgsMixIn(object):
     """Mix-in that implements methods to add and drop raster images."""
 
     def add_to_raster_imgs(self, new_raster_imgs: GeoDataFrame):
-        """Add image data in new_raster_imgs to the connector keeping track of
+        """Add images to connector's ``raster_imgs`` attribute.
+
+        Adds the new_raster_imgs to the connector's :ref:`raster_imgs` keeping track of
         which (vector) geometries are contained in which images.
 
         Args:
@@ -85,10 +87,11 @@ class AddDropRasterImgsMixIn(object):
         remove_imgs_from_disk: bool = True,
         label_maker: Optional[LabelMaker] = None,
     ):
-        """Drop images from connector and dataset, i.e. remove rows from the
-        connector's raster_imgs, delete the corresponding vertices in the graph,
-        and delete the image from disk (unless remove_imgs_from_disk is set to
-        False).
+        """Drop images from connector's ``raster_imgs`` attribute and from dataset.
+
+        Remove rows from the connector's raster_imgs, delete the corresponding
+        vertices in the graph, and delete the image from disk (unless
+        remove_imgs_from_disk is set to False).
 
         Args:
             img_names (List[str]): img_names/ids of images to be dropped.
