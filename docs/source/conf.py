@@ -60,16 +60,22 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# autodoc settings
+autodoc_default_options = {
+    'inherited-members': True
+}
+
+
 # HTML settings
 html_theme_options = {
     # Doesn't seem to work???
     # 'sidebar_width': 10, # 1(min) - 12(max)
 }
 
-# Todo settings
+# todo settings
 todo_include_todos = True
 
-# Napoleon settings
+# napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = True
