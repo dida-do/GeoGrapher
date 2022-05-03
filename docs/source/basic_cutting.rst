@@ -3,10 +3,11 @@ Basic cutting of datasets
 
 .. todo::
 
-    - other options
-    - saving and loading etc
+    - make it clear we are creating new datasets from old ones and not operating in place.
+    - other options.
+    - saving and loading etc.
 
-Cutting every image to a grid of images
+Cutting Every Image To A Grid of Images
 =======================================
 
 Cutting every image in the dataset to a grid of images::
@@ -25,7 +26,11 @@ grown since it was cut::
 
     cutter.update()
 
-Basic cutting: cutting images around vector features
+.. warning::
+
+    The ``update`` method assumes that that no vector_features or raster images that remain in the target dataset have been removed from the source dataset.
+
+Cutting Images Around Vector Features
 ====================================================
 
 Cutting images around vector features (e.g. create 512 x 512 pixel
@@ -46,3 +51,8 @@ Updating the ``target_data_dir`` after the ``source_data_dir``
 has grown (more images or vector features) since it was cut::
 
     cutter.update()
+
+.. warning::
+
+    The ``update`` method assumes that that no vector_features or raster images that remain in the target dataset have been removed from the source dataset.
+

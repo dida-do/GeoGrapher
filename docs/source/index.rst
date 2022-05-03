@@ -15,6 +15,9 @@ Welcome to GeoGrapher's documentation!
    label_makers
    basic_cutting
    advanced_cutting
+   glossary
+   api
+
 
 
 
