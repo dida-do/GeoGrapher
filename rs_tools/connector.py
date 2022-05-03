@@ -56,39 +56,13 @@ class Connector(
         BipartiteGraphMixIn,  # Needs to be last
 ):
     """
-    The Connector connects vector features and raster data by building up
-    a (bipartite) graph defined by the containment and intersection relations
-    between the vector features and raster images.
+    Dataset class that connects vector features and raster data.
 
-    REWRITE!
-
-    The Connector class can build up, handle, and organize datasets
-    consisting of geometry labels (as well as tabular information
-    about them in the form of a GeoDataFrame) and remote sensing raster images
-    and potentially (semantic) segmentation pixel labels (e.g. GeoTiffs
-    or .npy files) (as well as tabular information about the images and pixel labels
-    in the form of a GeoDataFrame) by providing a two-way linkage between
-    the geometries and the images/pixel labels automatically keeping track of which geometries
-    are contained in which images/pixel labels.
-
-    Attributes:
-
-    - vector_features: GeoDataFrame of vector features. Should be indexed \
-        by unique identifiers (str or int) and contain the following columns:
-        - 'geometry': shapely geometry of vector feature (in a standard crs)
-        - 'img_count': int. Number of images in the dataset that fully contain the feature geometry.
-        - other columns as needed for one's application.
-
-    - raster_imgs: GeoDataFrame containing tabular information about the images. Should be indexed \
-        by the image names and contain the following columns:
-        - 'geometry': shapely.geometry.Polygon. Polygon defining the image bounds (in the connector's standardized crs)
-        - 'orig_crs_epsg_code': int. The EPSG code of the crs the georeferenced image is in.
-        - other columns as needed for one's application.
-
-    - crs_epsg_code: EPSG code of the coordinate reference system (crs) the connector
-    (i.e. the connector's raster_imgs and vector_features) is in. Defaults to 4326 (WGS84). Setting
-    this attribute will automatically set the connector's raster_imgs and vector_features crs's.
-
+    A ``Connector`` represents a remote sensing computer vision dataset
+    composed of vector features and raster images. It connects the features and
+    images by a bipartite graph encoding the containment or intersection
+    relationships between them and is a container for tabular information about
+    the features and images as well as for metadata about the dataset.
     """
 
     # yapf: disable
@@ -118,14 +92,26 @@ class Connector(
 
         # yapf: enable
     ):
-        """To initialize a new connector use either the from_scratch class
-        method or the empty_connector_same_format_as method. To initialize an
-        existing connector use the from_data_dir or from_paths class methods.
+        """
+        Note:
+            We advise you to use the following more convenient constructor methods to
+            initialize a ``Connector`` instead of using ``__init__`` directly.
 
-        Warning:
+            To initialize a new connector use:
+                - the :meth:`from_scratch` class method (:ref:`see here for an example <from_scratch>`), or
+                - the :meth:`empty_connector_same_format_as` method
+
+            To initialize an existing connector use:
+                - the :meth:`from_data_dir` class method (:ref:`see here for an example <init_existing_connector>`), or
+                - the :meth:`from_paths` class method (:ref:`see here for an example <init_existing_connector>`)
+
+        Todo:
+            Why is "To initialize a new connector use: [...]" etc. above in **bold**?
+
+        Caution:
             Note that many methods that create new dataset from existing ones
             won't work if you use a nonstandard directory format (i.e. set the
-            images_dir, labels_dir, connector_dir from hand instead
+            ``images_dir``, ``labels_dir``, ``connector_dir`` arguments by hand instead
             of setting the data_dir arg).
 
         Either all four of the images_dir, labels_dir, and connector_dir args
@@ -220,7 +206,7 @@ class Connector(
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
     ) -> ConnectorType:
-        """Initialize from paths"""
+        """Initialize a connector from paths"""
 
         # read args from json
         try:
@@ -250,7 +236,7 @@ class Connector(
         cls: Type[ConnectorType],
         data_dir: Union[Path, str],
     ) -> ConnectorType:
-        """Initialize and return an connector from a data directory.
+        """Initialize a connector from a data directory.
 
         Args:
             data_dir (Union[Path, str]): data directory containing 'connector_files', 'images', and 'labels' subdirectories
@@ -275,10 +261,11 @@ class Connector(
 
     @classmethod
     def from_scratch(cls, **kwargs: Any) -> Connector:
-        """Initialize and return a new connector from keyword arguments.
+        """Initialize a new connector.
 
         Ars:
-            \**kwargs (Any): keyword arguments (except load_from_disk), see docstring for __init__
+            \**kwargs (Any): same keyword arguments as in :meth:`__init__`
+                except for load_from_disk
 
         Returns:
             initialized connector
@@ -287,23 +274,41 @@ class Connector(
         return cls(**kwargs)
 
     @property
-    def images_dir(self):
+    def vector_features(self) -> GeoDataFrame:
+        """vector features, see :ref:`vector_features`"""
+
+    @property
+    def raster_imgs(self) -> GeoDataFrame:
+        """tabular information about the raster images, see :ref:`raster_imgs`
+        """
+        return self._raster_imgs
+
+    @raster_imgs.setter
+    def raster_imgs(self, new_raster_imgs: GeoDataFrame):
+        self._raster_imgs = new_raster_imgs
+
+    @property
+    def images_dir(self) -> Path:
+        """Directory containing the raster images"""
         return self._images_dir
 
     @property
-    def labels_dir(self):
+    def labels_dir(self) -> Path:
+        """Directory containing the segmentation labels"""
         return self._labels_dir
 
     @property
-    def connector_dir(self):
+    def connector_dir(self) -> Path:
+        """Directory in which the connector files are saved"""
         return self._connector_dir
 
     @property
     def crs_epsg_code(self) -> int:
         """
-        int: EPSG code of connector's crs.
+        EPSG code of connector's :term:`crs`.
 
-        Setting will set connector's raster_imgs and vector_features crs automatically.
+        Setting ``crs_epsg_code`` will set automatically set the connector's
+        ``raster_imgs`` and ``vector_features`` crs.
         """
         return self.attrs["crs_epsg_code"]
 
@@ -318,6 +323,7 @@ class Connector(
 
     @property
     def task_vector_feature_classes(self):
+        """All classes for the :term:`ML` task."""
         return self.attrs["task_feature_classes"]
 
     @task_vector_feature_classes.setter
@@ -328,7 +334,10 @@ class Connector(
 
     @property
     def all_vector_feature_classes(self):
-        """Return all allowed classes in vector_features, including those not related to the ML task (e.g. the background class)"""
+        """All allowed classes in vector_features.
+
+        Includes those not related to the :term:`ML` task (e.g. the background class)
+        """
 
         answer = self.task_vector_feature_classes.copy()
         for class_name in NON_ML_TASK_FEATURE_CLASSES:
@@ -340,6 +349,7 @@ class Connector(
 
     @property
     def image_data_dirs(self) -> List[Path]:
+        """All directories containing image data (including e.g. segmentation labels)"""
         return self._image_data_dirs
 
     def save(self):
@@ -379,9 +389,10 @@ class Connector(
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
     ) -> Connector:
-        """Factory method that returns an empty connector of the same format
-        (i.e. columns in vector_features and raster_imgs) as self with data_dir
-        target_data_dir.
+        """Return an empty connector of the same format.
+
+        Return an empty connector of the same format
+        (i.e. same columns in vector_features and raster_imgs).
 
         Args:
             data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, connector_dir.
@@ -461,13 +472,13 @@ class Connector(
 
             self._graph = BipartiteGraph(file_path=self._graph_path)
             self.vector_features = vector_features
-            self.raster_imgs = raster_imgs
+            self._raster_imgs = raster_imgs
 
         else:
 
             self._graph = empty_graph()
             self.vector_features = empty_gdf_same_format_as(vector_features)
-            self.raster_imgs = empty_gdf_same_format_as(raster_imgs)
+            self._raster_imgs = empty_gdf_same_format_as(raster_imgs)
 
             self.add_to_vector_features(vector_features)
             self.add_to_raster_imgs(raster_imgs)
