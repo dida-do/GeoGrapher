@@ -39,6 +39,7 @@ conda-env-remove:
 install:
 	pip install --upgrade pip wheel pip-tools &&\
 	pip-sync requirements.txt
+	pip install -e .
 
 format:
 	yapf -i --recursive $(PROJECTNAME)
