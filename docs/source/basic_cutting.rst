@@ -1,5 +1,5 @@
-Basic cutting of datasets
-#########################
+Cutting Datasets: Basic
+#######################
 
 .. todo::
 
@@ -7,11 +7,12 @@ Basic cutting of datasets
     - other options.
     - saving and loading etc.
 
+Use the ``DSCutter`` classes to create a new dataset from an existing source dataset by cutting the source dataset. GeoGrapher has two general customizable ``DSCutter`` classes: :class:`rs_tools.cutter`
+
 Cutting Every Image To A Grid of Images
 =======================================
 
-Cutting every image in the dataset to a grid of images::
-
+To create a new dataset in ``target_data_dir`` from a source dataset in ``source_data_dir`` by cutting every image in the dataset to a grid of images use the :class:`rs_tools.cutters.DSCutterEveryImgToGrid` class::
 
     from rs_tools.cutters import DSCutterEveryImgToGrid
     cutter = DSCutterEveryImgToGrid(
