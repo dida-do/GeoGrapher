@@ -94,22 +94,16 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
 
         self.target_connector.add_to_vector_features(self.source_connector.vector_features)
 
-        # Get names of imgs in src that have not been cut
-        imgs_in_src_that_have_been_cut = self.cut_imgs
-        mask_imgs_in_src_that_have_not_been_cut = ~self.source_connector.raster_imgs.index.isin(
-            imgs_in_src_that_have_been_cut)
-        names_of_imgs_in_src_that_have_not_been_cut = self.source_connector.raster_imgs.loc[
-            mask_imgs_in_src_that_have_not_been_cut].index
-
-        # Iterate over all images in source dataset that have not been cut.
-        for img_name in tqdm(names_of_imgs_in_src_that_have_not_been_cut,
+        # Iterate over all images in source dataset
+        for img_name in tqdm(self.source_connector.raster_imgs.index,
                              desc='Cutting dataset: '):
 
             # If filter condition is satisfied, (if not, don't do anything) ...
             if self.img_filter_predicate(img_name,
                                          target_connector=self.target_connector,
                                          new_img_dict=new_imgs_dict,
-                                         source_connector=self.source_connector):
+                                         source_connector=self.source_connector,
+                                         cut_imgs=self.cut_imgs):
 
                 # ... cut the images (and their labels) and remember information to be appended
                 # to self.target_connector raster_imgs in return dict

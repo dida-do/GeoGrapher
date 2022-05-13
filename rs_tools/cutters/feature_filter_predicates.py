@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any, Literal, Union
 from pydantic import BaseModel
 
 from geopandas import GeoSeries
@@ -87,7 +87,7 @@ class AlwaysTrue(FeatureFilterPredicate):
         return True
 
 
-class OnlyThisGeom(FeatureFilterPredicate):
+class OnlyThisVectorFeature(FeatureFilterPredicate):
     """Simple vector feature filter initialized with a feature this_feature_name.
 
     Returns True if and only if the feature under consideration is equal
@@ -109,36 +109,36 @@ class OnlyThisGeom(FeatureFilterPredicate):
         return feature_name == self.this_feature_name
 
 
-class GeomFilterRowCondition(FeatureFilterPredicate):
+class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
     """Simple GeomFilterPredicate that applies a given predicate to the row
     in the source or target vector_features corresponding to the vector feature name in
     question."""
 
     def __init__(self,
                  row_series_predicate: Callable[[Union[GeoSeries, Series]],
-                                                bool], mode: str) -> None:
+                                                bool], mode: Literal['source', 'target']) -> None:
         """
         Args:
             row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply
-            to the row corresponding to a vector featurein vector_features in source_connector or target_connector.
-            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'source_connector' or 'target_connector'
+            to the row corresponding to a vector feature in vector_features in source_connector or target_connector.
+            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'source' or 'target'
         """
 
         super().__init__()
 
         self.row_series_predicate = row_series_predicate
         assert mode in {
-            'source_connector', 'target_connector'
-        }, f"Unknown mode: {mode}. Should be one of 'source_connector' or 'target_connector'"
+            'source', 'target'
+        }, f"Unknown mode: {mode}. Should be one of 'source' or 'target'"
         self.mode = mode
 
     def __call__(self, feature_name: Union[str, int],
                  target_connector: Connector, new_imgs_dict: dict,
                  source_connector: Connector, **kwargs: Any) -> bool:
 
-        if self.mode == 'target_connector':
+        if self.mode == 'target':
             connector = target_connector
-        elif self.mode == 'source_connector':
+        elif self.mode == 'source':
             connector = source_connector
 
         vector_features = connector.vector_features
