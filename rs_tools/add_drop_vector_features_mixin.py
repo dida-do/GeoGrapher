@@ -30,9 +30,10 @@ class AddDropVectorFeaturesMixIn(object):
         label_maker: Optional[LabelMaker] = None,
         force_overwrite: bool = False,
     ):
-        """Add (or overwrite) vector features in new_vector_features to the connector
-        (i.e. append to the connector's vector_features) keeping track of which
-        vector features are contained in which images.
+        """Add vector features to connector's ``vector_features`` attribute.
+
+        Add (or overwrite) vector features in new_vector_features and
+        update graph encoding intersection/containment relations.
 
         Args:
             new_vector_features (GeoDataFrame): GeoDataFrame of vector features conforming to the connector's vector_features format
@@ -133,8 +134,10 @@ class AddDropVectorFeaturesMixIn(object):
         vector_feature_names: Sequence[Union[str, int]],
         label_maker: Optional[LabelMaker] = None,
     ):
-        """Drop vector features from connector (i.e. remove rows from the
-        connector's vector_features)
+        """Drop vector features from connector's ``vector_features`` attribute.
+
+        Drop vector features from connector's ``vector_features`` attribute and
+        update graph encoding intersection/containment relations.
 
         Args:
             vector_feature_names (Sequence[str]): vector_feature_names/identifiers of vector features to be dropped.

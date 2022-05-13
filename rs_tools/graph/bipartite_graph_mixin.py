@@ -19,8 +19,8 @@ class BipartiteGraphMixIn:
     bipartite graph."""
 
     def have_img_for_vector_feature(self, feature_name: str) -> bool:
-        """Return whether there is an image in the dataset fully containing the
-        vector feature.
+        """Return whether there exists an image fully containing the vector
+        feature.
 
         Args:
             feature_name (str): Name of vector feature
@@ -32,8 +32,9 @@ class BipartiteGraphMixIn:
         return self.vector_features.loc[feature_name, 'img_count'] > 0
 
     def rectangle_bounding_img(self, img_name: str) -> BaseGeometry:
-        """Return the shapely vector feature of the rectangle bounding the image in
-        coordinates in the connector's (standard) crs.
+        """Return shapely geometry bounding an image.
+
+        The geometry is with respect to the connector's (standard) :term:`crs`.
 
         Args:
             img_name (str): the img_name/identifier of the image
@@ -46,8 +47,7 @@ class BipartiteGraphMixIn:
 
     def vector_features_intersecting_img(
             self, img_name: Union[str, List[str]]) -> List[str]:
-        """Given an image or a list of images, return the list of (the names
-        of) all geometries which have non-empty intersection with it.
+        """Return the vector features which intersect one or (any of) several images.
 
         Args:
             img_name (str, or List[str]): name/id of image or list names/ids
@@ -75,9 +75,7 @@ class BipartiteGraphMixIn:
     def imgs_intersecting_vector_feature(self,
                                          feature_name: Union[str, List[str]],
                                          mode: str = 'names') -> List[str]:
-        """Given a vector feature (or list of vector features), return a list of the names or
-        paths of all images which have non-empty intersection with the
-        vector feature(s).
+        """Return names or paths of all raster images which intersect one or (any of) several vector features.
 
         Args:
             feature_name (str): name/id (or list) of vector feature(s)
@@ -112,8 +110,7 @@ class BipartiteGraphMixIn:
 
     def vector_features_contained_in_img(
             self, img_name: Union[str, List[str]]) -> List[str]:
-        """Given an image, return an iterator of the names of all vector features
-        which it fully contains.
+        """Return vector features fully containing a given image (or any of several images).
 
         Args:
             img_name (str): name/id of image or list of names/ids of images
@@ -145,8 +142,7 @@ class BipartiteGraphMixIn:
         feature_name: Union[str, List[str]],
         mode: str = 'names',
     ) -> List[str]:
-        """Given a vector feature (or a list of geometries), return a list of the names
-        or paths of all images in which the vector feature is fully contained.
+        """Return names or paths of all images in which a given vector feature (or any of several) is fully contained.
 
         Args:
             feature_name (str): name/id (or list of names) of vector feature(s)
@@ -184,6 +180,8 @@ class BipartiteGraphMixIn:
     def does_img_contain_vector_feature(self, img_name: str,
                                         feature_name: str) -> bool:
         """
+        Return whether a raster image fully contains a vector feature.
+
         Args:
             img_name (str): Name of image
             feature_name (str): name of vector feature
@@ -197,6 +195,8 @@ class BipartiteGraphMixIn:
     def is_vector_feature_contained_in_img(self, feature_name: str,
                                            img_name: str) -> bool:
         """
+        Return whether a vector feature is fully contained in a raster image.
+
         Args:
             img_name (str): Name of image
             feature_name (str): name of vector feature
@@ -210,6 +210,8 @@ class BipartiteGraphMixIn:
     def does_img_intersect_vector_feature(self, img_name: str,
                                           feature_name: str) -> bool:
         """
+        Return whether a vector feature intersects a raster image.
+
         Args:
             img_name (str): Name of image
             feature_name (str): name of vector feature
@@ -223,6 +225,8 @@ class BipartiteGraphMixIn:
     def does_vector_feature_intersect_img(self, feature_name: str,
                                           img_name: str) -> bool:
         """
+        Return whether a vector feature intersects a raster image.
+
         Args:
             img_name (str): Name of image
             feature_name (str): name of vector feature
