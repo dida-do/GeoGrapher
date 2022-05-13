@@ -40,9 +40,6 @@ INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self.connector_di
 DEFAULT_CONNECTOR_DIR_NAME = "connector"
 DEFAULT_IMAGES_DIR_NAME = "images"
 DEFAULT_LABELS_DIR_NAME = "labels"
-NON_ML_TASK_FEATURE_CLASSES = [
-    "background_class"
-]  # vector feature classes not to be determined by a machine learning model (e.g. features that define background regions or masks)
 
 ConnectorType = TypeVar("ConnectorType", bound="Connector")
 
@@ -64,6 +61,11 @@ class Connector(
     relationships between them and is a container for tabular information about
     the features and images as well as for metadata about the dataset.
     """
+
+    _non_task_feature_classes = [
+        "background_class"
+    ]  # vector feature classes not to be determined by a machine learning model (e.g. features that define background regions or masks)
+
 
     # yapf: disable
     def __init__(
@@ -340,7 +342,7 @@ class Connector(
         """
 
         answer = self.task_vector_feature_classes.copy()
-        for class_name in NON_ML_TASK_FEATURE_CLASSES:
+        for class_name in self._non_task_feature_classes:
             class_value = getattr(self, class_name)
             if class_value is not None:
                 answer += [class_value]
@@ -602,8 +604,8 @@ class Connector(
 
         return serializable_dict
 
-    @staticmethod
     def _check_no_non_ml_task_geom_classes_are_task_feature_classes(
+        self,
         task_feature_classes: List[str],
         background_class: str, **kwargs
     ):
@@ -620,7 +622,7 @@ class Connector(
         non_task_feature_classes = {"background_class": background_class}
         for key, val in kwargs.items():
             if (
-                key in NON_ML_TASK_FEATURE_CLASSES
+                key in self._non_task_feature_classes
                 and val is not None
                 and val not in non_task_feature_classes
             ):
