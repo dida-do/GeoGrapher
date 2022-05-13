@@ -11,12 +11,12 @@ from typing import List, Optional, Set, Union
 import shapely
 from geopandas.geodataframe import GeoDataFrame
 
-from assoc import Connector
-from assoc.errors import (ImgAlreadyExistsError, ImgDownloadError,
-                          NoImgsForPolygonFoundError)
-from assoc.tests.img_polygon_associator_artificial_data_test import \
-    SEGMENTATION_CLASSES
-from aubesa.aubassoc import raster_imgs_from_s2_tif_dir as raster_imgs_from_dir
+# from assoc import Connector
+# from assoc.errors import (ImgAlreadyExistsError, ImgDownloadError,
+#                           NoImgsForPolygonFoundError)
+# from assoc.tests.img_polygon_associator_artificial_data_test import \
+#     SEGMENTATION_CLASSES
+# from aubesa.aubassoc import raster_imgs_from_s2_tif_dir as raster_imgs_from_dir
 
 # Parameters for download method of mock associator
 PROBABILITY_OF_DOWNLOAD_ERROR = 0.1
