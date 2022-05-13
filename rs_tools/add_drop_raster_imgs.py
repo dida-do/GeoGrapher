@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import Literal, Optional, Sequence, Union, TYPE_CHECKING
+from typing import Literal, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -8,17 +8,13 @@ from rs_tools.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 
 from rs_tools.utils.connector_utils import _check_df_cols_agree
 from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
-if TYPE_CHECKING:
-    from rs_tools.label_makers.label_maker_base import LabelMaker
+from rs_tools.label_makers.label_maker_base import LabelMaker
 
-# logger
 log = logging.getLogger(__name__)
 
-# log level (e.g. 'DEBUG')
-# log.setLevel(logging.DEBUG)
 
 
-class AddDropRasterImgsMixIn(object):
+class AddDropRasterImgsMixIn:
     """Mix-in that implements methods to add and drop raster images."""
 
     def add_to_raster_imgs(self, new_raster_imgs: GeoDataFrame):
@@ -40,9 +36,10 @@ class AddDropRasterImgsMixIn(object):
                 f"new_raster_imgs contains rows with duplicate img_names: {duplicates.index.tolist()}"
             )
 
-        if len(new_raster_imgs[new_raster_imgs.geometry.isna()]) > 0:
+        if new_raster_imgs.geometry.isna().any():
+            imgs_with_null_geoms: str = ', '.join(new_raster_imgs[new_raster_imgs.geometry.isna()].index)
             raise ValueError(
-                f"new_raster_imgs contains rows with None geometries: {', '.join(new_raster_imgs[new_raster_imgs.geometry.isna()].index)}"
+                f"new_raster_imgs contains rows with None geometries: {imgs_with_null_geoms}"
             )
 
         self._check_required_df_cols_exist(df=new_raster_imgs,
@@ -95,8 +92,10 @@ class AddDropRasterImgsMixIn(object):
 
         Args:
             img_names (List[str]): img_names/ids of images to be dropped.
-            remove_imgs_from_disk (bool): If true, delete images and labels from disk (if they exist).
-            label_maker (LabelMaker, optional): If given, will use label_makers delete_labels method. Defaults to None.
+            remove_imgs_from_disk (bool): If true, delete images and labels
+                from disk (if they exist). Defaults to True.
+            label_maker (LabelMaker, optional): If given, will use label_makers
+                delete_labels method. Defaults to None.
         """
 
         # make sure we don't interpret a string as a list of characters in the iteration below:
