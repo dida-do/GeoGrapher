@@ -12,6 +12,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../../rs_tools'))
 
 
@@ -62,7 +63,7 @@ html_static_path = ['_static']
 
 # autodoc settings
 autodoc_default_options = {
-    'inherited-members': True
+    'inherited-members': 'pydantic.BaseModel, BaseModel',
 }
 
 
