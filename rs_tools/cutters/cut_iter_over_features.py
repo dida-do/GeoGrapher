@@ -40,14 +40,14 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
     to the target dataset/connector.
     """
 
-    img_cutter: SingleImgCutter = Field(title="Single image cutter")
-    img_selector: ImgSelector = Field(
-        title="Image selector",
-        description="Selects images from source to cut for a given vector feature")
     feature_filter_predicate: FeatureFilterPredicate = Field(
         default_factory=AlwaysTrue,
         title="Single image cutter",
         description="Filters vector features to be cut")
+    img_selector: ImgSelector = Field(
+        title="Image selector",
+        description="Selects images from source to cut for a given vector feature")
+    img_cutter: SingleImgCutter = Field(title="Single image cutter")
     label_maker: Optional[LabelMaker] = Field(default=None, title="Label maker",
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None")
