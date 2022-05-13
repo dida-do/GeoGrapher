@@ -6,7 +6,7 @@ import logging
 from pydantic import Field
 from rs_tools.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
 from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.img_filter_predicates import AlwaysTrue, ImgFilterPredicate
+from rs_tools.cutters.img_filter_predicates import ImgsNotPreviouslyCutOnly, ImgFilterPredicate
 from rs_tools.cutters.single_img_cutter_grid import SingleImgCutterToGrid
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class DSCutterEveryImgToGrid(DSCutterIterOverImgs):
     def __init__(
         self,
         new_img_size: ImgSize = 512,
-        img_filter_predicate: ImgFilterPredicate = AlwaysTrue(),
+        img_filter_predicate: ImgFilterPredicate = ImgsNotPreviouslyCutOnly(),
         cut_imgs: Optional[List[str]] = None,
     ) -> None:
         if cut_imgs is None:
