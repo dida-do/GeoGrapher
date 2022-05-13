@@ -278,6 +278,11 @@ class Connector(
     @property
     def vector_features(self) -> GeoDataFrame:
         """vector features, see :ref:`vector_features`"""
+        return self._vector_features
+
+    @vector_features.setter
+    def vector_features(self, new_vector_features: GeoDataFrame) -> None:
+        self._vector_features = new_vector_features
 
     @property
     def raster_imgs(self) -> GeoDataFrame:
@@ -286,7 +291,7 @@ class Connector(
         return self._raster_imgs
 
     @raster_imgs.setter
-    def raster_imgs(self, new_raster_imgs: GeoDataFrame):
+    def raster_imgs(self, new_raster_imgs: GeoDataFrame) -> None:
         self._raster_imgs = new_raster_imgs
 
     @property
@@ -479,7 +484,7 @@ class Connector(
         else:
 
             self._graph = empty_graph()
-            self.vector_features = empty_gdf_same_format_as(vector_features)
+            self._vector_features = empty_gdf_same_format_as(vector_features)
             self._raster_imgs = empty_gdf_same_format_as(raster_imgs)
 
             self.add_to_vector_features(vector_features)
