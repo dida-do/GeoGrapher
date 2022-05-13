@@ -6,7 +6,10 @@ Used by cutting functions.
 import random
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Union
+from pandas import Series
+from geopandas import GeoSeries
+
 
 from pydantic import BaseModel
 from rs_tools.connector import Connector
