@@ -28,7 +28,6 @@ class AddDropVectorFeaturesMixIn(object):
         self,
         new_vector_features: GeoDataFrame,
         label_maker: Optional[LabelMaker] = None,
-        force_overwrite: bool = False,
     ):
         """Add vector features to connector's ``vector_features`` attribute.
 
@@ -38,18 +37,20 @@ class AddDropVectorFeaturesMixIn(object):
         Args:
             new_vector_features (GeoDataFrame): GeoDataFrame of vector features conforming to the connector's vector_features format
             label_maker (LabelMaker, optional): If given generate new labels for images containing vector features that were added. Defaults to None.
-            force_overwrite (bool): whether to overwrite existing rows for vector features, default is False
         """
-
-        new_vector_features = deepcopy_gdf(
-            new_vector_features)  #  don't modify argument
-        new_vector_features['img_count'] = 0
 
         duplicates = new_vector_features[
             new_vector_features.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(
                 f"new_vector_features contains rows with duplicate vector_feature_names (indices): {duplicates.index.tolist()}"
+            )
+
+        feature_names_in_both = list(set(new_vector_features.index) & set(self.vector_features.index))
+        if feature_names_in_both:
+            feature_names_in_both_str = ', '.join(feature_names_in_both)
+            raise ValueError(
+                f"conflict: already have entries for vector features {feature_names_in_both_str}"
             )
 
         if len(new_vector_features[new_vector_features.geometry.isna()]) > 0:
@@ -61,6 +62,10 @@ class AddDropVectorFeaturesMixIn(object):
             df=new_vector_features,
             df_name='new_vector_features',
             crs_epsg_code=self.crs_epsg_code)
+
+        new_vector_features = deepcopy_gdf(new_vector_features)
+        new_vector_features['img_count'] = 0
+
         self._check_required_df_cols_exist(df=new_vector_features,
                                            df_name='new_vector_features',
                                            mode='vector_features')
@@ -74,45 +79,11 @@ class AddDropVectorFeaturesMixIn(object):
         # For each new feature...
         for vector_feature_name in new_vector_features.index:
 
-            # ... if it already is in the connector ...
-            if self._graph.exists_vertex(
-                    vector_feature_name, VECTOR_FEATURES_COLOR
-            ):  # or: vector_feature_name in self.vector_features.index
+            # ... add a vertex for the new feature to the graph and add all connections to existing images.
+            self._add_vector_feature_to_graph(
+                vector_feature_name, vector_features=new_vector_features)
 
-                # ... if necessary. ...
-                if force_overwrite == True:
-
-                    # ... we overwrite the row in the connector's vector_features ...
-                    self.vector_features.loc[
-                        vector_feature_name] = new_vector_features.loc[
-                            vector_feature_name].copy()
-
-                    # ... and drop the row from new_vector_features, so it won't be in self.vector_features twice after we concatenate vector_features to self.vector_features. ...
-                    new_vector_features.drop(vector_feature_name, inplace=True)
-
-                    # Then, we recalculate the connections. ...
-                    self._remove_vector_feature_from_graph_modify_vector_features(
-                        vector_feature_name)
-                    self._add_vector_feature_to_graph(vector_feature_name)
-
-                # Else ...
-                else:
-
-                    # ... we drop the row from new_vector_features...
-                    new_vector_features.drop(vector_feature_name, inplace=True)
-
-                    log.info(
-                        "integrate_new_vector_features: dropping row for %s from input vector_features since is already in the connector! (force_overwrite arg is set to %s)",
-                        vector_feature_name, force_overwrite)
-
-            # If it is not in the connector ...
-            else:
-
-                # ... add a vertex for the new feature to the graph and add all connections to existing images. ...
-                self._add_vector_feature_to_graph(
-                    vector_feature_name, vector_features=new_vector_features)
-
-        # Finally, append new_vector_features to the connector's (self.)vector_features.
+        # Append new_vector_features to the connector's (self.)vector_features.
         self.vector_features = concat_gdfs(
             [self.vector_features, new_vector_features])
         #self.vector_features = self.vector_features.convert_dtypes()
