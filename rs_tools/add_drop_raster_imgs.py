@@ -36,6 +36,13 @@ class AddDropRasterImgsMixIn:
                 f"new_raster_imgs contains rows with duplicate img_names: {duplicates.index.tolist()}"
             )
 
+        imgs_names_in_both = list(set(new_raster_imgs.index) & set(self.raster_imgs.index))
+        if imgs_names_in_both:
+            img_names_in_both_str = ', '.join(imgs_names_in_both)
+            raise ValueError(
+                f"conflict: already have entries for raster images {img_names_in_both_str}"
+            )
+
         if new_raster_imgs.geometry.isna().any():
             imgs_with_null_geoms: str = ', '.join(new_raster_imgs[new_raster_imgs.geometry.isna()].index)
             raise ValueError(
@@ -56,23 +63,12 @@ class AddDropRasterImgsMixIn:
         # go through all new imgs...
         for img_name in new_raster_imgs.index:
 
-            # ... check if it is already in connector.
-            if self._graph.exists_vertex(img_name, RASTER_IMGS_COLOR):
-
-                # drop row from new_raster_imgs, so it won't be in self.raster_imgs twice after we concat new_raster_imgs to self.raster_imgs
-                new_raster_imgs.drop(img_name, inplace=True)
-                log.info(
-                    "add_to_raster_imgs: dropping row for %s from input raster_imgs since an image with that name is already in the connector!",
-                    img_name)
-
-            else:
-
-                # add new img vertex to the graph, add all connections to existing images,
-                # and modify self.vector_features 'img_count' value
-                img_bounding_rectangle = new_raster_imgs.loc[img_name,
-                                                             'geometry']
-                self._add_img_to_graph_modify_vector_features(
-                    img_name, img_bounding_rectangle=img_bounding_rectangle)
+            # add new img vertex to the graph, add all connections to existing images,
+            # and modify self.vector_features 'img_count' value
+            img_bounding_rectangle = new_raster_imgs.loc[img_name,
+                                                        'geometry']
+            self._add_img_to_graph_modify_vector_features(
+                img_name, img_bounding_rectangle=img_bounding_rectangle)
 
         # append new_raster_imgs
         self.raster_imgs = concat_gdfs([self.raster_imgs, new_raster_imgs])
