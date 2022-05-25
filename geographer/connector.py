@@ -633,7 +633,7 @@ class Connector(
             ):
                 non_task_feature_classes[key] = val
 
-        if not set(non_task_feature_classes.values()) & set(task_feature_classes) == set():
+        if not set(non_task_feature_classes.values()).isdisjoint(set(task_feature_classes)):
             bad_values = {
                 class_name: value
                 for class_name, value in non_task_feature_classes.items()
