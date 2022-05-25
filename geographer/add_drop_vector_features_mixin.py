@@ -8,11 +8,11 @@ from typing import Optional, Sequence, Union, TYPE_CHECKING
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from rs_tools.graph.bipartite_graph_mixin import VECTOR_FEATURES_COLOR
-from rs_tools.utils.connector_utils import _check_df_cols_agree
-from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
+from geographer.graph.bipartite_graph_mixin import VECTOR_FEATURES_COLOR
+from geographer.utils.connector_utils import _check_df_cols_agree
+from geographer.utils.utils import concat_gdfs, deepcopy_gdf
 if TYPE_CHECKING:
-    from rs_tools.label_makers.label_maker_base import LabelMaker
+    from geographer.label_makers.label_maker_base import LabelMaker
 
 # logger
 log = logging.getLogger(__name__)

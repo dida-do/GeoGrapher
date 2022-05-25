@@ -7,13 +7,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   rs_tools.converters
-   rs_tools.cutters
-   rs_tools.downloaders
-   rs_tools.graph
-   rs_tools.label_makers
-   rs_tools.testing
-   rs_tools.utils
+   geographer.converters
+   geographer.cutters
+   geographer.downloaders
+   geographer.graph
+   geographer.label_makers
+   geographer.testing
+   geographer.utils
 
 Submodules
 ----------
@@ -21,7 +21,7 @@ Submodules
 rs\_tools.add\_drop\_raster\_imgs module
 ----------------------------------------
 
-.. automodule:: rs_tools.add_drop_raster_imgs
+.. automodule:: geographer.add_drop_raster_imgs
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ rs\_tools.add\_drop\_raster\_imgs module
 rs\_tools.add\_drop\_vector\_features\_mixin module
 ---------------------------------------------------
 
-.. automodule:: rs_tools.add_drop_vector_features_mixin
+.. automodule:: geographer.add_drop_vector_features_mixin
    :members:
    :undoc-members:
    :show-inheritance:
@@ -37,7 +37,7 @@ rs\_tools.add\_drop\_vector\_features\_mixin module
 rs\_tools.connector module
 --------------------------
 
-.. automodule:: rs_tools.connector
+.. automodule:: geographer.connector
    :members:
    :undoc-members:
    :show-inheritance:
@@ -45,7 +45,7 @@ rs\_tools.connector module
 rs\_tools.creator\_from\_source\_dataset\_base module
 -----------------------------------------------------
 
-.. automodule:: rs_tools.creator_from_source_dataset_base
+.. automodule:: geographer.creator_from_source_dataset_base
    :members:
    :undoc-members:
    :show-inheritance:
@@ -53,7 +53,7 @@ rs\_tools.creator\_from\_source\_dataset\_base module
 rs\_tools.errors module
 -----------------------
 
-.. automodule:: rs_tools.errors
+.. automodule:: geographer.errors
    :members:
    :undoc-members:
    :show-inheritance:
@@ -61,7 +61,7 @@ rs\_tools.errors module
 rs\_tools.global\_constants module
 ----------------------------------
 
-.. automodule:: rs_tools.global_constants
+.. automodule:: geographer.global_constants
    :members:
    :undoc-members:
    :show-inheritance:
@@ -69,7 +69,7 @@ rs\_tools.global\_constants module
 rs\_tools.img\_bands\_getter\_mixin module
 ------------------------------------------
 
-.. automodule:: rs_tools.img_bands_getter_mixin
+.. automodule:: geographer.img_bands_getter_mixin
    :members:
    :undoc-members:
    :show-inheritance:
@@ -77,7 +77,7 @@ rs\_tools.img\_bands\_getter\_mixin module
 rs\_tools.update\_from\_source\_dataset\_mixin module
 -----------------------------------------------------
 
-.. automodule:: rs_tools.update_from_source_dataset_mixin
+.. automodule:: geographer.update_from_source_dataset_mixin
    :members:
    :undoc-members:
    :show-inheritance:
@@ -85,7 +85,7 @@ rs\_tools.update\_from\_source\_dataset\_mixin module
 Module contents
 ---------------
 
-.. automodule:: rs_tools
+.. automodule:: geographer
    :members:
    :undoc-members:
    :show-inheritance:

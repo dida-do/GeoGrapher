@@ -1,7 +1,7 @@
-rs_tools
+geographer
 ========
 
 .. toctree::
    :maxdepth: 4
 
-   rs_tools
+   geographer

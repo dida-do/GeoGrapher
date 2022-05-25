@@ -7,7 +7,7 @@ Submodules
 rs\_tools.utils.connector\_utils module
 ---------------------------------------
 
-.. automodule:: rs_tools.utils.connector_utils
+.. automodule:: geographer.utils.connector_utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ rs\_tools.utils.connector\_utils module
 rs\_tools.utils.geoserver\_utils module
 ---------------------------------------
 
-.. automodule:: rs_tools.utils.geoserver_utils
+.. automodule:: geographer.utils.geoserver_utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ rs\_tools.utils.geoserver\_utils module
 rs\_tools.utils.merge\_datasets module
 --------------------------------------
 
-.. automodule:: rs_tools.utils.merge_datasets
+.. automodule:: geographer.utils.merge_datasets
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ rs\_tools.utils.merge\_datasets module
 rs\_tools.utils.raster\_imgs\_from\_tif\_dir module
 ---------------------------------------------------
 
-.. automodule:: rs_tools.utils.raster_imgs_from_tif_dir
+.. automodule:: geographer.utils.raster_imgs_from_tif_dir
    :members:
    :undoc-members:
    :show-inheritance:
@@ -39,7 +39,7 @@ rs\_tools.utils.raster\_imgs\_from\_tif\_dir module
 rs\_tools.utils.utils module
 ----------------------------
 
-.. automodule:: rs_tools.utils.utils
+.. automodule:: geographer.utils.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ rs\_tools.utils.utils module
 Module contents
 ---------------
 
-.. automodule:: rs_tools.utils
+.. automodule:: geographer.utils
    :members:
    :undoc-members:
    :show-inheritance:

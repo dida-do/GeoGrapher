@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
 
-from rs_tools.graph import BipartiteGraph
+from geographer.graph import BipartiteGraph
 
 log = logging.getLogger(__name__)
 
