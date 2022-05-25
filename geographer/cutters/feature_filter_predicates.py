@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from geopandas import GeoSeries
 from pandas import Series
 
-from rs_tools.connector import Connector
+from geographer.connector import Connector
 
 
 class FeatureFilterPredicate(BaseModel, Callable):
@@ -38,7 +38,7 @@ class FeatureFilterPredicate(BaseModel, Callable):
             The feature filter predicate should be able to return a boolean answer for a given feature
             depending on all the information in the source and target connectors. It is used
             by the cutting function create_or_update_dataset_from_iter_over_vector features
-            in rs_tools.cut.cut_iter_over_vector features. This function does not concatenate
+            in geographer.cut.cut_iter_over_vector features. This function does not concatenate
             the information about the new images that have been cut to the target_connector.raster_imgs
             until after all vector features have been iterated over. We want to use
             the feature filter predicate _during_ this iteration, so we allow the call function

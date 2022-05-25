@@ -9,7 +9,7 @@ from geopandas import GeoSeries
 from pandas import Series
 from pydantic import BaseModel
 
-from rs_tools.connector import Connector
+from geographer.connector import Connector
 
 
 class ImgFilterPredicate(ABC, Callable, BaseModel):

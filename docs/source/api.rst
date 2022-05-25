@@ -9,8 +9,8 @@ API
 .. autosummary::
     :toctree:
 
-    rs_tools.connector.Connector
-    rs_tools.cutters.DSCutterEveryImgToGrid
-    rs_tools.cutters.DSCutterImgsAroundEveryFeature
-    rs_tools.cutters.DSCutterIterOverImgs
-    rs_tools.cutters.DSCutterIterOverFeatures
+    geographer.connector.Connector
+    geographer.cutters.DSCutterEveryImgToGrid
+    geographer.cutters.DSCutterImgsAroundEveryFeature
+    geographer.cutters.DSCutterIterOverImgs
+    geographer.cutters.DSCutterIterOverFeatures

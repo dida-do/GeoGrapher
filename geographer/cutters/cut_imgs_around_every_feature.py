@@ -4,11 +4,11 @@ Dataset cutter that cuts out images around vector features.
 
 import logging
 from typing import Optional, Union
-from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.cut_iter_over_features import DSCutterIterOverFeatures
-from rs_tools.cutters.img_selectors import ImgSelector, RandomImgSelector
-from rs_tools.cutters.feature_filter_predicates import IsFeatureMissingImgs, FeatureFilterPredicate
-from rs_tools.cutters.single_img_cutter_around_feature import \
+from geographer.cutters.type_aliases import ImgSize
+from geographer.cutters.cut_iter_over_features import DSCutterIterOverFeatures
+from geographer.cutters.img_selectors import ImgSelector, RandomImgSelector
+from geographer.cutters.feature_filter_predicates import IsFeatureMissingImgs, FeatureFilterPredicate
+from geographer.cutters.single_img_cutter_around_feature import \
     SingleImgCutterAroundFeature
 
 logger = logging.getLogger(__name__)

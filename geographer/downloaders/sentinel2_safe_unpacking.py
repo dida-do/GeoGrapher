@@ -14,7 +14,7 @@ from rasterio.errors import RasterioIOError
 from scipy.ndimage import zoom
 from shapely.geometry import box
 
-from rs_tools.utils.utils import create_logger
+from geographer.utils.utils import create_logger
 
 NO_DATA_VAL = 0  # No data value for sentinel 2 L1C
 

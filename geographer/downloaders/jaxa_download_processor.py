@@ -8,8 +8,8 @@ from pathlib import Path
 
 import rasterio as rio
 from shapely.geometry import box
-from rs_tools.downloaders.base_download_processor import ImgDownloadProcessor
-from rs_tools.utils.utils import transform_shapely_geometry
+from geographer.downloaders.base_download_processor import ImgDownloadProcessor
+from geographer.utils.utils import transform_shapely_geometry
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

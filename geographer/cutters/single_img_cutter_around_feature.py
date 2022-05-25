@@ -17,10 +17,10 @@ from rasterio.windows import Window
 from shapely.geometry.base import BaseGeometry
 from shapely.geometry import box
 
-from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
-from rs_tools.utils.utils import transform_shapely_geometry
-from rs_tools.connector import Connector
+from geographer.cutters.type_aliases import ImgSize
+from geographer.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.utils.utils import transform_shapely_geometry
+from geographer.connector import Connector
 
 logger = logging.getLogger(__name__)
 

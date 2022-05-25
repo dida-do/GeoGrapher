@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from rs_tools.graph.bipartite_graph import empty_bipartite_graph
+from geographer.graph.bipartite_graph import empty_bipartite_graph
 
 
 def test_bipartite_graph():

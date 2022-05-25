@@ -1,1 +1,1 @@
-from rs_tools.connector import Connector
+from geographer.connector import Connector
