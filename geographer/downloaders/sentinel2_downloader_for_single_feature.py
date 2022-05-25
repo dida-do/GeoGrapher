@@ -12,10 +12,10 @@ from sentinelsat.exceptions import UnauthorizedError, ServerError
 from shapely import wkt
 from shapely.geometry import Polygon
 
-from rs_tools.errors import NoImgsForPolygonFoundError
-from rs_tools.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
-from rs_tools.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
-from rs_tools.utils.utils import transform_shapely_geometry
+from geographer.errors import NoImgsForPolygonFoundError
+from geographer.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
+from geographer.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
+from geographer.utils.utils import transform_shapely_geometry
 
 # logger
 log = logging.getLogger(__name__)

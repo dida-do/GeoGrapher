@@ -7,7 +7,7 @@ Submodules
 rs\_tools.graph.bipartite\_graph module
 ---------------------------------------
 
-.. automodule:: rs_tools.graph.bipartite_graph
+.. automodule:: geographer.graph.bipartite_graph
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ rs\_tools.graph.bipartite\_graph module
 rs\_tools.graph.bipartite\_graph\_class module
 ----------------------------------------------
 
-.. automodule:: rs_tools.graph.bipartite_graph_class
+.. automodule:: geographer.graph.bipartite_graph_class
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ rs\_tools.graph.bipartite\_graph\_class module
 rs\_tools.graph.bipartite\_graph\_mixin module
 ----------------------------------------------
 
-.. automodule:: rs_tools.graph.bipartite_graph_mixin
+.. automodule:: geographer.graph.bipartite_graph_mixin
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ rs\_tools.graph.bipartite\_graph\_mixin module
 Module contents
 ---------------
 
-.. automodule:: rs_tools.graph
+.. automodule:: geographer.graph
    :members:
    :undoc-members:
    :show-inheritance:

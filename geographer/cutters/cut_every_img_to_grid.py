@@ -4,10 +4,10 @@ from typing import List, Optional
 import logging
 
 from pydantic import Field
-from rs_tools.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
-from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.img_filter_predicates import ImgsNotPreviouslyCutOnly, ImgFilterPredicate
-from rs_tools.cutters.single_img_cutter_grid import SingleImgCutterToGrid
+from geographer.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
+from geographer.cutters.type_aliases import ImgSize
+from geographer.cutters.img_filter_predicates import ImgsNotPreviouslyCutOnly, ImgFilterPredicate
+from geographer.cutters.single_img_cutter_grid import SingleImgCutterToGrid
 
 logger = logging.getLogger(__name__)
 

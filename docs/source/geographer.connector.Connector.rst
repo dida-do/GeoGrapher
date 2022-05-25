@@ -1,7 +1,7 @@
 ﻿rs\_tools.connector.Connector
 =============================
 
-.. currentmodule:: rs_tools.connector
+.. currentmodule:: geographer.connector
 
 .. autoclass:: Connector
 

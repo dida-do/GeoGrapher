@@ -6,11 +6,11 @@ import logging
 import shutil
 from tqdm.auto import tqdm
 
-from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
-from rs_tools.label_makers.label_type_conversion_utils import \
+from geographer.creator_from_source_dataset_base import DSCreatorFromSource
+from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
+from geographer.label_makers.label_type_conversion_utils import \
     convert_geoms_df_soft_cat_to_cat
-from rs_tools import Connector
+from geographer import Connector
 
 log = logging.Logger(__name__)
 

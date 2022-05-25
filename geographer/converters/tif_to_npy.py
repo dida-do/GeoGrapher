@@ -8,8 +8,8 @@ from pydantic import Field
 import rasterio as rio
 from tqdm.auto import tqdm
 
-from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
-from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
+from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
+from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 
 log = logging.Logger(__name__)
 

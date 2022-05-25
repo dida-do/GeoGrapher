@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from zipfile import ZipFile
 
-from rs_tools.downloaders.base_download_processor import ImgDownloadProcessor
-from rs_tools.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
-from rs_tools.utils.utils import transform_shapely_geometry
+from geographer.downloaders.base_download_processor import ImgDownloadProcessor
+from geographer.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
+from geographer.utils.utils import transform_shapely_geometry
 
 
 class Sentinel2Processor(ImgDownloadProcessor):

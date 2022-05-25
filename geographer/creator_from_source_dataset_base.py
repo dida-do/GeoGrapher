@@ -6,8 +6,8 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
-from rs_tools.connector import Connector
-from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
+from geographer.connector import Connector
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 
 
 class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
