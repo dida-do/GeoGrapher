@@ -12,7 +12,7 @@ from geopandas import GeoSeries
 
 
 from pydantic import BaseModel
-from rs_tools.connector import Connector
+from geographer.connector import Connector
 
 
 class ImgSelector(Callable, BaseModel):
@@ -51,7 +51,7 @@ class ImgSelector(Callable, BaseModel):
         Note:
             It should be possible for the returned sublist to depend on all the information in the source and target connectors.
             The ImgSelector used by the cutting function create_or_update_tif_dataset_from_iter_over_features
-            in rs_tools.cut.cut_iter_over_features. This function does not concatenate the information about the new images
+            in geographer.cut.cut_iter_over_features. This function does not concatenate the information about the new images
             that have been cut to the target_connector.raster_imgs until after all vector features have been iterated over.
             We want to use the vector features filter predicate _during_ this iteration, so we allow the call function to also depend
             on a new_imgs_dict argument which contains the information about the new images that have been cut. Unlike

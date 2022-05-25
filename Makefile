@@ -1,7 +1,7 @@
 .PHONY: help env env-update env-remove init install format lint test \
 	docs-sphinx requirements
 
-PROJECTNAME=rs_tools
+PROJECTNAME=geographer
 
 help:
 	@echo "Available commands:"

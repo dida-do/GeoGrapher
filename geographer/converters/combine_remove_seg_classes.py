@@ -13,10 +13,10 @@ import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
 from pydantic import Field
 from tqdm.auto import tqdm
-from rs_tools.creator_from_source_dataset_base import DSCreatorFromSource
-from rs_tools.global_constants import VECTOR_FEATURES_INDEX_NAME
-from rs_tools.utils.utils import concat_gdfs, deepcopy_gdf
-from rs_tools import Connector
+from geographer.creator_from_source_dataset_base import DSCreatorFromSource
+from geographer.global_constants import VECTOR_FEATURES_INDEX_NAME
+from geographer.utils.utils import concat_gdfs, deepcopy_gdf
+from geographer import Connector
 
 log = logging.Logger(__name__)
 

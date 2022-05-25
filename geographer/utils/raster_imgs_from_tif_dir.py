@@ -9,7 +9,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Polygon, box
 from tqdm.auto import tqdm
 
-from rs_tools.utils.utils import transform_shapely_geometry
+from geographer.utils.utils import transform_shapely_geometry
 
 
 def default_read_in_img_for_img_df_function(
@@ -72,7 +72,7 @@ def raster_imgs_from_imgs_dir(
     """
 
     # stupid hack to avoid (not really) circular importing python can't deal with.
-    from rs_tools.global_constants import STANDARD_CRS_EPSG_CODE
+    from geographer.global_constants import STANDARD_CRS_EPSG_CODE
 
     images_dir = Path(images_dir)
 

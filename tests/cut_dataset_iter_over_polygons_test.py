@@ -1,4 +1,4 @@
-"""Unit (py)tests for rs_tools.cut.cut_dataset_iter_over_polygons.
+"""Unit (py)tests for geographer.cut.cut_dataset_iter_over_polygons.
 
 WARNING! Needs to be updated to work with new associator. WARNING! Uses
 real data in rstools folder on markov. Ideally, should use artificially
@@ -11,8 +11,8 @@ from pathlib import Path
 
 import rasterio as rio
 
-import rs_tools.img_polygon_associator as ipa
-from rs_tools.cut.cut_dataset_iter_over_polygons import \
+import geographer.img_polygon_associator as ipa
+from geographer.cut.cut_dataset_iter_over_polygons import \
     new_tif_dataset_small_imgs_for_each_polygon as cut2small_imgs
 
 # for test_new_dataset_one_small_img_for_each_polygon

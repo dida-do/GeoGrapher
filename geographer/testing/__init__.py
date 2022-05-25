@@ -1,1 +1,1 @@
-from rs_tools.testing.graph_df_compatibility import test_graph_vertices_counts
+from geographer.testing.graph_df_compatibility import test_graph_vertices_counts

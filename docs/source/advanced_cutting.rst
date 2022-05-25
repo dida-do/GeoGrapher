@@ -3,8 +3,8 @@ Cutting Datasets: Advanced
 
 GeoGrapher provides two general templates for cutting datasets:
 
-- iterating over vector features using :class:`rs_tools.cutters.DSCutterIterOverFeatures`
-- iterating over raster images using :class:`rs_tools.cutters.DSCutterIterOverImgs`
+- iterating over vector features using :class:`geographer.cutters.DSCutterIterOverFeatures`
+- iterating over raster images using :class:`geographer.cutters.DSCutterIterOverImgs`
 
 As described below both depend on various components. Choosing different components allows for customization.
 
@@ -22,7 +22,7 @@ Iterating Over Vector Features
 Desription
 ~~~~~~~~~~
 
-Cutting of datasets by iterating over vector features is accomplished by the ``DSCutterIterOverFeatures`` class (:class:`rs_tools.cutters.DSCutterIterOverFeatures`). A ``DSCutterIterOverFeatures`` is initialized with:
+Cutting of datasets by iterating over vector features is accomplished by the ``DSCutterIterOverFeatures`` class (:class:`geographer.cutters.DSCutterIterOverFeatures`). A ``DSCutterIterOverFeatures`` is initialized with:
 
     - ``name``: a name used for :ref:`saving <save_DSCutter>` the ``DSCutter``.
     - ``source_data_dir``: the source data directory
@@ -55,7 +55,7 @@ Defining a ``vector_feature_filter``
 
 Assume our source dataset contains vector features from around the world and that the source dataset's vector features have a 'climate_zone' attribute (i.e. a 'climate_zone' column in the source connector's ``vector_features`` attribute). Suppose you only want to cut vector features which are located in an area of interest and whose 'climate_zone' is 'tropical'. You can use the ``GeomFilterRowCondition`` as our ``vector_feature_filter``::
 
-    from rs_tools.feature_filter_predicate import GeomFilterRowCondition
+    from geographer.feature_filter_predicate import GeomFilterRowCondition
 
     aoi: shapely.geometry.Polygon = ... # polygon describing area of interest
     def row_series_predicate(series: GeoSeries):
@@ -70,7 +70,7 @@ Defining an img_cutter
 
 To create cutouts around for each vector features with the bounding boxes of the cutout chosen at random subject to the constraint that it contains the vector feature use the ``SingleImgCutterAroundFeature``::
 
-    from rs_tools.cutters import SingleImgCutterAroundFeature
+    from geographer.cutters import SingleImgCutterAroundFeature
     my_img_cutter = SingleImgCutterAroundFeature(
         mode="random",
         new_img_size=512,
@@ -83,7 +83,7 @@ Defining an ``img_selector``
 
 Suppose for a vector feature you want to randomly select any two images in the source dataset containing the vector features::
 
-    from rs_tools.cutters.img_selector import RandomImgSelector
+    from geographer.cutters.img_selector import RandomImgSelector
     my_img_selector = RandomImgSelector(target_img_count=2)
 
 .. note::
@@ -97,7 +97,7 @@ If your datasets include labels you should define the optional ``label_maker``::
 
 ::
 
-    from rs_tools.label_makers import SegLabelMakerCategorical
+    from geographer.label_makers import SegLabelMakerCategorical
     my_label_maker = SegLabelMakerCategorical()
 
 See :doc:`label_makers` for more details on making labels.
@@ -125,7 +125,7 @@ Putting It All Together: Cutting
 
 ::
 
-    from rs_tools.cutters import DSCutterIterOverFeatures
+    from geographer.cutters import DSCutterIterOverFeatures
     dataset_cutter = DSCutterIterOverFeatures(
         name="my_cutter",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -149,7 +149,7 @@ Updating The Target Dataset:
 
 Updating the target dataset after the source dataset has grown::
 
-    from rs_tools.cutters import DSCutterIterOverFeatures
+    from geographer.cutters import DSCutterIterOverFeatures
     dataset_cutter = DSCutterIterOverFeatures.from_json_file(<path/to/saved.json>)
     dataset_cutter.update()
 
@@ -159,7 +159,7 @@ Iterating Over Raster Images
 Description
 ~~~~~~~~~~
 
-Cutting of datasets by iterating over raster images is accomplished by the ``DSCutterIterOverImgs`` class (:class:`rs_tools.cutters.DSCutterIterOverImgs`). A ``DSCutterIterOverImgs`` is initialized with:
+Cutting of datasets by iterating over raster images is accomplished by the ``DSCutterIterOverImgs`` class (:class:`geographer.cutters.DSCutterIterOverImgs`). A ``DSCutterIterOverImgs`` is initialized with:
 
     - ``name``: a name used for :ref:`saving <save_DSCutter>` the ``DSCutter``.
     - ``source_data_dir``: the source data directory
@@ -199,7 +199,7 @@ Suppose you want to select images that
 - and contain at least 3 vector features.
 You can write a custom ``ImgFilterPredicate`` to do this::
 
-    from rs_tools.cutters import ImgFilterPredicate
+    from geographer.cutters import ImgFilterPredicate
 
     class MyImgFilterPredicate(ImgFilterPredicate):
         def __call__(
@@ -230,9 +230,9 @@ You can write a custom ``ImgFilterPredicate`` to do this::
 Defining an img_cutter
 ----------------------
 
-Suppose you want to cut every selected image to a grid of images. You can use the ``SingleImgCutterToGrid`` (:class:`rs_tools.cutters.single_img_cutter_grid.SingleImgCutterToGrid`) to do this::
+Suppose you want to cut every selected image to a grid of images. You can use the ``SingleImgCutterToGrid`` (:class:`geographer.cutters.single_img_cutter_grid.SingleImgCutterToGrid`) to do this::
 
-    from rs_tools.cutters.single_img_cutter_grid import SingleImgCutterToGrid
+    from geographer.cutters.single_img_cutter_grid import SingleImgCutterToGrid
     my_img_cutter = SingleImgCutterToGrid(new_img_size=512)
 
 Defining a ``label_maker`` (recommended)
@@ -242,7 +242,7 @@ If your datasets include labels you should define the optional ``label_maker``::
 
 ::
 
-    from rs_tools.label_makers import SegLabelMakerCategorical
+    from geographer.label_makers import SegLabelMakerCategorical
     my_label_maker = SegLabelMakerCategorical()
 
 See :doc:`label_makers` for more details on making labels.
@@ -259,7 +259,7 @@ Putting It All Together: Cutting
 
 ::
 
-    from rs_tools.cutters import DSCutterIterOverImgs
+    from geographer.cutters import DSCutterIterOverImgs
     dataset_cutter = DSCutterIterOverImgs(
         name="my_cutter",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -282,7 +282,7 @@ Updating The Target Dataset:
 
 Updating the target dataset after the source dataset has grown::
 
-    from rs_tools.cutters import DSCutterIterOverImgs
+    from geographer.cutters import DSCutterIterOverImgs
     dataset_cutter = DSCutterIterOverImgs.from_json_file(<path/to/saved.json>)
     dataset_cutter.update()
 

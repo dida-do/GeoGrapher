@@ -119,7 +119,7 @@ Creating an empty connector
 
 To create a new connector use the ``from_scratch`` class method::
 
-    from rs_tools import Connector
+    from geographer import Connector
     connector = Connector.from_scratch(
         data_dir=<DATA_DIR>)
 

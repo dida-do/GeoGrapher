@@ -62,7 +62,7 @@ Categorical Segmentation Labels
 
 Creating categorical segmentation labels encoded for each pixel as an integer corresponding to the class::
 
-    from rs_tools.label_makers import SegLabelMakerCategorical
+    from geographer.label_makers import SegLabelMakerCategorical
     label_maker = SegLabelMakerCategorical()
     label_maker.make_labels(
         connector=<your_connector>,
@@ -80,7 +80,7 @@ Soft-Categorical Segmentation Labels
 
 Creating soft-categorical segmentation labels::
 
-    from rs_tools.label_makers import SegLabelMakerSoftCategorical
+    from geographer.label_makers import SegLabelMakerSoftCategorical
     label_maker = SegLabelMakerSoftCategorical()
     label_maker.make_labels(
         connector=<your_connector>,

@@ -32,7 +32,7 @@ import json
 import logging
 from json import JSONDecodeError
 
-from rs_tools.graph.bipartite_graph_class import BipartiteGraphClass
+from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 
 # logger
 log = logging.Logger(__name__)
