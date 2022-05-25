@@ -241,10 +241,10 @@ class Connector(
         """Initialize a connector from a data directory.
 
         Args:
-            data_dir (Union[Path, str]): data directory containing 'connector_files', 'images', and 'labels' subdirectories
+            data_dir: data directory containing 'connector_files', 'images', and 'labels' subdirectories
 
         Returns:
-            IPAType: initialized connector
+            ConnectorType: initialized connector
         """
 
         data_dir = Path(data_dir)
