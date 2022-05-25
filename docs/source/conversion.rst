@@ -19,7 +19,7 @@ Combining And/Or Removing Vector Feature Classes
 
 Assume your dataset has ``task_vector_feature_classes`` given by ``['class1', 'class2', 'class3', 'class4']``. Suppose you want to combine  ``'class1'`` and ``'class2'`` to a new class ``'new_class_name1'``, rename ``class3`` to ``'new_class_name2'``, drop all vector features belonging to ``'class4'``, and remove all images not containing and of the new classes ``'new_class_name1'`` and  ``'new_class_name2'``. This can be accomplished using the ``DSConverterCombineRemoveClasses`` as follows::
 
-    from rs_tools.converters import DSConverterCombineRemoveClasses
+    from geographer.converters import DSConverterCombineRemoveClasses
     converter = DSConverterCombineRemoveClasses(
         name="combine_remove_classes",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -44,7 +44,7 @@ Soft-Categorical To Categorical
 
 Converting a segmentation dataset from soft-categorical to categorical vector features and labels using ``DSConverterCombineRemoveClasses``::
 
-    from rs_tools.converters import DSConverterCombineRemoveClasses
+    from geographer.converters import DSConverterCombineRemoveClasses
     converter = DSConverterSoftCatToCat(
         name="convert_soft_to_cat",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -63,7 +63,7 @@ GeoTiff To .npy
 
 Converting a dataset from GeoTiff to .npy::
 
-    from rs_tools.converters import DSConverterGeoTiffToNpy
+    from geographer.converters import DSConverterGeoTiffToNpy
     converter = DSConverterGeoTiffToNpy(
         name="convert_soft_to_cat",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,

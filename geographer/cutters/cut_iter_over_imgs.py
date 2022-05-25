@@ -11,15 +11,15 @@ from pydantic import Field
 
 from geopandas import GeoDataFrame
 from tqdm.auto import tqdm
-from rs_tools.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
-from rs_tools.connector import Connector
-from rs_tools.label_makers.label_maker_base import LabelMaker
+from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
+from geographer.connector import Connector
+from geographer.label_makers.label_maker_base import LabelMaker
 
-from rs_tools.utils.utils import concat_gdfs
-from rs_tools.cutters.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
-from rs_tools.cutters.img_filter_predicates import ImgFilterPredicate
-from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
-from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME
+from geographer.utils.utils import concat_gdfs
+from geographer.cutters.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
+from geographer.cutters.img_filter_predicates import ImgFilterPredicate
+from geographer.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.global_constants import RASTER_IMGS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 

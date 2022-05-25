@@ -19,15 +19,15 @@ import geopandas as gpd
 from geopandas import GeoDataFrame
 
 # Mix-in classes:
-from rs_tools.add_drop_raster_imgs import AddDropRasterImgsMixIn
-from rs_tools.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
-from rs_tools.graph.bipartite_graph_mixin import BipartiteGraphMixIn
+from geographer.add_drop_raster_imgs import AddDropRasterImgsMixIn
+from geographer.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
+from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
 
-from rs_tools.global_constants import (RASTER_IMGS_INDEX_NAME,
+from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
                                        VECTOR_FEATURES_INDEX_NAME,
                                        STANDARD_CRS_EPSG_CODE)
-from rs_tools.graph import BipartiteGraph
-from rs_tools.utils.connector_utils import (empty_gdf,
+from geographer.graph import BipartiteGraph
+from geographer.utils.connector_utils import (empty_gdf,
                                             empty_gdf_same_format_as,
                                             empty_graph)
 

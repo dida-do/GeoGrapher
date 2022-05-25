@@ -9,9 +9,9 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from tqdm.auto import tqdm
-from rs_tools.connector import Connector
-from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
-from rs_tools.label_makers.label_maker_base import LabelMaker
+from geographer.connector import Connector
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
+from geographer.label_makers.label_maker_base import LabelMaker
 
 # logger
 log = logging.getLogger(__name__)

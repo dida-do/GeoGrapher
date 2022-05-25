@@ -10,7 +10,7 @@ Example usage
 
 Example usage::
 
-    from rs_tools.downloaders import (
+    from geographer.downloaders import (
         ImgDownloaderForVectorFeatures,
         SentinelDownloaderForSingleVectorFeature,
         Sentinel2Processor

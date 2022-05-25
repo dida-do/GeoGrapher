@@ -7,14 +7,14 @@ Cutting Datasets: Basic
     - other options.
     - saving and loading etc.
 
-Use the ``DSCutter`` classes to create a new dataset from an existing source dataset by cutting the source dataset. GeoGrapher has two general customizable ``DSCutter`` classes: :class:`rs_tools.cutter`
+Use the ``DSCutter`` classes to create a new dataset from an existing source dataset by cutting the source dataset. GeoGrapher has two general customizable ``DSCutter`` classes: :class:`geographer.cutter`
 
 Cutting Every Image To A Grid of Images
 =======================================
 
-To create a new dataset in ``target_data_dir`` from a source dataset in ``source_data_dir`` by cutting every image in the dataset to a grid of images use the :class:`rs_tools.cutters.DSCutterEveryImgToGrid` class::
+To create a new dataset in ``target_data_dir`` from a source dataset in ``source_data_dir`` by cutting every image in the dataset to a grid of images use the :class:`geographer.cutters.DSCutterEveryImgToGrid` class::
 
-    from rs_tools.cutters import DSCutterEveryImgToGrid
+    from geographer.cutters import DSCutterEveryImgToGrid
     cutter = DSCutterEveryImgToGrid(
         new_img_size=512,
         source_data_dir=<SOURCE_DATA_DIR>,
@@ -37,7 +37,7 @@ Cutting Images Around Vector Features
 Cutting images around vector features (e.g. create 512 x 512 pixel
 cutouts around vector features from 10980 x 10980 Sentinel-2 tiles)::
 
-    from rs_tools.cutters import DSCutterImgsAroundEveryFeature
+    from geographer.cutters import DSCutterImgsAroundEveryFeature
     cutter = DSCutterImgsAroundEveryFeature(
         source_data_dir=<SOURCE_DATA_DIR>,
         target_data_dir=<TARGET_DATA_DIR>,
