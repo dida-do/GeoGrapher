@@ -13,18 +13,18 @@ from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
-from rs_tools import Connector
-from rs_tools.base_model_dict_conversion.save_load_base_model_mixin import \
+from geographer import Connector
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
     SaveAndLoadBaseModelMixIn
-from rs_tools.errors import (
+from geographer.errors import (
     ImgAlreadyExistsError,
     ImgDownloadError,
     NoImgsForPolygonFoundError,
 )
-from rs_tools.downloaders.base_download_processor import ImgDownloadProcessor
-from rs_tools.downloaders.base_downloader_for_single_feature import \
+from geographer.downloaders.base_download_processor import ImgDownloadProcessor
+from geographer.downloaders.base_downloader_for_single_feature import \
     ImgDownloaderForSingleVectorFeature
-from rs_tools.utils.utils import concat_gdfs
+from geographer.utils.utils import concat_gdfs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.WARNING)

@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 from pathlib import Path
 import json
 
-from rs_tools.base_model_dict_conversion.base_model_dict_conversion_functional import eval_nested_base_model_dict, get_nested_base_model_dict
+from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import eval_nested_base_model_dict, get_nested_base_model_dict
 
 
 class SaveAndLoadBaseModelMixIn:

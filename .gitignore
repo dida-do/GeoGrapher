@@ -3,9 +3,9 @@ __pycache__/
 .DS_Store
 assoc/*
 aubesa/*
-rs_tools.egg-info
-rs_tools-env/
-rs_tools/cut_old_functional/
-rs_tools/playground/
-rs_tools/img_download/.ipynb_checkpoints/
-rs_tools.egg-info/
+geographer.egg-info
+geographer-env/
+geographer/cut_old_functional/
+geographer/playground/
+geographer/img_download/.ipynb_checkpoints/
+geographer.egg-info/

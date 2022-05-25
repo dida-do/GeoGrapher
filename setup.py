@@ -2,6 +2,6 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="rs_tools",
+    name="geographer",
     packages=find_packages(),
 )

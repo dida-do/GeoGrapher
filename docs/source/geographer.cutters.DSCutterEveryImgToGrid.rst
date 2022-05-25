@@ -1,7 +1,7 @@
 ﻿rs\_tools.cutters.DSCutterEveryImgToGrid
 ========================================
 
-.. currentmodule:: rs_tools.cutters
+.. currentmodule:: geographer.cutters
 
 .. autoclass:: DSCutterEveryImgToGrid
 

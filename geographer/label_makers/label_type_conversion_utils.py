@@ -1,6 +1,6 @@
 from geopandas import GeoDataFrame
 
-from rs_tools.utils.utils import deepcopy_gdf
+from geographer.utils.utils import deepcopy_gdf
 
 
 def convert_vector_features_soft_cat_to_cat(

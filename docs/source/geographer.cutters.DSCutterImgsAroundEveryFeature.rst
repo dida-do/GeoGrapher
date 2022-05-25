@@ -1,7 +1,7 @@
 ﻿rs\_tools.cutters.DSCutterImgsAroundEveryFeature
 ================================================
 
-.. currentmodule:: rs_tools.cutters
+.. currentmodule:: geographer.cutters
 
 .. autoclass:: DSCutterImgsAroundEveryFeature
 

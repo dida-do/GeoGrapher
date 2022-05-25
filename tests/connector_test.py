@@ -9,13 +9,13 @@ See connector_test.png for a visualization of the test data (polygons as vector_
 from pathlib import Path
 import geopandas as gpd
 import pandas as pd
-from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME, STANDARD_CRS_EPSG_CODE, VECTOR_FEATURES_INDEX_NAME
-from rs_tools.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
+from geographer.global_constants import RASTER_IMGS_INDEX_NAME, STANDARD_CRS_EPSG_CODE, VECTOR_FEATURES_INDEX_NAME
+from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
 import pytest
 import shapely as shp
 from geopandas.testing import assert_geodataframe_equal
 from shapely.geometry import Polygon, box
-from rs_tools.connector import Connector
+from geographer.connector import Connector
 
 TASK_FEATURE_CLASSES = ["class1", "class2"]
 

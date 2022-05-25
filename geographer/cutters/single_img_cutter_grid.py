@@ -9,9 +9,9 @@ import rasterio as rio
 from affine import Affine
 from rasterio.windows import Window
 
-from rs_tools.connector import Connector
-from rs_tools.cutters.type_aliases import ImgSize
-from rs_tools.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.connector import Connector
+from geographer.cutters.type_aliases import ImgSize
+from geographer.cutters.single_img_cutter_base import SingleImgCutter
 
 logger = logging.getLogger(__name__)
 

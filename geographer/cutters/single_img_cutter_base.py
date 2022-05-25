@@ -13,9 +13,9 @@ from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 
-from rs_tools.connector import Connector
-from rs_tools.img_bands_getter_mixin import ImgBandsGetterMixIn
-from rs_tools.global_constants import RASTER_IMGS_INDEX_NAME
+from geographer.connector import Connector
+from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
+from geographer.global_constants import RASTER_IMGS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 

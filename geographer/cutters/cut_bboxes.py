@@ -14,17 +14,17 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from geopandas import GeoDataFrame
 
-from rs_tools.cut.single_img_cutter_bbox import SingleImgCutterFromBBoxes
-from rs_tools.cut.type_aliases import ImgSize
-from rs_tools.global_constants import DATA_DIR_SUBDIRS
+from geographer.cut.single_img_cutter_bbox import SingleImgCutterFromBBoxes
+from geographer.cut.type_aliases import ImgSize
+from geographer.global_constants import DATA_DIR_SUBDIRS
 
 if TYPE_CHECKING:
-    from rs_tools.img_geom_associator import ImgPolygonAssociator
+    from geographer.img_geom_associator import ImgPolygonAssociator
 
-from rs_tools.cutteres.cut_iter_over_imgs import \
+from geographer.cutteres.cut_iter_over_imgs import \
     create_or_update_dataset_iter_over_imgs
-from rs_tools.cut.img_filter_predicates import AlwaysTrue
-from rs_tools.cut.single_img_cutter_grid import SingleImgCutterToGrid
+from geographer.cut.img_filter_predicates import AlwaysTrue
+from geographer.cut.single_img_cutter_grid import SingleImgCutterToGrid
 
 
 
