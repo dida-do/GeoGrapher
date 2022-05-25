@@ -53,16 +53,12 @@ def test_connector():
     """
     Test add_to_vector_features
     """
-    # integrate vector_features
+    # add vector_features
     connector.add_to_vector_features(new_vector_features)
 
     connector_vector_features_no_img_count = connector.vector_features[[
         col for col in connector.vector_features.columns if col != 'img_count'
     ]]
-    # WHY DOES THIS NOT WORK?
-    # assert assert_geodataframe_equal(connector_vector_features_no_img_count, new_vector_features)
-    # This does not work either
-    #assert connector_vector_features_no_img_count == new_vector_features
     pd.testing.assert_frame_equal(
         connector_vector_features_no_img_count,
         new_vector_features,
@@ -136,16 +132,13 @@ def test_connector():
         'polygon1', 'polygon2'
     }
     """
-    Integrate another img_df with a row that already exists in connector.raster_imgs
+    Add more images
     """
     # empty GeoDataFrame with right index name
     new_raster_imgs2 = gpd.GeoDataFrame()
     new_raster_imgs2.rename_axis(RASTER_IMGS_INDEX_NAME, inplace=True)
 
     # the new_raster_imgs2 geometries will be the img bounding rectangles here:
-    bounding_rectangle1 = box(
-        -10, -10, 10, 10
-    )  # contains all polygons, but an polygon with that name already exists in connector, so should be ignored by add_to_vector_features
     bounding_rectangle3 = box(
         -3, -3, 7, 7)  # contains all of p1, p2, p3, p4 (to be defined below)
     bounding_rectangle4 = box(
@@ -154,8 +147,8 @@ def test_connector():
 
     # add them to new_raster_imgs2
     for img_name, bounding_rectangle in zip(
-        ['img1', 'img3', 'img4'],
-        [bounding_rectangle1, bounding_rectangle3, bounding_rectangle4]):
+        ['img3', 'img4'],
+        [bounding_rectangle3, bounding_rectangle4]):
         new_raster_imgs2.loc[img_name, 'geometry'] = bounding_rectangle
 
     new_raster_imgs["some_img_attribute"] = "foobar"
@@ -206,7 +199,43 @@ def test_connector():
         }
     }
     """
-    Integrate another vector_features with a row that already exists in the connector's vector_features
+    Drop vector feature
+    """
+    connector.drop_vector_features('polygon3')
+
+    # test containment/intersection relations, i.e. graph structure
+    assert connector._graph._graph_dict == {
+        VECTOR_FEATURES_COLOR: {
+            "polygon1": {
+                "img1": "contains",
+                "img2": "intersects",
+                "img3": "contains",
+                "img4": "contains"
+            },
+            "polygon2": {
+                "img1": "contains",
+                "img3": "contains"
+            },
+        },
+        RASTER_IMGS_COLOR: {
+            "img1": {
+                "polygon1": "contains",
+                "polygon2": "contains"
+            },
+            "img2": {
+                "polygon1": "intersects",
+            },
+            "img3": {
+                "polygon1": "contains",
+                "polygon2": "contains",
+            },
+            "img4": {
+                "polygon1": "contains",
+            }
+        }
+    }
+    """
+    Add more vector features
     """
 
     # create empty GeoDataFrame with the right index name
@@ -217,7 +246,7 @@ def test_connector():
     polygon4 = box(-1, -1, 0, 0)  # genuinely new entry
     polygon3 = box(
         -100, -100, -99,
-        -99)  # entry for polygon3 already exists in connector.vector_features
+        -99)
 
     # add the polygon names and geometries to the geodataframe
     for p_name, p_geom in zip(['polygon3', 'polygon4'], [polygon3, polygon4]):
@@ -230,8 +259,7 @@ def test_connector():
         epsg=STANDARD_CRS_EPSG_CODE)
 
     # integrate new_vector_features with force_overwrite=True:
-    connector.add_to_vector_features(new_vector_features2,
-                                     force_overwrite=True)
+    connector.add_to_vector_features(new_vector_features2)
 
     assert connector._graph._graph_dict == {
         VECTOR_FEATURES_COLOR: {
@@ -343,7 +371,3 @@ def test_connector():
     connector.drop_raster_imgs("img4")
     assert len(connector.raster_imgs) == 1
 
-
-# TODO: remove once I get pytest to run
-if __name__ == "__main__":
-    test_connector()
