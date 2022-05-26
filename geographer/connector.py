@@ -241,10 +241,10 @@ class Connector(
         """Initialize a connector from a data directory.
 
         Args:
-            data_dir (Union[Path, str]): data directory containing 'connector_files', 'images', and 'labels' subdirectories
+            data_dir: data directory containing 'connector_files', 'images', and 'labels' subdirectories
 
         Returns:
-            IPAType: initialized connector
+            ConnectorType: initialized connector
         """
 
         data_dir = Path(data_dir)
@@ -633,7 +633,7 @@ class Connector(
             ):
                 non_task_feature_classes[key] = val
 
-        if not set(non_task_feature_classes.values()) & set(task_feature_classes) == set():
+        if not set(non_task_feature_classes.values()).isdisjoint(set(task_feature_classes)):
             bad_values = {
                 class_name: value
                 for class_name, value in non_task_feature_classes.items()
