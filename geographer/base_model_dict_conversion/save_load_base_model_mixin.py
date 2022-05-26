@@ -21,9 +21,10 @@ class SaveAndLoadBaseModelMixIn:
         json_file_path = Path(json_file_path)
         if json_file_path.suffix != '.json':
             raise ValueError("Need file path to .json file")
-        with open(json_file_path, 'w') as file:
+        json_file_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(json_file_path, 'w', encoding='utf-8' as file:
             base_model_dict = get_nested_base_model_dict(self)
-            json.dump(base_model_dict, file)
+            json.dump(base_model_dict, file, ensure_ascii=False, indent=4)
 
     @classmethod
     def from_json_file(

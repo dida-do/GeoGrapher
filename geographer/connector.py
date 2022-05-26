@@ -383,9 +383,10 @@ class Connector(
         self.vector_features.to_file(Path(self._vector_features_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
-        with open(self.attrs_path, "w") as write_file:
+        with open(self.attrs_path, "w", encoding='utf-8') as write_file:
             saveattrs = self._make_dict_json_serializable(self.attrs)
-            json.dump(saveattrs, write_file)
+            json.dump(saveattrs, write_file, ensure_ascii=False, indent=4)
+
 
     def empty_connector_same_format(
         self,
