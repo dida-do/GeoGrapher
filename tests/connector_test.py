@@ -16,6 +16,7 @@ import shapely as shp
 from geopandas.testing import assert_geodataframe_equal
 from shapely.geometry import Polygon, box
 from geographer.connector import Connector
+from geographer.testing.graph_df_compatibility import test_graph_vertices_counts
 
 TASK_FEATURE_CLASSES = ["class1", "class2"]
 
@@ -26,6 +27,7 @@ def test_connector():
     data_dir = Path("/whatever/")
     connector = Connector.from_scratch(
         data_dir=data_dir, task_feature_classes=TASK_FEATURE_CLASSES)
+
     """
     Toy vector_features
     """
@@ -63,6 +65,7 @@ def test_connector():
         connector_vector_features_no_img_count,
         new_vector_features,
     )
+    assert test_graph_vertices_counts(connector)
     """
     Toy raster_imgs
     """
@@ -117,6 +120,7 @@ def test_connector():
             }
         }
     }
+    assert test_graph_vertices_counts(connector)
     """
     Test have_img_for_feature, rectangle_bounding_img, polygons_intersecting_img, polygons_contained_in_img, imgs_containing_feature, values of 'have_img?' column in connector.vector_features.
     """
@@ -198,6 +202,7 @@ def test_connector():
             }
         }
     }
+    assert test_graph_vertices_counts(connector)
     """
     Drop vector feature
     """
@@ -234,6 +239,7 @@ def test_connector():
             }
         }
     }
+    assert test_graph_vertices_counts(connector)
     """
     Add more vector features
     """
@@ -303,6 +309,8 @@ def test_connector():
         }
     }
 
+    assert test_graph_vertices_counts(connector)
+
     # assert we have no duplicate entries
     assert len(connector.raster_imgs) == 4
     assert len(connector.vector_features) == 4
@@ -340,6 +348,8 @@ def test_connector():
             }
         }
     }
+
+    assert test_graph_vertices_counts(connector)
     """
     Test drop_vector_features
     """
@@ -370,4 +380,8 @@ def test_connector():
 
     connector.drop_raster_imgs("img4")
     assert len(connector.raster_imgs) == 1
+    assert test_graph_vertices_counts(connector)
+
+if __name__ == "__main__":
+    test_connector()
 
