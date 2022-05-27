@@ -12,7 +12,7 @@ from sentinelsat.exceptions import UnauthorizedError, ServerError
 from shapely import wkt
 from shapely.geometry import Polygon
 
-from geographer.errors import NoImgsForPolygonFoundError
+from geographer.errors import NoImgsForVectorFeatureFoundError
 from geographer.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
 from geographer.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
 from geographer.utils.utils import transform_shapely_geometry
@@ -99,7 +99,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
 
         # If we couldn't find anything, remember that, so we can deal with it later.
         if len(products) == 0:
-            raise NoImgsForPolygonFoundError(
+            raise NoImgsForVectorFeatureFoundError(
                 f"No images for vector feature {feature_name} found with cloud coverage less than or equal to {max_percent_cloud_coverage}!"
             )
 
@@ -142,7 +142,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                     log.warning("Failed to download or unzip %s: %s",
                                 product_metadata['title'], str(exc))
 
-        raise NoImgsForPolygonFoundError(
+        raise NoImgsForVectorFeatureFoundError(
             f"All images for {feature_name} failed to download.")
 
     def _get_longform_producttype(self, producttype):

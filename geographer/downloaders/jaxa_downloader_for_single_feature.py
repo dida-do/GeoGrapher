@@ -42,9 +42,8 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
 
     def download(
         self,
-        geom_name: Union[int, str],
-        geom_geometry: BaseGeometry,
-        connector: Connector,
+        feature_name: Union[int, str],
+        feature_geom: BaseGeometry,
         download_dir: Path,
         previously_downloaded_imgs_set: Set[Union[str, int]],
         data_version: str = None,
@@ -66,13 +65,13 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             for small geometries, but works for large geometries.
 
         Args:
-            geom_name (Union[str, int]): the name of the vector geometry
-            geom_geometry (shapely geometry):
+            feature_name (Union[str, int]): the name of the vector geometry
+            feature_geometry (shapely geometry):
             download_dir (Path or str): directory that the image file should be downloaded to
-            jaxa_data_version (str): One of '1804', '1903', '2003', or '2012'.
+            data_version (str): One of '1804', '1903', '2003', or '2012'.
                 1804 is the only version that has been tested.
                 Defaults if possible to whichever choice you made last time.
-            jaxa_download_mode (str): One of 'bboxvertices', 'bboxgrid'.
+            download_mode (str): One of 'bboxvertices', 'bboxgrid'.
                 Defaults if possible to whichever choice you made last time.
             **kwargs (Any): other kwargs, ignored.
 
@@ -93,7 +92,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         jaxa_file_and_folder_names = set()
         if download_mode == 'bboxvertices':
 
-            for (x, y) in geom_geometry.envelope.exterior.coords:
+            for (x, y) in feature_geom.envelope.exterior.coords:
 
                 jaxa_folder_name = '{}/'.format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
@@ -105,7 +104,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
 
         elif download_mode == 'bboxgrid':
 
-            minx, miny, maxx, maxy = geom_geometry.envelope.exterior.bounds
+            minx, miny, maxx, maxy = feature_geom.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
             deltay = math.ceil(maxy - miny)
@@ -140,7 +139,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             else:
                 log.info(
                     'Downloading from ftp.eorc.jaxa.jp (v%s) for geometry %s',
-                    data_version, geom_name)
+                    data_version, feature_name)
                 log.info('Downloading to: %s',
                          os.path.join(download_dir, jaxa_file_name))
                 try:
