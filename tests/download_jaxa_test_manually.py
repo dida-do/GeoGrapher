@@ -14,6 +14,7 @@ from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
 from geographer.downloaders.jaxa_downloader_for_single_feature import JAXADownloaderForSingleVectorFeature
 from geographer.downloaders.jaxa_download_processor import JAXADownloadProcessor
+from tests.utils import get_test_dir
 
 def test_jaxa_download():
     """Test downloading JAXA data"""
@@ -21,16 +22,13 @@ def test_jaxa_download():
     """
     Create connector containing vector_features but no raster images
     """
-    # get repo working tree directory
-    repo = git.Repo('.', search_parent_directories=True)
-    repo_root = Path(repo.working_tree_dir)
+    test_dir = get_test_dir()
+    data_dir = test_dir / "temp/download_jaxa_test"
 
-    download_test_data_dir = repo_root / "tests/data/temp/download_jaxa_test"
-
-    vector_features = gpd.read_file(repo_root / 'tests/geographer_download_test.geojson', driver='GeoJSON')
+    vector_features = gpd.read_file(test_dir / 'geographer_download_test.geojson', driver='GeoJSON')
     vector_features.set_index("name", inplace=True)
 
-    connector = Connector.from_scratch(data_dir=download_test_data_dir ,task_feature_classes=['object'])
+    connector = Connector.from_scratch(data_dir=data_dir ,task_feature_classes=['object'])
     connector.add_to_vector_features(vector_features)
 
     """
@@ -39,7 +37,7 @@ def test_jaxa_download():
     jaxa_download_processor = JAXADownloadProcessor()
     jaxa_downloader_for_single_feature = JAXADownloaderForSingleVectorFeature()
     jaxa_downloader = ImgDownloaderForVectorFeatures(
-        download_dir=download_test_data_dir / "download",
+        download_dir=data_dir / "download",
         downloader_for_single_feature=jaxa_downloader_for_single_feature,
         download_processor=jaxa_download_processor,
         kwarg_defaults={
@@ -70,7 +68,7 @@ def test_jaxa_download():
     """
     Clean up: delete downloads
     """
-    shutil.rmtree(download_test_data_dir)
+    shutil.rmtree(data_dir)
 
 
 if __name__ == "__main__":
