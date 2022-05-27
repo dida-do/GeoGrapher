@@ -19,7 +19,7 @@ from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
 from geographer.errors import (
     ImgAlreadyExistsError,
     ImgDownloadError,
-    NoImgsForPolygonFoundError,
+    NoImgsForVectorFeatureFoundError,
 )
 from geographer.downloaders.base_download_processor import ImgDownloadProcessor
 from geographer.downloaders.base_downloader_for_single_feature import \
@@ -41,7 +41,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     kwarg_defaults: dict = Field(default_factory=dict)
 
     def download(self,
-                 assoc: Union[Path, str, Connector],
+                 connector: Union[Path, str, Connector],
                  feature_names: Optional[Union[str, int, List[int],
                                                List[str]]] = None,
                  target_img_count: int = 1,
@@ -52,11 +52,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         """Download images for vector features so as to target a number of images per vector feature.
 
         Sequentially considers the vector features for which the image count (number of images fully
-        containing a given vector feature) is less than num_target_imgs_per_feature images in the associator's
+        containing a given vector feature) is less than num_target_imgs_per_feature images in the connector's
         internal vector_features or the optional vector_features argument (if given), for each such vector feature
         attempts to download num_target_imgs_per_feature - image_count images fully containing the vector feature
         (or several images jointly containing the vector feature), and integrates the new image(s)
-        into the dataset/associator. Integrates images downloaded for a vector feature into the dataset/associator
+        into the dataset/connector. Integrates images downloaded for a vector feature into the dataset/connector
         immediately after downloading them and before downloading images for the next vector feature. In particular,
         the image count is updated immediately after each download.
 
@@ -70,10 +70,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             the filter_out_features_contained_in_union_of_intersecting_imgs argument.
 
         Args:
-            feature_names (List[str], optional): Optional feature_name or list of feature_names to download images for. Defaults to None, i.e. consider all vector features in assoc.vector_features.
+            feature_names (List[str], optional): Optional feature_name or list of feature_names to download images for. Defaults to None, i.e. consider all vector features in connector.vector_features.
             downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
             target_img_count (int): target for number of images per vector feature in the dataset after downloading. The actual number of images for each vector feature P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_feature images for P P is also contained in images downloaded for other vector features.
-            vector_features (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of vector features conforming to the associator's format for vector_features, defaults to the associator's internal vector_features (i.e. assoc.vector_features). If provided and not equal to assoc.vector_features will download images for only those vector features and integrate the vector features in vector_features into the associator after the images have been downloaded.
+            vector_features (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of vector features conforming to the connector's format for vector_features, defaults to the connector's internal vector_features (i.e. connector.vector_features). If provided and not equal to connector.vector_features will download images for only those vector features and integrate the vector features in vector_features into the connector after the images have been downloaded.
             filter_out_vector features_contained_in_union_of_intersecting_imgs (bool): Useful when dealing with 'large' vector features. Defaults to False.
             shuffle (bool): Whether to shuffle order of vector features for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
             kwargs (dict, optional): additional keyword arguments passed to downloader_for_single_feature and download_processor. Defaults to self.kwarg_defaults.
@@ -96,17 +96,17 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
         self.kwarg_defaults.update(kwargs)
 
-        if not isinstance(assoc, Connector):
-            assoc = Connector.from_data_dir(assoc)
-        assoc.images_dir.mkdir(parents=True, exist_ok=True)
+        if not isinstance(connector, Connector):
+            connector = Connector.from_data_dir(connector)
+        connector.images_dir.mkdir(parents=True, exist_ok=True)
         self.download_dir.mkdir(
             parents=True,
-            exist_ok=True)  #TODO: assoc.data_dir / 'downloads' or whatever
+            exist_ok=True)  #TODO: connector.data_dir / 'downloads' or whatever
 
         features_for_which_to_download = self._get_features_for_which_to_download(
             feature_names=feature_names,
             target_img_count=target_img_count,
-            assoc=assoc,
+            connector=connector,
             filter_out_features_contained_in_union_of_intersecting_imgs=
             filter_out_features_contained_in_union_of_intersecting_imgs,
         )
@@ -114,20 +114,20 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         if shuffle:
             random.shuffle(features_for_which_to_download)
 
-        previously_downloaded_imgs_set = set(assoc.raster_imgs.index)
+        previously_downloaded_imgs_set = set(connector.raster_imgs.index)
         # (Will be used to make sure no attempt is made to download an image more than once.)
 
-        # Dict to keep track of imgs we've downloaded. We'll append this to assoc.raster_imgs as a (geo)dataframe later
+        # Dict to keep track of imgs we've downloaded. We'll append this to connector.raster_imgs as a (geo)dataframe later
         new_imgs_dict = defaultdict(list)
 
         pbar = tqdm(
-            enumerate(assoc.vector_features[[
+            enumerate(connector.vector_features[[
                 "geometry"
             ]].loc[features_for_which_to_download].itertuples(),
                       start=1))
         for count, (feature_name, feature_geom) in pbar:
 
-            # feature_geom = assoc.vector_features.loc[feature_name, 'geometry']
+            # feature_geom = connector.vector_features.loc[feature_name, 'geometry']
 
             pbar.set_description(
                 f"Polygon {count}/{len(features_for_which_to_download)}", )
@@ -139,7 +139,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             # an image for a vector feature that earlier was lacking an image if it is now contained in one of the already downloaded images,
             # so need to check again that there are not enough images for the vector feature (since the iterator above is set when it is called
             # and won't know if the "img_count" column value has been changed in the meanwhile).
-            num_img_series_to_download = target_img_count - assoc.vector_features.loc[
+            num_img_series_to_download = target_img_count - connector.vector_features.loc[
                 feature_name, "img_count"]
             if num_img_series_to_download <= 0:
                 log.debug(
@@ -150,7 +150,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             while num_img_series_to_download > 0:
 
                 # Try downloading an image series and save returned dict (of dicts)
-                # containing information for vector_features, assoc.raster_imgs...
+                # containing information for vector_features, connector.raster_imgs...
                 try:
 
                     # DEBUG INFO
@@ -159,10 +159,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                         feature_name)
 
                     return_dict = self.downloader_for_single_feature.download(
-                        feature_name,
-                        feature_geom,
-                        self.download_dir,
-                        previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
+                        feature_name=feature_name,
+                        feature_geometry=feature_geom,
+                        download_dir=self.download_dir,
+                        previously_downloaded_imgs_set=previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
                         **self.kwarg_defaults,
                     )
 
@@ -172,10 +172,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 #     raise
 
                 # ... unless either no images could be found ...
-                except NoImgsForPolygonFoundError as exc:
+                except NoImgsForVectorFeatureFoundError as exc:
 
-                    # ... in which case we save it in assoc.vector_features, ...
-                    assoc.vector_features.loc[feature_name,
+                    # ... in which case we save it in connector.vector_features, ...
+                    connector.vector_features.loc[feature_name,
                                               'download_exception'] = repr(exc)
 
                     # ... log a warning, ...
@@ -187,7 +187,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 # ... or a download error occured, ...
                 except ImgDownloadError as exc:
 
-                    assoc.vector_features.loc[feature_name,
+                    connector.vector_features.loc[feature_name,
                                               'download_exception'] = repr(exc)
                     log.warning(exc, exc_info=True)
 
@@ -201,9 +201,9 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 # If the download_method call was successful ...
                 else:
 
-                    # ... we first extract the information to be appended to assoc.raster_imgs.
+                    # ... we first extract the information to be appended to connector.raster_imgs.
                     list_img_info_dicts = return_dict['list_img_info_dicts']
-                    # (each img_info_dict contains the information for a new row of assoc.raster_imgs)
+                    # (each img_info_dict contains the information for a new row of connector.raster_imgs)
 
                     # DEBUG INFO
                     log.debug("list_img_info_dicts is %s \n\n",
@@ -228,8 +228,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                             single_img_processed_return_dict = self.download_processor.process(
                                 img_name,
                                 self.download_dir,
-                                assoc.images_dir,
-                                assoc.crs_epsg_code,
+                                connector.images_dir,
+                                connector.crs_epsg_code,
                                 **self.kwarg_defaults,
                             )
 
@@ -237,8 +237,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                             img_info_dict.update(
                                 single_img_processed_return_dict)
 
-                            # Connect the image: Add an image vertex to the graph, connect to all vector_features vertices for which the intersection is non-empty and modify assoc.vector_features where necessary ...
-                            assoc._add_img_to_graph_modify_vector_features(
+                            # Connect the image: Add an image vertex to the graph, connect to all vector_features vertices for which the intersection is non-empty and modify connector.vector_features where necessary ...
+                            connector._add_img_to_graph_modify_vector_features(
                                 img_name=img_name,
                                 img_bounding_rectangle=img_info_dict[
                                     'geometry'])
@@ -256,7 +256,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
                             log.warning("Polygon %s not fully contained in the union of the images that were downloaded for it!", feature_name)
 
-                            assoc.vector_features.loc[feature_name, "download_exception"] += " Polygon %s not fully contained in images downloaded for it: %s", feature_name, downloaded_img_names
+                            connector.vector_features.loc[feature_name, "download_exception"] += " Polygon %s not fully contained in images downloaded for it: %s", feature_name, downloaded_img_names
                         """
 
                         # update new_imgs_dict
@@ -268,15 +268,15 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
         if len(new_imgs_dict) > 0:
             new_raster_imgs = self._get_new_raster_imgs(
-                new_imgs_dict, assoc.crs_epsg_code)
-            assoc.raster_imgs = concat_gdfs(
-                [assoc.raster_imgs, new_raster_imgs])
-            assoc.save()
+                new_imgs_dict, connector.crs_epsg_code)
+            connector.raster_imgs = concat_gdfs(
+                [connector.raster_imgs, new_raster_imgs])
+            connector.save()
 
     def save(self, file_path: Union[Path, str]):
         """
         Save downloader. By convention, the downloader should be saved to the
-        associator subdirectory of the data directory it is supposed to operate on.
+        connector subdirectory of the data directory it is supposed to operate on.
         """
         self._save(file_path)
 
@@ -322,13 +322,13 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         self,
         feature_names: Union[str, int, List[int], List[str]],
         target_img_count: int,
-        assoc: Connector,
+        connector: Connector,
         filter_out_features_contained_in_union_of_intersecting_imgs: bool,
     ) -> List[Union[int, str]]:
 
         if feature_names is None:
-            features_for_which_to_download = list(assoc.vector_features.loc[
-                assoc.vector_features['img_count'] < target_img_count].index)
+            features_for_which_to_download = list(connector.vector_features.loc[
+                connector.vector_features['img_count'] < target_img_count].index)
         elif isinstance(feature_names, (str, int)):
             features_for_which_to_download = [feature_names]
         elif isinstance(feature_names, list) and all(
@@ -340,27 +340,27 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             )
 
         if not set(features_for_which_to_download) <= set(
-                assoc.vector_features.index):
+                connector.vector_features.index):
             raise ValueError(
-                f"Polygons {set(features_for_which_to_download) - set(assoc.vector_features.index)} missing from assoc.vector_features"
+                f"Polygons {set(features_for_which_to_download) - set(connector.vector_features.index)} missing from connector.vector_features"
             )
 
         features_for_which_to_download = self._filter_out_features_with_null_geometry(
-            features_for_which_to_download, assoc)
+            features_for_which_to_download, connector)
 
         if filter_out_features_contained_in_union_of_intersecting_imgs:
             features_for_which_to_download = self._filter_out_features_contained_in_union_of_intersecting_imgs(
-                features_for_which_to_download, assoc)
+                features_for_which_to_download, connector)
 
         return features_for_which_to_download
 
     def _filter_out_features_with_null_geometry(
         self,
         feature_names: Union[str, int, List[int], List[str]],
-        assoc: Connector,
+        connector: Connector,
     ) -> None:
-        features_w_null_geometry_mask = assoc.vector_features.geometry.values == None
-        features_w_null_geometry = assoc.vector_features[
+        features_w_null_geometry_mask = connector.vector_features.geometry.values == None
+        features_w_null_geometry = connector.vector_features[
             features_w_null_geometry_mask].index.tolist()
         if features_w_null_geometry != []:
             log.info(
@@ -376,13 +376,13 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     def _filter_out_features_contained_in_union_of_intersecting_imgs(
         self,
         feature_names: Union[str, int, List[int], List[str]],
-        assoc: Connector,
+        connector: Connector,
     ) -> None:
         feature_names = [
             feature_name for feature_name in feature_names
-            if not unary_union(assoc.raster_imgs.loc[
-                assoc.imgs_intersecting_feature(feature_name)].geometry.tolist(
-                )).contains(assoc.vector_features.loc[feature_name].geometry)
+            if not unary_union(connector.raster_imgs.loc[
+                connector.imgs_intersecting_feature(feature_name)].geometry.tolist(
+                )).contains(connector.vector_features.loc[feature_name].geometry)
         ]
         return feature_names
 
