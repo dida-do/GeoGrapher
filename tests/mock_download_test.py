@@ -18,6 +18,7 @@ import geopandas as gpd
 
 from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
+from geographer.testing.graph_df_compatibility import test_graph_vertices_counts
 from geographer.testing.mock_download import MockDownloaderForSingleFeature, MockDownloadProcessor
 from tests.utils import get_test_dir
 
@@ -133,13 +134,13 @@ def test_mock_download_many_features():
             3: 90,
         }
 
-    logging.disable(logging.ERROR)
     downloader.download(
         connector=connector,
         target_img_count=8
     )
 
     assert all(download_processor.source_connector.vector_features.img_count.value_counts() == connector.vector_features.img_count.value_counts())
+    assert test_graph_vertices_counts(connector)
 
     # clean up
     shutil.rmtree(data_dir)
