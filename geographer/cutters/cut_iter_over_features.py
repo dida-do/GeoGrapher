@@ -73,7 +73,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         """Create a new dataset. See create_or_update for more details."""
         return self.create_or_update()
 
-    def _update_from_source(self) -> Connector:
+    def _update(self) -> Connector:
         """Update target dataset. See create_or_update for more details."""
         return self.create_or_update()
 
