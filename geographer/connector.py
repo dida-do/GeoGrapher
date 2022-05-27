@@ -196,7 +196,7 @@ class Connector(
         ]  # in subclass implementation, can add e.g. mask_dir
 
     def __getattr__(self, key):
-        if key in self.__dict__["attrs"]:
+        if "attrs" in self.__dict__ and key in self.__dict__["attrs"]:
             return self.__dict__["attrs"][key]
         else:
             raise AttributeError(f"No such attribute: {key}")

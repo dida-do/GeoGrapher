@@ -11,7 +11,7 @@ class ImgAlreadyExistsError(Error):
     pass
 
 
-class NoImgsForPolygonFoundError(Error):
+class NoImgsForVectorFeatureFoundError(Error):
     """Error raised by an connector's downloader to indicate no images could
     be found or downloaded."""
 
