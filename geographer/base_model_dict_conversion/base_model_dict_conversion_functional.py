@@ -3,46 +3,76 @@ Util functions to convert BaseModels to nested dicts
 keeping track of class constructors. Used for serializing BaseModels
 """
 
+from multiprocessing.sharedctypes import Value
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+from numpy import isin
 
 from pydantic import BaseModel
 
 
-def get_nested_base_model_dict(base_model_obj: BaseModel) -> dict:
-    """Return nested dict of nested BaseModel containing fields and BaseModel constructors"""
-    non_base_model_fields_dict = {
-        add_escape_str(key): val
-        for key, val in base_model_obj
-        if key in base_model_obj.dict().keys()  # to avoid excluded fields
-        and not isinstance(val, (BaseModel, Path))
-    }
-    base_model_fields_dict = {
+
+
+
+def get_nested_base_model_dict(base_model_obj_or_dict: Union[BaseModel, dict, Any]) -> dict:
+    """Return nested dict of nested BaseModel containing fields and BaseModel constructors or of dict"""
+    if isinstance(base_model_obj_or_dict, dict):
+        dict_ = base_model_obj_or_dict
+        dict_items = base_model_obj_or_dict.items()
+    elif isinstance(base_model_obj_or_dict, BaseModel):
+        dict_ = base_model_obj_or_dict.dict()
+        dict_items = base_model_obj_or_dict
+
+    dict_or_base_model_fields_dict = {
         add_escape_str(key): get_nested_base_model_dict(val)
-        for key, val in base_model_obj if isinstance(val, BaseModel)
-        and key in base_model_obj.dict().keys()  # to avoid excluded fields
+        for key, val in dict_items if isinstance(val, (dict, BaseModel))
+        and key in dict_.keys()  # to avoid excluded fields for BaseModels
     }
     path_fields_dict = {
         add_escape_str(key): {
             'constructor_Path': str(val)
         }
-        for key, val in base_model_obj if isinstance(val, Path)
-        and key in base_model_obj.dict().keys()  # to avoid excluded fields
+        for key, val in dict_items if isinstance(val, Path)
+        and key in dict_.keys()  # to avoid excluded fields for BaseModels
     }
-    return {
-        f'constructor_{type(base_model_obj).__name__}':
-        non_base_model_fields_dict | base_model_fields_dict | path_fields_dict
+    tuple_fields_dict = {
+        add_escape_str(key): {
+            'constructor_tuple': get_nested_dict(val)
+        }
+        for key, val in dict_items if isinstance(val, tuple)
+        and key in dict_.keys()  # to avoid excluded fields for BaseModels
     }
+    remaining_fields_dict = {
+        add_escape_str(key): val
+        for key, val in dict_items
+        if key in dict_.keys()  # to avoid excluded fields for BaseModels
+        and not isinstance(val, (BaseModel, Path, dict, tuple))
+    }
+    if isinstance(base_model_obj_or_dict, dict):
+        return remaining_fields_dict | dict_or_base_model_fields_dict | path_fields_dict | tuple_fields_dict
+    elif isinstance(base_model_obj_or_dict, BaseModel):
+        return {
+            f'constructor_{type(base_model_obj_or_dict).__name__}':
+            remaining_fields_dict | dict_or_base_model_fields_dict | path_fields_dict | tuple_fields_dict
+        }
+
+
+def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:
+    """Return nested dict if obj is a BaseModel or dict else return obj"""
+    if isinstance(obj, (BaseModel, dict)):
+        return get_nested_base_model_dict(obj)
+    else:
+        return obj
 
 
 def eval_nested_base_model_dict(
-    dict_or_field_value: Union[BaseModel, Any],
+    dict_or_field_value: Union[dict, Any],
     constructor_symbol_table: Optional[Dict[str, Any]] = None,
 ) -> Union[BaseModel, Any]:
     """Evaluate nested BaseModel dict (or field contents)
 
     Args:
-        dict_or_field_value (Union[BaseModel, Any]): nested base model dict or field value
+        dict_or_field_value (Union[dict, Any]): nested base model dict or field value
         constructor_symbol_table (Optional[Dict[str, Any]], optional): symbol table of constructors. Defaults to None.
 
     Returns:
@@ -52,6 +82,12 @@ def eval_nested_base_model_dict(
         return dict_or_field_value
     elif is_path_constructor_dict(dict_or_field_value):
         return Path(get_path_constructor_arg(dict_or_field_value))
+    elif is_tuple_constructor_dict(dict_or_field_value):
+        tuple_components = [
+            eval_nested_base_model_dict(val, constructor_symbol_table)
+            for val in get_tuple_constructor_args(dict_or_field_value)
+        ]
+        return tuple(tuple_components)
     elif is_base_model_constructor_dict(dict_or_field_value):
         constructor = get_base_model_constructor(
             dict_or_field_value,
@@ -78,6 +114,19 @@ def get_path_constructor_arg(dict_: dict) -> str:
     """Return argument string for Path constructor"""
     key = list(dict_.keys())[0]
     assert isinstance(dict_[key], str)
+    return dict_[key]
+
+
+def is_tuple_constructor_dict(dict_: dict) -> bool:
+    """Return True if and only if dict_ encodes a tuple"""
+    return isinstance(dict_, dict) and len(dict_) == 1 and list(
+        dict_.keys())[0] == 'constructor_tuple'
+
+
+def get_tuple_constructor_args(dict_: dict) -> list:
+    """Return list of tuple components"""
+    key = list(dict_.keys())[0]
+    assert isinstance(dict_[key], (list, tuple))
     return dict_[key]
 
 
