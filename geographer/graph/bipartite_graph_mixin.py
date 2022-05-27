@@ -152,7 +152,7 @@ class BipartiteGraphMixIn:
             List[str]: list of the img_names/identifiers of all images in connector containing the vector feature(s)
         """
 
-        if isinstance(feature_name, str):
+        if not isinstance(feature_name, list):
             feature_names = [feature_name]
         else:
             feature_names = feature_name
