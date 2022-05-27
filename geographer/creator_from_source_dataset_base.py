@@ -5,7 +5,7 @@ Base class for Creating or updating a dataset from an existing source dataset.
 from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 from geographer.connector import Connector
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 
@@ -21,6 +21,12 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         title="Name",
         description=
         "Name of dataset creator. Used as part of filename when saving.")
+    _source_connector: Optional[Connector] = Field(default=None, exclude=True, description="Do not set by hand")
+    _target_connector: Optional[Connector] = Field(default=None, exclude=True, description="Do not set by hand")
+
+    class Config:
+        arbitrary_types_allowed = True
+        extra = Extra.allow
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -80,7 +86,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
             target_connector = Connector.from_data_dir(
                 self.target_data_dir)
         except FileNotFoundError:
-            target_connector = self.empty_connector_same_format_as(
+            target_connector = self.source_connector.empty_connector_same_format(
                 self.target_data_dir)
         finally:
             self._target_connector = target_connector
