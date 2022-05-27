@@ -160,7 +160,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
                     return_dict = self.downloader_for_single_feature.download(
                         feature_name=feature_name,
-                        feature_geometry=feature_geom,
+                        feature_geom=feature_geom,
                         download_dir=self.download_dir,
                         previously_downloaded_imgs_set=previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
                         **self.kwarg_defaults,

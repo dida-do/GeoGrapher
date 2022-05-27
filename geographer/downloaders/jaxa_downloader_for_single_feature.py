@@ -43,7 +43,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
     def download(
         self,
         feature_name: Union[int, str],
-        feature_geometry: BaseGeometry,
+        feature_geom: BaseGeometry,
         download_dir: Path,
         previously_downloaded_imgs_set: Set[Union[str, int]],
         data_version: str = None,
@@ -92,7 +92,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         jaxa_file_and_folder_names = set()
         if download_mode == 'bboxvertices':
 
-            for (x, y) in feature_geometry.envelope.exterior.coords:
+            for (x, y) in feature_geom.envelope.exterior.coords:
 
                 jaxa_folder_name = '{}/'.format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
@@ -104,7 +104,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
 
         elif download_mode == 'bboxgrid':
 
-            minx, miny, maxx, maxy = feature_geometry.envelope.exterior.bounds
+            minx, miny, maxx, maxy = feature_geom.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
             deltay = math.ceil(maxy - miny)
