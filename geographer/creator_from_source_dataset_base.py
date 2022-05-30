@@ -27,6 +27,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     class Config:
         arbitrary_types_allowed = True
         extra = Extra.allow
+        underscore_attrs_are_private = True
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -55,7 +56,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
     def save(self):
         """Save to update folder in source_data_dir"""
-        json_file_path = self.target_connector.connector_dir / self.name
+        json_file_path = self.target_connector.connector_dir / f"{self.name}.json"
         self._save(json_file_path)
 
     @property
