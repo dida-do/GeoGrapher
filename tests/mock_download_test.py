@@ -11,6 +11,7 @@ dataset of images in a source directory.
 
 import logging
 from pathlib import Path
+import random
 import warnings
 import shutil
 
@@ -18,7 +19,7 @@ import geopandas as gpd
 
 from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
-from geographer.testing.graph_df_compatibility import test_graph_vertices_counts
+from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
 from geographer.testing.mock_download import MockDownloaderForSingleFeature, MockDownloadProcessor
 from tests.utils import get_test_dir
 
@@ -105,6 +106,8 @@ def test_mock_download():
 def test_mock_download_many_features():
     """Test ImgDownloaderForVectorFeatures using mock downloads"""
 
+    random.seed(1983)
+
     download_source_data_dir = get_test_dir() / "mock_download_source"
     source_connector = Connector.from_data_dir(download_source_data_dir)
 
@@ -140,7 +143,7 @@ def test_mock_download_many_features():
     )
 
     assert all(download_processor.source_connector.vector_features.img_count.value_counts() == connector.vector_features.img_count.value_counts())
-    assert test_graph_vertices_counts(connector)
+    assert check_graph_vertices_counts(connector)
 
     # clean up
     shutil.rmtree(data_dir)
