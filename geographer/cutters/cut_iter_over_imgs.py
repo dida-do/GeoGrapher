@@ -92,7 +92,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
             list(self.source_connector.raster_imgs.columns)
         }
 
-        self.target_connector.add_to_vector_features(self.source_connector.vector_features)
+        # Add vector features in source dataset missing from target dataset
+        self._add_missing_vector_features_to_target()
 
         # Iterate over all images in source dataset
         for img_name in tqdm(self.source_connector.raster_imgs.index,

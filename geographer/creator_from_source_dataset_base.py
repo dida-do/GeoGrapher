@@ -92,6 +92,17 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         finally:
             self._target_connector = target_connector
 
+    def _add_missing_vector_features_to_target(self):
+        """
+        Add vector features in source dataset missing from target dataset to target dataset.
+
+        Only checks feature names/indices, not whether entries differ.
+        """
+        source_features = self.source_connector.vector_features
+        target_features = self.target_connector.vector_features
+        features_to_add = source_features[~source_features.index.isin(target_features.index)]
+        self.target_connector.add_to_vector_features(features_to_add)
+
     def _create_target_dirs(self):
         """Create target_data_dir and subdirectories"""
         self.target_connector.connector_dir.mkdir(parents=True, exist_ok=True)
