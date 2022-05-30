@@ -198,7 +198,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             (in image CRS) and CRS of new image
         """
 
-        for (source_images_dir, target_images_dir), count in enumerate(
+        for count, (source_images_dir, target_images_dir) in enumerate(
                 zip(source_connector.image_data_dirs,
                     target_connector.image_data_dirs)):
 
@@ -209,7 +209,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             ) and count > 0:  # count == 0 corresponds to images_dir
                 continue
             else:
-                img_bands = self._get_bands_for_img_type(
+                img_bands = self._get_bands_for_img(
                     bands, source_img_path)
 
                 # write img window to destination img geotif
@@ -251,6 +251,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         with rio.open(src_img_path) as src:
 
             # and destination ...
+            Path(dst_img_path).parent.mkdir(exist_ok=True, parents=True)
             with rio.open(Path(dst_img_path),
                           'w',
                           driver='GTiff',

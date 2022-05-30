@@ -47,8 +47,8 @@ class DSCutterImgsAroundEveryFeature(DSCutterIterOverFeatures):
         """
 
         is_feature_missing_imgs: FeatureFilterPredicate = IsFeatureMissingImgs(
-            target_img_count)
-        random_img_selector: ImgSelector = RandomImgSelector(target_img_count)
+            target_img_count=target_img_count)
+        random_img_selector: ImgSelector = RandomImgSelector(target_img_count=target_img_count)
         small_imgs_around_features_cutter = SingleImgCutterAroundFeature(
             mode=mode,
             new_img_size=new_img_size,
