@@ -102,8 +102,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
             list(self.source_connector.raster_imgs.columns)
         }
 
-        # Add all vector features in source dataset to target dataset
-        self.target_connector.add_to_vector_features(self.source_connector.vector_features)
+        # Add vector features in source dataset missing from target dataset
+        self._add_missing_vector_features_to_target()
 
         features_to_iterate_over = list(
             filter(
