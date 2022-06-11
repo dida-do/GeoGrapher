@@ -45,7 +45,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         super().__init__(**data)
         self._check_crs_agree()
 
-    def cut(self):
+    def cut(self) -> Connector:
         """
         Cut a dataset.
 
@@ -53,15 +53,30 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         """
         return self.create()
 
-    def _create(self):
+    def _create(self) -> None:
         """Create a new dataset. See create_or_update for more details."""
-        return self.create_or_update()
+        self._create_or_update()
 
-    def _update(self) -> Connector:
+    def _update(self) -> None:
         """Update target dataset."""
-        return self.create_or_update()
+        self._create_or_update()
 
     def create_or_update(self) -> Connector:
+        """
+        Create or update target dataset.
+
+        Returns:
+            connector of target dataset
+        """
+        self._create_or_update()
+        self._after_creating_or_updating()
+        self.target_connector.save()
+        return self.target_connector
+
+    def _after_creating_or_updating(self):
+        self.save()
+
+    def _create_or_update(self) -> None:
         """Higher order method to create or update a data set of GeoTiffs by
         iterating over images in the source dataset.
 
@@ -160,12 +175,6 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                 connector=self,
                 img_names=imgs_w_new_features,
             )
-
-        # Finally, save connector and cutter to disk.
-        self.target_connector.save()
-        self.save()
-
-        return self.target_connector
 
     def _check_crs_agree(self):
         """Simple safety check: make sure coordinate systems of source and target agree"""
