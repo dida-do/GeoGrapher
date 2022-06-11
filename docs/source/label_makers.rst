@@ -38,7 +38,7 @@ The classes the ``vector_features`` may belong to for a machine learning task ar
 
 .. todo::
 
-    - consistent naming convention: ``ml_task_feature_classes``, ``task_vector_feature_classes``, ``ml_task_vector_feature_classes``
+    - consistent naming convention: ``task_vector_feature_classes``, ``task_vector_feature_classes``, ``ml_task_vector_feature_classes``
 
 In some applications it is useful to have vector features that belong to a background class different from any of the machine learning task classes. A optional background class can be set in
 - the ``background_class`` argument of the ``Connector`` class's ``from_scratch`` class constructor method
