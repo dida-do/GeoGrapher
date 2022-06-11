@@ -58,11 +58,6 @@ def test_save_load_nested_base_model():
     # load
     s2_downloader_from_json = ImgDownloaderForVectorFeatures.from_json_file(
         s2_downloader_json_path,
-        constructor_symbol_table={
-            'ImgDownloaderForVectorFeatures': ImgDownloaderForVectorFeatures,
-            'SentinelDownloaderForSingleVectorFeature': SentinelDownloaderForSingleVectorFeature,
-            'Sentinel2Processor': Sentinel2Processor
-        }
     )
     # make sure saving and loading again doesn't change anything
     assert s2_downloader_from_json == s2_downloader
