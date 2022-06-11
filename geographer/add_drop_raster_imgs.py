@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -8,7 +8,8 @@ from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 
 from geographer.utils.connector_utils import _check_df_cols_agree
 from geographer.utils.utils import concat_gdfs, deepcopy_gdf
-from geographer.label_makers.label_maker_base import LabelMaker
+if TYPE_CHECKING:
+    from geographer.label_makers.label_maker_base import LabelMaker
 
 log = logging.getLogger(__name__)
 
