@@ -41,7 +41,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
             for class_ in [connector.background_class] if class_ is not None
         }
         segmentation_classes = [
-            class_ for class_ in connector.task_feature_vector_classes
+            class_ for class_ in connector.task_vector_feature_classes
             if class_ not in classes_to_ignore
         ]
 
@@ -142,7 +142,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
         feature_classes_in_vector_features = set(
             connector.vector_features["type"].unique())
         if not feature_classes_in_vector_features <= set(
-                connector.all_feature_classes):
+                connector.all_vector_feature_classes):
             raise ValueError(
-                f"Unrecognized classes in connector.vector_features: {feature_classes_in_vector_features - set(self.all_feature_classes)}"
+                f"Unrecognized classes in connector.vector_features: {feature_classes_in_vector_features - set(self.all_vector_feature_classes)}"
             )

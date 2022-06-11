@@ -67,7 +67,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         existing_images = {
             img_path.name
             for img_path in connector.images_dir.iterdir()
-            if img_path.is_file() and img_path.name in self.raster_imgs.index
+            if img_path.is_file() and img_path.name in connector.raster_imgs.index
         }
 
         if img_names is None:
@@ -75,7 +75,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             existing_labels = {
                 img_path.name
                 for img_path in connector.labels_dir.iterdir()
-                if img_path.is_file() and img_path.name in self.raster_imgs.index
+                if img_path.is_file() and img_path.name in connector.raster_imgs.index
             }
             img_names = existing_images - existing_labels
         elif not set(img_names) <= existing_images:
@@ -84,7 +84,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             )
 
         for img_name in tqdm(img_names, desc='Making labels: '):
-            self._make_label_for_img(connector=self, img_name=img_name)
+            self._make_label_for_img(connector=connector, img_name=img_name)
 
         connector.attrs['label_type'] = self.label_type
         self._after_make_labels(connector)
@@ -109,7 +109,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     @staticmethod
     def _compare_existing_imgs_to_raster_imgs(connector: Connector):
         """Safety check: compare sets of images in images_dir and in
-        self.raster_imgs.
+        connector.raster_imgs.
 
         Raises warnings if there is a discrepancy.
         """
@@ -126,12 +126,12 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
             # ... log a warning
             log.warning(
-                "There images in self.raster_imgs that are not in the images_dir %s.",
+                "There images in connector.raster_imgs that are not in the images_dir %s.",
                 connector.images_dir)
 
         # ... and if it is not a subset, ...
         if not existing_images <= set(connector.raster_imgs.index):
 
             # ... log an warning
-            message = "Warning! There are images in the dataset's images subdirectory that are not in self.raster_imgs."
+            message = "Warning! There are images in the dataset's images subdirectory that are not in connector.raster_imgs."
             log.warning(message)
