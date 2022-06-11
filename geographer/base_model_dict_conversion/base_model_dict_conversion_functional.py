@@ -37,7 +37,7 @@ def get_nested_base_model_dict(base_model_obj_or_dict: Union[BaseModel, dict, An
     }
     tuple_fields_dict = {
         add_escape_str(key): {
-            'constructor_tuple': get_nested_dict(val)
+            'constructor_tuple': get_nested_base_model_dict(val) if isinstance(val, (BaseModel, dict)) else val
         }
         for key, val in dict_items if isinstance(val, tuple)
         and key in dict_.keys()  # to avoid excluded fields for BaseModels
@@ -59,10 +59,7 @@ def get_nested_base_model_dict(base_model_obj_or_dict: Union[BaseModel, dict, An
 
 def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:
     """Return nested dict if obj is a BaseModel or dict else return obj"""
-    if isinstance(obj, (BaseModel, dict)):
-        return get_nested_base_model_dict(obj)
-    else:
-        return obj
+    
 
 
 def eval_nested_base_model_dict(
