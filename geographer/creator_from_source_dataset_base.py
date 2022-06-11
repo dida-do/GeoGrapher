@@ -48,11 +48,15 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         """Create a new dataset by cutting the source dataset"""
         self._create(*args, **kwargs)
         self._after_creating_or_updating()
+        self.target_connector.save()
+        return self.target_connector
 
     def update(self, *args, **kwargs) -> Connector:
         """Update the target dataset from the source dataset"""
         self._update(*args, **kwargs)
         self._after_creating_or_updating()
+        self.target_connector.save()
+        return self.target_connector
 
     def save(self):
         """Save to update folder in source_data_dir"""
