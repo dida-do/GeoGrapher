@@ -9,6 +9,7 @@ TODO: write more assert statements!
 
 from pathlib import Path
 import shutil
+from typing import List
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from geographer.connector import Connector
@@ -18,14 +19,15 @@ from geographer.cutters.feature_filter_predicates import IsFeatureMissingImgs
 from geographer.cutters.img_selectors import RandomImgSelector
 from geographer.cutters.single_img_cutter_around_feature import SingleImgCutterAroundFeature
 from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
+from tests.cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
 from tests.utils import get_test_dir
 
 IMG_SIZE = 128
 
 def test_imgs_around_every_feature():
 
-    source_data_dir=get_test_dir() / 'cut_source'
-    target_data_dir=get_test_dir() / 'temp/cut_every_img_to_grid'
+    source_data_dir=get_test_dir() / CUT_SOURCE_DATA_DIR_NAME
+    target_data_dir=get_test_dir() / 'temp/imgs_around_every_feature'
     shutil.rmtree(target_data_dir, ignore_errors=True)
 
     # TODO: remove
@@ -118,12 +120,10 @@ def test_imgs_around_every_feature():
 
     # make sure tempelhofer feld is contained in union of images intersecting it
     tempelhofer_feld: Polygon = target_connector.vector_features.loc["berlin_tempelhofer_feld"].geometry
-    imgs_intersecting_tempelhofer_feld = target_connector.imgs_intersecting_vector_feature("berlin_tempelhofer_feld")
-    union_imgs: Polygon = unary_union(target_connector.raster_imgs.geometry.loc[imgs_intersecting_tempelhofer_feld])
+    imgs_intersecting_tempelhofer_feld: List[str] = target_connector.imgs_intersecting_vector_feature("berlin_tempelhofer_feld")
+    bboxes = target_connector.raster_imgs.geometry.loc[imgs_intersecting_tempelhofer_feld].tolist()
+    union_imgs: Polygon = unary_union(bboxes)
     assert tempelhofer_feld.within (union_imgs)
-
-    # clean up
-    shutil.rmtree(target_data_dir)
 
 if __name__ == "__main__":
     test_imgs_around_every_feature()
