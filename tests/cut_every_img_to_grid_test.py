@@ -22,12 +22,13 @@ from geographer.utils.utils import create_kml_all_geodataframes, deepcopy_gdf
 from tests.utils import get_test_dir
 
 CUT_INTO = 60 # 36 or 30?
+CUT_SOURCE_DATA_DIR_NAME = 'cut_source'
 
 def test_cut_every_img_to_grid():
 
     assert 10980 % CUT_INTO == 0
 
-    source_data_dir=get_test_dir() / 'cut_source'
+    source_data_dir=get_test_dir() / CUT_SOURCE_DATA_DIR_NAME
     target_data_dir=get_test_dir() / 'temp/cut_every_img_to_grid'
     shutil.rmtree(target_data_dir, ignore_errors=True)
 
@@ -59,11 +60,6 @@ def test_cut_every_img_to_grid():
     intersecting_geoms = target_connector.raster_imgs.loc[target_connector.imgs_intersecting_vector_feature("berlin_tempelhofer_feld")].geometry.tolist()
     assert tempelhofer_feld_geom.within(unary_union(intersecting_geoms))
 
-    # # TODO: remove
-    # from pprint import pprint
-    # pprint(target_connector._graph._graph_dict["vector_features"])
-    # create_kml_all_geodataframes(target_data_dir, Path.home() / "target_dataset.geojson")
-
     # load and recut (shouldn't do anything)
     raster_imgs_before_cutting = deepcopy_gdf(target_connector.raster_imgs)
     cutter = DSCutterIterOverImgs.from_json_file(
@@ -71,9 +67,6 @@ def test_cut_every_img_to_grid():
     cutter.cut()
 
     assert (target_connector.raster_imgs == raster_imgs_before_cutting).all().all()
-
-    # clean up
-    shutil.rmtree(target_data_dir)
 
 if __name__ == "__main__":
     test_cut_every_img_to_grid()
