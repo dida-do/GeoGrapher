@@ -52,7 +52,7 @@ Vector Feature Class Types
 
 Currently, GeoGrapher's LabelMakers support two formats (*vector feature class types*) in which classes can be assigned to vector features:
 - *categorical*: The class information is contained in a ``'type'`` column in ``vector_features``
-- *soft-categorical*: Probabilistic/soft class information is contained in ``prob_seg_class_<class_name>`` columns (one for each class) containing the probabilities that the vector features belong to a given class.
+- *soft-categorical*: Probabilistic/soft class information is contained in ``prob_of_class_<class_name>`` columns (one for each class) containing the probabilities that the vector features belong to a given class.
 
 Making Segmentation Labels
 ++++++++++++++++++++++++++
@@ -89,7 +89,7 @@ Creating soft-categorical segmentation labels::
 
 .. note::
 
-    To use a ``SegLabelMakerSoftCategorical`` with a connector, there needs to be a ``prob_seg_class_<segmentation_class_name>`` column in the connector's ``vector_features`` GeoDataFrame for each segmentation class in ``connector.ml_task_classes`` containing the probability that the features belong to the class.
+    To use a ``SegLabelMakerSoftCategorical`` with a connector, there needs to be a ``prob_of_class_<segmentation_class_name>`` column in the connector's ``vector_features`` GeoDataFrame for each segmentation class in ``connector.ml_task_classes`` containing the probability that the features belong to the class.
 
 Other Vision Tasks or Label Types
 +++++++++++++++++++++++++++++++++
