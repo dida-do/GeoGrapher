@@ -24,11 +24,13 @@ from geographer.testing.mock_download import MockDownloaderForSingleFeature, Moc
 from tests.utils import get_test_dir
 
 
+MOCK_DOWNLOAD_SOURCE_DATA_DIR = "mock_download_source"
+
 def test_mock_download():
     """Test mock download function"""
     test_dir = get_test_dir()
     data_dir = test_dir / "temp/mock_download_few_features"
-    download_source_data_dir = test_dir / "mock_download_source"
+    download_source_data_dir = test_dir / MOCK_DOWNLOAD_SOURCE_DATA_DIR
 
     source_connector = Connector.from_scratch(data_dir=download_source_data_dir)
     connector = Connector.from_scratch(data_dir=data_dir ,task_feature_classes=['object'])
@@ -106,9 +108,9 @@ def test_mock_download():
 def test_mock_download_many_features():
     """Test ImgDownloaderForVectorFeatures using mock downloads"""
 
-    random.seed(1983)
+    random.seed(74) #74
 
-    download_source_data_dir = get_test_dir() / "mock_download_source"
+    download_source_data_dir = get_test_dir() / MOCK_DOWNLOAD_SOURCE_DATA_DIR
     source_connector = Connector.from_data_dir(download_source_data_dir)
 
     data_dir = get_test_dir() / "temp/mock_download"
@@ -133,8 +135,8 @@ def test_mock_download_many_features():
     assert connector.vector_features.img_count.value_counts().to_dict() == \
         {
             1: 247,
-            2: 197, # lots of overlapping images
-            3: 90,
+            2: 227, # lots of overlapping images
+            3: 60,
         }
 
     downloader.download(
@@ -144,9 +146,6 @@ def test_mock_download_many_features():
 
     assert all(download_processor.source_connector.vector_features.img_count.value_counts() == connector.vector_features.img_count.value_counts())
     assert check_graph_vertices_counts(connector)
-
-    # clean up
-    shutil.rmtree(data_dir)
 
 
 if __name__ == "__main__":
