@@ -13,13 +13,13 @@ def convert_vector_features_soft_cat_to_cat(
     # make 'type' column
     new_vector_features['type'] = new_vector_features[[
         col for col in new_vector_features.columns
-        if col[:15] == 'prob_seg_class_'
+        if col[:15] == 'prob_of_class_'
     ]].idxmax(axis='columns').apply(lambda x: x[15:])
 
-    # drop 'prob_seg_class_[seg_class]' cols
+    # drop 'prob_of_class_[seg_class]' cols
     new_vector_features.drop([
         col
-        for col in new_vector_features.columns if col[:15] == 'prob_seg_class_'
+        for col in new_vector_features.columns if col[:15] == 'prob_of_class_'
     ],
                              axis='columns',
                              inplace=True)

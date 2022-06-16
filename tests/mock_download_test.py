@@ -11,6 +11,7 @@ dataset of images in a source directory.
 
 import logging
 from pathlib import Path
+import random
 import warnings
 import shutil
 
@@ -18,16 +19,18 @@ import geopandas as gpd
 
 from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
-from geographer.testing.graph_df_compatibility import test_graph_vertices_counts
+from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
 from geographer.testing.mock_download import MockDownloaderForSingleFeature, MockDownloadProcessor
 from tests.utils import get_test_dir
 
+
+MOCK_DOWNLOAD_SOURCE_DATA_DIR = "mock_download_source"
 
 def test_mock_download():
     """Test mock download function"""
     test_dir = get_test_dir()
     data_dir = test_dir / "temp/mock_download_few_features"
-    download_source_data_dir = test_dir / "mock_download_source"
+    download_source_data_dir = test_dir / MOCK_DOWNLOAD_SOURCE_DATA_DIR
 
     source_connector = Connector.from_scratch(data_dir=download_source_data_dir)
     connector = Connector.from_scratch(data_dir=data_dir ,task_feature_classes=['object'])
@@ -105,7 +108,9 @@ def test_mock_download():
 def test_mock_download_many_features():
     """Test ImgDownloaderForVectorFeatures using mock downloads"""
 
-    download_source_data_dir = get_test_dir() / "mock_download_source"
+    random.seed(74) #74
+
+    download_source_data_dir = get_test_dir() / MOCK_DOWNLOAD_SOURCE_DATA_DIR
     source_connector = Connector.from_data_dir(download_source_data_dir)
 
     data_dir = get_test_dir() / "temp/mock_download"
@@ -130,8 +135,8 @@ def test_mock_download_many_features():
     assert connector.vector_features.img_count.value_counts().to_dict() == \
         {
             1: 247,
-            2: 197, # lots of overlapping images
-            3: 90,
+            2: 227, # lots of overlapping images
+            3: 60,
         }
 
     downloader.download(
@@ -140,10 +145,7 @@ def test_mock_download_many_features():
     )
 
     assert all(download_processor.source_connector.vector_features.img_count.value_counts() == connector.vector_features.img_count.value_counts())
-    assert test_graph_vertices_counts(connector)
-
-    # clean up
-    shutil.rmtree(data_dir)
+    assert check_graph_vertices_counts(connector)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from geographer.creator_from_source_dataset_base import DSCreatorFromSource
 from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 from geographer.label_makers.label_type_conversion_utils import \
-    convert_geoms_df_soft_cat_to_cat
+    convert_vector_features_soft_cat_to_cat
 from geographer import Connector
 
 log = logging.Logger(__name__)
@@ -37,7 +37,7 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
                 self.target_assoc.geoms_df.index)
 
         # add geometriess to target dataset
-        source_geoms_df_converted_to_soft_categorical_format = convert_geoms_df_soft_cat_to_cat(
+        source_geoms_df_converted_to_soft_categorical_format = convert_vector_features_soft_cat_to_cat(
             self.source_assoc.geoms_df)
         self.target_assoc.add_to_geoms_df(
             source_geoms_df_converted_to_soft_categorical_format)

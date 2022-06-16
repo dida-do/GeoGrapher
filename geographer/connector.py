@@ -137,7 +137,7 @@ class Connector(
 
         if task_feature_classes is None:
             task_feature_classes = ["object"]
-        self._check_no_non_ml_task_geom_classes_are_task_feature_classes(
+        self._check_no_non_task_feature_classes_are_task_classes(
             task_feature_classes=task_feature_classes, background_class=background_class, **kwargs
         )
 
@@ -610,7 +610,7 @@ class Connector(
 
         return serializable_dict
 
-    def _check_no_non_ml_task_geom_classes_are_task_feature_classes(
+    def _check_no_non_task_feature_classes_are_task_classes(
         self,
         task_feature_classes: List[str],
         background_class: str, **kwargs
