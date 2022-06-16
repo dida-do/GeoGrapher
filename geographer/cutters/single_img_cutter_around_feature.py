@@ -156,7 +156,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         Returns:
             List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
         """
-        if 'feature_name' not in kwargs['feature_name']:
+        if 'feature_name' not in kwargs:
             raise ValueError("Need vector feature name")
         feature_name = kwargs['feature_name']
 

@@ -1,10 +1,18 @@
-from abc import abstractmethod
+"""Contains mix-in class to save and load BaseModels"""
+
+from abc import abstractmethod, ABC
 from typing import Any, Dict, Optional, Union
 from pathlib import Path
 import json
-
+from inspect import isabstract, isclass, getmro
+from pkgutil import walk_packages
+from pathlib import Path
+import logging
+from importlib import import_module
+from pydantic import BaseModel
 from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import eval_nested_base_model_dict, get_nested_base_model_dict
 
+logger = logging.getLogger(__name__)
 
 class SaveAndLoadBaseModelMixIn:
     """
@@ -33,6 +41,32 @@ class SaveAndLoadBaseModelMixIn:
         constructor_symbol_table: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """Load and return saved BaseModel"""
+
+        if constructor_symbol_table is None:
+            constructor_symbol_table = {}
+
+        ### add all classes in geographer inherited from BaseModel to constructor symbol table
+        geographer_dir = Path(__file__).resolve().parent.parent
+        for py_file_path in geographer_dir.rglob("*.py"):
+            py_file_path_no_suffix = str(py_file_path.with_suffix(""))
+            idx = py_file_path_no_suffix.rfind("geographer")
+            module_import_str = ".".join(Path(py_file_path_no_suffix[idx:]).parts)
+
+            # import the module and iterate through its attributes
+            try:
+                module = import_module(module_import_str)
+                for attribute_name in dir(module):
+                    attribute = getattr(module, attribute_name)
+
+                    if isclass(attribute)\
+                        and attribute_name not in constructor_symbol_table\
+                        and BaseModel in getmro(attribute)\
+                        and not isabstract(attribute):
+                        constructor_symbol_table[attribute_name] = attribute
+            except:
+                logger.debug(f"Error when importing {module_import_str}")
+
+        ### open json and load
         with open(json_file_path) as file:
             saved_base_model_dict = json.load(file)
             loaded_base_model = eval_nested_base_model_dict(

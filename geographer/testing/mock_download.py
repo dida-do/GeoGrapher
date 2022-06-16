@@ -21,8 +21,6 @@ from geographer.errors import ImgAlreadyExistsError, ImgDownloadError, NoImgsFor
 
 
 
-random.seed(1983)
-
 
 class MockDownloadProcessor(ImgDownloadProcessor):
     """

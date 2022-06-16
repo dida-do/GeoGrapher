@@ -1,15 +1,18 @@
 """Test compatibility of raster_imgs, vector_features, and graph"""
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import logging
-
 import pandas as pd
+
 from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
+if TYPE_CHECKING:
+    from geographer.connector import Connector
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def test_graph_vertices_counts(connector):
+def check_graph_vertices_counts(connector: Connector):
     """Test connector invariant.
 
     Tests whether the set of vertices of the graph corresponds with the

@@ -89,7 +89,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                     start_band = 1 if not self.add_background_band else 2
 
                     for count, seg_class in enumerate(
-                            connector.segmentation_classes, start=start_band):
+                            connector.task_vector_feature_classes, start=start_band):
 
                         # To do that, first find (the df of) the geoms intersecting the image ...
                         features_intersecting_img_df = connector.vector_features.loc[
@@ -111,7 +111,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                         # Extract the class probabilities ...
                         class_probabilities = list(
                             features_intersecting_img_df[
-                                f"prob_seg_class_{seg_class}"])
+                                f"prob_of_class_{seg_class}"])
 
                         # .. and combine with the geometries
                         # to a list of (geometry, value) pairs.
@@ -143,7 +143,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                         non_background_band_indices = list(
                             range(start_band,
-                                  2 + len(connector.segmentation_classes)))
+                                  2 + len(connector.task_vector_feature_classes)))
 
                         # The probability of a pixel belonging to
                         # the background is the complement of it
@@ -161,23 +161,23 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         if self.add_background_band:
 
             # ... add a band for the implicit background segmentation class, ...
-            label_bands_count = 1 + len(connector.segmentation_classes)
+            label_bands_count = 1 + len(connector.task_vector_feature_classes)
 
         # ... if the background *is* included, ...
         elif not self.add_background_band:
 
             # ... don't.
-            label_bands_count = len(connector.segmentation_classes)
+            label_bands_count = len(connector.task_vector_feature_classes)
 
         return label_bands_count
 
     def _run_safety_checks(self, connector: Connector):
-        """Check existence of 'prob_seg_class_<class name>' columns in connector.vector_features."""
+        """Check existence of 'prob_of_class_<class name>' columns in connector.vector_features."""
 
         # check required columns exist
         required_cols = {
-            f"prob_seg_class_{class_}"
-            for class_ in connector.all_classes
+            f"prob_of_class_{class_}"
+            for class_ in connector.all_vector_feature_classes
         }
         if not set(required_cols) <= set(connector.vector_features.columns):
             missing_cols = set(required_cols) - set(
@@ -188,13 +188,13 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # check no other columns will be mistaken for
         feature_classes_in_vector_features = {
-            col_name[15:]
+            col_name[1+len("prob_of_class"):]
             for col_name in connector.vector_features.columns
-            if col_name.startswith("prob_seg_class_")
+            if col_name.startswith("prob_of_class_")
         }
         if not feature_classes_in_vector_features <= set(
-                connector.all_classes):
+                connector.all_vector_feature_classes):
             log.warning(
-                "Ignoring columns: %s. The corresponding classes are not in connector.all_segmentation_classes",
+                "Ignoring columns: %s. The corresponding classes are not in connector.all_vector_feature_classes",
                 feature_classes_in_vector_features -
-                set(connector.all_classes))
+                set(connector.all_vector_feature_classes))

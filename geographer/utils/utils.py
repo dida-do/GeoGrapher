@@ -8,8 +8,10 @@ round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely
 import copy
 import logging
 import os
+from pathlib import Path
 from typing import Any, Callable, List, Union
 
+import fiona
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -22,6 +24,9 @@ from shapely.geometry import (GeometryCollection, LinearRing, LineString,
                               MultiLineString, MultiPoint, MultiPolygon, Point,
                               Polygon)
 from shapely.ops import transform
+
+from geographer.global_constants import RASTER_IMGS_INDEX_NAME, VECTOR_FEATURES_INDEX_NAME
+gpd.io.file.fiona.drvsupport.supported_drivers['KML'] = 'rw'
 
 GEOMS_UNION = Union[Point, Polygon, MultiPoint, MultiPolygon, MultiLineString,
                     LinearRing, LineString, GeometryCollection]
@@ -156,3 +161,31 @@ def concat_gdfs(objs: List[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
 
 def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
     return {key: fun(val) for key, val in dict_arg.items()}
+
+def create_kml_all_geodataframes(data_dir: Union[Path, str], out_path: Union[Path, str]) -> None:
+    """
+    Create KML file from a dataset's raster_imgs and vector_features.
+
+    Can be used to visualize data in Google Earth Pro.
+    """
+    data_dir = Path(data_dir)
+    out_path = Path(out_path)
+    if not out_path.suffix in {".kml", ".KML"}:
+        raise ValueError("out_path should have .kml suffix")
+
+    raster_imgs_path = data_dir / "connector/raster_imgs.geojson"
+    vector_features_path = data_dir / "connector/vector_features.geojson"
+
+    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[["geometry", RASTER_IMGS_INDEX_NAME]]
+    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[["geometry", VECTOR_FEATURES_INDEX_NAME]]
+
+    raster_imgs["Description"] = "image"
+    raster_imgs["Name"] = raster_imgs[RASTER_IMGS_INDEX_NAME]
+    vector_features["Description"] = "vector feature"
+    vector_features["Name"] = vector_features[VECTOR_FEATURES_INDEX_NAME]
+
+    combined = concat_gdfs([raster_imgs, vector_features])
+
+    with fiona.drivers():
+        combined.to_file(out_path, driver="KML")
+
