@@ -1,6 +1,5 @@
 # TODO: rename MOCK_DOWNLOAD_SOURCE_DATA_DIR?
 
-from ftplib import all_errors
 from functools import reduce
 import os
 import shutil
@@ -8,7 +7,7 @@ from typing import List
 import pandas as pd
 from geopandas import GeoDataFrame
 from geographer import Connector
-from geographer.converters.combine_remove_seg_classes import DSConverterCombineRemoveClasses
+from geographer.converters import DSConverterCombineRemoveClasses
 from geographer.label_makers import SegLabelMakerCategorical, SegLabelMakerSoftCategorical
 from geographer.utils.utils import deepcopy_gdf
 from tests.mock_download_test import MOCK_DOWNLOAD_SOURCE_DATA_DIR
