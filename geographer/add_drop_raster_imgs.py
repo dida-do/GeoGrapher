@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -8,7 +8,8 @@ from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 
 from geographer.utils.connector_utils import _check_df_cols_agree
 from geographer.utils.utils import concat_gdfs, deepcopy_gdf
-from geographer.label_makers.label_maker_base import LabelMaker
+if TYPE_CHECKING:
+    from geographer.label_makers.label_maker_base import LabelMaker
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +18,10 @@ log = logging.getLogger(__name__)
 class AddDropRasterImgsMixIn:
     """Mix-in that implements methods to add and drop raster images."""
 
-    def add_to_raster_imgs(self, new_raster_imgs: GeoDataFrame):
+    def add_to_raster_imgs(
+        self,
+        new_raster_imgs: GeoDataFrame,
+        label_maker: Optional[LabelMaker] = None):
         """Add images to connector's ``raster_imgs`` attribute.
 
         Adds the new_raster_imgs to the connector's :ref:`raster_imgs` keeping track of
@@ -25,6 +29,7 @@ class AddDropRasterImgsMixIn:
 
         Args:
             new_raster_imgs (gdf.GeoDataFrame): GeoDataFrame of image information conforming to the connector's raster_imgs format
+            label_maker (LabelMaker, optional): If given generate labels for new images.
         """
 
         new_raster_imgs = deepcopy_gdf(
@@ -73,6 +78,11 @@ class AddDropRasterImgsMixIn:
         # append new_raster_imgs
         self.raster_imgs = concat_gdfs([self.raster_imgs, new_raster_imgs])
         #self.raster_imgs = self.raster_imgs.convert_dtypes()
+
+        if label_maker is not None:
+            label_maker.make_labels(
+                connector=self,
+                img_names=new_raster_imgs.index.tolist())
 
     def drop_raster_imgs(
         self,

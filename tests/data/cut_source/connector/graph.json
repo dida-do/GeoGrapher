@@ -1,0 +1,34 @@
+{
+    "vector_features": {
+        "berlin_brandenburg_gate": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        },
+        "berlin_reichstag": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        },
+        "lisbon_praca_do_comercio": {},
+        "lisbon_castelo_de_sao_jorge": {},
+        "berlin_platz_des_18_maerz": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        },
+        "berlin_tiergarten": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        },
+        "berlin_brandenburg_gate_square": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        },
+        "berlin_tempelhofer_feld": {
+            "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
+        }
+    },
+    "raster_imgs": {
+        "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": {
+            "berlin_reichstag": "contains",
+            "berlin_brandenburg_gate": "contains",
+            "berlin_platz_des_18_maerz": "contains",
+            "berlin_tiergarten": "contains",
+            "berlin_brandenburg_gate_square": "contains",
+            "berlin_tempelhofer_feld": "contains"
+        }
+    }
+}

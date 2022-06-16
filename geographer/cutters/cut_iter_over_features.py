@@ -69,15 +69,29 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         """
         return self.create()
 
-    def _create(self) -> Connector:
+    def _create(self) -> None:
         """Create a new dataset. See create_or_update for more details."""
-        return self.create_or_update()
+        self._create_or_update()
 
-    def _update_from_source(self) -> Connector:
+    def _update(self) -> None:
         """Update target dataset. See create_or_update for more details."""
-        return self.create_or_update()
+        self._create_or_update()
+
+    def _after_creating_or_updating(self):
+        self.save()
 
     def create_or_update(self) -> Connector:
+        """
+        Create or update target dataset.
+
+        Returns:
+            connector of target dataset
+        """
+        self._create_or_update()
+        self.save()
+        return self.target_connector
+
+    def _create_or_update(self) -> None:
         """Higher order general purpose method to create or update a dataset of
         GeoTiffs by iterating over vector features.
 
@@ -102,8 +116,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
             list(self.source_connector.raster_imgs.columns)
         }
 
-        # Add all vector features in source dataset to target dataset
-        self.target_connector.add_to_vector_features(self.source_connector.vector_features)
+        # Add vector features in source dataset missing from target dataset
+        self._add_missing_vector_features_to_target()
 
         features_to_iterate_over = list(
             filter(
@@ -223,8 +237,6 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
 
         # Finally, save connector to disk.
         self.target_connector.save()
-
-        return self.target_connector
 
     def _filter_out_previously_cut_imgs(
             self, feature_name: Union[str, int],
