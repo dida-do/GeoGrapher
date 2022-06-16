@@ -19,7 +19,7 @@ def test_label_maker_categorical_seg():
 def test_label_maker_soft_categorical_seg():
     """Test SegLabelMakerCategorical"""
 
-    data_dir = get_test_dir() / 'cut_source'
+    data_dir = get_test_dir() / "cut_source"
     connector = Connector.from_data_dir(data_dir)
     class_names = connector.all_vector_feature_classes
     assert len(class_names) == 1
