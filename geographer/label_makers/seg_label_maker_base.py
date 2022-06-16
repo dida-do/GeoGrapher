@@ -33,7 +33,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
     @property
     @abstractmethod
-    def label_type(self):
+    def label_type(self) -> str:
         """Return label type"""
         pass
 
@@ -60,6 +60,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         # safety checks
         self._run_safety_checks(connector)
+        self._set_label_type_in_connector_attrs(connector)
         self._compare_existing_imgs_to_raster_imgs(connector)
 
         connector.labels_dir.mkdir(parents=True, exist_ok=True)
@@ -105,6 +106,9 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         for img_name in tqdm(img_names, desc='Deleting labels: '):
             (connector.labels_dir / img_name).unlink(missing_ok=True)
+
+    def _set_label_type_in_connector_attrs(self, connector: Connector):
+        connector.attrs["label_type"] = self.label_type
 
     @staticmethod
     def _compare_existing_imgs_to_raster_imgs(connector: Connector):
