@@ -3,6 +3,5 @@
         "object"
     ],
     "background_class": null,
-    "crs_epsg_code": 4326,
-    "label_type": "soft-categorical"
+    "crs_epsg_code": 4326
 }
