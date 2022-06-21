@@ -1,5 +1,5 @@
-﻿rs\_tools.cutters.DSCutterIterOverImgs
-======================================
+﻿geographer.cutters.DSCutterIterOverImgs
+=======================================
 
 .. currentmodule:: geographer.cutters
 
