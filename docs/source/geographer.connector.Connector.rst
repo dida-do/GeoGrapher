@@ -1,5 +1,5 @@
-﻿rs\_tools.connector.Connector
-=============================
+﻿geographer.connector.Connector
+==============================
 
 .. currentmodule:: geographer.connector
 
