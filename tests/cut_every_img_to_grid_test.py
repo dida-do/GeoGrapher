@@ -2,10 +2,10 @@
 TODO: write more assert statements!
 - picture resulting grid, check graph is correct, write corresponding assert statement for the graph
 - test update
-DONE - check union / intersections
 - bands
-- tempelhof contained in union of imgs intersecting it
-
+- AOI - 1 is slightly off: CUT_INTO=2: 0.05, CUT_INTO=4: 0.026, CUT_INTO=8: ...
+    this is due to funny rounding when bboxes are computed? there is some overlap...
+    not sure how to fix this.
 """
 
 from pathlib import Path
@@ -21,7 +21,7 @@ from geographer.testing.graph_df_compatibility import check_graph_vertices_count
 from geographer.utils.utils import create_kml_all_geodataframes, deepcopy_gdf
 from tests.utils import get_test_dir
 
-CUT_INTO = 60 # 36 or 30?
+CUT_INTO = 60 #
 CUT_SOURCE_DATA_DIR_NAME = 'cut_source'
 
 def test_cut_every_img_to_grid():
