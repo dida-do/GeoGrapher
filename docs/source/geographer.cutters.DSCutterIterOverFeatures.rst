@@ -1,5 +1,5 @@
-﻿rs\_tools.cutters.DSCutterIterOverFeatures
-==========================================
+﻿geographer.cutters.DSCutterIterOverFeatures
+===========================================
 
 .. currentmodule:: geographer.cutters
 
