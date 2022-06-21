@@ -28,7 +28,7 @@ def create_dummy_imgs(
         img_names = connector.raster_imgs.index.tolist()
 
     for img_name, bbox_geom, epsg_code in tqdm(
-        list(connector.raster_imgs[["geometry", "orig_crs_epsg_code"]].loc[img_names].itertuples()),
+            list(connector.raster_imgs[["geometry", "orig_crs_epsg_code"]].loc[img_names].itertuples()),
         desc="Creating dummy images"):
 
         img_array = np.stack([np.ones((img_size, img_size), dtype=np.uint8) * n for n in range(3)])
