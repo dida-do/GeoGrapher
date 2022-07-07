@@ -1,6 +1,6 @@
 import pytest
 import shutil
-from geographer.connector import Connector
+from geographer import Connector
 from tests.cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
 from tests.utils import create_dummy_imgs, delete_dummy_images, get_test_dir
 
