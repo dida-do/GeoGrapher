@@ -20,6 +20,7 @@ Welcome to GeoGrapher's documentation!
    basic_cutting
    advanced_cutting
    conversion
+   cluster_rasters
    glossary
    api
 
