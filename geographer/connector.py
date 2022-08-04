@@ -31,20 +31,21 @@ from geographer.utils.connector_utils import (empty_gdf,
                                             empty_gdf_same_format_as,
                                             empty_graph)
 
-INFERRED_PATH_ATTR_FILENAMES = {  # attribute self.key will be self.connector_dir / val
+DEFAULT_CONNECTOR_DIR_NAME = "connector"
+DEFAULT_IMAGES_DIR_NAME = "images"
+DEFAULT_LABELS_DIR_NAME = "labels"
+INFERRED_PATH_ATTR_FILENAMES = {
     "_vector_features_path": "vector_features.geojson",
     "_raster_imgs_path": "raster_imgs.geojson",
     "attrs_path": "attrs.json",
     "_graph_path": "graph.json",
 }
-DEFAULT_CONNECTOR_DIR_NAME = "connector"
-DEFAULT_IMAGES_DIR_NAME = "images"
-DEFAULT_LABELS_DIR_NAME = "labels"
+"""attribute self.key will be self.connector_dir / val"""
+
 
 ConnectorType = TypeVar("ConnectorType", bound="Connector")
 
 log = logging.getLogger(__name__)
-# log.setLevel(logging.DEBUG)
 
 
 class Connector(
