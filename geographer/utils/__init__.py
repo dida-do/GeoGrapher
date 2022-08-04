@@ -8,4 +8,3 @@ of GeoTiffs.
 from geographer.utils.raster_imgs_from_tif_dir import (
     default_read_in_img_for_img_df_function, raster_imgs_from_imgs_dir)
 from geographer.utils.utils import deepcopy_gdf, transform_shapely_geometry
-from geographer.utils.cluster_rasters import get_raster_clusters
