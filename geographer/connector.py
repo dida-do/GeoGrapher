@@ -359,6 +359,13 @@ class Connector(
         """All directories containing image data (including e.g. segmentation labels)"""
         return self._image_data_dirs
 
+    @property
+    def graph_str(self) -> str:
+        """String representation of the connector's internal graph.
+
+        Note that the representation might change if the internal representation changes."""
+        return str(self._graph)
+
     def save(self):
         """Save connector to disk."""
 
@@ -442,10 +449,6 @@ class Connector(
         )
 
         return new_empty_connector
-
-    def print_graph(self):
-        """Print the connector's internal graph."""
-        print(self._graph)
 
     def _get_empty_df(self, df_name: str) -> GeoDataFrame:
 
