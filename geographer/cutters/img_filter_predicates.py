@@ -13,8 +13,7 @@ from geographer.connector import Connector
 
 
 class ImgFilterPredicate(ABC, Callable, BaseModel):
-    """Abstract base class for predicates used to filter images in cutting
-    functions.
+    """ABC for predicates used to filter images in cutting functions.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.
