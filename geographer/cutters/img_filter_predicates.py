@@ -43,10 +43,10 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
         """
         raise NotImplementedError
 
-    def save(self, save_dir: Path) -> None:
-        """Save the predicate to a given directory."""
-        save_dir.mkdir(exist_ok=True)
-        with open(save_dir, 'w') as f:
+    def save(self, json_path: Path) -> None:
+        """Save the predicate."""
+        json_path.parent.mkdir(exist_ok=True)
+        with open(json_path, 'w') as f:
             f.write(self.json(indent=2))
 
 class AlwaysTrue(ImgFilterPredicate):
