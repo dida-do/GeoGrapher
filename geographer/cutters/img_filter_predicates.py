@@ -34,6 +34,7 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
             target_connector (Connector): connector of target dataset.
             new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images 
             source_connector (Connector): connector of source dataset that new images are being cut out from
+            cut_imgs (List[str]): list of (names of) cut images
 
         Returns:
             bool: True should mean image is to be kept, False that it is to be filtered out
