@@ -99,16 +99,13 @@ class Connector(
             We advise you to use the following more convenient constructor methods to
             initialize a ``Connector`` instead of using ``__init__`` directly.
 
-            To initialize a new connector use:
+            To initialize a new connector use
                 - the :meth:`from_scratch` class method (:ref:`see here for an example <from_scratch>`), or
                 - the :meth:`empty_connector_same_format_as` method
 
-            To initialize an existing connector use:
+            To initialize an existing connector use
                 - the :meth:`from_data_dir` class method (:ref:`see here for an example <init_existing_connector>`), or
                 - the :meth:`from_paths` class method (:ref:`see here for an example <init_existing_connector>`)
-
-        Todo:
-            Why is "To initialize a new connector use: [...]" etc. above in **bold**?
 
         Caution:
             Note that many methods that create new dataset from existing ones
