@@ -33,10 +33,7 @@ class ImgSelector(Callable, BaseModel):
         cut_imgs: Dict[str, List[str]],
         **kwargs: Any,
     ) -> List[str]:
-        """Override to subclass. If img_names_list is empty an empty list
-        should be returned.
-
-        The new_vector_features and new_graph arguments contain all the information available to decide which images to select. They should not be modified by this method.
+        """Select rasters to create cutouts from from a list of rasters.
 
         Args:
             img_names_list (List[str]): list of images to be selected from
@@ -49,6 +46,11 @@ class ImgSelector(Callable, BaseModel):
             List[str]: sublist of img_names_list
 
         Note:
+            - Override to subclass. If img_names_list is empty an empty list
+            should be returned.
+
+            - The new_vector_features and new_graph arguments contain all the information available to decide which images to select. They should not be modified by this method.
+
             It should be possible for the returned sublist to depend on all the information in the source and target connectors.
             The ImgSelector used by the cutting function create_or_update_tif_dataset_from_iter_over_features
             in geographer.cut.cut_iter_over_features. This function does not concatenate the information about the new images
