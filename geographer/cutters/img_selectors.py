@@ -76,6 +76,8 @@ class RandomImgSelector(ImgSelector):
         **kwargs: Any,
     ) -> List[str]:
         """
+        Randomly select images from a list of images.
+
         Select target_img_count - #{img_count of vector feature in target_connector} images (or if not possible less) from img_names_list.
         """
 
