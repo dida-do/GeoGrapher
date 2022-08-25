@@ -52,7 +52,9 @@ class ImgSelector(Callable, BaseModel):
             - Override to subclass. If img_names_list is empty an empty list
             should be returned.
 
-            - The new_vector_features and new_graph arguments contain all the information available to decide which images to select. They should not be modified by this method.
+            - The new_vector_features and new_graph arguments contain all the information
+            available to decide which images to select. They should not be modified by
+            this method.
 
             It should be possible for the returned sublist to depend on all the information in the source and target connectors.
             The ImgSelector used by the cutting function create_or_update_tif_dataset_from_iter_over_features
