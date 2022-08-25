@@ -1,4 +1,4 @@
-.PHONY: help env env-remove install format lint test \
+.PHONY: help env env-remove install install-dev format lint test \
 	docs-sphinx
 
 PROJECTNAME=geographer
@@ -23,6 +23,10 @@ env-remove:
 install:
 	pip install --upgrade pip wheel pip-tools &&\
 	python -m pip install -e .
+
+install-dev:
+	pip install --upgrade pip wheel pip-tools &&\
+	python -m pip install -e ".[dev]"
 
 format:
 	yapf -i --recursive $(PROJECTNAME)
