@@ -38,8 +38,11 @@ class ImgSelector(Callable, BaseModel):
         Args:
             img_names_list (List[str]): list of images to be selected from
             target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
+            new_imgs_dict (dict): dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries correspondong to images
             source_connector (Connector): connector of source dataset that new images are being cut out from
+            cut_imgs: (Dict[str, List[str]]): dict containing for each raster in the target dataset
+                the list of rasters in the source from which cutouts have been created for it
             kwargs (Any): Optional keyword arguments
 
         Returns:
