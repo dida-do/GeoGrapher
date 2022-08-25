@@ -24,7 +24,9 @@ pip install GeoGrapher
 To install the package for development work, clone this repo and run
 
 ```
-make [TODO]
+make env
+source geographer-env/bin/activate # activate the environment
+make install-dev
 ```
 
 # Documentation
