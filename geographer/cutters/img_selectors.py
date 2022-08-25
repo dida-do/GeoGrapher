@@ -33,7 +33,7 @@ class ImgSelector(Callable, BaseModel):
         cut_imgs: Dict[str, List[str]],
         **kwargs: Any,
     ) -> List[str]:
-        """Select rasters to create cutouts from from a list of rasters.
+        """Select rasters to create cutouts from a list of rasters.
 
         Args:
             img_names_list (List[str]): list of images to be selected from
