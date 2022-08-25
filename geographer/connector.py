@@ -1,6 +1,4 @@
 """
-TODO: docstring
-
 The Connector class organizes and handles remote sensing
 datasets.
 """
