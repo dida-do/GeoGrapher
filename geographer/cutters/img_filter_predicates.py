@@ -13,8 +13,7 @@ from geographer.connector import Connector
 
 
 class ImgFilterPredicate(ABC, Callable, BaseModel):
-    """Abstract base class for predicates used to filter images in cutting
-    functions.
+    """ABC for predicates used to filter images in cutting functions.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.
@@ -35,6 +34,7 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
             target_connector (Connector): connector of target dataset.
             new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images 
             source_connector (Connector): connector of source dataset that new images are being cut out from
+            cut_imgs (List[str]): list of (names of) cut images
 
         Returns:
             bool: True should mean image is to be kept, False that it is to be filtered out
@@ -44,10 +44,10 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
         """
         raise NotImplementedError
 
-    def save(self, save_dir: Path) -> None:
-        """Save the predicate to a given directory."""
-        save_dir.mkdir(exist_ok=True)
-        with open(save_dir, 'w') as f:
+    def save(self, json_path: Path) -> None:
+        """Save the predicate."""
+        json_path.parent.mkdir(exist_ok=True)
+        with open(json_path, 'w') as f:
             f.write(self.json(indent=2))
 
 class AlwaysTrue(ImgFilterPredicate):
