@@ -25,14 +25,14 @@ class FeatureFilterPredicate(BaseModel, Callable):
                  source_connector: Connector, **kwargs: Any) -> bool:
         """
         Args:
-            feature_name (Union[str, int]): vector feature identifier
-            target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector (Connector): connector of source dataset that new images are being cut out from
-            kwargs (Any): Optional keyword arguments
+            feature_name: vector feature identifier
+            target_connector: connector of target dataset.
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
+            source_connector: connector of source dataset that new images are being cut out from
+            kwargs: Optional keyword arguments
 
         Returns:
-            bool: True should mean feature is to be kept, False that it is to be filtered out
+            True should mean feature is to be kept, False that it is to be filtered out
 
         Note:
             The feature filter predicate should be able to return a boolean answer for a given feature
@@ -63,14 +63,14 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
         consideration is strictly less than target_img_count, False otherwise.
 
         Args:
-            feature_name (Union[str, int]): feature identifier
-            target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector (Connector): connector of source dataset that new images are being cut out from
-            kwargs (Any): Optional keyword arguments
+            feature_name: feature identifier
+            target_connector: connector of target dataset.
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
+            source_connector: connector of source dataset that new images are being cut out from
+            kwargs: Optional keyword arguments
 
         Returns:
-            answer (bool)
+            answer
         """
 
         return target_connector.vector_features.loc[

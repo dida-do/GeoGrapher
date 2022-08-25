@@ -30,14 +30,14 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
     ) -> bool:
         """
         Args:
-            img_name (str): img identifier
-            target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images 
-            source_connector (Connector): connector of source dataset that new images are being cut out from
-            cut_imgs (List[str]): list of (names of) cut images
+            img_name: img identifier
+            target_connector: connector of target dataset.
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images 
+            source_connector: connector of source dataset that new images are being cut out from
+            cut_imgs: list of (names of) cut images
 
         Returns:
-            bool: True should mean image is to be kept, False that it is to be filtered out
+            True should mean image is to be kept, False that it is to be filtered out
 
         Note:
             The new_imgs_dict should be viewed as part of the target connector. See feature_filter_predicates.py for an explanation.
@@ -121,13 +121,13 @@ class ImgFilterRowCondition(ImgFilterPredicate):
 
         Args:
 
-            img_name (str): image name
-            target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector (Connector): source connector
+            img_name: image name
+            target_connector: connector of target dataset.
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
+            source_connector: source connector
 
         Returns:
-            bool: result of aplying self.row_series_predicate to source_connector.raster_imgs[img_name]
+            result of aplying self.row_series_predicate to source_connector.raster_imgs[img_name]
         """
 
         row_series: Union[GeoSeries,

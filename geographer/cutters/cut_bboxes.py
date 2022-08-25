@@ -48,16 +48,16 @@ class DSCutterBBoxes(): #TODO
 
 
         Args:
-            source_data_dir (Union[str, Path], optional): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
-            source_assoc (ImgPolygonAssociator, optional): associator of dataset containing the GeoTiffs to be cut from.
-            target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created.
-            target_assoc (ImgPolygonAssociator, optional): associator of target dataset.
-            new_img_size (ImgSize): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
-            img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
+            source_data_dir: data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+            source_assoc: associator of dataset containing the GeoTiffs to be cut from.
+            target_data_dir: path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created.
+            target_assoc associator of target dataset.
+            new_img_size: size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+            img_bands: list of bands to extract from source images. Defaults to None (i.e. all bands).
+            label_bands:  list of bands to extract from source labels. Defaults to None (i.e. all bands).
 
         Returns:
-            ImgPolygonAssociator: associator of new dataset in target_data_dir
+            connector of new dataset in target_data_dir
         """
 
         target_data_dir = Path(target_data_dir)

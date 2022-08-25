@@ -23,13 +23,13 @@ class ImgDownloadProcessor(ABC, BaseModel):
         """Process a single download.
 
         Args:
-            img_name (str): name of image
-            download_dir (Path): directory containing download
-            images_dir (Path): directory to place processed image in
-            crs_epsg_code (int): EPSG code of crs image bounds should be returned in
-            kwargs (Any): other keyword arguments
+            img_name: name of image
+            download_dir: directory containing download
+            images_dir: directory to place processed image in
+            crs_epsg_code: EPSG code of crs image bounds should be returned in
+            kwargs: other keyword arguments
 
         Returns:
             return_dict: Contains information about the downloaded product.
-            Keys should include: 'img_name', 'geometry', 'orig_crs_epsg_code'.
+                Keys should include: 'img_name', 'geometry', 'orig_crs_epsg_code'.
         """

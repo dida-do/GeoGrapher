@@ -37,8 +37,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         image.
 
         Args:
-            connector (Connector): calling Connector
-            img_name (str): name of image for which a label should be created
+            connector : calling Connector
+            img_name: name of image for which a label should be created
 
 
         Returns:

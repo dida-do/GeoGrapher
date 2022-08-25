@@ -53,7 +53,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         """Create segmentation labels.
 
         Args:
-            img_names (List[str], optional): list of image names to create labels for.
+            img_names: list of image names to create labels for.
                 Defaults to None (i.e. all images without a label).
         """
 
@@ -99,7 +99,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         """Delete (pixel) labels from the connector's labels_dir.
 
         Args:
-            img_names (Optional[List[str]], optional): names of images for which to delete labels. Defaults to None, i.e. all labels.
+            img_names: names of images for which to delete labels. Defaults to None, i.e. all labels.
         """
         if img_names is None:
             img_names = connector.raster_imgs.index

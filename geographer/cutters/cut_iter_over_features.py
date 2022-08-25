@@ -111,7 +111,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
             vector features in the source dataset. Will break if the assumption is not met.
 
         Returns:
-            Connector: connector of newly created or updated dataset
+            connector of newly created or updated dataset
         """
 
         # Remember information to determine for which images to generate new labels
@@ -257,12 +257,12 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         feature have already been created.
 
         Args:
-            feature_name (Union[str, int]): name/id of vector feature
-            src_imgs_containing_feature (Set[str]): set of images in source dataset containing the vector feature
-            target_connector (Connector): connector of target dataset
+            feature_name: name/id of vector feature
+            src_imgs_containing_feature: set of images in source dataset containing the vector feature
+            target_connector: connector of target dataset
 
         Returns:
-            List[str]: [description]
+            list of filtered rasters
         """
 
         src_imgs_previously_cut_for_this_feature = set(

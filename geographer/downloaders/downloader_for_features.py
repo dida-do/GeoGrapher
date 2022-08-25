@@ -66,13 +66,12 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             the filter_out_features_contained_in_union_of_intersecting_imgs argument.
 
         Args:
-            feature_names (List[str], optional): Optional feature_name or list of feature_names to download images for. Defaults to None, i.e. consider all vector features in connector.vector_features.
-            downloader (str): One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
-            target_img_count (int): target for number of images per vector feature in the dataset after downloading. The actual number of images for each vector feature P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_feature images for P P is also contained in images downloaded for other vector features.
-            vector_features (GeoDataFrame, optional): (Probably just best ignore this) GeoDataFrame of vector features conforming to the connector's format for vector_features, defaults to the connector's internal vector_features (i.e. connector.vector_features). If provided and not equal to connector.vector_features will download images for only those vector features and integrate the vector features in vector_features into the connector after the images have been downloaded.
+            feature_names: Optional feature_name or list of feature_names to download images for. Defaults to None, i.e. consider all vector features in connector.vector_features.
+            downloader: One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
+            target_img_count: target for number of images per vector feature in the dataset after downloading. The actual number of images for each vector feature P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_feature images for P P is also contained in images downloaded for other vector features.
             filter_out_vector features_contained_in_union_of_intersecting_imgs (bool): Useful when dealing with 'large' vector features. Defaults to False.
-            shuffle (bool): Whether to shuffle order of vector features for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
-            kwargs (dict, optional): additional keyword arguments passed to downloader_for_single_feature and download_processor. Defaults to self.kwarg_defaults.
+            shuffle: Whether to shuffle order of vector features for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
+            kwargs: optional additional keyword arguments passed to downloader_for_single_feature and download_processor. Defaults to self.kwarg_defaults.
 
         Note:
             Any kwargs given will be saved to self.default_kwargs and become default values.

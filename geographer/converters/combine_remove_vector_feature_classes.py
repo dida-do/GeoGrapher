@@ -58,13 +58,13 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             Will only add images and vector features from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
 
         Args:
-            source_data_dir (pathlib.Path or str): data_dir of source dataset/connector
-            target_data_dir (pathlib.Path or str, optional): data_dir of target dataset/connector. If None (default value), will convert in place, i.e. overwrite source dataset and connector of tifs.
-            classes: (List[Union[List[str], str]]) vector feature classes in existing dataset/connector to be kept and combined in new dataset/connector. E.g. [['ct', 'ht'], 'wr', ['h']] will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h' classes. Along with the regular vector feature classes one may also use the background class here.
-            new_class_names: (Optional[List[str]]) optional list of names of new vector feature classes corresponding to classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
-            class_separator: (str) used if the new_class_names argument is not provided to join the names of existing vector feature classes that are to be kept. Defaults to class_separator.
-            new_background_class (Optional[str]): optional new background class, defaults to None, i.e. old background class
-            remove_imgs: (bool). If True, remove images not containing vector features belonging to the vector feature classes to be kept.
+            source_data_dir: data_dir of source dataset/connector
+            target_data_dir: data_dir of target dataset/connector. If None (default value), will convert in place, i.e. overwrite source dataset and connector of tifs.
+            classes: vector feature classes in existing dataset/connector to be kept and combined in new dataset/connector. E.g. [['ct', 'ht'], 'wr', ['h']] will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h' classes. Along with the regular vector feature classes one may also use the background class here.
+            new_class_names: optional list of names of new vector feature classes corresponding to classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
+            class_separator: used if the new_class_names argument is not provided to join the names of existing vector feature classes that are to be kept. Defaults to class_separator.
+            new_background_class: optional new background class, defaults to None, i.e. old background class
+            remove_imgs: If True, remove images not containing vector features belonging to the vector feature classes to be kept.
 
         Returns:
             The Connector of the new dataset.
@@ -231,10 +231,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             all_source_vector_feature_classes: List[str]) -> GeoDataFrame:
         """
         Args:
-            label_type (str): [description]
-            vector_features (GeoDataFrame): [description]
-            classes (List[str]):
-            new_class_names (List[str]):
+            label_type: [description]
+            vector_features: [description]
+            classes:
+            new_class_names:
 
         Returns:
             GeoDataFrame: [description]

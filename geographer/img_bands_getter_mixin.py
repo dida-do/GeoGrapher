@@ -18,8 +18,8 @@ class ImgBandsGetterMixIn:
         target image.
 
         Args:
-            source_img_path (Path): path to source image.
-            bands (Optional[Dict[str, Optional[List[int]]]]): dict of band indices
+            source_img_path: path to source image.
+            bands: dict of band indices
 
         Raises:
             ValueError: If the optional bands dict is not None
@@ -42,10 +42,10 @@ class ImgBandsGetterMixIn:
         """Return list of all band indices of source GeoTiff.
 
         Args:
-            source_img_path (Path): path to source image (or label etc)
+            source_img_path: path to source image (or label etc)
 
         Returns:
-            List[int]: list of indices of all bands in GeoTiff
+            list of indices of all bands in GeoTiff
         """
 
         with rio.open(source_img_path) as src:

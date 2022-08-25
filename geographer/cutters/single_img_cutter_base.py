@@ -60,12 +60,12 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         corresponding entries for the new images.
 
         Args:
-            img_name (str): name of img in source dataset to be cut.
-            target_connector (Connector): connector of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs
+            img_name: name of img in source dataset to be cut.
+            target_connector: connector of target dataset
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs
             and values lists of entries correspondong to images containing information
             about cut images not yet appended to target_connector.raster_imgs
-            kwargs (Any): optional keyword arguments for _get_windows_transforms_img_names
+            kwargs: optional keyword arguments for _get_windows_transforms_img_names
 
         Returns:
             dict of lists that containing the data to be put in the raster_imgs of the
@@ -145,10 +145,10 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
                 value: the entries to be written in those columns for the new image.
 
         Args:
-            new_img_name (str): name of new image
-            source_img_name (str): name of source image
-            img_bounds_in_img_crs (Tuple[float, float, float, float]): image bounds
-            img_crs (CRS): CRS of img
+            new_img_name: name of new image
+            source_img_name: name of source image
+            img_bounds_in_img_crs: image bounds
+            img_crs: CRS of img
 
         Returns:
             dict: img info dict (see above)
@@ -188,14 +188,13 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         window and transform.
 
         Args:
-            new_img_name (str): name of new image
-            source_img_name (str): name of source image
-            window (Window):
-            window_transform (Affine):
+            new_img_name: name of new image
+            source_img_name: name of source image
+            window: window
+            window_transform: window transform
 
         Returns:
-            Tuple[Tuple[float, float, float, float], CRS]: tuple of bounds
-            (in image CRS) and CRS of new image
+            tuple of bounds (in image CRS) and CRS of new image
         """
 
         for count, (source_images_dir, target_images_dir) in enumerate(
@@ -236,14 +235,14 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         """Write window from source GeoTiff to new GeoTiff.
 
         Args:
-            src_img_path (Union[Path, str]): path of source GeoTiff
-            dst_img_path (Union[Path, str]): path to GeoTiff to be created
-            img_bands (List[int]): bands to extract from source GeoTiff
-            window (Window): window to cut out from source GeoTiff
-            window_transform (Affine): window transform of window
+            src_img_path: path of source GeoTiff
+            dst_img_path: path to GeoTiff to be created
+            img_bands: bands to extract from source GeoTiff
+            window: window to cut out from source GeoTiff
+            window_transform: window transform of window
 
         Returns:
-            Tuple[Tuple[float, float, float, float], CRS]: bounds (in image CRS) and CRS of new image
+            bounds (in image CRS) and CRS of new image
         """
 
         # Open source ...

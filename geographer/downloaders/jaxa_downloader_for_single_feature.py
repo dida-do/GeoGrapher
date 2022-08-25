@@ -65,15 +65,15 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             for small geometries, but works for large geometries.
 
         Args:
-            feature_name (Union[str, int]): the name of the vector geometry
-            feature_geometry (shapely geometry):
-            download_dir (Path or str): directory that the image file should be downloaded to
-            data_version (str): One of '1804', '1903', '2003', or '2012'.
+            feature_name: the name of the vector geometry
+            feature_geometry:
+            download_dir: directory that the image file should be downloaded to
+            data_version: One of '1804', '1903', '2003', or '2012'.
                 1804 is the only version that has been tested.
                 Defaults if possible to whichever choice you made last time.
-            download_mode (str): One of 'bboxvertices', 'bboxgrid'.
+            download_mode: One of 'bboxvertices', 'bboxgrid'.
                 Defaults if possible to whichever choice you made last time.
-            **kwargs (Any): other kwargs, ignored.
+            **kwargs: other kwargs, ignored.
 
         Returns:
             dict of dicts according to the connector convention
@@ -192,10 +192,14 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         """Creates string for filename corresponding to jaxas naming-convention
         to download from ftp server.
 
-        :param x: float, longitude (W/E), can be 'None' (will be ignored then in string-creation)
-        :param y: float, latitude (N/S), can be 'None' (will be ignored then in string-creation)
-        :param nx, ny: int, number of digits used for naming (filled with leading 0's)
-        :return: string, filename (but not filetype eg .tif) containing the coordinates x,y
+        Args:
+            x: longitude (W/E), can be 'None' (will be ignored then in string-creation)
+            y: latitude (N/S), can be 'None' (will be ignored then in string-creation)
+            nx: number of digits used for naming (filled with leading 0's)
+            ny: number of digits used for naming (filled with leading 0's)
+
+        Returns:
+            (stem of) filename (not including filetype eg .tif) containing the coordinates x,y
         """
         if x is not None:
             xf = '{ew}{x:0{nx}d}'.format(ew='W' if x < 0 else 'E',

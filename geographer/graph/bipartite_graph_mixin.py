@@ -24,10 +24,10 @@ class BipartiteGraphMixIn:
         feature.
 
         Args:
-            feature_name (str): Name of vector feature
+            feature_name: Name of vector feature
 
         Returns:
-            bool: `True` if there is an image in the dataset fully containing the vector feature, False otherwise.
+            `True` if there is an image in the dataset fully containing the vector feature, False otherwise.
         """
 
         return self.vector_features.loc[feature_name, 'img_count'] > 0
@@ -38,10 +38,10 @@ class BipartiteGraphMixIn:
         The geometry is with respect to the connector's (standard) :term:`crs`.
 
         Args:
-            img_name (str): the img_name/identifier of the image
+            img_name: the img_name/identifier of the image
 
         Returns:
-            BaseGeometry: shapely geometry giving the bounds of the image in the standard crs of the connector
+            shapely geometry giving the bounds of the image in the standard crs of the connector
         """
 
         return self.raster_imgs.loc[img_name, 'geometry']
@@ -52,10 +52,10 @@ class BipartiteGraphMixIn:
         images.
 
         Args:
-            img_name (str, or List[str]): name/id of image or list names/ids
+            img_name: name/id of image or list names/ids
 
         Returns:
-            list of strs of feature_names/ids of all vector features in connector which have non-empty intersection with the image(s)
+            list of feature_names/ids of all vector features in connector which have non-empty intersection with the raster(s)
         """
 
         if isinstance(img_name, str):
@@ -81,11 +81,11 @@ class BipartiteGraphMixIn:
         (any of) several vector features.
 
         Args:
-            feature_name (str): name/id (or list) of vector feature(s)
-            mode (str): One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
+            feature_name: name/id (or list) of vector feature(s)
+            mode: One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
 
         Returns:
-            list of str: list of the feature_names/identifiers of all vector features in connector with non-empty intersection with the image.
+            feature_names/identifiers of all vector features in connector with non-empty intersection with the image.
         """
 
         if isinstance(feature_name, str):
@@ -117,10 +117,10 @@ class BipartiteGraphMixIn:
         several images).
 
         Args:
-            img_name (str): name/id of image or list of names/ids of images
+            img_name: name/id of image or list of names/ids of images
 
         Returns:
-            list of str: list of the feature_names/identifiers of all vector features in connector contained in the image(s).
+            feature_names/identifiers of all vector features in connector contained in the image(s).
         """
 
         if isinstance(img_name, str):
@@ -150,11 +150,11 @@ class BipartiteGraphMixIn:
         (or any of several) is fully contained.
 
         Args:
-            feature_name (str): name/id (or list of names) of vector feature(s)
-            mode (str): One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
+            feature_name: name/id (or list of names) of vector feature(s)
+            mode: One of 'names' or 'paths'. In the former case the image names are returned in the latter case paths to the images. Defaults to 'names'.
 
         Returns:
-            List[str]: list of the img_names/identifiers of all images in connector containing the vector feature(s)
+            img_names/identifiers of all images in connector containing the vector feature(s)
         """
 
         if not isinstance(feature_name, list):
@@ -187,11 +187,11 @@ class BipartiteGraphMixIn:
         """Return whether a raster image fully contains a vector feature.
 
         Args:
-            img_name (str): Name of image
-            feature_name (str): name of vector feature
+            img_name: Name of image
+            feature_name: name of vector feature
 
         Returns:
-            bool: True or False depending on whether the image contains the vector feature or not
+            True or False depending on whether the image contains the vector feature or not
         """
 
         return feature_name in self.vector_features_contained_in_img(img_name)
@@ -202,11 +202,11 @@ class BipartiteGraphMixIn:
         image.
 
         Args:
-            img_name (str): Name of image
-            feature_name (str): name of vector feature
+            img_name: Name of image
+            feature_name: name of vector feature
 
         Returns:
-            bool: True or False depending on whether the vector feature contains the image or not
+            True or False depending on whether the vector feature contains the image or not
         """
 
         return self.does_img_contain_vector_feature(img_name, feature_name)
@@ -216,11 +216,11 @@ class BipartiteGraphMixIn:
         """Return whether a vector feature intersects a raster image.
 
         Args:
-            img_name (str): Name of image
-            feature_name (str): name of vector feature
+            img_name: Name of image
+            feature_name: name of vector feature
 
         Returns:
-            bool: True or False depending on whether the image intersects the vector feature or not
+            True or False depending on whether the image intersects the vector feature or not
         """
 
         return feature_name in self.vector_features_intersecting_img(img_name)
@@ -230,11 +230,11 @@ class BipartiteGraphMixIn:
         """Return whether a vector feature intersects a raster image.
 
         Args:
-            img_name (str): Name of image
-            feature_name (str): name of vector feature
+            img_name: Name of image
+            feature_name: name of vector feature
 
         Returns:
-            bool: True or False depending on whether the vector feature intersects the image or not
+            True or False depending on whether the vector feature intersects the image or not
         """
 
         return self.does_img_intersect_vector_feature(img_name, feature_name)
@@ -253,13 +253,13 @@ class BipartiteGraphMixIn:
         Remember (i.e. create a connection in the graph) whether the image fully contains or just has non-empty intersection with the vector feature, i.e. add an edge of the approriate type between the image and the vector feature.
 
         Args:
-            img_name (str): Name of image to connect
-            feature_name (str): Name of vector feature to connect
-            contains_or_intersects (optional, str): Optional connection criteria
-            vector_features (optional, gdf.GeoDataFrame): Optional vector feature dataframe
-            img_bounding_rectangle (optional, BaseGeometry): vector feature decribing image footprint
-            graph (optional, BipartiteGraph): optional bipartied graph
-            ignore_safety_check (bool): whether to check contains_or_intersects relation
+            img_name: Name of image to connect
+            feature_name: Name of vector feature to connect
+            contains_or_intersects: Optional connection criteria
+            vector_features: Optional vector feature dataframe
+            img_bounding_rectangle: vector feature decribing image footprint
+            graph: optional bipartied graph
+            ignore_safety_check: whether to check contains_or_intersects relation
         """
 
         if contains_or_intersects not in {'contains', 'intersects', None}:
@@ -315,8 +315,8 @@ class BipartiteGraphMixIn:
         which it has non-empty intersection.
 
         Args:
-            feature_name (str): name/id of vector feature to add
-            vector_features (GeoDataFrame, optional): Defaults to None (i.e. self.vector_features).
+            feature_name: name/id of vector feature to add
+            vector_features: Defaults to None (i.e. self.vector_features).
         """
 
         # default vector_features
@@ -378,10 +378,10 @@ class BipartiteGraphMixIn:
         already has connections a warning will be logged.
 
         Args:
-            img_name (str): Name of image to add
-            img_bounding_rectangle (optional, BaseGeometry): vector feature decribing image footprint
-            vector_features (optional, gdf.GeoDataFrame): Optional vector features dataframe
-            graph (optional, BipartiteGraph): optional bipartied graph
+            img_name: Name of image to add
+            img_bounding_rectangle: vector feature decribing image footprint
+            vector_features: Optional vector features dataframe
+            graph: optional bipartied graph
         """
 
         # default vector_features
@@ -444,8 +444,8 @@ class BipartiteGraphMixIn:
         vector_features field 'img_count' to 0.
 
         Args:
-            feature_name (str): vector feature name/id
-            set_img_count_to_zero (bool): Whether to set img_count to 0.
+            feature_name: vector feature name/id
+            set_img_count_to_zero: Whether to set img_count to 0.
         """
 
         self._graph.delete_vertex(feature_name,
@@ -461,7 +461,7 @@ class BipartiteGraphMixIn:
         the vector features contained in the image.
 
         Args:
-            img_name (str): name/id of image to remove
+            img_name: name/id of image to remove
         """
 
         for feature_name in self.vector_features_contained_in_img(img_name):

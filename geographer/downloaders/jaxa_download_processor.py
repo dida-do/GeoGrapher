@@ -28,13 +28,13 @@ class JAXADownloadProcessor(ImgDownloadProcessor):
         """Processes a downloaded JAXA file.
 
         Args:
-            img_name (str): image name
-            download_dir (Path): download directory
-            images_dir (Path): images directory
-            return_bounds_in_crs_epsg_code (int): EPSG code of crs to return image bounds in
+            img_name: image name
+            download_dir: download directory
+            images_dir: images directory
+            return_bounds_in_crs_epsg_code: EPSG code of crs to return image bounds in
 
         Returns:
-            dict: img_info_dict containing information about the image
+            img_info_dict containing information about the image
         """
 
         geotif_filename = download_dir / img_name

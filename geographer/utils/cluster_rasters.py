@@ -36,7 +36,7 @@ def get_raster_clusters(
         preclustering_method (Optional[ str]): optional preclustering method to speed up clustering
 
     Returns:
-        List[Set[str]]: (names of rasters defining) clusters
+        (names of rasters defining) clusters
     """
 
     allowed_clusters_defined_by_args = {
@@ -104,11 +104,11 @@ def _refine_preclustering_along_second_axis(
     """
 
     Args:
-        preclusters (List[Set[str]]): preclusters
-        second_axis (str): name of second axis along which to refine pre-clustering
+        preclusters: preclusters
+        second_axis: name of second axis along which to refine pre-clustering
 
     Returns:
-        Tuple[List[Set[str]], List[Set[str]]]: singleton and non-singleton pre-clusters
+        singleton and non-singleton pre-clusters
     """
 
     singletons, preclusters_along_2nd_axis = [], []

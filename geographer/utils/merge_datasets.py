@@ -1,3 +1,5 @@
+"""Utility functions for merging datasets"""
+
 import os
 import shutil
 from pathlib import Path
@@ -11,12 +13,13 @@ from geographer.connector import Connector
 def merge_datasets(source_data_dir: Union[Path, str],
                    target_data_dir: Union[Path, str],
                    delete_source: bool = True) -> None:
-    """TODO.
+    """Merge datasets
 
     Args:
-        source_data_dir (Union[Path, str]): [description]
-        target_data_dir (Union[Path, str]): [description]
-        delete_source (bool, optional): [description]. Defaults to True.
+        source_data_dir: data dir of source dataset
+        target_data_dir: data dir of target dataset
+        delete_source: Whether to delete source dataset after merging.
+            Defaults to True.
     """
 
     source_connector = Connector.from_data_dir(source_data_dir)
@@ -41,11 +44,17 @@ def merge_datasets(source_data_dir: Union[Path, str],
     target_connector.save()
 
 
-# recursively merge two folders including subfolders
-# shamelessly stolen from the internet to save time
 # TODO rewrite using pathlib
 def merge_dirs(root_src_dir: Union[Path, str],
                root_dst_dir: Union[Path, str]) -> None:
+    """Recursively merge two folders including subfolders
+
+    (Shamelessly copied from stackoverflow)
+
+    Args:
+        root_src_dir: root source directory
+        root_dst_dir: root target directory
+    """
 
     pbar = tqdm(os.walk(root_src_dir))
     for src_dir, dirs, files in pbar:

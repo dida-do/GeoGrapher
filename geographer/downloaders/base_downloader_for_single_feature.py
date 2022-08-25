@@ -25,12 +25,12 @@ class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
         """Download an image or a series of images for a single vector feature.
 
         Args:
-            feature_name (Union[int, str]): name of vector feature
-            feature_geom (shapely.geometry.Polygon): geometry of vector feature
-            download_dir (Path): directory to download to
-            previously_downloaded_imgs_set (Set[Union[str, int]]): set of (names of)
+            feature_name: name of vector feature
+            feature_geom: geometry of vector feature
+            download_dir: directory to download to
+            previously_downloaded_imgs_set: set of (names of)
             previously downloaded images
-            kwargs (Any): other keyword arguments
+            kwargs: other keyword arguments
 
         Returns:
             Dict with a key 'list_img_info_dicts': The corresponding value is a list of dicts

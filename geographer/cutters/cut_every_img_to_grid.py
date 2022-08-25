@@ -29,12 +29,12 @@ def get_cutter_every_img_to_grid(
     grid of images.
 
     Args:
-        source_data_dir (Path): source data dir
-        target_data_dir (Path): target data dir
-        name (str): name of cutter, used when saving the cutter
-        new_img_size (ImgSize, optional): size of new images. Defaults to 512.
-        img_filter_predicate (Optional[ImgFilterPredicate], optional): image
-            filter predicate to select images. Defaults to None (i.e. cut all
+        source_data_dir: source data dir
+        target_data_dir: target data dir
+        name: name of cutter, used when saving the cutter
+        new_img_size: size of new images. Defaults to 512.
+        img_filter_predicate: image filter predicate to select
+            images. Defaults to None (i.e. cut all
             images that have not been previously cut).
 
     Returns:

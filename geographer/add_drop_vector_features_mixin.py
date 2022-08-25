@@ -39,8 +39,8 @@ class AddDropVectorFeaturesMixIn(object):
         update graph encoding intersection/containment relations.
 
         Args:
-            new_vector_features (GeoDataFrame): GeoDataFrame of vector features conforming to the connector's vector_features format
-            label_maker (LabelMaker, optional): If given generate new labels for images containing vector features that were added. Defaults to None.
+            new_vector_features: GeoDataFrame of vector features conforming to the connector's vector_features format
+            label_maker: If given generate new labels for images containing vector features that were added. Defaults to None.
         """
 
         duplicates = new_vector_features[
@@ -116,8 +116,8 @@ class AddDropVectorFeaturesMixIn(object):
         update graph encoding intersection/containment relations.
 
         Args:
-            vector_feature_names (Sequence[str]): vector_feature_names/identifiers of vector features to be dropped.
-            label_maker (LabelMaker, optional): If given generate new labels for images containing vector features that were dropped. Defaults to None.
+            vector_feature_names: vector_feature_names/identifiers of vector features to be dropped.
+            label_maker: If given generate new labels for images containing vector features that were dropped. Defaults to None.
         """
 
         # make sure we don't interpret a string as a list of characters in the iteration below:

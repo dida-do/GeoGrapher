@@ -82,10 +82,10 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         below for details.
 
         Args:
-            feature_name: name of  vector feature
+            feature_name: name of vector feature
             feature_geom: shapely geometry of vector feature
             download_dir: directory that the image file should be 'downloaded' to.
-            previously_downloaded_imgs_set: Set of previously downloaded img_names. In some use cases when it can't be guaranteed that an image can be downloaded that fully contains the vector feature it can happen that attempts will be made to download an image that is already in the connector. Passing this argument allows the download function to make sure it doesn't try downloading an image that is already in the dataset.
+            previously_downloaded_imgs_set: previously downloaded img_names. In some use cases when it can't be guaranteed that an image can be downloaded that fully contains the vector feature it can happen that attempts will be made to download an image that is already in the connector. Passing this argument allows the download function to make sure it doesn't try downloading an image that is already in the dataset.
             **kwargs: optional keyword arguments depending on the application.
         Returns:
              A dict with keys and values:

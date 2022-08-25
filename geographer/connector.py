@@ -115,16 +115,16 @@ class Connector(
 
         Args:
 
-            load_from_disk (bool): whether to load an existing connector from disk or create a new one.
-            task_feature_classes (Sequence[str]): list of feature classes for the machine learning task (excluding mask and background classes). Defaults to None, i.e. the single class "object"
-            vector_features (Optional[GeoDataFrame], optional): vector_features. Defaults to None, i.e. (if not loading from disk) an empty vector_features.
-            raster_imgs (Optional[GeoDataFrame], optional): raster_imgs. Defaults to None, i.e. (if not loading from disk) an empty raster_imgs.
-            crs_epsg_code (int, optional): EPSG code connector works with. Defaults to STANDARD_CRS_EPSG_CODE
-            data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, connector_dir.
-            images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
-            labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
-            connector_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json connector component files.
-            \**kwargs (Any): optional keyword args for subclass implementations.
+            load_from_disk: whether to load an existing connector from disk or create a new one.
+            task_feature_classes: list of feature classes for the machine learning task (excluding mask and background classes). Defaults to None, i.e. the single class "object"
+            vector_features: vector_features. Defaults to None, i.e. (if not loading from disk) an empty vector_features.
+            raster_imgs: raster_imgs. Defaults to None, i.e. (if not loading from disk) an empty raster_imgs.
+            crs_epsg_code: EPSG code connector works with. Defaults to STANDARD_CRS_EPSG_CODE
+            data_dir: data directory containing images_dir, labels_dir, connector_dir.
+            images_dir: path to directory containing images.
+            labels_dir: path to directory containing labels.
+            connector_dir: path to directory containing (geo)json connector component files.
+            \**kwargs: optional keyword args for subclass implementations.
         """
 
         super().__init__()
@@ -238,7 +238,7 @@ class Connector(
             data_dir: data directory containing 'connector_files', 'images', and 'labels' subdirectories
 
         Returns:
-            ConnectorType: initialized connector
+            initialized connector
         """
 
         data_dir = Path(data_dir)
@@ -260,7 +260,7 @@ class Connector(
         """Initialize a new connector.
 
         Ars:
-            \**kwargs (Any): same keyword arguments as in :meth:`__init__`
+            \**kwargs: same keyword arguments as in :meth:`__init__`
                 except for load_from_disk
 
         Returns:
@@ -407,10 +407,10 @@ class Connector(
         (i.e. same columns in vector_features and raster_imgs).
 
         Args:
-            data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, connector_dir.
-            images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
-            labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
-            connector_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json connector component files.
+            data_dir: data directory containing images_dir, labels_dir, connector_dir.
+            images_dir: path to directory containing images.
+            labels_dir: path to directory containing labels.
+            connector_dir: path to directory containing (geo)json connector component files.
 
         Returns:
             new empty connector
@@ -510,8 +510,8 @@ class Connector(
         """Standardize CRS of dataframe (i.e. set to CRS of connector).
 
         Args:
-            vector_features (GeoDataFrame): vector_features
-            raster_imgs (GeoDataFrame): raster_imgs
+            vector_features: vector_features
+            raster_imgs: raster_imgs
         """
 
         if df.crs.to_epsg() != crs_epsg_code:
@@ -597,10 +597,10 @@ class Connector(
         """Make dict serializable as JSON by replacing Path with strings.
 
         Args:
-            input_dict (dict): input dict with keys strings and values of arbitrary type
+            input_dict: input dict with keys strings and values of arbitrary type
 
         Returns:
-            dict:  dict with non-serializable values replaced by serializable ones (just Path -> str, for now)
+            dict with non-serializable values replaced by serializable ones (just Path -> str, for now)
         """
 
         def make_val_serializable(val):
@@ -618,8 +618,8 @@ class Connector(
         """TODO.
 
         Args:
-            task_feature_classes (List[str]): [description]
-            background_class (str): [description]
+            task_feature_classes: [description]
+            background_class: [description]
         """
 
         if not len(task_feature_classes) == len(set(task_feature_classes)):

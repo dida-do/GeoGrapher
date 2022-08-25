@@ -26,10 +26,11 @@ class SegLabelMakerCategorical(SegLabelMaker):
         """Create a categorical GeoTiff (pixel) label for an image.
 
         Args:
-            - connector (Connector):
-            - img_name (str): Name of image for which a label should be created.
+            connector:
+            img_name: Name of image for which a label should be created.
+
         Returns:
-            - None:
+            None:
         """
 
         img_path = connector.images_dir / img_name

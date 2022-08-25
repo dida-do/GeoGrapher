@@ -41,8 +41,8 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
     def __init__(self, **data) -> None:
         """
         Args:
-            new_img_size (ImgSize): size of new image
-            bbox_geojson_path (Path): path to geojson file containing the bboxes
+            new_img_size: size of new image
+            bbox_geojson_path: path to geojson file containing the bboxes
         """
 
         super().__init__(**data)

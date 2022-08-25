@@ -73,11 +73,11 @@ class BipartiteGraph(BipartiteGraphClass):
         undirected graph with edges in both directions.
 
         Args:
-            - graph_dict: dict (of dicts of dicts) defining a bipartite graph. See example in module header.
-            - file_path: (str or pathlib.Path), path to .json containing such a dict.
-            - red: vertex color, defaults to 'red'.
-            - black: vertex color, defaults to 'black.
-            - directed: bool. If True the graph is directed, defaults to False.
+            graph_dict: dict (of dicts of dicts) defining a bipartite graph. See example in module header.
+            file_path:path to .json containing such a dict.
+            red: vertex color, defaults to 'red'.
+            black: vertex color, defaults to 'black.
+            directed: If True the graph is directed, defaults to False.
         """
         if file_path is not None:
             self.file_path = file_path
@@ -199,9 +199,9 @@ class BipartiteGraph(BipartiteGraphClass):
         """Return edge data.
 
         Args:
-            - from_vertex:
-            - from_color:
-            - to_vertex:
+            from_vertex:
+            from_color:
+            to_vertex:
         """
 
         return self._graph_dict[from_color][from_vertex][to_vertex]
@@ -210,8 +210,8 @@ class BipartiteGraph(BipartiteGraphClass):
         """Add a vertex.
 
         Args:
-            - vertex_name
-            - vertex_color
+            vertex_name
+            vertex_color
         """
 
         # check if vertex already exists
@@ -232,11 +232,11 @@ class BipartiteGraph(BipartiteGraphClass):
         force is True, in which case it overwrites the existing edge_data.
 
         Args:
-            - from_vertex:
-            - from_color:
-            - to_vertex:
-            - edge_data:
-            - force:
+            from_vertex:
+            from_color:
+            to_vertex:
+            edge_data:
+            force:
         """
 
         if not self.exists_vertex(from_vertex, from_vertex_color):
@@ -280,9 +280,9 @@ class BipartiteGraph(BipartiteGraphClass):
         this). Only implemented for directed graphs.
 
         Args:
-            - vertex_name:
-            - vertex_color:
-            - force_delete_with_edges:
+            vertex_name:
+            vertex_color:
+            force_delete_with_edges:
         """
 
         if not self.exists_vertex(vertex_name, vertex_color):
@@ -325,12 +325,9 @@ class BipartiteGraph(BipartiteGraphClass):
         from_vertex_color to to_vertex.
 
         Args:
-            - from_vertex (vertex):
-            - from_vertex_color (color):
-            - to_vertex (vertex):
-
-        Returns:
-            None
+            from_vertex:
+            from_vertex_color:
+            to_vertex:
         """
 
         if not to_vertex in self._graph_dict[from_vertex_color][from_vertex]:
@@ -346,10 +343,7 @@ class BipartiteGraph(BipartiteGraphClass):
         """Save graph (i.e. graph_dict) to disk as json file.
 
         Args:
-            - file_path (str or pathlib.Path): path of json file to save graph to.
-
-        Returns:
-            None
+            file_path: path of json file to save graph to.
         """
 
         if file_path is None:
@@ -372,7 +366,7 @@ class BipartiteGraph(BipartiteGraphClass):
         opposite edge exists as well. Useful for testing.
 
         Returns:
-            bool, True if graph is undirected, False if it's not.
+            True if graph is undirected, False if it's not.
         """
         # an empty graph is undirected
         answer = True
@@ -391,16 +385,16 @@ class BipartiteGraph(BipartiteGraphClass):
 
         return answer
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check equality of graphs. Two graphs are equal if the vertex sets
         and colors and the edge sets and edge data agree, which is tested by
         asking whether the underlying dicts are equal.
 
         Args:
-            - other (BipartiteGraph):
+            other (BipartiteGraph):
 
         Returns:
-            - (bool): True if the graphs are equal, False otherwise.
+            True if the graphs are equal, False otherwise.
         """
 
         return self._graph_dict == other._graph_dict
@@ -410,7 +404,7 @@ class BipartiteGraph(BipartiteGraphClass):
 
         Args:
         Returns:
-            - (str): string representation of the graph.
+            (str): string representation of the graph.
         """
 
         return json.dumps(self._graph_dict, indent=4)

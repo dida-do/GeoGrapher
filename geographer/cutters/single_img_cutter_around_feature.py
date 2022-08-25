@@ -50,18 +50,18 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
     ) -> None:
         """
         Args:
-            mode (str, optional): One of 'random', 'centered', 'variable'.
+            mode: One of 'random', 'centered', 'variable'.
                 If 'random' images (or minimal image grids) will be randomly chosen
                 subject to constraint that they fully contain the vector features, if 'centered'
                 will be centered on the vector features. If 'variable' the image size will be
                 the max of some minimum size and a multiple of the bounding rectangle
                 of the vector feature. Defaults to 'random'.
-            new_img_size (Optional[ImgSize]): size (side length of square or rows, cols).
+            new_img_size: size (side length of square or rows, cols).
                 Only needed if mode is 'centered' or 'random'.
-            scaling factor (Optional[float]): factor to scale the bounding rectangle
+            scaling factor: factor to scale the bounding rectangle
                 of the vector feature by to get the image size.
-            min_new_img_size (Optional[ImgSize]): minimum size of new image in 'variable' mode.
-            random_seed (int, optional). random seed. Defaults to 42.
+            min_new_img_size: minimum size of new image in 'variable' mode.
+            random_seed: random seed. Defaults to 42.
 
         Raises:
             ValueError: If the mode is unknown.
@@ -146,15 +146,15 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         a minimal rectangular grid in the image covering the feature.
 
         Args:
-            feature_name (Union[str, int]): feature identifier
-            source_img_name (str): name of source image
-            target_connector (Connector): connector of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images containing information about cut images not yet appended to target_connector.
-            feature_crs_epsg_code (int): EPSG code of the vector feature crs
-            **kwargs (Any): keyword arguments
+            feature_name: feature identifier
+            source_img_name: name of source image
+            target_connector: connector of target dataset
+            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images containing information about cut images not yet appended to target_connector.
+            feature_crs_epsg_code: EPSG code of the vector feature crs
+            **kwargs: keyword arguments
 
         Returns:
-            List[Tuple[Window, Affine, str]]: list of windows, window_transformations, and new image names
+            list of windows, window_transformations, and new image names
         """
         if 'feature_name' not in kwargs:
             raise ValueError("Need vector feature name")

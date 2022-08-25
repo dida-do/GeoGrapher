@@ -34,20 +34,20 @@ def get_cutter_imgs_around_every_feature(
     scaling_factor*size_of_bounding_box or min_new_img_size
 
     Args:
-        source_data_dir (Union[Path, str]): source data dir
-        target_data_dir (Union[Path, str]): target data dir
-        name (str): name
-        new_img_size (Optional[ImgSize], optional): new image size for
+        source_data_dir: source data dir
+        target_data_dir: target data dir
+        name: name
+        new_img_size: new image size for
             "random" and "centered" modes. Defaults to 512.
-        min_new_img_size (Optional[ImgSize], optional): lower bound on image
+        min_new_img_size: lower bound on image
             size for "variable" mode. Defaults to None.
-        scaling_factor (Optional[float], optional): scaling factor for
+        scaling_factor: scaling factor for
             "variable" mode. Defaults to None.
-        target_img_count (int, optional): targeted number of images per vector
+        target_img_count: targeted number of images per vector
             feature to create. Defaults to 1.
-        mode (optional): On. Defaults to "random".
-        bands (Optional[dict], optional): bands dict. Defaults to None.
-        random_seed (int, optional): random seed. Defaults to 10.
+        mode: On. Defaults to "random".
+        bands: bands dict. Defaults to None.
+        random_seed: random seed. Defaults to 10.
 
     Returns:
         DSCutterIterOverFeatures: dataset cutter

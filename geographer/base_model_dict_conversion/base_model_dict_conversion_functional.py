@@ -71,11 +71,11 @@ def eval_nested_base_model_dict(
     """Evaluate nested BaseModel dict (or field contents)
 
     Args:
-        dict_or_field_value (Union[dict, Any]): nested base model dict or field value
-        constructor_symbol_table (Optional[Dict[str, Any]], optional): symbol table of constructors. Defaults to None.
+        dict_or_field_value: nested base model dict or field value
+        constructor_symbol_table: symbol table of constructors. Defaults to None.
 
     Returns:
-        Union[BaseModel, Any]: _description_
+        BaseModel or component
     """
     if not isinstance(dict_or_field_value, dict):
         return dict_or_field_value

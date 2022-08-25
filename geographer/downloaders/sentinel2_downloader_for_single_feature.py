@@ -63,15 +63,15 @@ class SentinelDownloaderForSingleVectorFeature(
             feature_geom: geometry of vector feature
             download_dir: Directory Sentinel-2 products will be downloaded to.
             previously_downloaded_imgs_set: Set of already downloaded products.
-            producttype (str): One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'
-            resolution (int): One of 10, 20, or 60.
-            max_percent_cloud_coverage (int): Integer between 0 and 100.
-            date (Any):  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+            producttype: One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'
+            resolution: One of 10, 20, or 60.
+            max_percent_cloud_coverage: Integer between 0 and 100.
+            date:  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
             area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
-            credentials_ini_path (Path): Path to ini file containing API credentials.
+            credentials_ini_path: Path to ini file containing API credentials.
 
         Returns:
-            info_dicts: A dictionary containing information about the images. ({'list_img_info_dicts': [img_info_dict])
+            A dictionary containing information about the images. ({'list_img_info_dicts': [img_info_dict]})
 
         Raises:
             ValueError: Raised if an unkknown product type is given.
@@ -216,7 +216,7 @@ class SentinelDownloaderForSingleVectorFeature(
             in_dir: The directory containing the zip file.
             out_dir: The directory to save the
             convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
-            resolution: int
+            resolution: resolution
 
         Returns:
             return_dict: Contains information about the downloaded product.

@@ -49,8 +49,8 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
     ..note:: Function might be adapted for more specialized usage in the future
 
     Args:
-        app_name (string): Name of the logger. Will appear in the console output
-        level (int): threshold level for the new logger.
+        app_name: Name of the logger. Will appear in the console output
+        level: threshold level for the new logger.
 
     Returns:
         logging.Logger: new logging instance
@@ -86,12 +86,12 @@ def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
     another.
 
     Args:
-        geometry (GEOMS_UNION): shapely geometry to be transformed.
-        from_epsg (int): EPSG code of crs to be transformed from.
-        to_epsg (int): EPSG code of crs to be transformed to.
+        geometry: shapely geometry to be transformed.
+        from_epsg: EPSG code of crs to be transformed from.
+        to_epsg: EPSG code of crs to be transformed to.
 
     Returns:
-        GEOMS_UNION: transformed shapely geometry
+        transformed shapely geometry
     """
 
     # define the coordinate transform ...
@@ -119,11 +119,11 @@ def round_shapely_geometry(geometry: GEOMS_UNION,
     bounding rectangles.
 
     Args:
-        geometry (GEOMS_UNION): shapely geometry to be rounded
-        ndigits (int, optional): number of significant digits to round to. Defaults to 1.
+        geometry: shapely geometry to be rounded
+        ndigits: number of significant digits to round to. Defaults to 1.
 
     Returns:
-        GEOMS_UNION: geometry with all coordinates rounded to ndigits number of significant digits.
+        geometry with all coordinates rounded to ndigits number of significant digits.
     """
 
     return transform(lambda x, y: (round(x, ndigits), round(y, ndigits)),

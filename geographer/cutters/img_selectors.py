@@ -36,17 +36,17 @@ class ImgSelector(Callable, BaseModel):
         """Select rasters to create cutouts from a list of rasters.
 
         Args:
-            img_names_list (List[str]): list of images to be selected from
-            target_connector (Connector): connector of target dataset.
-            new_imgs_dict (dict): dict with keys index or column names of
+            img_names_list: list of images to be selected from
+            target_connector: connector of target dataset.
+            new_imgs_dict: dict with keys index or column names of
                 target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector (Connector): connector of source dataset that new images are being cut out from
-            cut_imgs: (Dict[str, List[str]]): dict containing for each raster in the target dataset
+            source_connector: connector of source dataset that new images are being cut out from
+            cut_imgs: dict containing for each raster in the target dataset
                 the list of rasters in the source from which cutouts have been created for it
-            kwargs (Any): Optional keyword arguments
+            kwargs: Optional keyword arguments
 
         Returns:
-            List[str]: sublist of img_names_list
+            sublist of img_names_list
 
         Note:
             - Override to subclass. If img_names_list is empty an empty list

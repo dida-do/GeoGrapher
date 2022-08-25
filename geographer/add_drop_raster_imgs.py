@@ -28,8 +28,8 @@ class AddDropRasterImgsMixIn:
         which (vector) geometries are contained in which images.
 
         Args:
-            new_raster_imgs (gdf.GeoDataFrame): GeoDataFrame of image information conforming to the connector's raster_imgs format
-            label_maker (LabelMaker, optional): If given generate labels for new images.
+            new_raster_imgs: GeoDataFrame of image information conforming to the connector's raster_imgs format
+            label_maker: If given generate labels for new images.
         """
 
         new_raster_imgs = deepcopy_gdf(
@@ -98,10 +98,10 @@ class AddDropRasterImgsMixIn:
         remove_imgs_from_disk is set to False).
 
         Args:
-            img_names (List[str]): img_names/ids of images to be dropped.
-            remove_imgs_from_disk (bool): If true, delete images and labels
+            img_names: img_names/ids of images to be dropped.
+            remove_imgs_from_disk: If true, delete images and labels
                 from disk (if they exist). Defaults to True.
-            label_maker (LabelMaker, optional): If given, will use label_makers
+            label_maker: If given, will use label_makers
                 delete_labels method. Defaults to None.
         """
 

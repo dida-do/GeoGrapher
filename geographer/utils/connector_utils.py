@@ -21,11 +21,12 @@ def empty_gdf(index_name,
     types and crs.
 
     Args:
-        - index_name: name of the index of the new empty GeoDataFrame
-        - cols_and_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
-        - crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
+        index_name: name of the index of the new empty GeoDataFrame
+        cols_and_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
+        crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
+
     Returns:
-        - new_empty_df: the empty vector_features_df GeoDataFrame.
+        new_empty_df: the empty vector_features_df GeoDataFrame.
     """
 
     new_empty_gdf_dict = {
@@ -67,9 +68,11 @@ def empty_vector_features_same_format_as(
     """Creates an empty vector_features of the same format (index name,
     columns, column types) as the vector_features argument.
 
-    :param vector_features: Example polygon dataframe
+    Args:
+        vector_features: Example polygon dataframe
 
-    :return: New empty dataframe
+    Returns:
+        New empty dataframe
     """
 
     return empty_gdf_same_format_as(vector_features)
@@ -80,9 +83,11 @@ def empty_raster_imgs_same_format_as(
     """Creates an empty raster_imgs of the same format (index name, columns,
     column types) as the raster_imgs argument.
 
-    :param raster_imgs: Example images dataframe
+    Args:
+        raster_imgs: Example images dataframe
 
-    :return: New empty images datagrame
+    Returns:
+        New empty images datagrame
     """
 
     return empty_gdf_same_format_as(raster_imgs)
@@ -91,7 +96,8 @@ def empty_raster_imgs_same_format_as(
 def empty_graph() -> BipartiteGraph:
     """Return an empty bipartite graph to be used by Connector.
 
-    :returns: empty graph
+    Returns:
+        empty graph
     """
     return empty_bipartite_graph(red=VECTOR_FEATURES_COLOR,
                                  black=RASTER_IMGS_COLOR)
