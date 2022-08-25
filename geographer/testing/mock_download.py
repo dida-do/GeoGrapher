@@ -1,5 +1,5 @@
-"""
-Mock ImgDownloaderForSingleVectorFeature and ImgDownloadProcessor for testing.
+"""Mock ImgDownloaderForSingleVectorFeature and ImgDownloadProcessor for
+testing.
 
 Virtually 'download' from a dataset of images in a source directory.
 """
@@ -7,24 +7,22 @@ Virtually 'download' from a dataset of images in a source directory.
 import random
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Union
-from pydantic import Field
 
 import shapely
-from shapely.geometry import Polygon
 from geopandas.geodataframe import GeoDataFrame
+from pydantic import Field
+from shapely.geometry import Polygon
+
 from geographer.connector import Connector
 from geographer.downloaders.base_download_processor import ImgDownloadProcessor
-from geographer.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
-
-from geographer.errors import ImgAlreadyExistsError, ImgDownloadError, NoImgsForVectorFeatureFoundError
-
-
-
+from geographer.downloaders.base_downloader_for_single_feature import \
+    ImgDownloaderForSingleVectorFeature
+from geographer.errors import (ImgAlreadyExistsError, ImgDownloadError,
+                               NoImgsForVectorFeatureFoundError)
 
 
 class MockDownloadProcessor(ImgDownloadProcessor):
-    """
-    Mock raster image download processor.
+    """Mock raster image download processor.
 
     Just return the img_dict, since no actual image data is downloaded.
     """
@@ -44,23 +42,23 @@ class MockDownloadProcessor(ImgDownloadProcessor):
     ) -> Dict[Union[Literal['img_name', 'geometry', 'orig_crs_epsg_code'],
                     str], Any]:
         return {
-                'img_name':
-                img_name,
-                'geometry':
-                self.source_connector.raster_imgs.loc[img_name, 'geometry'],
-                'orig_crs_epsg_code':
-                self.source_connector.raster_imgs.loc[img_name, 'orig_crs_epsg_code'],
-                'img_processed?':
-                True
-            }
+            'img_name':
+            img_name,
+            'geometry':
+            self.source_connector.raster_imgs.loc[img_name, 'geometry'],
+            'orig_crs_epsg_code':
+            self.source_connector.raster_imgs.loc[img_name,
+                                                  'orig_crs_epsg_code'],
+            'img_processed?':
+            True
+        }
 
 
 class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
-    """
-    Mock downloader for single feature.
+    """Mock downloader for single feature.
 
-    Just return the information from a source dataset's raster_imgs
-    from a source directory. No actual image data is copied.
+    Just return the information from a source dataset's raster_imgs from
+    a source directory. No actual image data is copied.
     """
 
     source_connector: Connector = Field(exclude=True)
@@ -78,10 +76,10 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         previously_downloaded_imgs_set: Set[Union[str, int]],
         **kwargs,
     ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
-        """'Download' an image fully containing a vector vector feature or several
-        images jointly containing it from the source_connector and return a dict
-        with information to be updated in the connector, see below for
-        details.
+        """'Download' an image fully containing a vector vector feature or
+        several images jointly containing it from the source_connector and
+        return a dict with information to be updated in the connector, see
+        below for details.
 
         Args:
             feature_name: name of  vector feature
@@ -145,10 +143,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
                 # ... 'download' it, i.e. return the corresponding return dict.
                 img_info_dict = {
-                    'img_name':
-                    img_name,
-                    'img_processed?':
-                    False,
+                    'img_name': img_name,
+                    'img_processed?': False,
                 }
 
                 return {

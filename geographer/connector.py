@@ -20,16 +20,16 @@ from geopandas import GeoDataFrame
 
 # Mix-in classes:
 from geographer.add_drop_raster_imgs import AddDropRasterImgsMixIn
-from geographer.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
-from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-
+from geographer.add_drop_vector_features_mixin import \
+    AddDropVectorFeaturesMixIn
 from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
-                                       VECTOR_FEATURES_INDEX_NAME,
-                                       STANDARD_CRS_EPSG_CODE)
+                                         STANDARD_CRS_EPSG_CODE,
+                                         VECTOR_FEATURES_INDEX_NAME)
 from geographer.graph import BipartiteGraph
+from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
 from geographer.utils.connector_utils import (empty_gdf,
-                                            empty_gdf_same_format_as,
-                                            empty_graph)
+                                              empty_gdf_same_format_as,
+                                              empty_graph)
 
 DEFAULT_CONNECTOR_DIR_NAME = "connector"
 DEFAULT_IMAGES_DIR_NAME = "images"
@@ -42,7 +42,6 @@ INFERRED_PATH_ATTR_FILENAMES = {
 }
 """attribute self.key will be self.connector_dir / val"""
 
-
 ConnectorType = TypeVar("ConnectorType", bound="Connector")
 
 log = logging.getLogger(__name__)
@@ -53,20 +52,19 @@ class Connector(
         AddDropRasterImgsMixIn,
         BipartiteGraphMixIn,  # Needs to be last
 ):
-    """
-    Dataset class that connects vector features and raster data.
+    """Dataset class that connects vector features and raster data.
 
     A ``Connector`` represents a remote sensing computer vision dataset
-    composed of vector features and raster images. It connects the features and
-    images by a bipartite graph encoding the containment or intersection
-    relationships between them and is a container for tabular information about
-    the features and images as well as for metadata about the dataset.
+    composed of vector features and raster images. It connects the
+    features and images by a bipartite graph encoding the containment or
+    intersection relationships between them and is a container for
+    tabular information about the features and images as well as for
+    metadata about the dataset.
     """
 
     _non_task_feature_classes = [
         "background_class"
     ]  # vector feature classes not to be determined by a machine learning model (e.g. features that define background regions or masks)
-
 
     # yapf: disable
     def __init__(
@@ -206,7 +204,7 @@ class Connector(
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
     ) -> ConnectorType:
-        """Initialize a connector from paths"""
+        """Initialize a connector from paths."""
 
         # read args from json
         try:
@@ -284,8 +282,8 @@ class Connector(
 
     @property
     def raster_imgs(self) -> GeoDataFrame:
-        """tabular information about the raster images, see :ref:`raster_imgs`
-        """
+        """tabular information about the raster images, see
+        :ref:`raster_imgs`"""
         return self._raster_imgs
 
     @raster_imgs.setter
@@ -294,26 +292,25 @@ class Connector(
 
     @property
     def images_dir(self) -> Path:
-        """Directory containing the raster images"""
+        """Directory containing the raster images."""
         return self._images_dir
 
     @property
     def labels_dir(self) -> Path:
-        """Directory containing the segmentation labels"""
+        """Directory containing the segmentation labels."""
         return self._labels_dir
 
     @property
     def connector_dir(self) -> Path:
-        """Directory in which the connector files are saved"""
+        """Directory in which the connector files are saved."""
         return self._connector_dir
 
     @property
     def crs_epsg_code(self) -> int:
-        """
-        EPSG code of connector's :term:`crs`.
+        """EPSG code of connector's :term:`crs`.
 
-        Setting ``crs_epsg_code`` will set automatically set the connector's
-        ``raster_imgs`` and ``vector_features`` crs.
+        Setting ``crs_epsg_code`` will set automatically set the
+        connector's ``raster_imgs`` and ``vector_features`` crs.
         """
         return self.attrs["crs_epsg_code"]
 
@@ -341,7 +338,8 @@ class Connector(
     def all_vector_feature_classes(self):
         """All allowed classes in vector_features.
 
-        Includes those not related to the :term:`ML` task (e.g. the background class)
+        Includes those not related to the :term:`ML` task (e.g. the
+        background class)
         """
 
         answer = self.task_vector_feature_classes.copy()
@@ -354,14 +352,17 @@ class Connector(
 
     @property
     def image_data_dirs(self) -> List[Path]:
-        """All directories containing image data (including e.g. segmentation labels)"""
+        """All directories containing image data (including e.g. segmentation
+        labels)"""
         return self._image_data_dirs
 
     @property
     def graph_str(self) -> str:
         """String representation of the connector's internal graph.
 
-        Note that the representation might change if the internal representation changes."""
+        Note that the representation might change if the internal
+        representation changes.
+        """
         return str(self._graph)
 
     def save(self):

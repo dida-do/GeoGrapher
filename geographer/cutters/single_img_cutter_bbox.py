@@ -1,6 +1,5 @@
-"""
-A SingleImgCutter to extract one or several pre defined bounding box from an image.
-"""
+"""A SingleImgCutter to extract one or several pre defined bounding box from an
+image."""
 
 import logging
 from pathlib import Path
@@ -13,9 +12,9 @@ from pydantic import PrivateAttr, validator
 from rasterio.windows import Window, from_bounds
 from shapely.geometry import box
 
+from geographer.connector import Connector
 from geographer.cutters.single_img_cutter_base import SingleImgCutter
 from geographer.cutters.type_aliases import ImgSize
-from geographer.connector import Connector
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +26,11 @@ def _correct_window_offset(offset: Union[int, float], size: Union[int, float],
 
 
 class SingleImgCutterFromBBoxes(SingleImgCutter):
-    """
-    A SingleImgCutter to extract one or several pre defined bounding box from an image.
-    The new size of the images must be specified as it is used to ensure a
-    standardised output.
+    """A SingleImgCutter to extract one or several pre defined bounding box
+    from an image.
+
+    The new size of the images must be specified as it is used to ensure
+    a standardised output.
     """
 
     new_img_size: ImgSize
@@ -73,7 +73,7 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
     @validator("new_img_size")
     def new_img_size_side_lengths_must_be_positive(cls,
                                                    value: ImgSize) -> ImgSize:
-        """Validate new_img_size side lengths are positive"""
+        """Validate new_img_size side lengths are positive."""
         if isinstance(value, tuple) and not all(val > 0 for val in value):
             logger.error("new_img_size: need positive side length(s)")
             raise ValueError("new_img_size: need positive side length(s)")
@@ -84,7 +84,7 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
 
     @property
     def new_img_size_rows(self) -> int:
-        """Return number of rows of new image size"""
+        """Return number of rows of new image size."""
         if isinstance(self.new_img_size, tuple):
             return self.new_img_size[0]
         else:
@@ -92,7 +92,7 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
 
     @property
     def new_img_size_cols(self) -> int:
-        """Return number of columns of new image size"""
+        """Return number of columns of new image size."""
         if isinstance(self.new_img_size, tuple):
             return self.new_img_size[1]
         else:

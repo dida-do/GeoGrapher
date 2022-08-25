@@ -1,39 +1,46 @@
-"""
-label maker arg
+"""label maker arg.
 
-Dataset cutter that iterates over images. Implements a general-purpose higher order function
-to create or update datasets of GeoTiffs from existing ones by iterating over images.
+Dataset cutter that iterates over images. Implements a general-purpose
+higher order function to create or update datasets of GeoTiffs from
+existing ones by iterating over images.
 """
 
 import logging
 from typing import List, Optional
-from pydantic import Field
 
 from geopandas import GeoDataFrame
+from pydantic import Field
 from tqdm.auto import tqdm
-from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
-from geographer.connector import Connector
-from geographer.label_makers.label_maker_base import LabelMaker
 
-from geographer.utils.utils import concat_gdfs
-from geographer.cutters.img_filter_predicates import AlwaysTrue as AlwaysTrueImgs
+from geographer.connector import Connector
+from geographer.creator_from_source_dataset_base import \
+    DSCreatorFromSourceWithBands
+from geographer.cutters.img_filter_predicates import \
+    AlwaysTrue as AlwaysTrueImgs
 from geographer.cutters.img_filter_predicates import ImgFilterPredicate
 from geographer.cutters.single_img_cutter_base import SingleImgCutter
 from geographer.global_constants import RASTER_IMGS_INDEX_NAME
+from geographer.label_makers.label_maker_base import LabelMaker
+from geographer.utils.utils import concat_gdfs
 
 logger = logging.getLogger(__name__)
 
 
 class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
-    """
-    Dataset cutter that iterates over images. Implements a general-purpose higher order function
-    to create or update datasets of GeoTiffs from existing ones by iterating over images.
+    """Dataset cutter that iterates over images.
+
+    Implements a general-purpose higher order function to create or
+    update datasets of GeoTiffs from existing ones by iterating over
+    images.
     """
 
     img_cutter: SingleImgCutter
     img_filter_predicate: ImgFilterPredicate = AlwaysTrueImgs()
-    label_maker: Optional[LabelMaker] = Field(default=None, title="Label maker",
-        description="Optional label maker. If given, will be used to recompute labels\
+    label_maker: Optional[LabelMaker] = Field(
+        default=None,
+        title="Label maker",
+        description=
+        "Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None")
     cut_imgs: List[str] = Field(
         default_factory=list,
@@ -46,15 +53,18 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         self._check_crs_agree()
 
     def cut(self) -> Connector:
-        """
-        Cut a dataset.
+        """Cut a dataset.
 
-        Alternate name for the create method. See create_or_update for docstring.
+        Alternate name for the create method. See create_or_update for
+        docstring.
         """
         return self.create()
 
     def _create(self) -> None:
-        """Create a new dataset. See create_or_update for more details."""
+        """Create a new dataset.
+
+        See create_or_update for more details.
+        """
         self._create_or_update()
 
     def _update(self) -> None:
@@ -62,8 +72,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         self._create_or_update()
 
     def create_or_update(self) -> Connector:
-        """
-        Create or update target dataset.
+        """Create or update target dataset.
 
         Returns:
             connector of target dataset
@@ -97,7 +106,9 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(
             self.target_connector.raster_imgs.index)
-        added_features = set(self.source_connector.vector_features.index) - set(self.target_connector.vector_features.index)
+        added_features = set(
+            self.source_connector.vector_features.index) - set(
+                self.target_connector.vector_features.index)
 
         # dict to temporarily store information which will be appended
         # to target_connector's raster_imgs after cutting
@@ -115,11 +126,12 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                              desc='Cutting dataset: '):
 
             # If filter condition is satisfied, (if not, don't do anything) ...
-            if self.img_filter_predicate(img_name,
-                                         target_connector=self.target_connector,
-                                         new_img_dict=new_imgs_dict,
-                                         source_connector=self.source_connector,
-                                         cut_imgs=self.cut_imgs):
+            if self.img_filter_predicate(
+                    img_name,
+                    target_connector=self.target_connector,
+                    new_img_dict=new_imgs_dict,
+                    source_connector=self.source_connector,
+                    cut_imgs=self.cut_imgs):
 
                 # ... cut the images (and their labels) and remember information to be appended
                 # to self.target_connector raster_imgs in return dict
@@ -142,7 +154,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                 for key in new_imgs_dict.keys():
                     new_imgs_dict[key] += (imgs_from_single_cut_dict[key])
 
-                new_img_names = imgs_from_single_cut_dict[RASTER_IMGS_INDEX_NAME]
+                new_img_names = imgs_from_single_cut_dict[
+                    RASTER_IMGS_INDEX_NAME]
                 img_bounding_rectangles = imgs_from_single_cut_dict['geometry']
                 for new_img_name, img_bounding_rectangle in zip(
                         new_img_names, img_bounding_rectangles):
@@ -155,8 +168,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                         img_bounding_rectangle=img_bounding_rectangle)
 
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
-        new_raster_imgs = GeoDataFrame(new_imgs_dict,
-                                   crs=self.target_connector.raster_imgs.crs)
+        new_raster_imgs = GeoDataFrame(
+            new_imgs_dict, crs=self.target_connector.raster_imgs.crs)
         new_raster_imgs.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
 
         # ... and append it to self.raster_imgs.
@@ -165,8 +178,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
 
         # For those images that existed before the update and now intersect with newly added vector features ...
         imgs_w_new_features = [
-            img_name for feature_name in added_features for img_name in
-            self.target_connector.imgs_intersecting_vector_feature(feature_name)
+            img_name for feature_name in added_features for img_name in self.
+            target_connector.imgs_intersecting_vector_feature(feature_name)
             if img_name in imgs_in_target_dataset_before_update
         ]
         if self.label_maker is not None:
@@ -177,7 +190,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
             )
 
     def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and target agree"""
+        """Simple safety check: make sure coordinate systems of source and
+        target agree."""
         if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
             raise ValueError(
                 "Coordinate systems of source and target connectors do not agree"

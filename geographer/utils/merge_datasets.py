@@ -33,7 +33,8 @@ def merge_datasets(source_data_dir: Union[Path, str],
                 shutil.copy2(img_path, target_dir)
 
     # merge/copy over downloads (e.g. safe_files)
-    merge_dirs(str(source_connector.download_dir), str(target_connector.download_dir))
+    merge_dirs(str(source_connector.download_dir),
+               str(target_connector.download_dir))
 
     target_connector.add_to_polygons_df(source_connector.polygons_df)
     target_connector.add_to_raster_imgs(source_connector.raster_imgs)

@@ -1,13 +1,15 @@
 """Utilites used in the Connector class."""
 
 import logging
+
 import pandas as pd
 from geopandas import GeoDataFrame, GeoSeries
 
 from geographer.global_constants import STANDARD_CRS_EPSG_CODE
-from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
 from geographer.graph.bipartite_graph import (BipartiteGraph,
-                                            empty_bipartite_graph)
+                                              empty_bipartite_graph)
+from geographer.graph.bipartite_graph_mixin import (RASTER_IMGS_COLOR,
+                                                    VECTOR_FEATURES_COLOR)
 
 log = logging.getLogger(__name__)
 
@@ -62,8 +64,8 @@ def empty_gdf_same_format_as(df):
 
 def empty_vector_features_same_format_as(
         vector_features: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty vector_features of the same format (index name, columns,
-    column types) as the vector_features argument.
+    """Creates an empty vector_features of the same format (index name,
+    columns, column types) as the vector_features argument.
 
     :param vector_features: Example polygon dataframe
 
@@ -75,8 +77,8 @@ def empty_vector_features_same_format_as(
 
 def empty_raster_imgs_same_format_as(
         raster_imgs: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty raster_imgs of the same format (index name, columns, column
-    types) as the raster_imgs argument.
+    """Creates an empty raster_imgs of the same format (index name, columns,
+    column types) as the raster_imgs argument.
 
     :param raster_imgs: Example images dataframe
 

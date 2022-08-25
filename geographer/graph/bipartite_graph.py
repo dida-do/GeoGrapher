@@ -362,7 +362,10 @@ class BipartiteGraph(BipartiteGraphClass):
         else:
             self.file_path = file_path
             with open(file_path, "w", encoding="utf-8") as write_file:
-                json.dump(self._graph_dict, write_file, indent=4, ensure_ascii=False)
+                json.dump(self._graph_dict,
+                          write_file,
+                          indent=4,
+                          ensure_ascii=False)
 
     def really_undirected(self):
         """Check if graph is really undirected, i.e. if for each edge the

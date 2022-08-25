@@ -1,4 +1,5 @@
-"""Mix-in that implements the private methods used to manipulate a connector's bipartite graph."""
+"""Mix-in that implements the private methods used to manipulate a connector's
+bipartite graph."""
 
 import logging
 from typing import List, Optional, Union
@@ -47,7 +48,8 @@ class BipartiteGraphMixIn:
 
     def vector_features_intersecting_img(
             self, img_name: Union[str, List[str]]) -> List[str]:
-        """Return the vector features which intersect one or (any of) several images.
+        """Return the vector features which intersect one or (any of) several
+        images.
 
         Args:
             img_name (str, or List[str]): name/id of image or list names/ids
@@ -75,7 +77,8 @@ class BipartiteGraphMixIn:
     def imgs_intersecting_vector_feature(self,
                                          feature_name: Union[str, List[str]],
                                          mode: str = 'names') -> List[str]:
-        """Return names or paths of all raster images which intersect one or (any of) several vector features.
+        """Return names or paths of all raster images which intersect one or
+        (any of) several vector features.
 
         Args:
             feature_name (str): name/id (or list) of vector feature(s)
@@ -110,7 +113,8 @@ class BipartiteGraphMixIn:
 
     def vector_features_contained_in_img(
             self, img_name: Union[str, List[str]]) -> List[str]:
-        """Return vector features fully containing a given image (or any of several images).
+        """Return vector features fully containing a given image (or any of
+        several images).
 
         Args:
             img_name (str): name/id of image or list of names/ids of images
@@ -142,7 +146,8 @@ class BipartiteGraphMixIn:
         feature_name: Union[str, List[str]],
         mode: str = 'names',
     ) -> List[str]:
-        """Return names or paths of all images in which a given vector feature (or any of several) is fully contained.
+        """Return names or paths of all images in which a given vector feature
+        (or any of several) is fully contained.
 
         Args:
             feature_name (str): name/id (or list of names) of vector feature(s)
@@ -179,8 +184,7 @@ class BipartiteGraphMixIn:
 
     def does_img_contain_vector_feature(self, img_name: str,
                                         feature_name: str) -> bool:
-        """
-        Return whether a raster image fully contains a vector feature.
+        """Return whether a raster image fully contains a vector feature.
 
         Args:
             img_name (str): Name of image
@@ -194,8 +198,8 @@ class BipartiteGraphMixIn:
 
     def is_vector_feature_contained_in_img(self, feature_name: str,
                                            img_name: str) -> bool:
-        """
-        Return whether a vector feature is fully contained in a raster image.
+        """Return whether a vector feature is fully contained in a raster
+        image.
 
         Args:
             img_name (str): Name of image
@@ -209,8 +213,7 @@ class BipartiteGraphMixIn:
 
     def does_img_intersect_vector_feature(self, img_name: str,
                                           feature_name: str) -> bool:
-        """
-        Return whether a vector feature intersects a raster image.
+        """Return whether a vector feature intersects a raster image.
 
         Args:
             img_name (str): Name of image
@@ -224,8 +227,7 @@ class BipartiteGraphMixIn:
 
     def does_vector_feature_intersect_img(self, feature_name: str,
                                           img_name: str) -> bool:
-        """
-        Return whether a vector feature intersects a raster image.
+        """Return whether a vector feature intersects a raster image.
 
         Args:
             img_name (str): Name of image
@@ -309,8 +311,8 @@ class BipartiteGraphMixIn:
             self,
             feature_name: str,
             vector_features: Optional[GeoDataFrame] = None):
-        """Connects a vector feature to those images in self.raster_imgs with which it has
-        non-empty intersection.
+        """Connects a vector feature to those images in self.raster_imgs with
+        which it has non-empty intersection.
 
         Args:
             feature_name (str): name/id of vector feature to add
@@ -369,11 +371,11 @@ class BipartiteGraphMixIn:
             graph: Optional[BipartiteGraph] = None):
         """Create a vertex in the graph for the image if one does not yet exist
         and connect it to all vector features in the graph while modifying the
-        img_counts in vector_features where appropriate. The default values None
-        for vector_features and graph will be interpreted as self.vector_features and
-        self.graph. If img_bounding_rectangle is None, we assume we can get it
-        from self. If the image already exists and already has connections a
-        warning will be logged.
+        img_counts in vector_features where appropriate. The default values
+        None for vector_features and graph will be interpreted as
+        self.vector_features and self.graph. If img_bounding_rectangle is None,
+        we assume we can get it from self. If the image already exists and
+        already has connections a warning will be logged.
 
         Args:
             img_name (str): Name of image to add
@@ -437,8 +439,8 @@ class BipartiteGraphMixIn:
 
     def _remove_vector_feature_from_graph_modify_vector_features(
             self, feature_name: str, set_img_count_to_zero: bool = True):
-        """Removes a vector feature from the graph (i.e. removes the vertex and all
-        incident edges) and (if set_img_count_to_zero == True) sets the
+        """Removes a vector feature from the graph (i.e. removes the vertex and
+        all incident edges) and (if set_img_count_to_zero == True) sets the
         vector_features field 'img_count' to 0.
 
         Args:
@@ -455,8 +457,8 @@ class BipartiteGraphMixIn:
 
     def _remove_img_from_graph_modify_vector_features(self, img_name: str):
         """Removes an img from the graph (i.e. removes the vertex and all
-        incident edges) and modifies the vector_features fields 'img_count' for the
-        vector features contained in the image.
+        incident edges) and modifies the vector_features fields 'img_count' for
+        the vector features contained in the image.
 
         Args:
             img_name (str): name/id of image to remove

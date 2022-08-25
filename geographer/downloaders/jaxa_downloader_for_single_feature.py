@@ -1,6 +1,5 @@
-"""
-ImgDownloaderForSinglePolygon that downloads digital elevation model (DEM) data
-from jaxa.jp's ALOS data-source.
+"""ImgDownloaderForSinglePolygon that downloads digital elevation model (DEM)
+data from jaxa.jp's ALOS data-source.
 
 See here https://www.eorc.jaxa.jp/ALOS/en/index.htm for an overview of the ALOS data.
 A detailed product description for ALOS (file-format, etc) can be found in:
@@ -12,7 +11,6 @@ ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_vXXXX/
 There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 1804 version has been tested.
 """
 
-from typing import Literal, Dict, Union, Any
 import logging
 import math
 import os
@@ -22,12 +20,14 @@ import urllib.request as request
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Set, Union
+from typing import Any, Dict, Literal, Optional, Set, Union
 
 import numpy as np
 from shapely.geometry.base import BaseGeometry
-from geographer.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
+
 from geographer.connector import Connector
+from geographer.downloaders.base_downloader_for_single_feature import \
+    ImgDownloaderForSingleVectorFeature
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -50,8 +50,8 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         download_mode: str = None,
         **kwargs,
     ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
-        """Downloads DEM data from jaxa.jp's ftp-server for a given (vector) geometry and
-        returns dict-structure compatible with the connector.
+        """Downloads DEM data from jaxa.jp's ftp-server for a given (vector)
+        geometry and returns dict-structure compatible with the connector.
 
         Warning:
             The downloader has only been tested for the 1804 jaxa_data_version.

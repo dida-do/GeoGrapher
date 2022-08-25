@@ -1,4 +1,8 @@
-"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-hub. Should be easily extendable to Sentinel-1."""
+"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-
+hub.
+
+Should be easily extendable to Sentinel-1.
+"""
 
 import configparser
 import logging
@@ -8,25 +12,27 @@ from typing import Any, Set, Union
 from zipfile import ZipFile
 
 from sentinelsat import SentinelAPI
-from sentinelsat.exceptions import UnauthorizedError, ServerError
+from sentinelsat.exceptions import ServerError, UnauthorizedError
 from shapely import wkt
 from shapely.geometry import Polygon
 
-from geographer.errors import NoImgsForVectorFeatureFoundError
-from geographer.downloaders.base_downloader_for_single_feature import ImgDownloaderForSingleVectorFeature
+from geographer.downloaders.base_downloader_for_single_feature import \
+    ImgDownloaderForSingleVectorFeature
 from geographer.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
+from geographer.errors import NoImgsForVectorFeatureFoundError
 from geographer.utils.utils import transform_shapely_geometry
 
 # logger
 log = logging.getLogger(__name__)
 
 
-class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
+class SentinelDownloaderForSingleVectorFeature(
+        ImgDownloaderForSingleVectorFeature):
     """Downloader for Sentinel-2 images.
 
     Requires environment variables sentinelAPIusername and
-    sentinelAPIpassword to set up the sentinel API. Assumes raster_imgs has
-    columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
+    sentinelAPIpassword to set up the sentinel API. Assumes raster_imgs
+    has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
     'img_processed?'. Subclass/modify if you need other columns.
     """
 
@@ -45,8 +51,8 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         credentials_ini_path: Path,
         **kwargs,
     ) -> dict:
-        """Downloads a sentinel-2 image fully containing the vector feature, returns a
-        dict in the format needed by the associator.
+        """Downloads a sentinel-2 image fully containing the vector feature,
+        returns a dict in the format needed by the associator.
 
         Note:
             If not given, the username and password for the Copernicus Sentinel-2 OpenAPI
@@ -146,7 +152,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             f"All images for {feature_name} failed to download.")
 
     def _get_longform_producttype(self, producttype):
-        """Return producttype in longform as needed by the sentinel API"""
+        """Return producttype in longform as needed by the sentinel API."""
         if producttype in {'L2A', 'S2MSI2A'}:
             producttype = 'S2MSI2A'
         elif producttype in {'L1C', 'S2MSI1C'}:
@@ -159,7 +165,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
     @staticmethod
     def _check_args_are_valid(producttype, resolution,
                               max_percent_cloud_coverage):
-        """Run some safety checks on the arg values"""
+        """Run some safety checks on the arg values."""
         if resolution not in {10, 20, 60}:
             raise ValueError(f"Unknown resolution: {resolution}")
         if max_percent_cloud_coverage < 0 or max_percent_cloud_coverage > 100:

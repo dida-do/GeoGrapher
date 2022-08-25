@@ -1,30 +1,31 @@
-"""Contains mix-in class to save and load BaseModels"""
+"""Contains mix-in class to save and load BaseModels."""
 
-from abc import abstractmethod, ABC
-from typing import Any, Dict, Optional, Union
-from pathlib import Path
 import json
-from inspect import isabstract, isclass, getmro
-from pkgutil import walk_packages
-from pathlib import Path
 import logging
+from abc import ABC, abstractmethod
 from importlib import import_module
+from inspect import getmro, isabstract, isclass
+from pathlib import Path
+from pkgutil import walk_packages
+from typing import Any, Dict, Optional, Union
+
 from pydantic import BaseModel
-from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import eval_nested_base_model_dict, get_nested_base_model_dict
+
+from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import (
+    eval_nested_base_model_dict, get_nested_base_model_dict)
 
 logger = logging.getLogger(__name__)
 
+
 class SaveAndLoadBaseModelMixIn:
-    """
-    Mix-in class to save and load BaseModels.
-    """
+    """Mix-in class to save and load BaseModels."""
 
     @abstractmethod
     def save(self):
         pass
 
     def _save(self, json_file_path: Union[str, Path]) -> None:
-        """Save to json_file"""
+        """Save to json_file."""
         #Use to implement save method with file_path determined by use case
         json_file_path = Path(json_file_path)
         if json_file_path.suffix != '.json':
@@ -40,7 +41,7 @@ class SaveAndLoadBaseModelMixIn:
         json_file_path: Union[Path, str],
         constructor_symbol_table: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        """Load and return saved BaseModel"""
+        """Load and return saved BaseModel."""
 
         if constructor_symbol_table is None:
             constructor_symbol_table = {}
@@ -50,7 +51,8 @@ class SaveAndLoadBaseModelMixIn:
         for py_file_path in geographer_dir.rglob("*.py"):
             py_file_path_no_suffix = str(py_file_path.with_suffix(""))
             idx = py_file_path_no_suffix.rfind("geographer")
-            module_import_str = ".".join(Path(py_file_path_no_suffix[idx:]).parts)
+            module_import_str = ".".join(
+                Path(py_file_path_no_suffix[idx:]).parts)
 
             # import the module and iterate through its attributes
             try:

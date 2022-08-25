@@ -1,24 +1,26 @@
-"""
-Dataset cutter that iterates over vector features.
+"""Dataset cutter that iterates over vector features.
 
 Implements a general-purpose higher order function to create or update
-datasets of GeoTiffs from existing ones by iterating over vector features.
+datasets of GeoTiffs from existing ones by iterating over vector
+features.
 """
 
 import logging
 from collections import defaultdict
-from typing import (Dict, List, Optional, Set, Union)
+from typing import Dict, List, Optional, Set, Union
 
 from geopandas import GeoDataFrame
 from pydantic import Field
 from tqdm.auto import tqdm
 
 from geographer.connector import Connector
-from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
-from geographer.global_constants import RASTER_IMGS_INDEX_NAME
+from geographer.creator_from_source_dataset_base import \
+    DSCreatorFromSourceWithBands
+from geographer.cutters.feature_filter_predicates import (
+    AlwaysTrue, FeatureFilterPredicate)
 from geographer.cutters.img_selectors import ImgSelector
-from geographer.cutters.feature_filter_predicates import (AlwaysTrue, FeatureFilterPredicate)
 from geographer.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.global_constants import RASTER_IMGS_INDEX_NAME
 from geographer.label_makers.label_maker_base import LabelMaker
 from geographer.utils.utils import concat_gdfs, map_dict_values
 
@@ -26,18 +28,17 @@ logger = logging.getLogger(__name__)
 
 
 class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
-    """
-    Dataset cutter that iterates over vector features.
+    """Dataset cutter that iterates over vector features.
 
-    Implements a general-purpose higher order function to create or update
-    datasets of GeoTiffs from existing ones by iterating over vector features:
-    Adds all features in the source dataset to the target dataset and
-    iterate over all features in the target dataset. For each feature if
-    the feature_filter_predicate is met uses the img_selector to select a
-    subset of the images in the source dataset for which no images for
-    this feature have previously been cut from. Each of the images is
-    then cut using the img_cutter, and the new images are added
-    to the target dataset/connector.
+    Implements a general-purpose higher order function to create or
+    update datasets of GeoTiffs from existing ones by iterating over
+    vector features: Adds all features in the source dataset to the
+    target dataset and iterate over all features in the target dataset.
+    For each feature if the feature_filter_predicate is met uses the
+    img_selector to select a subset of the images in the source dataset
+    for which no images for this feature have previously been cut from.
+    Each of the images is then cut using the img_cutter, and the new
+    images are added to the target dataset/connector.
     """
 
     feature_filter_predicate: FeatureFilterPredicate = Field(
@@ -46,15 +47,20 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         description="Filters vector features to be cut")
     img_selector: ImgSelector = Field(
         title="Image selector",
-        description="Selects images from source to cut for a given vector feature")
+        description=
+        "Selects images from source to cut for a given vector feature")
     img_cutter: SingleImgCutter = Field(title="Single image cutter")
-    label_maker: Optional[LabelMaker] = Field(default=None, title="Label maker",
-        description="Optional label maker. If given, will be used to recompute labels\
+    label_maker: Optional[LabelMaker] = Field(
+        default=None,
+        title="Label maker",
+        description=
+        "Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None")
     cut_imgs: Dict[str, List[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut images dictionary",
-        description="Normally, should not be set by hand! Dict with vector features\
+        description=
+        "Normally, should not be set by hand! Dict with vector features\
         as keys and lists of images cut for each vector feature as values")
 
     def __init__(self, **data) -> None:
@@ -62,27 +68,32 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         self._check_crs_agree()
 
     def cut(self):
-        """
-        Cut a dataset.
+        """Cut a dataset.
 
-        Alternate name for the create method. See create_or_update for docstring.
+        Alternate name for the create method. See create_or_update for
+        docstring.
         """
         return self.create()
 
     def _create(self) -> None:
-        """Create a new dataset. See create_or_update for more details."""
+        """Create a new dataset.
+
+        See create_or_update for more details.
+        """
         self._create_or_update()
 
     def _update(self) -> None:
-        """Update target dataset. See create_or_update for more details."""
+        """Update target dataset.
+
+        See create_or_update for more details.
+        """
         self._create_or_update()
 
     def _after_creating_or_updating(self):
         self.save()
 
     def create_or_update(self) -> Connector:
-        """
-        Create or update target dataset.
+        """Create or update target dataset.
 
         Returns:
             connector of target dataset
@@ -131,15 +142,15 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
             ))
 
         # For each feature ...
-        for feature_name in tqdm(
-                features_to_iterate_over,
-                desc='Cutting dataset: '):
+        for feature_name in tqdm(features_to_iterate_over,
+                                 desc='Cutting dataset: '):
 
             # ... if we want to create new images for it ...
-            if self.feature_filter_predicate(feature_name=feature_name,
-                                             target_connector=self.target_connector,
-                                             new_imgs_dict=new_imgs_dict,
-                                             source_connector=self.source_connector):
+            if self.feature_filter_predicate(
+                    feature_name=feature_name,
+                    target_connector=self.target_connector,
+                    new_imgs_dict=new_imgs_dict,
+                    source_connector=self.source_connector):
 
                 # ... remember it ...
                 added_features += [feature_name]
@@ -173,7 +184,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
 
                     # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
                     assert {
-                        RASTER_IMGS_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'
+                        RASTER_IMGS_INDEX_NAME, 'geometry',
+                        'orig_crs_epsg_code'
                     } <= set(
                         imgs_from_single_cut_dict.keys()
                     ), "Dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
@@ -204,8 +216,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                         self.cut_imgs[feature_name] += [img_name]
 
         # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
-        new_raster_imgs = GeoDataFrame(new_imgs_dict,
-                                   crs=self.target_connector.raster_imgs.crs)
+        new_raster_imgs = GeoDataFrame(
+            new_imgs_dict, crs=self.target_connector.raster_imgs.crs)
         new_raster_imgs.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
 
         # log warning if columns don't agree
@@ -221,8 +233,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
 
         # For those images that existed before the update and now intersect with newly added vector features ...
         imgs_w_new_features = [
-            img_name for feature_name in added_features for img_name in
-            self.target_connector.imgs_intersecting_vector_feature(feature_name)
+            img_name for feature_name in added_features for img_name in self.
+            target_connector.imgs_intersecting_vector_feature(feature_name)
             if img_name in imgs_in_target_dataset_before_update
         ]
         if self.label_maker is not None:
@@ -241,8 +253,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
     def _filter_out_previously_cut_imgs(
             self, feature_name: Union[str, int],
             src_imgs_containing_feature: Set[str]) -> List[str]:
-        """Filter out source images from which cutouts containing a vector feature
-        have already been created.
+        """Filter out source images from which cutouts containing a vector
+        feature have already been created.
 
         Args:
             feature_name (Union[str, int]): name/id of vector feature
@@ -261,7 +273,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         return answer
 
     def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and target agree"""
+        """Simple safety check: make sure coordinate systems of source and
+        target agree."""
         if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
             raise ValueError(
                 "Coordinate systems of source and target connectors do not agree"

@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any, Callable, List, Union
 
 import fiona
-from fiona.drvsupport import supported_drivers
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -20,13 +19,16 @@ import pyproj
 import rasterio as rio
 import rasterio.mask
 import shapely
+from fiona.drvsupport import supported_drivers
 from geopandas import GeoDataFrame
 from shapely.geometry import (GeometryCollection, LinearRing, LineString,
                               MultiLineString, MultiPoint, MultiPolygon, Point,
                               Polygon)
 from shapely.ops import transform
 
-from geographer.global_constants import RASTER_IMGS_INDEX_NAME, VECTOR_FEATURES_INDEX_NAME
+from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
+                                         VECTOR_FEATURES_INDEX_NAME)
+
 supported_drivers['KML'] = 'rw'
 
 GEOMS_UNION = Union[Point, Polygon, MultiPoint, MultiPolygon, MultiLineString,
@@ -105,8 +107,7 @@ def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
     to_crs = rio.crs.CRS.from_epsg(to_epsg)
     assert rio.crs.epsg_treats_as_northingeasting(
         from_crs) == rio.crs.epsg_treats_as_northingeasting(
-            to_crs
-        ), "safety check that both crs treat as northeasting failed!"
+            to_crs), "safety check that both crs treat as northeasting failed!"
 
     return transformed_geometry
 
@@ -130,7 +131,6 @@ def round_shapely_geometry(geometry: GEOMS_UNION,
 
 
 def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
-
     gdf_copy = GeoDataFrame(columns=gdf.columns,
                             data=copy.deepcopy(gdf.values),
                             crs=gdf.crs)
@@ -141,11 +141,11 @@ def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
 
 
 def concat_gdfs(objs: List[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
-    """
-    Return concatentation of a list of GeoDataFrames.
+    """Return concatentation of a list of GeoDataFrames.
 
-    The crs and index name of the returned concatenated GeoDataFrames will be
-    the crs and index name of the first GeoDataFrame in the list.
+    The crs and index name of the returned concatenated GeoDataFrames
+    will be the crs and index name of the first GeoDataFrame in the
+    list.
     """
 
     for obj in objs:
@@ -163,9 +163,10 @@ def concat_gdfs(objs: List[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
 def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
     return {key: fun(val) for key, val in dict_arg.items()}
 
-def create_kml_all_geodataframes(data_dir: Union[Path, str], out_path: Union[Path, str]) -> None:
-    """
-    Create KML file from a dataset's raster_imgs and vector_features.
+
+def create_kml_all_geodataframes(data_dir: Union[Path, str],
+                                 out_path: Union[Path, str]) -> None:
+    """Create KML file from a dataset's raster_imgs and vector_features.
 
     Can be used to visualize data in Google Earth Pro.
     """
@@ -177,8 +178,12 @@ def create_kml_all_geodataframes(data_dir: Union[Path, str], out_path: Union[Pat
     raster_imgs_path = data_dir / "connector/raster_imgs.geojson"
     vector_features_path = data_dir / "connector/vector_features.geojson"
 
-    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[["geometry", RASTER_IMGS_INDEX_NAME]]
-    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[["geometry", VECTOR_FEATURES_INDEX_NAME]]
+    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[[
+        "geometry", RASTER_IMGS_INDEX_NAME
+    ]]
+    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[[
+        "geometry", VECTOR_FEATURES_INDEX_NAME
+    ]]
 
     raster_imgs["Description"] = "image"
     raster_imgs["Name"] = raster_imgs[RASTER_IMGS_INDEX_NAME]
@@ -189,4 +194,3 @@ def create_kml_all_geodataframes(data_dir: Union[Path, str], out_path: Union[Pat
 
     with fiona.drivers():
         combined.to_file(out_path, driver="KML")
-

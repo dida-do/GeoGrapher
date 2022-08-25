@@ -4,11 +4,12 @@ import logging
 from typing import List, Literal
 
 import numpy as np
-from pydantic import Field
 import rasterio as rio
+from pydantic import Field
 from tqdm.auto import tqdm
 
-from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
+from geographer.creator_from_source_dataset_base import \
+    DSCreatorFromSourceWithBands
 from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 
 log = logging.Logger(__name__)
@@ -127,12 +128,12 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
     @staticmethod
     def _npy_filename_from_tif(tif_filename: str) -> str:
-        """Return .npy filename from .tif filename"""
+        """Return .npy filename from .tif filename."""
         return tif_filename[:-4] + ".npy"
 
     @staticmethod
     def _check_imgs_are_tifs(img_names: List[str]):
-        """Make sure all images are GeoTiffs"""
+        """Make sure all images are GeoTiffs."""
         non_tif_imgs = list(
             filter(
                 lambda s: not s.endswith('.tif'),

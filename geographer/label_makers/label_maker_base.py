@@ -1,29 +1,28 @@
-"""
-Base class for label makers that generate labels (for
-any kind of computer vision task) from a connector's vector_features.
-"""
+"""Base class for label makers that generate labels (for any kind of computer
+vision task) from a connector's vector_features."""
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import logging
-from typing import List, Optional, TYPE_CHECKING
-from pydantic import BaseModel, Field
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, List, Optional
 
+from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
+
 if TYPE_CHECKING:
     from geographer.connector import Connector
-from geographer.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
+
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
+    SaveAndLoadBaseModelMixIn
 
 # logger
 log = logging.getLogger(__name__)
 
 
 class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
-    """
-    Base class for label makers that generate labels (for
-    any kind of computer vision task) from a connector's vector_features.
-    """
+    """Base class for label makers that generate labels (for any kind of
+    computer vision task) from a connector's vector_features."""
 
     @abstractmethod
     def make_labels(
@@ -31,8 +30,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
         img_names: Optional[List[str]] = None,
     ):
-        """
-        Create segmentation labels.
+        """Create segmentation labels.
 
         Args:
             img_names (List[str], optional): list of image names to create labels for.
@@ -56,6 +54,9 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
         img_names: Optional[List[str]] = None,
     ):
-        """Recompute labels. Equivalent to delete_labels followed by make_labels"""
+        """Recompute labels.
+
+        Equivalent to delete_labels followed by make_labels
+        """
         self.delete_labels(connector, img_names)
         self.make_labels(connector, img_names)

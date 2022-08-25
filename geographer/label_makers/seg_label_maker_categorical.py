@@ -1,26 +1,25 @@
-"""Label maker for categorical segmentation labels"""
+"""Label maker for categorical segmentation labels."""
 
 import logging
+
 import numpy as np
 import rasterio as rio
-
 from geopandas import GeoDataFrame
+
+from geographer.connector import Connector
 from geographer.label_makers.seg_label_maker_base import SegLabelMaker
 from geographer.utils.utils import transform_shapely_geometry
-from geographer.connector import Connector
 
 log = logging.getLogger(__name__)
 
 
 class SegLabelMakerCategorical(SegLabelMaker):
-    """
-    Label maker that generates categorical segmentation labels
-    from a connector's vector_features.
-    """
+    """Label maker that generates categorical segmentation labels from a
+    connector's vector_features."""
 
     @property
     def label_type(self) -> str:
-        """Return label type"""
+        """Return label type."""
         return 'categorical'
 
     def _make_label_for_img(self, connector: Connector, img_name: str):
@@ -89,7 +88,8 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
                         # To do that, first find (the df of) the geometries intersecting the image ...
                         features_intersecting_img: GeoDataFrame = connector.vector_features.loc[
-                            connector.vector_features_intersecting_img(img_name)]
+                            connector.vector_features_intersecting_img(
+                                img_name)]
 
                         # ... then restrict to (the subdf of) geometries
                         # with the given class.
@@ -132,7 +132,8 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     dst.write(label, 1)
 
     def _run_safety_checks(self, connector: Connector):
-        """Check existence of 'type' column in connector.vector_features and make sure entries are allowed."""
+        """Check existence of 'type' column in connector.vector_features and
+        make sure entries are allowed."""
 
         if "type" not in connector.vector_features.columns:
             raise ValueError(

@@ -6,6 +6,8 @@ Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cut
     - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over vector features.
 """
 
+# yapf: disable
+
 from __future__ import annotations
 
 import logging
@@ -21,16 +23,14 @@ from geographer.global_constants import DATA_DIR_SUBDIRS
 if TYPE_CHECKING:
     from geographer.img_geom_associator import ImgPolygonAssociator
 
-from geographer.cutteres.cut_iter_over_imgs import \
-    create_or_update_dataset_iter_over_imgs
 from geographer.cut.img_filter_predicates import AlwaysTrue
 from geographer.cut.single_img_cutter_grid import SingleImgCutterToGrid
-
-
+from geographer.cutteres.cut_iter_over_imgs import \
+    create_or_update_dataset_iter_over_imgs
 
 logger = logging.getLogger(__name__)
 
-DSCutterBBoxes(TODO):
+class DSCutterBBoxes(): #TODO
 
     def create_dataset_cut_bboxes(
             create_or_update: str,
@@ -116,3 +116,4 @@ DSCutterBBoxes(TODO):
         target_assoc.save()
 
         return target_assoc
+# yapf: enable

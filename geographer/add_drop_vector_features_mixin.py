@@ -3,14 +3,17 @@ TODO: _check_classes_in_vector_features_contained_in_all_classes
 """
 
 from __future__ import annotations
+
 import logging
-from typing import Optional, Sequence, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
+
 from geographer.graph.bipartite_graph_mixin import VECTOR_FEATURES_COLOR
 from geographer.utils.connector_utils import _check_df_cols_agree
 from geographer.utils.utils import concat_gdfs, deepcopy_gdf
+
 if TYPE_CHECKING:
     from geographer.label_makers.label_maker_base import LabelMaker
 
@@ -22,7 +25,8 @@ log = logging.getLogger(__name__)
 
 
 class AddDropVectorFeaturesMixIn(object):
-    """Mix-in that implements methods to add and drop vector features or images."""
+    """Mix-in that implements methods to add and drop vector features or
+    images."""
 
     def add_to_vector_features(
         self,
@@ -46,7 +50,8 @@ class AddDropVectorFeaturesMixIn(object):
                 f"new_vector_features contains rows with duplicate vector_feature_names (indices): {duplicates.index.tolist()}"
             )
 
-        feature_names_in_both = list(set(new_vector_features.index) & set(self.vector_features.index))
+        feature_names_in_both = list(
+            set(new_vector_features.index) & set(self.vector_features.index))
         if feature_names_in_both:
             feature_names_in_both_str = ', '.join(feature_names_in_both)
             raise ValueError(

@@ -1,26 +1,25 @@
-"""
-Label maker for soft-categorical (i.e. probabilistic multi-class) segmentation labels.
-"""
+"""Label maker for soft-categorical (i.e. probabilistic multi-class)
+segmentation labels."""
 
 import logging
 
 import numpy as np
 import rasterio as rio
 
+from geographer.connector import Connector
 from geographer.label_makers.seg_label_maker_base import SegLabelMaker
 from geographer.utils.utils import transform_shapely_geometry
-from geographer.connector import Connector
 
 log = logging.getLogger(__name__)
 
 
 class SegLabelMakerSoftCategorical(SegLabelMaker):
-    """
-    Label maker that generates soft-categorical (i.e. probabilistic multi-class)
-    segmentation labels from a connector's vector_features.
+    """Label maker that generates soft-categorical (i.e. probabilistic multi-
+    class) segmentation labels from a connector's vector_features.
 
-    Assumes the connector's vector_features contains for each segmentation class
-    a "prob_seg_class<seg_class>" column containing the probabilities for that class.
+    Assumes the connector's vector_features contains for each
+    segmentation class a "prob_seg_class<seg_class>" column containing
+    the probabilities for that class.
     """
 
     add_background_band: bool
@@ -34,7 +33,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         connector: Connector,
         img_name: str,
     ) -> None:
-        """Create a soft-categorical or onehot GeoTiff (pixel) label for an image.
+        """Create a soft-categorical or onehot GeoTiff (pixel) label for an
+        image.
 
         Args:
             connector (Connector): calling Connector
@@ -89,11 +89,13 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                     start_band = 1 if not self.add_background_band else 2
 
                     for count, seg_class in enumerate(
-                            connector.task_vector_feature_classes, start=start_band):
+                            connector.task_vector_feature_classes,
+                            start=start_band):
 
                         # To do that, first find (the df of) the geoms intersecting the image ...
                         features_intersecting_img_df = connector.vector_features.loc[
-                            connector.vector_features_intersecting_img(img_name)]
+                            connector.vector_features_intersecting_img(
+                                img_name)]
 
                         # ... extract the geometries ...
                         feature_geoms_in_std_crs = list(
@@ -142,8 +144,9 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                         # ... add background band.
 
                         non_background_band_indices = list(
-                            range(start_band,
-                                  2 + len(connector.task_vector_feature_classes)))
+                            range(
+                                start_band, 2 +
+                                len(connector.task_vector_feature_classes)))
 
                         # The probability of a pixel belonging to
                         # the background is the complement of it
@@ -172,7 +175,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         return label_bands_count
 
     def _run_safety_checks(self, connector: Connector):
-        """Check existence of 'prob_of_class_<class name>' columns in connector.vector_features."""
+        """Check existence of 'prob_of_class_<class name>' columns in
+        connector.vector_features."""
 
         # check required columns exist
         required_cols = {
@@ -188,7 +192,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # check no other columns will be mistaken for
         feature_classes_in_vector_features = {
-            col_name[1+len("prob_of_class"):]
+            col_name[1 + len("prob_of_class"):]
             for col_name in connector.vector_features.columns
             if col_name.startswith("prob_of_class_")
         }

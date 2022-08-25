@@ -1,22 +1,23 @@
-"""
-Create a dataset with soft-categorical labels from one with categorical labels.
-"""
+"""Create a dataset with soft-categorical labels from one with categorical
+labels."""
 
 import logging
 import shutil
+
 from tqdm.auto import tqdm
 
+from geographer import Connector
 from geographer.creator_from_source_dataset_base import DSCreatorFromSource
 from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 from geographer.label_makers.label_type_conversion_utils import \
     convert_vector_features_soft_cat_to_cat
-from geographer import Connector
 
 log = logging.Logger(__name__)
 
 
 class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
-    """Create a dataset with soft-categorical labels from one with categorical labels."""
+    """Create a dataset with soft-categorical labels from one with categorical
+    labels."""
 
     def _create(self):
         self._create_or_update()

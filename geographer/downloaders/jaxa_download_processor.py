@@ -1,6 +1,4 @@
-"""
-ImgDownloadProcessor for JAXA downloads.
-"""
+"""ImgDownloadProcessor for JAXA downloads."""
 
 import logging
 import shutil
@@ -8,6 +6,7 @@ from pathlib import Path
 
 import rasterio as rio
 from shapely.geometry import box
+
 from geographer.downloaders.base_download_processor import ImgDownloadProcessor
 from geographer.utils.utils import transform_shapely_geometry
 

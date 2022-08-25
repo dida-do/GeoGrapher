@@ -1,27 +1,27 @@
 from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 
+from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 from geographer.utils.connector_utils import _check_df_cols_agree
 from geographer.utils.utils import concat_gdfs, deepcopy_gdf
+
 if TYPE_CHECKING:
     from geographer.label_makers.label_maker_base import LabelMaker
 
 log = logging.getLogger(__name__)
 
 
-
 class AddDropRasterImgsMixIn:
     """Mix-in that implements methods to add and drop raster images."""
 
-    def add_to_raster_imgs(
-        self,
-        new_raster_imgs: GeoDataFrame,
-        label_maker: Optional[LabelMaker] = None):
+    def add_to_raster_imgs(self,
+                           new_raster_imgs: GeoDataFrame,
+                           label_maker: Optional[LabelMaker] = None):
         """Add images to connector's ``raster_imgs`` attribute.
 
         Adds the new_raster_imgs to the connector's :ref:`raster_imgs` keeping track of
@@ -41,7 +41,8 @@ class AddDropRasterImgsMixIn:
                 f"new_raster_imgs contains rows with duplicate img_names: {duplicates.index.tolist()}"
             )
 
-        imgs_names_in_both = list(set(new_raster_imgs.index) & set(self.raster_imgs.index))
+        imgs_names_in_both = list(
+            set(new_raster_imgs.index) & set(self.raster_imgs.index))
         if imgs_names_in_both:
             img_names_in_both_str = ', '.join(imgs_names_in_both)
             raise ValueError(
@@ -49,7 +50,8 @@ class AddDropRasterImgsMixIn:
             )
 
         if new_raster_imgs.geometry.isna().any():
-            imgs_with_null_geoms: str = ', '.join(new_raster_imgs[new_raster_imgs.geometry.isna()].index)
+            imgs_with_null_geoms: str = ', '.join(
+                new_raster_imgs[new_raster_imgs.geometry.isna()].index)
             raise ValueError(
                 f"new_raster_imgs contains rows with None geometries: {imgs_with_null_geoms}"
             )
@@ -70,8 +72,7 @@ class AddDropRasterImgsMixIn:
 
             # add new img vertex to the graph, add all connections to existing images,
             # and modify self.vector_features 'img_count' value
-            img_bounding_rectangle = new_raster_imgs.loc[img_name,
-                                                        'geometry']
+            img_bounding_rectangle = new_raster_imgs.loc[img_name, 'geometry']
             self._add_img_to_graph_modify_vector_features(
                 img_name, img_bounding_rectangle=img_bounding_rectangle)
 
@@ -80,9 +81,8 @@ class AddDropRasterImgsMixIn:
         #self.raster_imgs = self.raster_imgs.convert_dtypes()
 
         if label_maker is not None:
-            label_maker.make_labels(
-                connector=self,
-                img_names=new_raster_imgs.index.tolist())
+            label_maker.make_labels(connector=self,
+                                    img_names=new_raster_imgs.index.tolist())
 
     def drop_raster_imgs(
         self,
@@ -90,7 +90,8 @@ class AddDropRasterImgsMixIn:
         remove_imgs_from_disk: bool = True,
         label_maker: Optional[LabelMaker] = None,
     ):
-        """Drop images from connector's ``raster_imgs`` attribute and from dataset.
+        """Drop images from connector's ``raster_imgs`` attribute and from
+        dataset.
 
         Remove rows from the connector's raster_imgs, delete the corresponding
         vertices in the graph, and delete the image from disk (unless

@@ -4,24 +4,24 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
-from pydantic import BaseModel
 
 import rasterio as rio
 from affine import Affine
+from pydantic import BaseModel
 from rasterio.crs import CRS
 from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from shapely.geometry import box
 
 from geographer.connector import Connector
-from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 from geographer.global_constants import RASTER_IMGS_INDEX_NAME
+from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
 
 logger = logging.getLogger(__name__)
 
 
 class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
-    """Base class for SingleImgCUtter"""
+    """Base class for SingleImgCUtter."""
 
     @abstractmethod
     def _get_windows_transforms_img_names(
@@ -209,8 +209,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             ) and count > 0:  # count == 0 corresponds to images_dir
                 continue
             else:
-                img_bands = self._get_bands_for_img(
-                    bands, source_img_path)
+                img_bands = self._get_bands_for_img(bands, source_img_path)
 
                 # write img window to destination img geotif
                 bounds_in_img_crs, crs = self._write_window_to_geotif(

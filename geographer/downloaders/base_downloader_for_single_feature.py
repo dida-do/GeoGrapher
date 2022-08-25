@@ -1,16 +1,17 @@
-"""Base class for downloaders for a single vector feature"""
+"""Base class for downloaders for a single vector feature."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Literal, Set, Union
-from shapely.geometry import Polygon
+
 from pydantic import BaseModel
+from shapely.geometry import Polygon
 
 from geographer.connector import Connector
 
 
 class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
-    """Base class for downloaders for a single vector feature"""
+    """Base class for downloaders for a single vector feature."""
 
     @abstractmethod
     def download(

@@ -1,4 +1,8 @@
-"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-hub. Should be easily extendable to Sentinel-1."""
+"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-
+hub.
+
+Should be easily extendable to Sentinel-1.
+"""
 
 import os
 from pathlib import Path

@@ -8,27 +8,27 @@ import math
 import random
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
-from pydantic import Field, PrivateAttr
 
-from affine import Affine
 import rasterio as rio
+from affine import Affine
+from pydantic import Field, PrivateAttr
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
-from shapely.geometry.base import BaseGeometry
 from shapely.geometry import box
+from shapely.geometry.base import BaseGeometry
 
-from geographer.cutters.type_aliases import ImgSize
-from geographer.cutters.single_img_cutter_base import SingleImgCutter
-from geographer.utils.utils import transform_shapely_geometry
 from geographer.connector import Connector
+from geographer.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.cutters.type_aliases import ImgSize
+from geographer.utils.utils import transform_shapely_geometry
 
 logger = logging.getLogger(__name__)
 
 
 class SingleImgCutterAroundFeature(SingleImgCutter):
     """SingleImgCutter that cuts a small image (or several contiguous such
-    images if the vector feature does not fit into a single one) around each vector feature
-    in the image accepted by the feature filter predicate."""
+    images if the vector feature does not fit into a single one) around each
+    vector feature in the image accepted by the feature filter predicate."""
 
     mode: Literal["random", "centered", "variable"]
     new_img_size: Optional[ImgSize] = None
@@ -98,7 +98,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         random.seed(random_seed)
 
     def _check_img_size_type_and_value(self, img_size: ImgSize):
-        """Check type and value of arg"""
+        """Check type and value of arg."""
         if not isinstance(img_size, int) or (isinstance(img_size, tuple)
                                              and len(img_size) == 2 and all(
                                                  isinstance(entry, int)
@@ -141,9 +141,9 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
             target_connector: Connector,
             new_imgs_dict: Optional[dict] = None,
             **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
-        """Given a vector feature and a GeoTiff image fully containing it return a
-        list of windows, window transforms, and new img_names defining a
-        minimal rectangular grid in the image covering the feature.
+        """Given a vector feature and a GeoTiff image fully containing it
+        return a list of windows, window transforms, and new img_names defining
+        a minimal rectangular grid in the image covering the feature.
 
         Args:
             feature_name (Union[str, int]): feature identifier

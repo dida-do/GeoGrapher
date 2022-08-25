@@ -52,12 +52,12 @@ def raster_imgs_from_imgs_dir(
     read_in_img_for_img_df_function: Callable[[Path], Tuple[
         int, Polygon]] = default_read_in_img_for_img_df_function
 ) -> GeoDataFrame:
-    """Builds and returns an associator raster_imgs from a directory of images (or
-    from a data directory). Only the index (raster_imgs_index_name, defaults to
-    img_name), geometry column (coordinates of the img_bounding_rectangle, and
-    orig_crs_epsg_code (epsg code of crs the image is in) columns will be
-    populated, custom columns will have to be populated by a custom written
-    function.
+    """Builds and returns an associator raster_imgs from a directory of images
+    (or from a data directory). Only the index (raster_imgs_index_name,
+    defaults to img_name), geometry column (coordinates of the
+    img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the image
+    is in) columns will be populated, custom columns will have to be populated
+    by a custom written function.
 
     Args:
         - images_dir (Union[pathlib.Path, str]): path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.

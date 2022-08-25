@@ -1,5 +1,5 @@
-"""
-Callable classes for selecting a sublist from a list of images.
+"""Callable classes for selecting a sublist from a list of images.
+
 Used by cutting functions.
 """
 
@@ -7,11 +7,11 @@ import random
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any, Dict, List, Literal, Union
-from pandas import Series
+
 from geopandas import GeoSeries
-
-
+from pandas import Series
 from pydantic import BaseModel
+
 from geographer.connector import Connector
 
 
@@ -82,8 +82,7 @@ class RandomImgSelector(ImgSelector):
         cut_imgs: Dict[str, List[str]],
         **kwargs: Any,
     ) -> List[str]:
-        """
-        Randomly select images from a list of images.
+        """Randomly select images from a list of images.
 
         Select target_img_count - #{img_count of vector feature in target_connector} images (or if not possible less) from img_names_list.
         """

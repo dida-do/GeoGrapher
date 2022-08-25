@@ -1,8 +1,8 @@
 """Abstract base class for predicates used to filter images in cutting
 functions."""
-from pathlib import Path
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from collections.abc import Callable
+from pathlib import Path
 from typing import List, Union
 
 from geopandas import GeoSeries
@@ -50,6 +50,7 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
         with open(json_path, 'w') as f:
             f.write(self.json(indent=2))
 
+
 class AlwaysTrue(ImgFilterPredicate):
     """Default image filter predicate that always returns True.
 
@@ -67,8 +68,9 @@ class AlwaysTrue(ImgFilterPredicate):
         """Return True."""
         return True
 
+
 class ImgsNotPreviouslyCutOnly(ImgFilterPredicate):
-    """Select images not previously cut"""
+    """Select images not previously cut."""
 
     def __call__(
         self,
@@ -87,9 +89,11 @@ class RowSeriesPredicate(ABC, BaseModel):
     def __call__(*args, **kwargs):
         pass
 
+
 class ImgFilterRowCondition(ImgFilterPredicate):
     """Simple ImgFilter that applies a given predicate to the row in
-    source_connector.raster_imgs corresponding to the image name in question."""
+    source_connector.raster_imgs corresponding to the image name in
+    question."""
 
     row_series_predicate: RowSeriesPredicate
 
@@ -112,7 +116,8 @@ class ImgFilterRowCondition(ImgFilterPredicate):
         source_connector: Connector,
         cut_imgs: List[str],
     ) -> bool:
-        """Apply self.row_series_predicate to source_connector.raster_imgs[img_name]
+        """Apply self.row_series_predicate to
+        source_connector.raster_imgs[img_name]
 
         Args:
 

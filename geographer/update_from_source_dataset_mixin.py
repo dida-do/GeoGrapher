@@ -47,8 +47,8 @@ class UpdateFromSourceDSMixIn(object):
             log.info(f"Updating source dataset in {source_data_dir}")
             source_assoc = self.__class__.from_data_dir(source_data_dir)
             source_assoc.update_from_source_dataset()
-            log.info(
-                "Completed update of source dataset in %s", source_data_dir)
+            log.info("Completed update of source dataset in %s",
+                     source_data_dir)
 
             update_method()  # might return a value????
 

@@ -1,10 +1,14 @@
-"""Test compatibility of raster_imgs, vector_features, and graph"""
+"""Test compatibility of raster_imgs, vector_features, and graph."""
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import logging
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
-from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
+from geographer.graph.bipartite_graph_mixin import (RASTER_IMGS_COLOR,
+                                                    VECTOR_FEATURES_COLOR)
+
 if TYPE_CHECKING:
     from geographer.connector import Connector
 
@@ -16,20 +20,23 @@ def check_graph_vertices_counts(connector: Connector):
     """Test connector invariant.
 
     Tests whether the set of vertices of the graph corresponds with the
-    images and polygons in the connector and whether the number of
-    edges leaving the polygon nodes corresponding to imagges fully
-    containing the polygon are equal to the values in the vector_features
+    images and polygons in the connector and whether the number of edges
+    leaving the polygon nodes corresponding to imagges fully containing
+    the polygon are equal to the values in the vector_features
     'img_count' column.
     """
 
-    img_vertices_not_in_raster_imgs = set(connector._graph.vertices(RASTER_IMGS_COLOR)) - set(
-        connector.raster_imgs.index)
+    img_vertices_not_in_raster_imgs = set(
+        connector._graph.vertices(RASTER_IMGS_COLOR)) - set(
+            connector.raster_imgs.index)
     imgs_in_raster_imgs_not_in_graph = set(connector.raster_imgs.index) - set(
         connector._graph.vertices(RASTER_IMGS_COLOR))
     polygon_vertices_not_in_vector_features = set(
-        connector._graph.vertices(VECTOR_FEATURES_COLOR)) - set(connector.vector_features.index)
-    polygons_in_vector_features_not_in_graph = set(connector.vector_features.index) - set(
-        connector._graph.vertices(VECTOR_FEATURES_COLOR))
+        connector._graph.vertices(VECTOR_FEATURES_COLOR)) - set(
+            connector.vector_features.index)
+    polygons_in_vector_features_not_in_graph = set(
+        connector.vector_features.index) - set(
+            connector._graph.vertices(VECTOR_FEATURES_COLOR))
 
     set_descriptions_and_differences = \
         zip(
@@ -62,7 +69,8 @@ def check_graph_vertices_counts(connector: Connector):
 
     # Now, check whether img_count column agrees with results of img_containing_polygon for each polygon
     img_count_edges = connector.vector_features.apply(
-        lambda row: len(connector.imgs_containing_vector_feature(row.name)), axis=1)
+        lambda row: len(connector.imgs_containing_vector_feature(row.name)),
+        axis=1)
     img_count_edges.rename("img_count_edges", inplace=True)
 
     counts_correct = connector.vector_features['img_count'] == img_count_edges

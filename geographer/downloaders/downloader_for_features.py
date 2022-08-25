@@ -1,7 +1,5 @@
-"""
-Class for downloading images for vector features targeting
-a given number of images per vector feature.
-"""
+"""Class for downloading images for vector features targeting a given number of
+images per vector feature."""
 
 import logging
 import random
@@ -13,17 +11,15 @@ from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
+
 from geographer import Connector
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
     SaveAndLoadBaseModelMixIn
-from geographer.errors import (
-    ImgAlreadyExistsError,
-    ImgDownloadError,
-    NoImgsForVectorFeatureFoundError,
-)
 from geographer.downloaders.base_download_processor import ImgDownloadProcessor
 from geographer.downloaders.base_downloader_for_single_feature import \
     ImgDownloaderForSingleVectorFeature
+from geographer.errors import (ImgAlreadyExistsError, ImgDownloadError,
+                               NoImgsForVectorFeatureFoundError)
 from geographer.utils.utils import concat_gdfs
 
 log = logging.getLogger(__name__)
@@ -31,9 +27,8 @@ log.setLevel(logging.WARNING)
 
 
 class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
-    """
-    Download images for vector features targeting a given number of images per feature.
-    """
+    """Download images for vector features targeting a given number of images
+    per feature."""
 
     download_dir: Path
     downloader_for_single_feature: ImgDownloaderForSingleVectorFeature
@@ -49,7 +44,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                  bool = False,
                  shuffle: bool = True,
                  **kwargs):
-        """Download images for vector features so as to target a number of images per vector feature.
+        """Download images for vector features so as to target a number of
+        images per vector feature.
 
         Sequentially considers the vector features for which the image count (number of images fully
         containing a given vector feature) is less than num_target_imgs_per_feature images in the connector's
@@ -162,7 +158,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                         feature_name=feature_name,
                         feature_geom=feature_geom,
                         download_dir=self.download_dir,
-                        previously_downloaded_imgs_set=previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
+                        previously_downloaded_imgs_set=
+                        previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
                         **self.kwarg_defaults,
                     )
 
@@ -175,8 +172,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 except NoImgsForVectorFeatureFoundError as exc:
 
                     # ... in which case we save it in connector.vector_features, ...
-                    connector.vector_features.loc[feature_name,
-                                              'download_exception'] = repr(exc)
+                    connector.vector_features.loc[
+                        feature_name, 'download_exception'] = repr(exc)
 
                     # ... log a warning, ...
                     log.warning(exc, exc_info=True)
@@ -187,8 +184,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 # ... or a download error occured, ...
                 except ImgDownloadError as exc:
 
-                    connector.vector_features.loc[feature_name,
-                                              'download_exception'] = repr(exc)
+                    connector.vector_features.loc[
+                        feature_name, 'download_exception'] = repr(exc)
                     log.warning(exc, exc_info=True)
 
                 # ... or downloader_for_single_feature tried downloading a previously downloaded image.
@@ -274,9 +271,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             connector.save()
 
     def save(self, file_path: Union[Path, str]):
-        """
-        Save downloader. By convention, the downloader should be saved to the
-        connector subdirectory of the data directory it is supposed to operate on.
+        """Save downloader.
+
+        By convention, the downloader should be saved to the connector
+        subdirectory of the data directory it is supposed to operate on.
         """
         self._save(file_path)
 
@@ -284,7 +282,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     def _run_safety_checks_on_downloaded_imgs(
             previously_downloaded_imgs_set: Set[Union[str, int]],
             feature_name: Union[str, int], list_img_info_dicts: List[dict]):
-        """Check no images have been downloaded more than once"""
+        """Check no images have been downloaded more than once."""
 
         # Extract the new image names ...
         new_img_names_list = [
@@ -327,8 +325,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     ) -> List[Union[int, str]]:
 
         if feature_names is None:
-            features_for_which_to_download = list(connector.vector_features.loc[
-                connector.vector_features['img_count'] < target_img_count].index)
+            features_for_which_to_download = list(
+                connector.vector_features.loc[
+                    connector.vector_features['img_count'] < target_img_count].
+                index)
         elif isinstance(feature_names, (str, int)):
             features_for_which_to_download = [feature_names]
         elif isinstance(feature_names, list) and all(
@@ -379,10 +379,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
     ) -> None:
         feature_names = [
-            feature_name for feature_name in feature_names
-            if not unary_union(connector.raster_imgs.loc[
-                connector.imgs_intersecting_feature(feature_name)].geometry.tolist(
-                )).contains(connector.vector_features.loc[feature_name].geometry)
+            feature_name for feature_name in feature_names if not unary_union(
+                connector.raster_imgs.loc[connector.imgs_intersecting_feature(
+                    feature_name)].geometry.tolist()).contains(
+                        connector.vector_features.loc[feature_name].geometry)
         ]
         return feature_names
 
@@ -391,7 +391,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         new_imgs_dict: dict,
         raster_imgs_crs_epsg_code: int,
     ) -> GeoDataFrame:
-        """Build and return raster_imgs of new images from new_imgs_dict"""
+        """Build and return raster_imgs of new images from new_imgs_dict."""
         new_raster_imgs = GeoDataFrame(new_imgs_dict)
         new_raster_imgs.set_crs(epsg=raster_imgs_crs_epsg_code, inplace=True)
         new_raster_imgs.set_index("img_name", inplace=True)

@@ -1,8 +1,6 @@
-"""
-Given a dataset and an optional list of rasters partition the rasters
-into equivalence classes ('clusters') that need to be respected when
-generating the train-validation split.
-"""
+"""Given a dataset and an optional list of rasters partition the rasters into
+equivalence classes ('clusters') that need to be respected when generating the
+train-validation split."""
 
 import itertools
 from functools import partial
@@ -13,9 +11,10 @@ import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame
 from networkx import Graph
+from shapely.geometry.polygon import Point, Polygon
+
 from geographer import Connector
 from geographer.utils.utils import deepcopy_gdf
-from shapely.geometry.polygon import Point, Polygon
 
 
 def get_raster_clusters(
@@ -24,12 +23,11 @@ def get_raster_clusters(
         'rasters_that_share_vector_features',
         'rasters_that_share_vector_features_or_overlap'],
     raster_names: Optional[List[str]] = None,
-    preclustering_method: Optional[
-        Literal['x then y-axis', 'y then x-axis', 'x-axis', 'y-axis']
-    ] = 'y then x-axis'  #TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    preclustering_method: Optional[Literal[
+        'x then y-axis', 'y then x-axis', 'x-axis',
+        'y-axis']] = 'y then x-axis'  #TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ) -> List[Set[str]]:
-    """
-    Return clusters of raster.
+    """Return clusters of raster.
 
     Args:
         connector: connector or path or str to data dir containing connector
@@ -62,7 +60,8 @@ def get_raster_clusters(
     elif preclustering_method in {'x-axis', 'y-axis'}:
 
         axis = preclustering_method[0]  # 'x' or 'y'
-        geoms = _get_preclustering_geoms(connector=connector, img_names=raster_names)
+        geoms = _get_preclustering_geoms(connector=connector,
+                                         img_names=raster_names)
 
         preclusters = _pre_cluster_along_axis(geoms, axis)
         singletons, non_singletons = _separate_non_singletons(preclusters)
@@ -73,7 +72,8 @@ def get_raster_clusters(
         second_axis = 'y' if first_axis == 'x' else 'x'
 
         # cluster along first axis
-        geoms = _get_preclustering_geoms(connector=connector, img_names=raster_names)
+        geoms = _get_preclustering_geoms(connector=connector,
+                                         img_names=raster_names)
         preclusters = _pre_cluster_along_axis(geoms, first_axis)
 
         # cluster along 2nd axis
@@ -135,10 +135,12 @@ def _refine_preclustering_along_second_axis(
     return singletons, non_singletons
 
 
-def _get_preclustering_geoms(connector: Connector, img_names: List[str]) -> GeoDataFrame:
+def _get_preclustering_geoms(connector: Connector,
+                             img_names: List[str]) -> GeoDataFrame:
 
     # image geoms
-    raster_imgs = deepcopy_gdf(connector.raster_imgs[['geometry']].loc[img_names])
+    raster_imgs = deepcopy_gdf(connector.raster_imgs[['geometry'
+                                                      ]].loc[img_names])
     raster_imgs['name'] = raster_imgs.index
     raster_imgs['img_or_polygon'] = 'img'
 
@@ -167,7 +169,8 @@ def _get_preclustering_geoms(connector: Connector, img_names: List[str]) -> GeoD
     assert set(vector_features['name']) & set(raster_imgs['name']) == set()
 
     # combine geoms
-    geoms = GeoDataFrame(pd.concat([raster_imgs, vector_features]), crs=raster_imgs.crs)
+    geoms = GeoDataFrame(pd.concat([raster_imgs, vector_features]),
+                         crs=raster_imgs.crs)
 
     # don't need ?
     geoms = deepcopy_gdf(geoms)
@@ -199,7 +202,7 @@ def _separate_non_singletons(
 
 # simpler version
 def _pre_cluster_along_axis(geoms: GeoDataFrame,
-                           axis: Literal['x', 'y']) -> List[Set[str]]:
+                            axis: Literal['x', 'y']) -> List[Set[str]]:
 
     if axis not in {'x', 'y'}:
         raise ValueError(f"axis arg should be one of 'x', 'y'.")
@@ -254,10 +257,8 @@ def _extract_graph_of_rasters(
     clusters_defined_by: str,
     img_names: List[str] = None,
 ) -> Graph:
-    """
-    Extract graph of images with edges determined by the
-    clusters_defined_by arg.
-    """
+    """Extract graph of images with edges determined by the clusters_defined_by
+    arg."""
 
     img_graph = Graph()
     img_graph.add_nodes_from(img_names)
@@ -274,11 +275,10 @@ def _extract_graph_of_rasters(
 
 
 def _are_connected_by_an_edge(img: str, another_img: str,
-                              clusters_defined_by: str, connector: Connector) -> bool:
-    """
-    Return True if there is an edge in the graph of images
-    determined by the clusters_defined_by relation.
-    """
+                              clusters_defined_by: str,
+                              connector: Connector) -> bool:
+    """Return True if there is an edge in the graph of images determined by the
+    clusters_defined_by relation."""
 
     img_bbox = connector.raster_imgs.loc[img].geometry
     other_img_bbox = connector.raster_imgs.loc[another_img].geometry
@@ -289,11 +289,13 @@ def _are_connected_by_an_edge(img: str, another_img: str,
 
     elif clusters_defined_by == 'rasters_that_share_vector_features':
 
-        vector_features_in_img = set(connector.vector_features_intersecting_img(img))
+        vector_features_in_img = set(
+            connector.vector_features_intersecting_img(img))
         vector_features_in_other_img = set(
             connector.vector_features_intersecting_img(another_img))
 
-        connected = vector_features_in_img & vector_features_in_other_img != set()
+        connected = vector_features_in_img & vector_features_in_other_img != set(
+        )
 
     elif clusters_defined_by == 'rasters_that_share_vector_features_or_overlap':
 

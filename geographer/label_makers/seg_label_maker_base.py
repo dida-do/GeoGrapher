@@ -1,16 +1,16 @@
-"""
-Base class for label makers that generate segmentation labels
-from a connector's vector_features.
-"""
+"""Base class for label makers that generate segmentation labels from a
+connector's vector_features."""
 
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
 from typing import List, Optional
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
+
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
+    SaveAndLoadBaseModelMixIn
 from geographer.connector import Connector
-from geographer.base_model_dict_conversion.save_load_base_model_mixin import SaveAndLoadBaseModelMixIn
 from geographer.label_makers.label_maker_base import LabelMaker
 
 # logger
@@ -18,31 +18,31 @@ log = logging.getLogger(__name__)
 
 
 class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
-    """
-    Base class for label makers that generate segmentation labels
-    from a connector's vector_features.
-    """
+    """Base class for label makers that generate segmentation labels from a
+    connector's vector_features."""
 
     add_background_band: bool = Field(
         default=True, description="Whether to add implicit background band.")
 
     @abstractmethod
     def _make_label_for_img(self, connector: Connector, img_name: str):
-        """Make label for single image"""
+        """Make label for single image."""
         pass
 
     @property
     @abstractmethod
     def label_type(self) -> str:
-        """Return label type"""
+        """Return label type."""
         pass
 
     def _after_make_labels(self, connector: Connector):
-        """Override this hook in subclass to apply custom logic after making labels"""
+        """Override this hook in subclass to apply custom logic after making
+        labels."""
         pass
 
     def _run_safety_checks(self, connector: Connector):
-        """Override to check e.g. if existing classes in vector_features contained in connector.all_vector_feature_classes"""
+        """Override to check e.g. if existing classes in vector_features
+        contained in connector.all_vector_feature_classes."""
         pass
 
     def make_labels(
@@ -50,8 +50,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
         img_names: Optional[List[str]] = None,
     ):
-        """
-        Create segmentation labels.
+        """Create segmentation labels.
 
         Args:
             img_names (List[str], optional): list of image names to create labels for.
@@ -67,8 +66,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         existing_images = {
             img_path.name
-            for img_path in connector.images_dir.iterdir()
-            if img_path.is_file() and img_path.name in connector.raster_imgs.index
+            for img_path in connector.images_dir.iterdir() if
+            img_path.is_file() and img_path.name in connector.raster_imgs.index
         }
 
         if img_names is None:
@@ -76,7 +75,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             existing_labels = {
                 img_path.name
                 for img_path in connector.labels_dir.iterdir()
-                if img_path.is_file() and img_path.name in connector.raster_imgs.index
+                if img_path.is_file()
+                and img_path.name in connector.raster_imgs.index
             }
             img_names = existing_images - existing_labels
         elif not set(img_names) <= existing_images:

@@ -4,14 +4,14 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-from pydantic import validator, BaseModel
 import rasterio as rio
 from affine import Affine
+from pydantic import BaseModel, validator
 from rasterio.windows import Window
 
 from geographer.connector import Connector
-from geographer.cutters.type_aliases import ImgSize
 from geographer.cutters.single_img_cutter_base import SingleImgCutter
+from geographer.cutters.type_aliases import ImgSize
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class SingleImgCutterToGrid(SingleImgCutter):
 
     @validator("new_img_size")
     def new_img_size_type_correctness(cls, value: ImgSize) -> ImgSize:
-        """Validate new_img_size has correct type"""
+        """Validate new_img_size has correct type."""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = isinstance(
             value, tuple) and len(value) == 2 and all(
@@ -36,7 +36,7 @@ class SingleImgCutterToGrid(SingleImgCutter):
     @validator("new_img_size")
     def new_img_size_side_lengths_must_be_positive(cls,
                                                    value: ImgSize) -> ImgSize:
-        """Validate new_img_size side lengths are positive"""
+        """Validate new_img_size side lengths are positive."""
         if isinstance(value, tuple) and not all(val > 0 for val in value):
             logger.error("new_img_size: need positive side length(s)")
             raise ValueError("new_img_size: need positive side length(s)")
@@ -47,7 +47,7 @@ class SingleImgCutterToGrid(SingleImgCutter):
 
     @property
     def new_img_size_rows(self) -> int:
-        """Return number of rows of new image size"""
+        """Return number of rows of new image size."""
         if isinstance(self.new_img_size, tuple):
             return self.new_img_size[0]
         else:
@@ -55,7 +55,7 @@ class SingleImgCutterToGrid(SingleImgCutter):
 
     @property
     def new_img_size_cols(self) -> int:
-        """Return number of columns of new image size"""
+        """Return number of columns of new image size."""
         if isinstance(self.new_img_size, tuple):
             return self.new_img_size[1]
         else:

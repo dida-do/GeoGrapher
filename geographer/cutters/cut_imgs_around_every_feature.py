@@ -1,16 +1,16 @@
-"""
-Dataset cutter that cuts out images around vector features.
-"""
+"""Dataset cutter that cuts out images around vector features."""
 
 import logging
 from pathlib import Path
 from typing import Literal, Optional, Union
-from geographer.cutters.type_aliases import ImgSize
+
 from geographer.cutters.cut_iter_over_features import DSCutterIterOverFeatures
+from geographer.cutters.feature_filter_predicates import (
+    FeatureFilterPredicate, IsFeatureMissingImgs)
 from geographer.cutters.img_selectors import ImgSelector, RandomImgSelector
-from geographer.cutters.feature_filter_predicates import IsFeatureMissingImgs, FeatureFilterPredicate
 from geographer.cutters.single_img_cutter_around_feature import \
     SingleImgCutterAroundFeature
+from geographer.cutters.type_aliases import ImgSize
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,8 @@ def get_cutter_imgs_around_every_feature(
     target_img_count: int = 1,
     bands: Optional[dict] = None,
     random_seed: int = 10,
-    ) -> DSCutterIterOverFeatures:
-    """
-    Return dataset cutter that creates cutouts around vector
-    features.
+) -> DSCutterIterOverFeatures:
+    """Return dataset cutter that creates cutouts around vector features.
 
     In "random" or "centered" all cutouts will be of the same size.
     In "variable" mode the size of a cutout is the maximum of
@@ -57,7 +55,8 @@ def get_cutter_imgs_around_every_feature(
 
     is_feature_missing_imgs: FeatureFilterPredicate = IsFeatureMissingImgs(
         target_img_count=target_img_count)
-    random_img_selector: ImgSelector = RandomImgSelector(target_img_count=target_img_count)
+    random_img_selector: ImgSelector = RandomImgSelector(
+        target_img_count=target_img_count)
     small_imgs_around_features_cutter = SingleImgCutterAroundFeature(
         mode=mode,
         new_img_size=new_img_size,

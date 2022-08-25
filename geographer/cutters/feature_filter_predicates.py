@@ -3,17 +3,17 @@
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any, Literal, Union
-from pydantic import BaseModel
 
 from geopandas import GeoSeries
 from pandas import Series
+from pydantic import BaseModel
 
 from geographer.connector import Connector
 
 
 class FeatureFilterPredicate(BaseModel, Callable):
-    """Abstract base class for predicates used to filter vector features in cutting
-    functions.
+    """Abstract base class for predicates used to filter vector features in
+    cutting functions.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.
@@ -51,16 +51,16 @@ class FeatureFilterPredicate(BaseModel, Callable):
 
 
 class IsFeatureMissingImgs(FeatureFilterPredicate):
-    """Simple vector feature filter predicate that tests whether a feature has fewer
-    images than a specified target image count."""
+    """Simple vector feature filter predicate that tests whether a feature has
+    fewer images than a specified target image count."""
 
     target_img_count: int = 1
 
     def __call__(self, feature_name: Union[str, int],
                  target_connector: Connector, new_imgs_dict: dict,
                  source_connector: Connector, **kwargs: Any) -> bool:
-        """Return True if the image count of the vector feature under consideration is
-        strictly less than target_img_count, False otherwise.
+        """Return True if the image count of the vector feature under
+        consideration is strictly less than target_img_count, False otherwise.
 
         Args:
             feature_name (Union[str, int]): feature identifier
@@ -88,7 +88,8 @@ class AlwaysTrue(FeatureFilterPredicate):
 
 
 class OnlyThisVectorFeature(FeatureFilterPredicate):
-    """Simple vector feature filter initialized with a feature this_feature_name.
+    """Simple vector feature filter initialized with a feature
+    this_feature_name.
 
     Returns True if and only if the feature under consideration is equal
     to this_feature_name.
@@ -110,13 +111,14 @@ class OnlyThisVectorFeature(FeatureFilterPredicate):
 
 
 class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
-    """Simple GeomFilterPredicate that applies a given predicate to the row
-    in the source or target vector_features corresponding to the vector feature name in
-    question."""
+    """Simple GeomFilterPredicate that applies a given predicate to the row in
+    the source or target vector_features corresponding to the vector feature
+    name in question."""
 
     def __init__(self,
                  row_series_predicate: Callable[[Union[GeoSeries, Series]],
-                                                bool], mode: Literal['source', 'target']) -> None:
+                                                bool],
+                 mode: Literal['source', 'target']) -> None:
         """
         Args:
             row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply
