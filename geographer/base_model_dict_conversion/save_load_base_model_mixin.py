@@ -1,5 +1,7 @@
 """Contains mix-in class to save and load BaseModels."""
 
+from __future__ import annotations
+
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -7,7 +9,7 @@ from importlib import import_module
 from inspect import getmro, isabstract, isclass
 from pathlib import Path
 from pkgutil import walk_packages
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
@@ -41,7 +43,7 @@ class SaveAndLoadBaseModelMixIn:
     def from_json_file(
         cls,
         json_file_path: Union[Path, str],
-        constructor_symbol_table: Optional[Dict[str, Any]] = None,
+        constructor_symbol_table: Optional[dict[str, Any]] = None,
     ) -> Any:
         """Load and return saved BaseModel."""
 

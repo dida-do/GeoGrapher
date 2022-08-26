@@ -12,6 +12,8 @@ There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 
 version has been tested.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import os
@@ -21,7 +23,7 @@ import urllib.request as request
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Set, Union
+from typing import Any, Literal, Optional, Union
 
 import numpy as np
 from shapely.geometry.base import BaseGeometry
@@ -50,11 +52,11 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
         feature_name: Union[int, str],
         feature_geom: BaseGeometry,
         download_dir: Path,
-        previously_downloaded_imgs_set: Set[Union[str, int]],
+        previously_downloaded_imgs_set: set[Union[str, int]],
         data_version: str = None,
         download_mode: str = None,
         **kwargs,
-    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
+    ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """Downloads DEM data from jaxa.jp's ftp-server for a given (vector)
         geometry and returns dict-structure compatible with the connector.
 

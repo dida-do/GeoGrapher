@@ -4,9 +4,11 @@ testing.
 Virtually 'download' from a dataset of images in a source directory.
 """
 
+from __future__ import annotations
+
 import random
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Set, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 import shapely
 from geopandas.geodataframe import GeoDataFrame
@@ -73,9 +75,9 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         feature_name: Union[int, str],
         feature_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_imgs_set: Set[Union[str, int]],
+        previously_downloaded_imgs_set: set[Union[str, int]],
         **kwargs,
-    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
+    ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """'Download' an image fully containing a vector vector feature or
         several images jointly containing it from the source_connector and
         return a dict with information to be updated in the connector, see

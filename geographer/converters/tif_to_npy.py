@@ -1,7 +1,9 @@
 """Convert a dataset of GeoTiffs to NPYs."""
 
+from __future__ import annotations
+
 import logging
-from typing import List, Literal
+from typing import Literal
 
 import numpy as np
 import rasterio as rio
@@ -136,7 +138,7 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands, ImgBandsGetterMixIn)
         return tif_filename[:-4] + ".npy"
 
     @staticmethod
-    def _check_imgs_are_tifs(img_names: List[str]):
+    def _check_imgs_are_tifs(img_names: list[str]):
         """Make sure all images are GeoTiffs."""
         non_tif_imgs = list(
             filter(

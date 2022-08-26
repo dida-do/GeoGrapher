@@ -1,8 +1,10 @@
 """Create associator raster_imgs from a directory containing GeoTiff images."""
 
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import rasterio as rio
 from geopandas import GeoDataFrame
@@ -12,7 +14,7 @@ from tqdm.auto import tqdm
 from geographer.utils.utils import transform_shapely_geometry
 
 
-def default_read_in_img_for_img_df_function(img_path: Path) -> Tuple[int, Polygon]:
+def default_read_in_img_for_img_df_function(img_path: Path) -> tuple[int, Polygon]:
     """Read in the crs code and the bounding rectangle that defines a GeoTIFF
     image.
 
@@ -45,10 +47,10 @@ def default_read_in_img_for_img_df_function(img_path: Path) -> Tuple[int, Polygo
 def raster_imgs_from_imgs_dir(
     images_dir: Union[pathlib.Path, str],
     raster_imgs_crs_epsg_code: Optional[int] = None,
-    img_names: Optional[List[str]] = None,
+    img_names: Optional[list[str]] = None,
     imgs_datatype: str = "tif",
     read_in_img_for_img_df_function: Callable[
-        [Path], Tuple[int, Polygon]
+        [Path], tuple[int, Polygon]
     ] = default_read_in_img_for_img_df_function,
 ) -> GeoDataFrame:
     """Builds and returns an associator raster_imgs from a directory of images

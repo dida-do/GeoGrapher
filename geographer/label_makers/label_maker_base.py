@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
@@ -29,7 +29,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def make_labels(
         self,
         connector: Connector,
-        img_names: Optional[List[str]] = None,
+        img_names: Optional[list[str]] = None,
     ):
         """Create segmentation labels.
 
@@ -42,7 +42,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        img_names: Optional[List[str]] = None,
+        img_names: Optional[list[str]] = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 
@@ -54,7 +54,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def recompute_labels(
         self,
         connector: Connector,
-        img_names: Optional[List[str]] = None,
+        img_names: Optional[list[str]] = None,
     ):
         """Recompute labels.
 

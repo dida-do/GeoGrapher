@@ -3,10 +3,12 @@
 Used by cutting functions.
 """
 
+from __future__ import annotations
+
 import random
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Literal, Union
 
 from geopandas import GeoSeries
 from pandas import Series
@@ -26,13 +28,13 @@ class ImgSelector(Callable, BaseModel):
     @abstractmethod
     def __call__(
         self,
-        img_names_list: List[str],
+        img_names_list: list[str],
         target_connector: Connector,
         new_imgs_dict: dict,
         source_connector: Connector,
-        cut_imgs: Dict[str, List[str]],
+        cut_imgs: dict[str, list[str]],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> list[str]:
         """Select rasters to create cutouts from a list of rasters.
 
         Args:
@@ -83,13 +85,13 @@ class RandomImgSelector(ImgSelector):
     def __call__(
         self,
         feature_name: Union[str, int],
-        img_names_list: List[str],
+        img_names_list: list[str],
         target_connector: Connector,
         new_imgs_dict: dict,
         source_connector: Connector,
-        cut_imgs: Dict[str, List[str]],
+        cut_imgs: dict[str, list[str]],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> list[str]:
         """Randomly select images from a list of images.
 
         Select target_img_count - #{img_count of vector feature in target_connector}

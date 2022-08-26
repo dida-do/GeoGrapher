@@ -1,5 +1,7 @@
 """ImgDownloadProcessor for JAXA downloads."""
 
+from __future__ import annotations
+
 import logging
 import shutil
 from pathlib import Path
