@@ -5,9 +5,11 @@ datasets of GeoTiffs from existing ones by iterating over vector
 features.
 """
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Union
+from typing import Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -58,7 +60,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_imgs: Dict[str, List[str]] = Field(
+    cut_imgs: dict[str, list[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut images dictionary",
         description="Normally, should not be set by hand! Dict with vector features\
@@ -280,8 +282,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         self.target_connector.save()
 
     def _filter_out_previously_cut_imgs(
-        self, feature_name: Union[str, int], src_imgs_containing_feature: Set[str]
-    ) -> List[str]:
+        self, feature_name: Union[str, int], src_imgs_containing_feature: set[str]
+    ) -> list[str]:
         """Filter out source images from which cutouts containing a vector
         feature have already been created.
 

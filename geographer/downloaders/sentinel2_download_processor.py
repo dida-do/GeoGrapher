@@ -4,6 +4,8 @@ hub.
 Should be easily extendable to Sentinel-1.
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from zipfile import ZipFile

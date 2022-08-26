@@ -1,9 +1,11 @@
 """Abstract base class for single image cutters."""
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import rasterio as rio
 from affine import Affine
@@ -31,23 +33,22 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         target_connector: Optional[Connector] = None,
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
-    ) -> List[Tuple[Window, Affine, str]]:
+    ) -> list[Tuple[Window, Affine, str]]:
         """Return a list of rasterio windows, window transformations, and new
         image names. The returned list will be used to create the new images
         and labels. Override to subclass.
 
         Args:
-            source_img_name (str): name of img in source dataset to be cut.
-            target_connector (Connector): connector of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of
+            source_img_name: name of img in source dataset to be cut.
+            target_connector: connector of target dataset
+            new_imgs_dict: dict with keys index or column names of
                 target_connector.raster_imgs and values lists of entries corresponding
                 to images containing information about
             cut images not yet appended to target_connector.raster_imgs
-            kwargs (Any): keyword arguments to be used in subclass implementations.
+            kwargs: keyword arguments to be used in subclass implementations.
 
         Returns:
-            List[Tuple[Window, Affine, str]]: list of rasterio windows, window
-            transform, and new image names.
+            list of rasterio windows, window transform, and new image names.
         """
 
     def __call__(
@@ -56,7 +57,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         source_connector: Connector,
         target_connector: Optional[Connector] = None,
         new_imgs_dict: Optional[dict] = None,
-        bands: Optional[Dict[str, Optional[List[int]]]] = None,
+        bands: Optional[dict[str, Optional[list[int]]]] = None,
         **kwargs: Any,
     ) -> dict:
         """Cut new images from source image and return a dict with keys the
@@ -195,7 +196,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         target_connector: Connector,
         window: Window,
         window_transform: Affine,
-        bands: Optional[Dict[str, Optional[List[int]]]],
+        bands: Optional[dict[str, Optional[list[int]]]],
     ) -> Tuple[Tuple[float, float, float, float], CRS]:
         """Make a new image and label with given image name from the given
         window and transform.
@@ -246,7 +247,7 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         self,
         src_img_path: Union[Path, str],
         dst_img_path: Union[Path, str],
-        img_bands: List[int],
+        img_bands: list[int],
         window: Window,
         window_transform: Affine,
     ) -> Tuple[Tuple[float, float, float, float], CRS]:

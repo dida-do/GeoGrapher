@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from typing import List, Optional, Union
+from typing import Optional, Union
 import git
 import numpy as np
 import rasterio as rio
@@ -18,7 +18,7 @@ def get_test_dir():
 def create_dummy_imgs(
     data_dir: Union[Path, str],
     img_size: int,
-    img_names: Optional[List[str]]=None
+    img_names: Optional[list[str]]=None
     ) -> None:
     """Create dummy images for a dataset from the connector's raster_imgs geodataframe"""
     connector = Connector.from_data_dir(data_dir)

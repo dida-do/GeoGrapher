@@ -3,7 +3,7 @@ dataset."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Extra, Field
 
@@ -132,7 +132,7 @@ class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
     """Base class for Creating or updating a dataset from an existing source
     dataset that includes a bands field."""
 
-    bands: Optional[Dict[str, Optional[List[int]]]] = Field(
+    bands: Optional[dict[str, Optional[list[int]]]] = Field(
         default=None,
         title="Dict of band indices",
         description="keys: image directory names, values: list of band indices starting at 1 to keep",

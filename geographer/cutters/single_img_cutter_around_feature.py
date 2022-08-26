@@ -3,11 +3,13 @@ ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
 given vector feature from a source image.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal, Optional, Union
 
 import rasterio as rio
 from affine import Affine
@@ -123,7 +125,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
             raise ValueError("{img_size} needs to have positive side length(s)")
 
     @staticmethod
-    def _get_size_rows_cols(img_size: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
+    def _get_size_rows_cols(img_size: Union[int, tuple[int, int]]) -> tuple[int, int]:
 
         if isinstance(img_size, tuple):
             new_img_size_rows = img_size[0]
@@ -141,7 +143,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         target_connector: Connector,
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
-    ) -> List[Tuple[Window, Affine, str]]:
+    ) -> list[tuple[Window, Affine, str]]:
         """Given a vector feature and a GeoTiff image fully containing it
         return a list of windows, window transforms, and new img_names defining
         a minimal rectangular grid in the image covering the feature.
@@ -274,7 +276,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
 
     def _get_min_max_row_col(
         self, img: DatasetReader, transformed_feature_geom: BaseGeometry
-    ) -> Tuple[int, int, int, int]:
+    ) -> tuple[int, int, int, int]:
         """Return min_row, max_row, min_col, max_col of enveloping rectangle of
         vector feature."""
 
@@ -310,7 +312,7 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         max_row: int,
         min_col: int,
         max_col: int,
-    ) -> Tuple[int, int, int, int]:
+    ) -> tuple[int, int, int, int]:
         """Return row and col offsets and number of windows in row and in col
         direction such that the resulting grid is minimal grid fully covering
         the vector feature."""
