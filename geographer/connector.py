@@ -375,6 +375,7 @@ class Connector(
         Note that the representation might change if the internal
         representation changes.
         """
+
         return str(self._graph)
 
     def save(self):

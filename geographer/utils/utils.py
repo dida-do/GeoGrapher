@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Callable, List, Union
 
 import fiona
+from fiona.drvsupport import supported_drivers
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -40,7 +41,6 @@ from geographer.global_constants import (
     RASTER_IMGS_INDEX_NAME,
     VECTOR_FEATURES_INDEX_NAME,
 )
-
 supported_drivers["KML"] = "rw"
 
 GEOMS_UNION = Union[
