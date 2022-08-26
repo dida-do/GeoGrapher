@@ -1,9 +1,4 @@
-"""
-TODO: docstring
-
-The Connector class organizes and handles remote sensing
-datasets.
-"""
+"""The Connector class organizes and handles remote sensing datasets."""
 
 from __future__ import annotations
 
@@ -12,8 +7,7 @@ import logging
 import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import (Any, List, Literal, Optional, Sequence, Tuple, Type,
-                    TypeVar, Union)
+from typing import Any, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
@@ -21,15 +15,18 @@ from geopandas import GeoDataFrame
 # Mix-in classes:
 from geographer.add_drop_raster_imgs import AddDropRasterImgsMixIn
 from geographer.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
-from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-
-from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
-                                       VECTOR_FEATURES_INDEX_NAME,
-                                       STANDARD_CRS_EPSG_CODE)
+from geographer.global_constants import (
+    RASTER_IMGS_INDEX_NAME,
+    STANDARD_CRS_EPSG_CODE,
+    VECTOR_FEATURES_INDEX_NAME,
+)
 from geographer.graph import BipartiteGraph
-from geographer.utils.connector_utils import (empty_gdf,
-                                            empty_gdf_same_format_as,
-                                            empty_graph)
+from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
+from geographer.utils.connector_utils import (
+    empty_gdf,
+    empty_gdf_same_format_as,
+    empty_graph,
+)
 
 DEFAULT_CONNECTOR_DIR_NAME = "connector"
 DEFAULT_IMAGES_DIR_NAME = "images"
@@ -42,31 +39,31 @@ INFERRED_PATH_ATTR_FILENAMES = {
 }
 """attribute self.key will be self.connector_dir / val"""
 
-
 ConnectorType = TypeVar("ConnectorType", bound="Connector")
 
 log = logging.getLogger(__name__)
 
 
 class Connector(
-        AddDropVectorFeaturesMixIn,
-        AddDropRasterImgsMixIn,
-        BipartiteGraphMixIn,  # Needs to be last
+    AddDropVectorFeaturesMixIn,
+    AddDropRasterImgsMixIn,
+    BipartiteGraphMixIn,  # Needs to be last
 ):
-    """
-    Dataset class that connects vector features and raster data.
+    """Dataset class that connects vector features and raster data.
 
     A ``Connector`` represents a remote sensing computer vision dataset
-    composed of vector features and raster images. It connects the features and
-    images by a bipartite graph encoding the containment or intersection
-    relationships between them and is a container for tabular information about
-    the features and images as well as for metadata about the dataset.
+    composed of vector features and raster images. It connects the
+    features and images by a bipartite graph encoding the containment or
+    intersection relationships between them and is a container for
+    tabular information about the features and images as well as for
+    metadata about the dataset.
     """
 
     _non_task_feature_classes = [
         "background_class"
-    ]  # vector feature classes not to be determined by a machine learning model (e.g. features that define background regions or masks)
+    ]  # vector feature classes not to be determined by a machine learning
 
+    # model (e.g. features that define background regions or masks)
 
     # yapf: disable
     def __init__(
@@ -85,7 +82,8 @@ class Connector(
         # path args
         data_dir: Optional[
             Union[Path, str]
-        ] = None,  # either this arg or all the path args below must be set (i.e. not None)
+        ] = None,  # either this arg or all the path args below
+        # must be set (i.e. not None)
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
         connector_dir: Optional[Union[Path, str]] = None,
@@ -97,16 +95,19 @@ class Connector(
     ):
         """
         Note:
-            We advise you to use the following more convenient constructor methods to
-            initialize a ``Connector`` instead of using ``__init__`` directly.
+            We advise you to use the following more convenient constructor methods
+            to initialize a ``Connector`` instead of using ``__init__`` directly.
 
             To initialize a new connector use
-                - the :meth:`from_scratch` class method (:ref:`see here for an example <from_scratch>`), or
+                - the :meth:`from_scratch` class method (:ref:`see here for an
+                    example <from_scratch>`), or
                 - the :meth:`empty_connector_same_format_as` method
 
             To initialize an existing connector use
-                - the :meth:`from_data_dir` class method (:ref:`see here for an example <init_existing_connector>`), or
-                - the :meth:`from_paths` class method (:ref:`see here for an example <init_existing_connector>`)
+                - the :meth:`from_data_dir` class method (:ref:`see here for an
+                    example <init_existing_connector>`), or
+                - the :meth:`from_paths` class method (:ref:`see here for an
+                    example <init_existing_connector>`)
 
         Caution:
             Note that many methods that create new dataset from existing ones
@@ -119,16 +120,23 @@ class Connector(
 
         Args:
 
-            load_from_disk (bool): whether to load an existing connector from disk or create a new one.
-            task_feature_classes (Sequence[str]): list of feature classes for the machine learning task (excluding mask and background classes). Defaults to None, i.e. the single class "object"
-            vector_features (Optional[GeoDataFrame], optional): vector_features. Defaults to None, i.e. (if not loading from disk) an empty vector_features.
-            raster_imgs (Optional[GeoDataFrame], optional): raster_imgs. Defaults to None, i.e. (if not loading from disk) an empty raster_imgs.
-            crs_epsg_code (int, optional): EPSG code connector works with. Defaults to STANDARD_CRS_EPSG_CODE
-            data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, connector_dir.
-            images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
-            labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
-            connector_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json connector component files.
-            \**kwargs (Any): optional keyword args for subclass implementations.
+            load_from_disk: whether to load an existing connector from disk
+                or create a new one.
+            task_feature_classes: list of feature classes for the machine learning task
+                (excluding mask and background classes). Defaults to None,
+                i.e. the single class "object"
+            vector_features: vector_features. Defaults to None, i.e. (if not loading
+                from disk) an empty vector_features.
+            raster_imgs: raster_imgs. Defaults to None, i.e. (if not loading
+                from disk) an empty raster_imgs.
+            crs_epsg_code: EPSG code connector works with.
+                Defaults to STANDARD_CRS_EPSG_CODE
+            data_dir: data directory containing images_dir, labels_dir, connector_dir.
+            images_dir: path to directory containing images.
+            labels_dir: path to directory containing labels.
+            connector_dir: path to directory containing (geo)json connector component
+                files.
+            \**kwargs: optional keyword args for subclass implementations.
         """
 
         super().__init__()
@@ -154,7 +162,8 @@ class Connector(
             connector_dir=connector_dir,
         )
 
-        # build attrs from all args except for raster_imgs, vector_features, the corresponding column args, and the path/dir args
+        # build attrs from all args except for raster_imgs, vector_features,
+        # the corresponding column args, and the path/dir args
         self.attrs = {}
         self.attrs.update(
             {
@@ -206,7 +215,7 @@ class Connector(
         images_dir: Union[Path, str],
         labels_dir: Union[Path, str],
     ) -> ConnectorType:
-        """Initialize a connector from paths"""
+        """Initialize a connector from paths."""
 
         # read args from json
         try:
@@ -239,10 +248,11 @@ class Connector(
         """Initialize a connector from a data directory.
 
         Args:
-            data_dir: data directory containing 'connector_files', 'images', and 'labels' subdirectories
+            data_dir: data directory containing 'connector_files', 'images', and
+                'labels' subdirectories
 
         Returns:
-            ConnectorType: initialized connector
+            initialized connector
         """
 
         data_dir = Path(data_dir)
@@ -264,7 +274,7 @@ class Connector(
         """Initialize a new connector.
 
         Ars:
-            \**kwargs (Any): same keyword arguments as in :meth:`__init__`
+            \**kwargs: same keyword arguments as in :meth:`__init__`
                 except for load_from_disk
 
         Returns:
@@ -284,8 +294,8 @@ class Connector(
 
     @property
     def raster_imgs(self) -> GeoDataFrame:
-        """tabular information about the raster images, see :ref:`raster_imgs`
-        """
+        """tabular information about the raster images, see
+        :ref:`raster_imgs`"""
         return self._raster_imgs
 
     @raster_imgs.setter
@@ -294,26 +304,25 @@ class Connector(
 
     @property
     def images_dir(self) -> Path:
-        """Directory containing the raster images"""
+        """Directory containing the raster images."""
         return self._images_dir
 
     @property
     def labels_dir(self) -> Path:
-        """Directory containing the segmentation labels"""
+        """Directory containing the segmentation labels."""
         return self._labels_dir
 
     @property
     def connector_dir(self) -> Path:
-        """Directory in which the connector files are saved"""
+        """Directory in which the connector files are saved."""
         return self._connector_dir
 
     @property
     def crs_epsg_code(self) -> int:
-        """
-        EPSG code of connector's :term:`crs`.
+        """EPSG code of connector's :term:`crs`.
 
-        Setting ``crs_epsg_code`` will set automatically set the connector's
-        ``raster_imgs`` and ``vector_features`` crs.
+        Setting ``crs_epsg_code`` will set automatically set the
+        connector's ``raster_imgs`` and ``vector_features`` crs.
         """
         return self.attrs["crs_epsg_code"]
 
@@ -341,7 +350,8 @@ class Connector(
     def all_vector_feature_classes(self):
         """All allowed classes in vector_features.
 
-        Includes those not related to the :term:`ML` task (e.g. the background class)
+        Includes those not related to the :term:`ML` task (e.g. the
+        background class)
         """
 
         answer = self.task_vector_feature_classes.copy()
@@ -354,14 +364,18 @@ class Connector(
 
     @property
     def image_data_dirs(self) -> List[Path]:
-        """All directories containing image data (including e.g. segmentation labels)"""
+        """All directories containing image data (including e.g. segmentation
+        labels)"""
         return self._image_data_dirs
 
     @property
     def graph_str(self) -> str:
         """String representation of the connector's internal graph.
 
-        Note that the representation might change if the internal representation changes."""
+        Note that the representation might change if the internal
+        representation changes.
+        """
+
         return str(self._graph)
 
     def save(self):
@@ -408,10 +422,11 @@ class Connector(
         (i.e. same columns in vector_features and raster_imgs).
 
         Args:
-            data_dir (Optional[Union[Path, str]], optional): data directory containing images_dir, labels_dir, connector_dir.
-            images_dir (Optional[Union[Path, str]], optional): path to directory containing images.
-            labels_dir (Optional[Union[Path, str]], optional): path to directory containing labels.
-            connector_dir (Optional[Union[Path, str]], optional): path to directory containing (geo)json connector component files.
+            data_dir: data directory containing images_dir, labels_dir, connector_dir.
+            images_dir: path to directory containing images.
+            labels_dir: path to directory containing labels.
+            connector_dir: path to directory containing (geo)json connector
+                component files.
 
         Returns:
             new empty connector
@@ -511,8 +526,8 @@ class Connector(
         """Standardize CRS of dataframe (i.e. set to CRS of connector).
 
         Args:
-            vector_features (GeoDataFrame): vector_features
-            raster_imgs (GeoDataFrame): raster_imgs
+            vector_features: vector_features
+            raster_imgs: raster_imgs
         """
 
         if df.crs.to_epsg() != crs_epsg_code:
@@ -598,10 +613,11 @@ class Connector(
         """Make dict serializable as JSON by replacing Path with strings.
 
         Args:
-            input_dict (dict): input dict with keys strings and values of arbitrary type
+            input_dict: input dict with keys strings and values of arbitrary type
 
         Returns:
-            dict:  dict with non-serializable values replaced by serializable ones (just Path -> str, for now)
+            dict with non-serializable values replaced by serializable ones
+            (just Path -> str, for now)
         """
 
         def make_val_serializable(val):
@@ -619,8 +635,8 @@ class Connector(
         """TODO.
 
         Args:
-            task_feature_classes (List[str]): [description]
-            background_class (str): [description]
+            task_feature_classes: [description]
+            background_class: [description]
         """
 
         if not len(task_feature_classes) == len(set(task_feature_classes)):

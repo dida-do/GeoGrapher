@@ -1,13 +1,14 @@
-"""Base class for processing a downloaded file"""
+"""Base class for processing a downloaded file."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Literal, Union
 from pathlib import Path
+from typing import Any, Dict, Literal, Union
+
 from pydantic import BaseModel
 
 
 class ImgDownloadProcessor(ABC, BaseModel):
-    """Base class for download processors"""
+    """Base class for download processors."""
 
     @abstractmethod
     def process(
@@ -17,18 +18,17 @@ class ImgDownloadProcessor(ABC, BaseModel):
         images_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
-    ) -> Dict[Union[Literal['img_name', 'geometry', 'orig_crs_epsg_code'],
-                    str], Any]:
-        """Process a single download
+    ) -> Dict[Union[Literal["img_name", "geometry", "orig_crs_epsg_code"], str], Any]:
+        """Process a single download.
 
         Args:
-            img_name (str): name of image
-            download_dir (Path): directory containing download
-            images_dir (Path): directory to place processed image in
-            crs_epsg_code (int): EPSG code of crs image bounds should be returned in
-            kwargs (Any): other keyword arguments
+            img_name: name of image
+            download_dir: directory containing download
+            images_dir: directory to place processed image in
+            crs_epsg_code: EPSG code of crs image bounds should be returned in
+            kwargs: other keyword arguments
 
         Returns:
             return_dict: Contains information about the downloaded product.
-            Keys should include: 'img_name', 'geometry', 'orig_crs_epsg_code'.
+                Keys should include: 'img_name', 'geometry', 'orig_crs_epsg_code'.
         """

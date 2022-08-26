@@ -6,6 +6,8 @@ Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cut
     - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over vector features.
 """
 
+# yapf: disable
+
 from __future__ import annotations
 
 import logging
@@ -21,16 +23,14 @@ from geographer.global_constants import DATA_DIR_SUBDIRS
 if TYPE_CHECKING:
     from geographer.img_geom_associator import ImgPolygonAssociator
 
-from geographer.cutteres.cut_iter_over_imgs import \
-    create_or_update_dataset_iter_over_imgs
 from geographer.cut.img_filter_predicates import AlwaysTrue
 from geographer.cut.single_img_cutter_grid import SingleImgCutterToGrid
-
-
+from geographer.cutteres.cut_iter_over_imgs import \
+    create_or_update_dataset_iter_over_imgs
 
 logger = logging.getLogger(__name__)
 
-DSCutterBBoxes(TODO):
+class DSCutterBBoxes(): #TODO
 
     def create_dataset_cut_bboxes(
             create_or_update: str,
@@ -48,16 +48,16 @@ DSCutterBBoxes(TODO):
 
 
         Args:
-            source_data_dir (Union[str, Path], optional): data directory (images, labels, associator) containing the GeoTiffs to be cut from.
-            source_assoc (ImgPolygonAssociator, optional): associator of dataset containing the GeoTiffs to be cut from.
-            target_data_dir (Union[str, Path]): path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created.
-            target_assoc (ImgPolygonAssociator, optional): associator of target dataset.
-            new_img_size (ImgSize): size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
-            img_bands (List[int], optional): list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands (List[int], optional):  list of bands to extract from source labels. Defaults to None (i.e. all bands).
+            source_data_dir: data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+            source_assoc: associator of dataset containing the GeoTiffs to be cut from.
+            target_data_dir: path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created.
+            target_assoc associator of target dataset.
+            new_img_size: size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
+            img_bands: list of bands to extract from source images. Defaults to None (i.e. all bands).
+            label_bands:  list of bands to extract from source labels. Defaults to None (i.e. all bands).
 
         Returns:
-            ImgPolygonAssociator: associator of new dataset in target_data_dir
+            connector of new dataset in target_data_dir
         """
 
         target_data_dir = Path(target_data_dir)
@@ -116,3 +116,4 @@ DSCutterBBoxes(TODO):
         target_assoc.save()
 
         return target_assoc
+# yapf: enable
