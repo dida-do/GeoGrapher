@@ -26,7 +26,7 @@ class ImgBandsGetterMixIn:
             and the image type (source_img_path.parent.name) is not in the bands dict.
 
         Returns:
-            List[int]: list of band indices
+            list of band indices
         """
         img_type = source_img_path.parent.name
         if bands is None:
