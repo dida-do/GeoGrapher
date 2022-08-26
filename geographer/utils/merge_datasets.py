@@ -1,3 +1,5 @@
+"""Utility functions for merging datasets."""
+
 import os
 import shutil
 from pathlib import Path
@@ -8,26 +10,30 @@ from tqdm.auto import tqdm
 from geographer.connector import Connector
 
 
-def merge_datasets(source_data_dir: Union[Path, str],
-                   target_data_dir: Union[Path, str],
-                   delete_source: bool = True) -> None:
-    """TODO.
+def merge_datasets(
+    source_data_dir: Union[Path, str],
+    target_data_dir: Union[Path, str],
+    delete_source: bool = True,
+) -> None:
+    """Merge datasets.
 
     Args:
-        source_data_dir (Union[Path, str]): [description]
-        target_data_dir (Union[Path, str]): [description]
-        delete_source (bool, optional): [description]. Defaults to True.
+        source_data_dir: data dir of source dataset
+        target_data_dir: data dir of target dataset
+        delete_source: Whether to delete source dataset after merging.
+            Defaults to True.
     """
 
     source_connector = Connector.from_data_dir(source_data_dir)
     target_connector = Connector.from_data_dir(target_data_dir)
 
     # copy over image_data_dirs
-    for source_dir, target_dir in zip(source_connector.image_data_dirs,
-                                      target_connector.image_data_dirs):
+    for source_dir, target_dir in zip(
+        source_connector.image_data_dirs, target_connector.image_data_dirs
+    ):
         files_in_target_dir = {img.name for img in target_dir.iterdir()}
         pbar = tqdm(source_dir.iterdir())
-        pbar.set_description(f'copying {str(source_dir.name)}')
+        pbar.set_description(f"copying {str(source_dir.name)}")
         for img_path in pbar:
             if img_path.name not in files_in_target_dir:
                 shutil.copy2(img_path, target_dir)
@@ -40,11 +46,16 @@ def merge_datasets(source_data_dir: Union[Path, str],
     target_connector.save()
 
 
-# recursively merge two folders including subfolders
-# shamelessly stolen from the internet to save time
 # TODO rewrite using pathlib
-def merge_dirs(root_src_dir: Union[Path, str],
-               root_dst_dir: Union[Path, str]) -> None:
+def merge_dirs(root_src_dir: Union[Path, str], root_dst_dir: Union[Path, str]) -> None:
+    """Recursively merge two folders including subfolders.
+
+    (Shamelessly copied from stackoverflow)
+
+    Args:
+        root_src_dir: root source directory
+        root_dst_dir: root target directory
+    """
 
     pbar = tqdm(os.walk(root_src_dir))
     for src_dir, dirs, files in pbar:

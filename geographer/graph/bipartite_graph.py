@@ -5,7 +5,8 @@ Example:
 A graph with
     * vertex colors 'red' and 'black'
     * red vertices 'r1', 'r2' and black vertices 'b1', 'b2', 'b3'
-    * an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data 'bar' between 'r1' and 'b3'
+    * an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data
+        'bar' between 'r1' and 'b3'
 is encoded as the dict of dicts of dicts
 
 {
@@ -38,11 +39,11 @@ from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 log = logging.Logger(__name__)
 
 
-def empty_graph_dict(red='red', black='black'):
+def empty_graph_dict(red="red", black="black"):
     return {red: {}, black: {}}
 
 
-def empty_bipartite_graph(red='red', black='black'):
+def empty_bipartite_graph(red="red", black="black"):
     return BipartiteGraph(graph_dict=empty_graph_dict(red=red, black=black))
 
 
@@ -58,12 +59,9 @@ class BipartiteGraph(BipartiteGraphClass):
     The vertices have to be hashable, e.g. strings.
     """
 
-    def __init__(self,
-                 graph_dict=None,
-                 file_path=None,
-                 red=None,
-                 black=None,
-                 directed=False):
+    def __init__(
+        self, graph_dict=None, file_path=None, red=None, black=None, directed=False
+    ):
         """Should be constructed from either a dict (of dicts of dicts) or from
         a json file serializing such a dict. The encoding is such that
         graph_dict[vertex1_color][vertex1][vertex2] is the edge data between
@@ -73,11 +71,12 @@ class BipartiteGraph(BipartiteGraphClass):
         undirected graph with edges in both directions.
 
         Args:
-            - graph_dict: dict (of dicts of dicts) defining a bipartite graph. See example in module header.
-            - file_path: (str or pathlib.Path), path to .json containing such a dict.
-            - red: vertex color, defaults to 'red'.
-            - black: vertex color, defaults to 'black.
-            - directed: bool. If True the graph is directed, defaults to False.
+            graph_dict: dict (of dicts of dicts) defining a bipartite graph.
+                See example in module header.
+            file_path:path to .json containing such a dict.
+            red: vertex color, defaults to 'red'.
+            black: vertex color, defaults to 'black.
+            directed: If True the graph is directed, defaults to False.
         """
         if file_path is not None:
             self.file_path = file_path
@@ -97,7 +96,7 @@ class BipartiteGraph(BipartiteGraphClass):
             # vertex colors
             self.red, self.black = tuple(self._graph_dict.keys())
 
-        elif graph_dict is not None:  # we are building the graph from a graph dict, so this determines the color
+        elif graph_dict is not None:  # color determined by graph dict
             # make sure outermost dict has right shape
             if len(graph_dict) != 2:
                 raise Exception(
@@ -116,8 +115,8 @@ class BipartiteGraph(BipartiteGraphClass):
                     f"Error: Need either both or none of red and black specified!"
                 )
         else:
-            self.red = 'red'
-            self.black = 'black'
+            self.red = "red"
+            self.black = "black"
             self._graph_dict = empty_graph_dict(red=self.red, black=self.black)
             self.directed = directed
             self.file_path = None
@@ -154,9 +153,11 @@ class BipartiteGraph(BipartiteGraphClass):
             answer = map(
                 lambda opp_vertex_edge_data_pair: opp_vertex_edge_data_pair[0],
                 filter(
-                    lambda opp_vertex_edge_data_pair:
-                    opp_vertex_edge_data_pair[1] == edge_data,
-                    self._graph_dict[vertex_color][vertex].items()))
+                    lambda opp_vertex_edge_data_pair: opp_vertex_edge_data_pair[1]
+                    == edge_data,
+                    self._graph_dict[vertex_color][vertex].items(),
+                ),
+            )
         return list(answer)
 
     def exists_vertex(self, vertex_name, vertex_color=None):
@@ -175,33 +176,30 @@ class BipartiteGraph(BipartiteGraphClass):
         else:
             log.error(
                 "Not a valid vertex_color: %s. Graph vertex colors are %s.",
-                vertex_color, self.colors())
+                vertex_color,
+                self.colors(),
+            )
 
         return answer
 
-    def exists_edge(self,
-                    from_vertex,
-                    from_vertex_color,
-                    to_vertex,
-                    edge_data=None):
+    def exists_edge(self, from_vertex, from_vertex_color, to_vertex, edge_data=None):
         """Check whether an edge exists."""
 
         if edge_data == None:
-            answer = (to_vertex
-                      in self._graph_dict[from_vertex_color][from_vertex])
+            answer = to_vertex in self._graph_dict[from_vertex_color][from_vertex]
         else:
-            answer = to_vertex in self.vertices_opposite(from_vertex,
-                                                         from_vertex_color,
-                                                         edge_data=edge_data)
+            answer = to_vertex in self.vertices_opposite(
+                from_vertex, from_vertex_color, edge_data=edge_data
+            )
         return answer
 
     def edge_data(self, from_vertex, from_color, to_vertex):
         """Return edge data.
 
         Args:
-            - from_vertex:
-            - from_color:
-            - to_vertex:
+            from_vertex:
+            from_color:
+            to_vertex:
         """
 
         return self._graph_dict[from_color][from_vertex][to_vertex]
@@ -210,8 +208,8 @@ class BipartiteGraph(BipartiteGraphClass):
         """Add a vertex.
 
         Args:
-            - vertex_name
-            - vertex_color
+            vertex_name
+            vertex_color
         """
 
         # check if vertex already exists
@@ -221,58 +219,53 @@ class BipartiteGraph(BipartiteGraphClass):
             # create vertex w/o edges
             self._graph_dict[vertex_color][vertex_name] = {}
 
-    def add_edge(self,
-                 from_vertex,
-                 from_vertex_color,
-                 to_vertex,
-                 edge_data,
-                 force=False):
+    def add_edge(
+        self, from_vertex, from_vertex_color, to_vertex, edge_data, force=False
+    ):
         """Add an edge. If the vertices do not yet exist will create them.
         Throws an error if an edge between the vertices already exists unless
         force is True, in which case it overwrites the existing edge_data.
 
         Args:
-            - from_vertex:
-            - from_color:
-            - to_vertex:
-            - edge_data:
-            - force:
+            from_vertex:
+            from_color:
+            to_vertex:
+            edge_data:
+            force:
         """
 
         if not self.exists_vertex(from_vertex, from_vertex_color):
-            log.info("add_edge: vertex %s does not exist. Creating first...",
-                     from_vertex)
+            log.info(
+                "add_edge: vertex %s does not exist. Creating first...", from_vertex
+            )
             self.add_vertex(from_vertex, from_vertex_color)
-            #self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
-        if not self.exists_vertex(to_vertex,
-                                  self._opposite_color(from_vertex_color)):
-            log.info("add_edge: vertex %s does not exist. Creating first...",
-                     to_vertex)
+            # self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
+        if not self.exists_vertex(to_vertex, self._opposite_color(from_vertex_color)):
+            log.info("add_edge: vertex %s does not exist. Creating first...", to_vertex)
             self.add_vertex(to_vertex, self._opposite_color(from_vertex_color))
-            #self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
-        if force == False and self.exists_edge(from_vertex, from_vertex_color,
-                                               to_vertex):
+            # self.add_edge(from_vertex, from_vertex_color, to_vertex, edge_data, force)
+        if force == False and self.exists_edge(
+            from_vertex, from_vertex_color, to_vertex
+        ):
             log.error(
                 "add_edge: an edge %s (color: %s) to %s already exists. Set force=True to overwrite.",
-                from_vertex, from_vertex_color, to_vertex)
+                from_vertex,
+                from_vertex_color,
+                to_vertex,
+            )
             raise Exception(
                 f"add_edge: an edge {from_vertex} (color: {from_vertex_color}) to {to_vertex} already exists. Set force=True to overwrite."
             )
         else:
-            #add edge or update edge_date
-            self._graph_dict[from_vertex_color][from_vertex][
-                to_vertex] = edge_data
+            # add edge or update edge_date
+            self._graph_dict[from_vertex_color][from_vertex][to_vertex] = edge_data
 
-            #add or update opposite edge if graph is undirected:
+            # add or update opposite edge if graph is undirected:
             if self.directed == False:
                 to_vertex_color = self._opposite_color(from_vertex_color)
-                self._graph_dict[to_vertex_color][to_vertex][
-                    from_vertex] = edge_data
+                self._graph_dict[to_vertex_color][to_vertex][from_vertex] = edge_data
 
-    def delete_vertex(self,
-                      vertex_name,
-                      vertex_color,
-                      force_delete_with_edges=True):
+    def delete_vertex(self, vertex_name, vertex_color, force_delete_with_edges=True):
         """Delete a vertex. If force==False, will delete only if the vertex has
         no edges. If force==True, will also delete edges starting or ending at
         the vertex. Note that in that case we don't delete dangling opposite
@@ -280,29 +273,33 @@ class BipartiteGraph(BipartiteGraphClass):
         this). Only implemented for directed graphs.
 
         Args:
-            - vertex_name:
-            - vertex_color:
-            - force_delete_with_edges:
+            vertex_name:
+            vertex_color:
+            force_delete_with_edges:
         """
 
         if not self.exists_vertex(vertex_name, vertex_color):
 
-            log.info("delete_vertex: nothing to do, vertex %s does not exist.",
-                     vertex_name)
+            log.info(
+                "delete_vertex: nothing to do, vertex %s does not exist.", vertex_name
+            )
 
         # if force_delete_with_edges=False check if vertex has outgoing adjacent edges
         elif self.directed == True:
 
             log.error(
                 "Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in %s :(",
-                vertex_name)
+                vertex_name,
+            )
 
             raise Exception(
                 f"Sorry, delete_vertex is not implemented for directed graphs. I was too lazy to code up the complication of checking which edges end in {vertex_name} :("
             )
 
-        elif force_delete_with_edges == False and list(
-                self.vertices_opposite(vertex_name, vertex_color)) != []:
+        elif (
+            force_delete_with_edges == False
+            and list(self.vertices_opposite(vertex_name, vertex_color)) != []
+        ):
 
             raise Exception(
                 f"delete_vertex: vertex {vertex_name} of color {vertex_color} has edges. Set force_delete_with_edges=True to delete anyway (along with adjacent edges)."
@@ -310,14 +307,13 @@ class BipartiteGraph(BipartiteGraphClass):
 
         else:
 
-            # thinking of an undirected graph as a directed graph where for each edge there is an opposite edge,
-            # we first take out the edges _ending_ in vertex, i.e. the opposite edges to the outgoing ones at vertex.
+            # thinking of an undirected graph as a directed graph where for each edge
+            # there is an opposite edge, we first take out the edges _ending_ in
+            # vertex, i.e. the opposite edges to the outgoing ones at vertex.
             opposite_color = self._opposite_color(vertex_color)
-            for opposite_vertex in self._graph_dict[vertex_color][
-                    vertex_name].keys():
-                self._graph_dict[opposite_color][opposite_vertex].pop(
-                    vertex_name)
-            #then we take out the edges starting in vertex and the vertex itself
+            for opposite_vertex in self._graph_dict[vertex_color][vertex_name].keys():
+                self._graph_dict[opposite_color][opposite_vertex].pop(vertex_name)
+            # then we take out the edges starting in vertex and the vertex itself
             self._graph_dict[vertex_color].pop(vertex_name)
 
     def delete_edge(self, from_vertex, from_vertex_color, to_vertex):
@@ -325,20 +321,21 @@ class BipartiteGraph(BipartiteGraphClass):
         from_vertex_color to to_vertex.
 
         Args:
-            - from_vertex (vertex):
-            - from_vertex_color (color):
-            - to_vertex (vertex):
-
-        Returns:
-            None
+            from_vertex:
+            from_vertex_color:
+            to_vertex:
         """
 
         if not to_vertex in self._graph_dict[from_vertex_color][from_vertex]:
-            log.info("delete_edge(%s, %s, %s): There is no such edge.",
-                     from_vertex, from_vertex_color, to_vertex)
+            log.info(
+                "delete_edge(%s, %s, %s): There is no such edge.",
+                from_vertex,
+                from_vertex_color,
+                to_vertex,
+            )
         else:
             self._graph_dict[from_vertex_color][from_vertex].pop(to_vertex)
-            if self.directed == False:  #delete opposite edge
+            if self.directed == False:  # delete opposite edge
                 opposite_color = self._opposite_color(from_vertex_color)
                 self._graph_dict[opposite_color][to_vertex].pop(from_vertex)
 
@@ -346,10 +343,7 @@ class BipartiteGraph(BipartiteGraphClass):
         """Save graph (i.e. graph_dict) to disk as json file.
 
         Args:
-            - file_path (str or pathlib.Path): path of json file to save graph to.
-
-        Returns:
-            None
+            file_path: path of json file to save graph to.
         """
 
         if file_path is None:
@@ -369,7 +363,7 @@ class BipartiteGraph(BipartiteGraphClass):
         opposite edge exists as well. Useful for testing.
 
         Returns:
-            bool, True if graph is undirected, False if it's not.
+            True if graph is undirected, False if it's not.
         """
         # an empty graph is undirected
         answer = True
@@ -379,25 +373,26 @@ class BipartiteGraph(BipartiteGraphClass):
                 opposite_color = self._opposite_color(color)
                 for vertex in self._graph_dict[color]:
                     for opposite_vertex in self._graph_dict[color][vertex]:
-                        if (self._graph_dict[color][vertex][opposite_vertex] !=
-                                self._graph_dict[opposite_color]
-                            [opposite_vertex][vertex]):
+                        if (
+                            self._graph_dict[color][vertex][opposite_vertex]
+                            != self._graph_dict[opposite_color][opposite_vertex][vertex]
+                        ):
                             answer = False
         except KeyError as e:
             answer = False
 
         return answer
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check equality of graphs. Two graphs are equal if the vertex sets
         and colors and the edge sets and edge data agree, which is tested by
         asking whether the underlying dicts are equal.
 
         Args:
-            - other (BipartiteGraph):
+            other (BipartiteGraph):
 
         Returns:
-            - (bool): True if the graphs are equal, False otherwise.
+            True if the graphs are equal, False otherwise.
         """
 
         return self._graph_dict == other._graph_dict
@@ -407,7 +402,7 @@ class BipartiteGraph(BipartiteGraphClass):
 
         Args:
         Returns:
-            - (str): string representation of the graph.
+            (str): string representation of the graph.
         """
 
         return json.dumps(self._graph_dict, indent=4)

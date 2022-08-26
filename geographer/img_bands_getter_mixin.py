@@ -1,24 +1,25 @@
-"""Mix-in that provides methods to get image bands"""
+"""Mix-in that provides methods to get image bands."""
 
 from pathlib import Path
 from typing import Dict, List, Optional
+
 import rasterio as rio
 
 
 class ImgBandsGetterMixIn:
-    """Mix-in that provides methods to get image bands"""
+    """Mix-in that provides methods to get image bands."""
 
     def _get_bands_for_img(
         self,
         bands: Optional[Dict[str, Optional[List[int]]]],
         source_img_path: Path,
     ) -> List[int]:
-        """
-        Return list of bands indices in the source image to use in the target image.
+        """Return list of bands indices in the source image to use in the
+        target image.
 
         Args:
-            source_img_path (Path): path to source image.
-            bands (Optional[Dict[str, Optional[List[int]]]]): dict of band indices
+            source_img_path: path to source image.
+            bands: dict of band indices
 
         Raises:
             ValueError: If the optional bands dict is not None
@@ -41,10 +42,10 @@ class ImgBandsGetterMixIn:
         """Return list of all band indices of source GeoTiff.
 
         Args:
-            source_img_path (Path): path to source image (or label etc)
+            source_img_path: path to source image (or label etc)
 
         Returns:
-            List[int]: list of indices of all bands in GeoTiff
+            list of indices of all bands in GeoTiff
         """
 
         with rio.open(source_img_path) as src:
