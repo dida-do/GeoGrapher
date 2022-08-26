@@ -1,4 +1,4 @@
-"""Type aliases"""
+"""Type aliases."""
 
 from typing import Optional, Tuple, Union
 

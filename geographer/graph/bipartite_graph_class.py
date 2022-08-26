@@ -32,18 +32,12 @@ class BipartiteGraphClass:
     def add_vertex(self, vertex_name, vertex_color):
         raise NotImplementedError
 
-    def add_edge(self,
-                 from_vertex,
-                 from_vertex_color,
-                 to_vertex,
-                 edge_data,
-                 force=False):
+    def add_edge(
+        self, from_vertex, from_vertex_color, to_vertex, edge_data, force=False
+    ):
         raise NotImplementedError
 
-    def delete_vertex(self,
-                      vertex,
-                      vertex_color,
-                      force_delete_with_edges=True):
+    def delete_vertex(self, vertex, vertex_color, force_delete_with_edges=True):
         raise NotImplementedError
 
     def delete_edge(self, from_vertex, from_vertex_color, to_vertex):
