@@ -1,8 +1,10 @@
 """Base class for downloaders for a single vector feature."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Literal, Set, Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel
 from shapely.geometry import Polygon
@@ -19,9 +21,9 @@ class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
         feature_name: Union[int, str],
         feature_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_imgs_set: Set[Union[str, int]],
+        previously_downloaded_imgs_set: set[Union[str, int]],
         **kwargs,
-    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
+    ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """Download an image or a series of images for a single vector feature.
 
         Args:

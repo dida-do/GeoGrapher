@@ -1,9 +1,11 @@
 """A SingleImgCutter to extract one or several pre defined bounding box from an
 image."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 import geopandas as gpd
 import rasterio as rio
@@ -107,7 +109,7 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
         target_connector: Optional[Connector] = None,
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> list[str]:
 
         source_img_path = source_connector.images_dir / source_img_name
 

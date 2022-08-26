@@ -1,8 +1,10 @@
 """SingleImgCutter that cuts an image to a grid of images."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import rasterio as rio
 from affine import Affine
@@ -70,7 +72,7 @@ class SingleImgCutterToGrid(SingleImgCutter):
         target_connector: Optional[Connector] = None,
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
-    ) -> List[Tuple[Window, Affine, str]]:
+    ) -> list[tuple[Window, Affine, str]]:
 
         source_img_path = source_connector.images_dir / source_img_name
 

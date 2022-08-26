@@ -1,10 +1,12 @@
 """Unpack/convert sentinel-2 SAFE files to GeoTiffs."""
 
+from __future__ import annotations
+
 import itertools
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 import geopandas as gpd
 import numpy as np
@@ -27,10 +29,9 @@ def safe_to_geotif_L2A(
     upsample_lower_resolution: bool = True,
     outdir: Path = None,
     TCI: bool = True,
-    requested_jp2_masks: List[str] = ["CLDPRB", "SNWPRB"],
-    requested_gml_mask: List[Tuple[str]] = [("CLOUDS", "B00")],
-    # upsampling_method_specifier: str = "bilinear"
-) -> Dict:
+    requested_jp2_masks: list[str] = ["CLDPRB", "SNWPRB"],
+    requested_gml_mask: list[tuple[str, str]] = [("CLOUDS", "B00")],
+) -> dict:
     """Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a
     dict with the crs epsg code and a shapely polygon defined by the image
     bounds.
@@ -58,8 +59,6 @@ def safe_to_geotif_L2A(
         requested_jp2_masks: jp2 mask to load
         requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for
             which to get the mask)
-        upsampling_method_specifier: method to upsample from lower resolution to
-            higher. Options: (nearest,bilinear,cubic,average)
 
     Returns:
         dict containing tif crs and bounding rectangle

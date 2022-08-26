@@ -7,7 +7,7 @@ import logging
 import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Literal, Optional, Sequence, Type, TypeVar, Union
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
@@ -341,7 +341,7 @@ class Connector(
         return self.attrs["task_feature_classes"]
 
     @task_vector_feature_classes.setter
-    def task_vector_feature_classes(self, new_task_feature_classes: List[str]):
+    def task_vector_feature_classes(self, new_task_feature_classes: list[str]):
         if not len(new_task_feature_classes) == len(set(new_task_feature_classes)):
             raise ValueError("no duplicates in list of task_feature_classes allowed")
         self.attrs["task_feature_classes"] = new_task_feature_classes
@@ -363,7 +363,7 @@ class Connector(
         return answer
 
     @property
-    def image_data_dirs(self) -> List[Path]:
+    def image_data_dirs(self) -> list[Path]:
         """All directories containing image data (including e.g. segmentation
         labels)"""
         return self._image_data_dirs
@@ -598,7 +598,7 @@ class Connector(
             setattr(self, path_attr, self._connector_dir / filename)
 
     @classmethod
-    def _get_default_dirs_from_data_dir(cls, data_dir: Union[Path, str]) -> Tuple[Path, Path, Path]:
+    def _get_default_dirs_from_data_dir(cls, data_dir: Union[Path, str]) -> tuple[Path, Path, Path]:
 
         data_dir = Path(data_dir)
 
@@ -629,7 +629,7 @@ class Connector(
 
     def _check_no_non_task_feature_classes_are_task_classes(
         self,
-        task_feature_classes: List[str],
+        task_feature_classes: list[str],
         background_class: str, **kwargs
     ):
         """TODO.

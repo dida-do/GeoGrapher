@@ -1,11 +1,13 @@
 """Class for downloading images for vector features targeting a given number of
 images per vector feature."""
 
+from __future__ import annotations
+
 import logging
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
@@ -43,7 +45,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     def download(
         self,
         connector: Union[Path, str, Connector],
-        feature_names: Optional[Union[str, int, List[int], List[str]]] = None,
+        feature_names: Optional[Union[str, int, list[int], list[str]]] = None,
         target_img_count: int = 1,
         filter_out_features_contained_in_union_of_intersecting_imgs: bool = False,
         shuffle: bool = True,
@@ -322,9 +324,9 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
     @staticmethod
     def _run_safety_checks_on_downloaded_imgs(
-        previously_downloaded_imgs_set: Set[Union[str, int]],
+        previously_downloaded_imgs_set: set[Union[str, int]],
         feature_name: Union[str, int],
-        list_img_info_dicts: List[dict],
+        list_img_info_dicts: list[dict],
     ):
         """Check no images have been downloaded more than once."""
 
@@ -368,11 +370,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
     def _get_features_for_which_to_download(
         self,
-        feature_names: Union[str, int, List[int], List[str]],
+        feature_names: Union[str, int, list[int], list[str]],
         target_img_count: int,
         connector: Connector,
         filter_out_features_contained_in_union_of_intersecting_imgs: bool,
-    ) -> List[Union[int, str]]:
+    ) -> list[Union[int, str]]:
 
         if feature_names is None:
             features_for_which_to_download = list(
@@ -413,7 +415,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
     def _filter_out_features_with_null_geometry(
         self,
-        feature_names: Union[str, int, List[int], List[str]],
+        feature_names: Union[str, int, list[int], list[str]],
         connector: Connector,
     ) -> None:
         features_w_null_geometry_mask = (
@@ -437,7 +439,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
     def _filter_out_features_contained_in_union_of_intersecting_imgs(
         self,
-        feature_names: Union[str, int, List[int], List[str]],
+        feature_names: Union[str, int, list[int], list[str]],
         connector: Connector,
     ) -> None:
         feature_names = [

@@ -1,9 +1,11 @@
 """Base class for label makers that generate segmentation labels from a
 connector's vector_features."""
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
@@ -50,7 +52,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def make_labels(
         self,
         connector: Connector,
-        img_names: Optional[List[str]] = None,
+        img_names: Optional[list[str]] = None,
     ):
         """Create segmentation labels.
 
@@ -95,7 +97,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        img_names: Optional[List[str]] = None,
+        img_names: Optional[list[str]] = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 

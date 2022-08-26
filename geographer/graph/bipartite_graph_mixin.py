@@ -1,8 +1,10 @@
 """Mix-in that implements the private methods used to manipulate a connector's
 bipartite graph."""
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
@@ -49,8 +51,8 @@ class BipartiteGraphMixIn:
         return self.raster_imgs.loc[img_name, "geometry"]
 
     def vector_features_intersecting_img(
-        self, img_name: Union[str, List[str]]
-    ) -> List[str]:
+        self, img_name: Union[str, list[str]]
+    ) -> list[str]:
         """Return the vector features which intersect one or (any of) several
         images.
 
@@ -80,8 +82,8 @@ class BipartiteGraphMixIn:
         return feature_names
 
     def imgs_intersecting_vector_feature(
-        self, feature_name: Union[str, List[str]], mode: str = "names"
-    ) -> List[str]:
+        self, feature_name: Union[str, list[str]], mode: str = "names"
+    ) -> list[str]:
         """Return names or paths of all raster images which intersect one or
         (any of) several vector features.
 
@@ -120,8 +122,8 @@ class BipartiteGraphMixIn:
         return answer
 
     def vector_features_contained_in_img(
-        self, img_name: Union[str, List[str]]
-    ) -> List[str]:
+        self, img_name: Union[str, list[str]]
+    ) -> list[str]:
         """Return vector features fully containing a given image (or any of
         several images).
 
@@ -154,9 +156,9 @@ class BipartiteGraphMixIn:
 
     def imgs_containing_vector_feature(
         self,
-        feature_name: Union[str, List[str]],
+        feature_name: Union[str, list[str]],
         mode: str = "names",
-    ) -> List[str]:
+    ) -> list[str]:
         """Return names or paths of all images in which a given vector feature
         (or any of several) is fully contained.
 

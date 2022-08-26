@@ -2,10 +2,12 @@
 equivalence classes ('clusters') that need to be respected when generating the
 train-validation split."""
 
+from __future__ import annotations
+
 import itertools
 from functools import partial
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Set, Tuple, Union
+from typing import Any, Literal, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -23,11 +25,11 @@ def get_raster_clusters(
         "rasters_that_share_vector_features",
         "rasters_that_share_vector_features_or_overlap",
     ],
-    raster_names: Optional[List[str]] = None,
+    raster_names: Optional[list[str]] = None,
     preclustering_method: Optional[
         Literal["x then y-axis", "y then x-axis", "x-axis", "y-axis"]
     ] = "y then x-axis",  # TODO!!!!!!!!!!
-) -> List[Set[str]]:
+) -> list[set[str]]:
     """Return clusters of raster.
 
     Args:
@@ -99,8 +101,8 @@ def get_raster_clusters(
 
 # TODO: rename to refine pre clustering?
 def _refine_preclustering_along_second_axis(
-    preclusters: List[Set[str]], second_axis: Literal["x", "y"], connector: Connector
-) -> Tuple[List[Set[str]], List[Set[str]]]:
+    preclusters: list[set[str]], second_axis: Literal["x", "y"], connector: Connector
+) -> Tuple[list[set[str]], list[set[str]]]:
     """
 
     Args:
@@ -137,7 +139,7 @@ def _refine_preclustering_along_second_axis(
 
 
 def _get_preclustering_geoms(
-    connector: Connector, img_names: List[str]
+    connector: Connector, img_names: list[str]
 ) -> GeoDataFrame:
 
     # image geoms
@@ -190,8 +192,8 @@ def _get_preclustering_geoms(
 
 
 def _separate_non_singletons(
-    preclusters: List[Set[Any]],
-) -> Tuple[List[Set[Any]], List[Set[Any]]]:
+    preclusters: list[set[Any]],
+) -> tuple[list[set[Any]], list[set[Any]]]:
 
     singletons, non_singletions = [], []
     for precluster in preclusters:
@@ -206,7 +208,7 @@ def _separate_non_singletons(
 # simpler version
 def _pre_cluster_along_axis(
     geoms: GeoDataFrame, axis: Literal["x", "y"]
-) -> List[Set[str]]:
+) -> list[set[str]]:
 
     if axis not in {"x", "y"}:
         raise ValueError(f"axis arg should be one of 'x', 'y'.")
@@ -260,7 +262,7 @@ def _pre_cluster_along_axis(
 def _extract_graph_of_rasters(
     connector: Connector,
     clusters_defined_by: str,
-    img_names: List[str] = None,
+    img_names: list[str] = None,
 ) -> Graph:
     """Extract graph of images with edges determined by the clusters_defined_by
     arg."""
@@ -282,7 +284,10 @@ def _extract_graph_of_rasters(
 
 
 def _are_connected_by_an_edge(
-    img: str, another_img: str, clusters_defined_by: str, connector: Connector
+    img: str,
+    another_img: str,
+    clusters_defined_by: str,
+    connector: Connector,
 ) -> bool:
     """Return True if there is an edge in the graph of images determined by the
     clusters_defined_by relation."""
