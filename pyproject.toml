@@ -1,3 +1,9 @@
+[tool.black]
+target-version = ['py37', 'py38', 'py39']
+
+[tool.isort]
+profile = "black"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
