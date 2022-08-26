@@ -4,11 +4,13 @@ hub.
 Should be easily extendable to Sentinel-1.
 """
 
+from __future__ import annotations
+
 import configparser
 import logging
 import os
 from pathlib import Path
-from typing import Any, Set, Union
+from typing import Any, Union
 from zipfile import ZipFile
 
 from sentinelsat import SentinelAPI
@@ -41,7 +43,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         feature_name: Union[str, int],
         feature_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_imgs_set: Set[str],
+        previously_downloaded_imgs_set: set[str],
         producttype: str,
         resolution: int,
         max_percent_cloud_coverage: int,
@@ -161,7 +163,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             f"All images for {feature_name} failed to download."
         )
 
-    def _get_longform_producttype(self, producttype):
+    def _get_longform_producttype(self, producttype: str):
         """Return producttype in longform as needed by the sentinel API."""
         if producttype in {"L2A", "S2MSI2A"}:
             producttype = "S2MSI2A"
@@ -173,7 +175,11 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         return producttype
 
     @staticmethod
-    def _check_args_are_valid(producttype, resolution, max_percent_cloud_coverage):
+    def _check_args_are_valid(
+        producttype: str,
+        resolution: int,
+        max_percent_cloud_coverage: int,
+    ):
         """Run some safety checks on the arg values."""
         if resolution not in {10, 20, 60}:
             raise ValueError(f"Unknown resolution: {resolution}")

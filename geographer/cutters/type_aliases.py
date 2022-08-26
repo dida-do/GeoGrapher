@@ -1,5 +1,7 @@
 """Type aliases."""
 
-from typing import Optional, Tuple, Union
+from __future__ import annotations
 
-ImgSize = Optional[Union[int, Tuple[int, int]]]
+from typing import Optional, Union
+
+ImgSize = Optional[Union[int, tuple[int, int]]]

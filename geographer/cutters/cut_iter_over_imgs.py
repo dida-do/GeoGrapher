@@ -5,8 +5,10 @@ higher order function to create or update datasets of GeoTiffs from
 existing ones by iterating over images.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -40,7 +42,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_imgs: List[str] = Field(
+    cut_imgs: list[str] = Field(
         default_factory=list,
         description="Names of cut images in source_data_dir. Usually not to be set by hand!",
     )

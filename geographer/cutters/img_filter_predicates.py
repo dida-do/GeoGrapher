@@ -1,9 +1,12 @@
 """Abstract base class for predicates used to filter images in cutting
 functions."""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 from geopandas import GeoSeries
 from pandas import Series
@@ -26,7 +29,7 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
         target_connector: Connector,
         new_img_dict: dict,
         source_connector: Connector,
-        cut_imgs: List[str],
+        cut_imgs: list[str],
     ) -> bool:
         """
         Args:
@@ -67,7 +70,7 @@ class AlwaysTrue(ImgFilterPredicate):
         target_connector: Connector,
         new_img_dict: dict,
         source_connector: Connector,
-        cut_imgs: List[str],
+        cut_imgs: list[str],
     ) -> bool:
         """Return True."""
         return True
@@ -82,7 +85,7 @@ class ImgsNotPreviouslyCutOnly(ImgFilterPredicate):
         target_connector: Connector,
         new_img_dict: dict,
         source_connector: Connector,
-        cut_imgs: List[str],
+        cut_imgs: list[str],
     ) -> bool:
         return img_name not in cut_imgs
 
@@ -119,7 +122,7 @@ class ImgFilterRowCondition(ImgFilterPredicate):
         target_connector: Connector,
         new_img_dict: dict,
         source_connector: Connector,
-        cut_imgs: List[str],
+        cut_imgs: list[str],
     ) -> bool:
         """Apply self.row_series_predicate to
         source_connector.raster_imgs[img_name]

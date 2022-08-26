@@ -1,13 +1,12 @@
 """Create a new dataset from an existing one by combining and/or removing
-vector feature classes.
+vector feature classes."""
 
-TODO: TEST!
-"""
+from __future__ import annotations
 
 import logging
 import shutil
 from codecs import ignore_errors
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
@@ -27,10 +26,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     """Create a new dataset from an existing one by combining and/or removing
     vector feature classes."""
 
-    classes: List[Union[str, List[str]]] = Field(
+    classes: list[Union[str, list[str]]] = Field(
         description="Classes to keep and combine. See docstring."
     )
-    new_class_names: Optional[List[str]] = Field(
+    new_class_names: Optional[list[str]] = Field(
         default=None, description="Names of new classes"
     )
     class_separator: str = Field(
@@ -230,7 +229,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
         return self.target_connector
 
-    def _get_new_class_names(self, classes: List[str]) -> List[str]:
+    def _get_new_class_names(self, classes: list[str]) -> list[str]:
         # new_class_names
         if self.new_class_names is None:
             new_class_names = list(map(self.class_separator.join, classes))
@@ -245,7 +244,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         return new_class_names
 
     def _run_safety_checks(
-        self, classes_to_keep: List[str], new_class_names: List[str]
+        self, classes_to_keep: list[str], new_class_names: list[str]
     ):
 
         if not set(classes_to_keep) <= set(
@@ -272,9 +271,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         self,
         label_type: str,
         vector_features: GeoDataFrame,
-        classes: List[Union[str, List[str]]],
-        new_class_names: List[str],
-        all_source_vector_feature_classes: List[str],
+        classes: list[Union[str, list[str]]],
+        new_class_names: list[str],
+        all_source_vector_feature_classes: list[str],
     ) -> GeoDataFrame:
         """
         Args:
@@ -313,7 +312,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
         elif label_type == "soft-categorical":
 
-            def prob_of_class_names(classes: List[str]) -> List[str]:
+            def prob_of_class_names(classes: list[str]) -> list[str]:
                 answer = list(map(lambda class_: f"prob_of_class_{class_}", classes))
                 return answer
 

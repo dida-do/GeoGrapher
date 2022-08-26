@@ -1,5 +1,7 @@
 """Utilites used in the Connector class."""
 
+from __future__ import annotations
+
 import logging
 
 import pandas as pd
@@ -15,7 +17,11 @@ from geographer.graph.bipartite_graph_mixin import (
 log = logging.getLogger(__name__)
 
 
-def empty_gdf(index_name, cols_and_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE):
+def empty_gdf(
+    index_name: str,
+    cols_and_types: dict,
+    crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
+):
     """Return a empty GeoDataFrame with specified index and column names and
     types and crs.
 
@@ -44,7 +50,7 @@ def empty_gdf(index_name, cols_and_types, crs_epsg_code=STANDARD_CRS_EPSG_CODE):
     return new_empty_gdf
 
 
-def empty_gdf_same_format_as(df):
+def empty_gdf_same_format_as(df: GeoDataFrame) -> GeoDataFrame:
     """Creates an empty df of the same format (index name, columns, column
     types) as the df argument."""
     df_index_name = df.index.name

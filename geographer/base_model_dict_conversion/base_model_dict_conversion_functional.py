@@ -4,9 +4,11 @@ constructors.
 Used for serializing BaseModels
 """
 
+from __future__ import annotations
+
 from multiprocessing.sharedctypes import Value
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from numpy import isin
 from pydantic import BaseModel
@@ -74,7 +76,7 @@ def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:
 
 def eval_nested_base_model_dict(
     dict_or_field_value: Union[dict, Any],
-    constructor_symbol_table: Optional[Dict[str, Any]] = None,
+    constructor_symbol_table: Optional[dict[str, Any]] = None,
 ) -> Union[BaseModel, Any]:
     """Evaluate nested BaseModel dict (or field contents)
 
@@ -160,13 +162,13 @@ def is_base_model_constructor_dict(dict_: dict) -> bool:
 
 
 def get_base_model_constructor(
-    dict_: dict, constructor_symbol_table: Optional[Dict[str, Any]] = None
+    dict_: dict, constructor_symbol_table: Optional[dict[str, Any]] = None
 ) -> bool:
     """Return constructor corresponding to encoded BaseModel.
 
     Args:
         dict_ (dict): nested base model dict
-        constructor_symbol_table (Optional[Dict[str, Any]], optional): optional symbol
+        constructor_symbol_table (Optional[dict[str, Any]], optional): optional symbol
             table of constructors. Defaults to None.
 
     Returns:

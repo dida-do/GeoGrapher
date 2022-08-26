@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from geopandas import GeoDataFrame
 
@@ -25,8 +25,9 @@ if TYPE_CHECKING:
 
 from geographer.cut.img_filter_predicates import AlwaysTrue
 from geographer.cut.single_img_cutter_grid import SingleImgCutterToGrid
-from geographer.cutteres.cut_iter_over_imgs import \
-    create_or_update_dataset_iter_over_imgs
+from geographer.cutteres.cut_iter_over_imgs import (
+    create_or_update_dataset_iter_over_imgs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,8 @@ class DSCutterBBoxes(): #TODO
             target_data_dir: Union[str, Path] = None,
             target_assoc: Optional[ImgPolygonAssociator] = None,
             new_img_size: ImgSize = 512,
-            img_bands: Optional[List[int]] = None,
-            label_bands: Optional[List[int]] = None) -> ImgPolygonAssociator:
+            img_bands: Optional[list[int]] = None,
+            label_bands: Optional[list[int]] = None) -> ImgPolygonAssociator:
         """TODO.
 
         Warning:
