@@ -18,8 +18,7 @@ class ImgDownloadProcessor(ABC, BaseModel):
         images_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
-    ) -> Dict[Union[Literal['img_name', 'geometry', 'orig_crs_epsg_code'],
-                    str], Any]:
+    ) -> Dict[Union[Literal["img_name", "geometry", "orig_crs_epsg_code"], str], Any]:
         """Process a single download.
 
         Args:

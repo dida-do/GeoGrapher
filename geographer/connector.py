@@ -7,24 +7,26 @@ import logging
 import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import (Any, List, Literal, Optional, Sequence, Tuple, Type,
-                    TypeVar, Union)
+from typing import Any, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
 
 # Mix-in classes:
 from geographer.add_drop_raster_imgs import AddDropRasterImgsMixIn
-from geographer.add_drop_vector_features_mixin import \
-    AddDropVectorFeaturesMixIn
-from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
-                                         STANDARD_CRS_EPSG_CODE,
-                                         VECTOR_FEATURES_INDEX_NAME)
+from geographer.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
+from geographer.global_constants import (
+    RASTER_IMGS_INDEX_NAME,
+    STANDARD_CRS_EPSG_CODE,
+    VECTOR_FEATURES_INDEX_NAME,
+)
 from geographer.graph import BipartiteGraph
 from geographer.graph.bipartite_graph_mixin import BipartiteGraphMixIn
-from geographer.utils.connector_utils import (empty_gdf,
-                                              empty_gdf_same_format_as,
-                                              empty_graph)
+from geographer.utils.connector_utils import (
+    empty_gdf,
+    empty_gdf_same_format_as,
+    empty_graph,
+)
 
 DEFAULT_CONNECTOR_DIR_NAME = "connector"
 DEFAULT_IMAGES_DIR_NAME = "images"
@@ -43,9 +45,9 @@ log = logging.getLogger(__name__)
 
 
 class Connector(
-        AddDropVectorFeaturesMixIn,
-        AddDropRasterImgsMixIn,
-        BipartiteGraphMixIn,  # Needs to be last
+    AddDropVectorFeaturesMixIn,
+    AddDropRasterImgsMixIn,
+    BipartiteGraphMixIn,  # Needs to be last
 ):
     """Dataset class that connects vector features and raster data.
 
@@ -60,6 +62,7 @@ class Connector(
     _non_task_feature_classes = [
         "background_class"
     ]  # vector feature classes not to be determined by a machine learning
+
     # model (e.g. features that define background regions or masks)
 
     # yapf: disable

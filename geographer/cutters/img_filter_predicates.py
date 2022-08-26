@@ -51,7 +51,7 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
     def save(self, json_path: Path) -> None:
         """Save the predicate."""
         json_path.parent.mkdir(exist_ok=True)
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             f.write(self.json(indent=2))
 
 
@@ -88,7 +88,6 @@ class ImgsNotPreviouslyCutOnly(ImgFilterPredicate):
 
 
 class RowSeriesPredicate(ABC, BaseModel):
-
     @abstractmethod
     def __call__(*args, **kwargs):
         pass
@@ -102,8 +101,8 @@ class ImgFilterRowCondition(ImgFilterPredicate):
     row_series_predicate: RowSeriesPredicate
 
     def __init__(
-        self, row_series_predicate: Callable[[Union[GeoSeries, Series]],
-                                             bool]) -> None:
+        self, row_series_predicate: Callable[[Union[GeoSeries, Series]], bool]
+    ) -> None:
         """
         Args:
             row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]):
@@ -139,18 +138,18 @@ class ImgFilterRowCondition(ImgFilterPredicate):
             source_connector.raster_imgs[img_name]
         """
 
-        row_series: Union[GeoSeries,
-                          Series] = source_connector.raster_imgs.loc[img_name]
+        row_series: Union[GeoSeries, Series] = source_connector.raster_imgs.loc[
+            img_name
+        ]
         answer = self.row_series_predicate(row_series)
 
         return answer
 
 
 def wrap_function_as_RowSeriesPredicate(
-        fun: Callable[[Union[GeoSeries, Series]], bool]) -> RowSeriesPredicate:
-
+    fun: Callable[[Union[GeoSeries, Series]], bool]
+) -> RowSeriesPredicate:
     class WrappedAsRowSeriesPredicate(RowSeriesPredicate):
-
         def __call__(*args, **kwargs):
             return fun(*args, **kwargs)
 

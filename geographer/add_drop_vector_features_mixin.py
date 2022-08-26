@@ -45,17 +45,17 @@ class AddDropVectorFeaturesMixIn(object):
                 features that were added. Defaults to None.
         """
 
-        duplicates = new_vector_features[
-            new_vector_features.index.duplicated()]
+        duplicates = new_vector_features[new_vector_features.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(
                 f"new_vector_features contains rows with duplicate vector_feature_names (indices): {duplicates.index.tolist()}"
             )
 
         feature_names_in_both = list(
-            set(new_vector_features.index) & set(self.vector_features.index))
+            set(new_vector_features.index) & set(self.vector_features.index)
+        )
         if feature_names_in_both:
-            feature_names_in_both_str = ', '.join(feature_names_in_both)
+            feature_names_in_both_str = ", ".join(feature_names_in_both)
             raise ValueError(
                 f"conflict: already have entries for vector features {feature_names_in_both_str}"
             )
@@ -67,19 +67,24 @@ class AddDropVectorFeaturesMixIn(object):
 
         new_vector_features = self._get_df_in_crs(
             df=new_vector_features,
-            df_name='new_vector_features',
-            crs_epsg_code=self.crs_epsg_code)
+            df_name="new_vector_features",
+            crs_epsg_code=self.crs_epsg_code,
+        )
 
         new_vector_features = deepcopy_gdf(new_vector_features)
-        new_vector_features['img_count'] = 0
+        new_vector_features["img_count"] = 0
 
-        self._check_required_df_cols_exist(df=new_vector_features,
-                                           df_name='new_vector_features',
-                                           mode='vector_features')
-        _check_df_cols_agree(df=new_vector_features,
-                             df_name='new_vector_features',
-                             self_df=self.vector_features,
-                             self_df_name='self.vector_features')
+        self._check_required_df_cols_exist(
+            df=new_vector_features,
+            df_name="new_vector_features",
+            mode="vector_features",
+        )
+        _check_df_cols_agree(
+            df=new_vector_features,
+            df_name="new_vector_features",
+            self_df=self.vector_features,
+            self_df_name="self.vector_features",
+        )
         # self._check_classes_in_vector_features_contained_in_all_classes(
         #     new_vector_features, 'new_vector_features')
 
@@ -89,19 +94,21 @@ class AddDropVectorFeaturesMixIn(object):
             # ... add a vertex for the new feature to the graph and add all
             # connections to existing images.
             self._add_vector_feature_to_graph(
-                vector_feature_name, vector_features=new_vector_features)
+                vector_feature_name, vector_features=new_vector_features
+            )
 
         # Append new_vector_features to the connector's (self.)vector_features.
-        self.vector_features = concat_gdfs(
-            [self.vector_features, new_vector_features])
-        #self.vector_features = self.vector_features.convert_dtypes()
+        self.vector_features = concat_gdfs([self.vector_features, new_vector_features])
+        # self.vector_features = self.vector_features.convert_dtypes()
 
         if label_maker is not None:
             # delete labels that need to change and recompute
             imgs_w_new_vector_features = [
-                img_name for vector_feature_name in new_vector_features.index
+                img_name
+                for vector_feature_name in new_vector_features.index
                 for img_name in self.imgs_intersecting_vector_feature(
-                    vector_feature_name)
+                    vector_feature_name
+                )
             ]
             label_maker.recompute_labels(
                 connector=self,
@@ -136,11 +143,11 @@ class AddDropVectorFeaturesMixIn(object):
         # remove the feature vertices (along with their edges)
         for vector_feature_name in vector_feature_names:
             names_of_imgs_with_labels_to_recompute.update(
-                set(self.imgs_intersecting_vector_feature(
-                    vector_feature_name)))
-            self._graph.delete_vertex(vector_feature_name,
-                                      VECTOR_FEATURES_COLOR,
-                                      force_delete_with_edges=True)
+                set(self.imgs_intersecting_vector_feature(vector_feature_name))
+            )
+            self._graph.delete_vertex(
+                vector_feature_name, VECTOR_FEATURES_COLOR, force_delete_with_edges=True
+            )
 
         # drop row from self.vector_features
         self.vector_features.drop(vector_feature_names, inplace=True)
@@ -148,7 +155,8 @@ class AddDropVectorFeaturesMixIn(object):
         # recompute labels
         if label_maker is True:
             names_of_imgs_with_labels_to_recompute = list(
-                names_of_imgs_with_labels_to_recompute)
+                names_of_imgs_with_labels_to_recompute
+            )
             label_maker.delete_labels(
                 connector=self,
                 img_names=names_of_imgs_with_labels_to_recompute,

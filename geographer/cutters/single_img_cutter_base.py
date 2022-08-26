@@ -25,12 +25,13 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
 
     @abstractmethod
     def _get_windows_transforms_img_names(
-            self,
-            source_img_name: str,
-            source_connector: Connector,
-            target_connector: Optional[Connector] = None,
-            new_imgs_dict: Optional[dict] = None,
-            **kwargs: Any) -> List[Tuple[Window, Affine, str]]:
+        self,
+        source_img_name: str,
+        source_connector: Connector,
+        target_connector: Optional[Connector] = None,
+        new_imgs_dict: Optional[dict] = None,
+        **kwargs: Any,
+    ) -> List[Tuple[Window, Affine, str]]:
         """Return a list of rasterio windows, window transformations, and new
         image names. The returned list will be used to create the new images
         and labels. Override to subclass.
@@ -49,13 +50,15 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             transform, and new image names.
         """
 
-    def __call__(self,
-                 img_name: str,
-                 source_connector: Connector,
-                 target_connector: Optional[Connector] = None,
-                 new_imgs_dict: Optional[dict] = None,
-                 bands: Optional[Dict[str, Optional[List[int]]]] = None,
-                 **kwargs: Any) -> dict:
+    def __call__(
+        self,
+        img_name: str,
+        source_connector: Connector,
+        target_connector: Optional[Connector] = None,
+        new_imgs_dict: Optional[dict] = None,
+        bands: Optional[Dict[str, Optional[List[int]]]] = None,
+        **kwargs: Any,
+    ) -> dict:
         """Cut new images from source image and return a dict with keys the
         index and column names of the raster_imgs to be created by the calling
         dataset cutter and values lists containing the new image names and
@@ -92,8 +95,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {
             index_or_col_name: []
-            for index_or_col_name in [RASTER_IMGS_INDEX_NAME] +
-            list(source_connector.raster_imgs.columns)
+            for index_or_col_name in [RASTER_IMGS_INDEX_NAME]
+            + list(source_connector.raster_imgs.columns)
         }
 
         windows_transforms_img_names = self._get_windows_transforms_img_names(
@@ -101,7 +104,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             source_connector=source_connector,
             target_connector=target_connector,
             new_imgs_dict=new_imgs_dict,
-            **kwargs)
+            **kwargs,
+        )
 
         for window, window_transform, new_img_name in windows_transforms_img_names:
 
@@ -156,24 +160,30 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             dict: img info dict (see above)
         """
 
-        img_bounding_rectangle_in_raster_imgs_crs = box(*transform_bounds(
-            img_crs, source_connector.raster_imgs.crs, *img_bounds_in_img_crs))
+        img_bounding_rectangle_in_raster_imgs_crs = box(
+            *transform_bounds(
+                img_crs, source_connector.raster_imgs.crs, *img_bounds_in_img_crs
+            )
+        )
 
         single_new_img_info_dict = {
             RASTER_IMGS_INDEX_NAME: new_img_name,
-            'geometry': img_bounding_rectangle_in_raster_imgs_crs,
-            'orig_crs_epsg_code': img_crs.to_epsg(),
-            'img_processed?': True
+            "geometry": img_bounding_rectangle_in_raster_imgs_crs,
+            "orig_crs_epsg_code": img_crs.to_epsg(),
+            "img_processed?": True,
         }
 
         # Copy over any remaining information about the img from
         # source_connector.raster_imgs.
         for col in set(source_connector.raster_imgs.columns) - {
-                RASTER_IMGS_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
-                'img_processed?'
+            RASTER_IMGS_INDEX_NAME,
+            "geometry",
+            "orig_crs_epsg_code",
+            "img_processed?",
         }:
             single_new_img_info_dict[col] = source_connector.raster_imgs.loc[
-                source_img_name, col]
+                source_img_name, col
+            ]
 
         return single_new_img_info_dict
 
@@ -201,29 +211,34 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         """
 
         for count, (source_images_dir, target_images_dir) in enumerate(
-                zip(source_connector.image_data_dirs,
-                    target_connector.image_data_dirs)):
+            zip(source_connector.image_data_dirs, target_connector.image_data_dirs)
+        ):
 
             source_img_path = source_images_dir / source_img_name
             dst_img_path = target_images_dir / new_img_name
 
-            if not source_img_path.is_file(
-            ) and count > 0:  # count == 0 corresponds to images_dir
+            if (
+                not source_img_path.is_file() and count > 0
+            ):  # count == 0 corresponds to images_dir
                 continue
             else:
                 img_bands = self._get_bands_for_img(bands, source_img_path)
 
                 # write img window to destination img geotif
                 bounds_in_img_crs, crs = self._write_window_to_geotif(
-                    source_img_path, dst_img_path, img_bands, window,
-                    window_transform)
+                    source_img_path, dst_img_path, img_bands, window, window_transform
+                )
 
             # make sure all images/labels/masks have same bounds and crs
             if count == 0:
                 img_bounds_in_img_crs, img_crs = bounds_in_img_crs, crs
             else:
-                assert crs == img_crs, f"new image and {target_images_dir.name} crs disagree!"
-                assert bounds_in_img_crs == img_bounds_in_img_crs, f"new image and {target_images_dir.name} bounds disagree"
+                assert (
+                    crs == img_crs
+                ), f"new image and {target_images_dir.name} crs disagree!"
+                assert (
+                    bounds_in_img_crs == img_bounds_in_img_crs
+                ), f"new image and {target_images_dir.name} bounds disagree"
 
         return img_bounds_in_img_crs, img_crs
 
@@ -253,15 +268,17 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
 
             # and destination ...
             Path(dst_img_path).parent.mkdir(exist_ok=True, parents=True)
-            with rio.open(Path(dst_img_path),
-                          'w',
-                          driver='GTiff',
-                          height=window.height,
-                          width=window.width,
-                          count=len(img_bands),
-                          dtype=src.profile["dtype"],
-                          crs=src.crs,
-                          transform=window_transform) as dst:
+            with rio.open(
+                Path(dst_img_path),
+                "w",
+                driver="GTiff",
+                height=window.height,
+                width=window.width,
+                count=len(img_bands),
+                dtype=src.profile["dtype"],
+                crs=src.crs,
+                transform=window_transform,
+            ) as dst:
 
                 # ... and go through the bands.
                 for target_band, source_band in enumerate(img_bands, start=1):

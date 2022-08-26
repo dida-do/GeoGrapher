@@ -8,8 +8,9 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
 
-from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
-    SaveAndLoadBaseModelMixIn
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
+    SaveAndLoadBaseModelMixIn,
+)
 from geographer.connector import Connector
 from geographer.label_makers.label_maker_base import LabelMaker
 
@@ -22,7 +23,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     connector's vector_features."""
 
     add_background_band: bool = Field(
-        default=True, description="Whether to add implicit background band.")
+        default=True, description="Whether to add implicit background band."
+    )
 
     @abstractmethod
     def _make_label_for_img(self, connector: Connector, img_name: str):
@@ -66,8 +68,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         existing_images = {
             img_path.name
-            for img_path in connector.images_dir.iterdir() if
-            img_path.is_file() and img_path.name in connector.raster_imgs.index
+            for img_path in connector.images_dir.iterdir()
+            if img_path.is_file() and img_path.name in connector.raster_imgs.index
         }
 
         if img_names is None:
@@ -75,8 +77,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             existing_labels = {
                 img_path.name
                 for img_path in connector.labels_dir.iterdir()
-                if img_path.is_file()
-                and img_path.name in connector.raster_imgs.index
+                if img_path.is_file() and img_path.name in connector.raster_imgs.index
             }
             img_names = existing_images - existing_labels
         elif not set(img_names) <= existing_images:
@@ -84,10 +85,10 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
                 f"Can't make labels for missing images: {existing_images - img_names}"
             )
 
-        for img_name in tqdm(img_names, desc='Making labels: '):
+        for img_name in tqdm(img_names, desc="Making labels: "):
             self._make_label_for_img(connector=connector, img_name=img_name)
 
-        connector.attrs['label_type'] = self.label_type
+        connector.attrs["label_type"] = self.label_type
         self._after_make_labels(connector)
         connector.save()
 
@@ -105,7 +106,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         if img_names is None:
             img_names = connector.raster_imgs.index
 
-        for img_name in tqdm(img_names, desc='Deleting labels: '):
+        for img_name in tqdm(img_names, desc="Deleting labels: "):
             (connector.labels_dir / img_name).unlink(missing_ok=True)
 
     def _set_label_type_in_connector_attrs(self, connector: Connector):
@@ -133,7 +134,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             # ... log a warning
             log.warning(
                 "There images in connector.raster_imgs that are not in the images_dir %s.",
-                connector.images_dir)
+                connector.images_dir,
+            )
 
         # ... and if it is not a subset, ...
         if not existing_images <= set(connector.raster_imgs.index):

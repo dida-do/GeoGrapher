@@ -53,20 +53,20 @@ class Sentinel2Processor(ImgDownloadProcessor):
             zip_ref.extractall(download_dir / Path("safe_files/"))
         os.remove(zip_path)
         # convert SAFE to GeoTiff
-        conversion_dict = safe_to_geotif_L2A(safe_root=Path(safe_path),
-                                             resolution=resolution,
-                                             outdir=images_dir)
+        conversion_dict = safe_to_geotif_L2A(
+            safe_root=Path(safe_path), resolution=resolution, outdir=images_dir
+        )
 
         orig_crs_epsg_code = int(conversion_dict["crs_epsg_code"])
-        img_bounding_rectangle_orig_crs = conversion_dict[
-            "img_bounding_rectangle"]
+        img_bounding_rectangle_orig_crs = conversion_dict["img_bounding_rectangle"]
         img_bounding_rectangle = transform_shapely_geometry(  # convert to standard crs
             img_bounding_rectangle_orig_crs,
             from_epsg=orig_crs_epsg_code,
-            to_epsg=return_bounds_in_crs_epsg_code)
+            to_epsg=return_bounds_in_crs_epsg_code,
+        )
         return {
-            'img_name': img_name,
-            'geometry': img_bounding_rectangle,
-            'orig_crs_epsg_code': orig_crs_epsg_code,
-            'img_processed?': True,
+            "img_name": img_name,
+            "geometry": img_bounding_rectangle,
+            "orig_crs_epsg_code": orig_crs_epsg_code,
+            "img_processed?": True,
         }

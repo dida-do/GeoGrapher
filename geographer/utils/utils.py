@@ -24,18 +24,35 @@ import rasterio.mask
 import shapely
 from fiona.drvsupport import supported_drivers
 from geopandas import GeoDataFrame
-from shapely.geometry import (GeometryCollection, LinearRing, LineString,
-                              MultiLineString, MultiPoint, MultiPolygon, Point,
-                              Polygon)
+from shapely.geometry import (
+    GeometryCollection,
+    LinearRing,
+    LineString,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    Point,
+    Polygon,
+)
 from shapely.ops import transform
 
-from geographer.global_constants import (RASTER_IMGS_INDEX_NAME,
-                                         VECTOR_FEATURES_INDEX_NAME)
+from geographer.global_constants import (
+    RASTER_IMGS_INDEX_NAME,
+    VECTOR_FEATURES_INDEX_NAME,
+)
 
-supported_drivers['KML'] = 'rw'
+supported_drivers["KML"] = "rw"
 
-GEOMS_UNION = Union[Point, Polygon, MultiPoint, MultiPolygon, MultiLineString,
-                    LinearRing, LineString, GeometryCollection]
+GEOMS_UNION = Union[
+    Point,
+    Polygon,
+    MultiPoint,
+    MultiPolygon,
+    MultiLineString,
+    LinearRing,
+    LineString,
+    GeometryCollection,
+]
 
 
 def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
@@ -74,7 +91,8 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
 
     # create formatter
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     # add formatter to the console handler
     ch.setFormatter(formatter)
@@ -83,8 +101,9 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
-                               to_epsg: int) -> GEOMS_UNION:
+def transform_shapely_geometry(
+    geometry: GEOMS_UNION, from_epsg: int, to_epsg: int
+) -> GEOMS_UNION:
     """Transform a shapely geometry (e.g. Polygon or Point) from one crs to
     another.
 
@@ -98,9 +117,9 @@ def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
     """
 
     # define the coordinate transform ...
-    project = pyproj.Transformer.from_crs(f"epsg:{from_epsg}",
-                                          f"epsg:{to_epsg}",
-                                          always_xy=True)
+    project = pyproj.Transformer.from_crs(
+        f"epsg:{from_epsg}", f"epsg:{to_epsg}", always_xy=True
+    )
 
     # ... and apply it:
     transformed_geometry = transform(project.transform, geometry)
@@ -109,14 +128,15 @@ def transform_shapely_geometry(geometry: GEOMS_UNION, from_epsg: int,
     from_crs = rio.crs.CRS.from_epsg(from_epsg)
     to_crs = rio.crs.CRS.from_epsg(to_epsg)
     assert rio.crs.epsg_treats_as_northingeasting(
-        from_crs) == rio.crs.epsg_treats_as_northingeasting(
-            to_crs), "safety check that both crs treat as northeasting failed!"
+        from_crs
+    ) == rio.crs.epsg_treats_as_northingeasting(
+        to_crs
+    ), "safety check that both crs treat as northeasting failed!"
 
     return transformed_geometry
 
 
-def round_shapely_geometry(geometry: GEOMS_UNION,
-                           ndigits=1) -> Union[Polygon, Point]:
+def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, Point]:
     """Round the coordinates of a shapely geometry (e.g. Polygon or Point).
     Useful in some cases for testing the coordinate conversion of image
     bounding rectangles.
@@ -129,14 +149,13 @@ def round_shapely_geometry(geometry: GEOMS_UNION,
         geometry with all coordinates rounded to ndigits number of significant digits.
     """
 
-    return transform(lambda x, y: (round(x, ndigits), round(y, ndigits)),
-                     geometry)
+    return transform(lambda x, y: (round(x, ndigits), round(y, ndigits)), geometry)
 
 
 def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
-    gdf_copy = GeoDataFrame(columns=gdf.columns,
-                            data=copy.deepcopy(gdf.values),
-                            crs=gdf.crs)
+    gdf_copy = GeoDataFrame(
+        columns=gdf.columns, data=copy.deepcopy(gdf.values), crs=gdf.crs
+    )
     gdf_copy = gdf_copy.astype(gdf.dtypes)
     gdf_copy.set_index(gdf.index, inplace=True)
 
@@ -153,9 +172,9 @@ def concat_gdfs(objs: List[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
 
     for obj in objs:
         if isinstance(obj, GeoDataFrame) and obj.crs != objs[0].crs:
-            raise ValueError('all geodataframes should have the same crs')
+            raise ValueError("all geodataframes should have the same crs")
         elif not isinstance(obj, GeoDataFrame):
-            raise ValueError('all objs should be GeoDataFrames')
+            raise ValueError("all objs should be GeoDataFrames")
 
     concatenated_gdf = GeoDataFrame(pd.concat(objs, **kwargs), crs=objs[0].crs)
     concatenated_gdf.index.name = objs[0].index.name
@@ -167,8 +186,9 @@ def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
     return {key: fun(val) for key, val in dict_arg.items()}
 
 
-def create_kml_all_geodataframes(data_dir: Union[Path, str],
-                                 out_path: Union[Path, str]) -> None:
+def create_kml_all_geodataframes(
+    data_dir: Union[Path, str], out_path: Union[Path, str]
+) -> None:
     """Create KML file from a dataset's raster_imgs and vector_features.
 
     Can be used to visualize data in Google Earth Pro.
@@ -181,12 +201,12 @@ def create_kml_all_geodataframes(data_dir: Union[Path, str],
     raster_imgs_path = data_dir / "connector/raster_imgs.geojson"
     vector_features_path = data_dir / "connector/vector_features.geojson"
 
-    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[[
-        "geometry", RASTER_IMGS_INDEX_NAME
-    ]]
-    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[[
-        "geometry", VECTOR_FEATURES_INDEX_NAME
-    ]]
+    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[
+        ["geometry", RASTER_IMGS_INDEX_NAME]
+    ]
+    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[
+        ["geometry", VECTOR_FEATURES_INDEX_NAME]
+    ]
 
     raster_imgs["Description"] = "image"
     raster_imgs["Name"] = raster_imgs[RASTER_IMGS_INDEX_NAME]

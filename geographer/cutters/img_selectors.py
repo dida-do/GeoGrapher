@@ -96,16 +96,17 @@ class RandomImgSelector(ImgSelector):
         images (or if not possible less) from img_names_list.
         """
 
-        target_num_imgs_to_sample = self.target_img_count \
-            - len(target_connector.imgs_containing_vector_feature(feature_name)) \
+        target_num_imgs_to_sample = (
+            self.target_img_count
+            - len(target_connector.imgs_containing_vector_feature(feature_name))
             - len(cut_imgs[feature_name])
+        )
 
         # can only sample a non-negative number of images
         target_num_imgs_to_sample = max(0, target_num_imgs_to_sample)
 
         # can only sample from img_names_list
-        num_imgs_to_sample = min(len(img_names_list),
-                                 target_num_imgs_to_sample)
+        num_imgs_to_sample = min(len(img_names_list), target_num_imgs_to_sample)
 
         return random.sample(img_names_list, num_imgs_to_sample)
 

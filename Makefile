@@ -31,6 +31,7 @@ install-dev:
 format:
 	yapf -i --recursive $(PROJECTNAME)
 	isort -rc --atomic $(PROJECTNAME)
+	black $(PROJECTNAME)
 	docformatter -i -r $(PROJECTNAME)
 
 lint:

@@ -20,9 +20,14 @@ class FeatureFilterPredicate(BaseModel, Callable):
     """
 
     @abstractmethod
-    def __call__(self, feature_name: Union[str, int],
-                 target_connector: Connector, new_imgs_dict: dict,
-                 source_connector: Connector, **kwargs: Any) -> bool:
+    def __call__(
+        self,
+        feature_name: Union[str, int],
+        target_connector: Connector,
+        new_imgs_dict: dict,
+        source_connector: Connector,
+        **kwargs: Any,
+    ) -> bool:
         """
         Args:
             feature_name: vector feature identifier
@@ -62,9 +67,14 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
 
     target_img_count: int = 1
 
-    def __call__(self, feature_name: Union[str, int],
-                 target_connector: Connector, new_imgs_dict: dict,
-                 source_connector: Connector, **kwargs: Any) -> bool:
+    def __call__(
+        self,
+        feature_name: Union[str, int],
+        target_connector: Connector,
+        new_imgs_dict: dict,
+        source_connector: Connector,
+        **kwargs: Any,
+    ) -> bool:
         """Return True if the image count of the vector feature under
         consideration is strictly less than target_img_count, False otherwise.
 
@@ -82,16 +92,23 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
             answer
         """
 
-        return target_connector.vector_features.loc[
-            feature_name, 'img_count'] < self.target_img_count
+        return (
+            target_connector.vector_features.loc[feature_name, "img_count"]
+            < self.target_img_count
+        )
 
 
 class AlwaysTrue(FeatureFilterPredicate):
     """Simple vector feature filter predicate that always returns True."""
 
-    def __call__(self, feature_name: Union[str, int],
-                 target_connector: Connector, new_imgs_dict: dict,
-                 source_connector: Connector, **kwargs: Any) -> bool:
+    def __call__(
+        self,
+        feature_name: Union[str, int],
+        target_connector: Connector,
+        new_imgs_dict: dict,
+        source_connector: Connector,
+        **kwargs: Any,
+    ) -> bool:
         """Return True."""
         return True
 
@@ -112,9 +129,14 @@ class OnlyThisVectorFeature(FeatureFilterPredicate):
         super().__init__()
         self.this_feature_name = this_feature_name
 
-    def __call__(self, feature_name: Union[str, int],
-                 target_connector: Connector, new_imgs_dict: dict,
-                 source_connector: Connector, **kwargs: Any) -> bool:
+    def __call__(
+        self,
+        feature_name: Union[str, int],
+        target_connector: Connector,
+        new_imgs_dict: dict,
+        source_connector: Connector,
+        **kwargs: Any,
+    ) -> bool:
 
         return feature_name == self.this_feature_name
 
@@ -124,10 +146,11 @@ class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
     the source or target vector_features corresponding to the vector feature
     name in question."""
 
-    def __init__(self,
-                 row_series_predicate: Callable[[Union[GeoSeries, Series]],
-                                                bool],
-                 mode: Literal['source', 'target']) -> None:
+    def __init__(
+        self,
+        row_series_predicate: Callable[[Union[GeoSeries, Series]], bool],
+        mode: Literal["source", "target"],
+    ) -> None:
         """
         Args:
             row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]):
@@ -141,22 +164,27 @@ class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
 
         self.row_series_predicate = row_series_predicate
         assert mode in {
-            'source', 'target'
+            "source",
+            "target",
         }, f"Unknown mode: {mode}. Should be one of 'source' or 'target'"
         self.mode = mode
 
-    def __call__(self, feature_name: Union[str, int],
-                 target_connector: Connector, new_imgs_dict: dict,
-                 source_connector: Connector, **kwargs: Any) -> bool:
+    def __call__(
+        self,
+        feature_name: Union[str, int],
+        target_connector: Connector,
+        new_imgs_dict: dict,
+        source_connector: Connector,
+        **kwargs: Any,
+    ) -> bool:
 
-        if self.mode == 'target':
+        if self.mode == "target":
             connector = target_connector
-        elif self.mode == 'source':
+        elif self.mode == "source":
             connector = source_connector
 
         vector_features = connector.vector_features
-        row_series: Union[GeoSeries,
-                          Series] = vector_features.loc[feature_name]
+        row_series: Union[GeoSeries, Series] = vector_features.loc[feature_name]
         answer = self.row_series_predicate(row_series)
 
         return answer

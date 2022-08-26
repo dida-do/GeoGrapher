@@ -19,8 +19,9 @@ from geographer.cutters.type_aliases import ImgSize
 logger = logging.getLogger(__name__)
 
 
-def _correct_window_offset(offset: Union[int, float], size: Union[int, float],
-                           new_size: int) -> int:
+def _correct_window_offset(
+    offset: Union[int, float], size: Union[int, float], new_size: int
+) -> int:
     center = offset + size / 2
     return int(center - new_size / 2)
 
@@ -46,10 +47,9 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
         """
 
         super().__init__(**data)
-        self._bboxes_df = gpd.read_file(self.bbox_geojson_path,
-                                        driver="GeoJSON")
+        self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
 
-    @validator('bbox_geojson_path')
+    @validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):
         """Validator: Make sure path exists and points to geojson"""
         if value.suffix != ".geojson":
@@ -62,17 +62,19 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
     def new_img_size_type_correctness(cls, value: ImgSize) -> ImgSize:
         """Validator: make sure new_img_size has correct type"""
         is_int: bool = isinstance(value, int)
-        is_pair_of_ints: bool = isinstance(
-            value, tuple) and len(value) == 2 and all(
-                isinstance(entry, int) for entry in value)
+        is_pair_of_ints: bool = (
+            isinstance(value, tuple)
+            and len(value) == 2
+            and all(isinstance(entry, int) for entry in value)
+        )
         if not (is_int or is_pair_of_ints):
             raise TypeError(
-                "new_img_size needs to be an integer or a pair of integers!")
+                "new_img_size needs to be an integer or a pair of integers!"
+            )
         return value
 
     @validator("new_img_size")
-    def new_img_size_side_lengths_must_be_positive(cls,
-                                                   value: ImgSize) -> ImgSize:
+    def new_img_size_side_lengths_must_be_positive(cls, value: ImgSize) -> ImgSize:
         """Validate new_img_size side lengths are positive."""
         if isinstance(value, tuple) and not all(val > 0 for val in value):
             logger.error("new_img_size: need positive side length(s)")
@@ -112,27 +114,35 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
         with rio.open(source_img_path) as src:
             img_bounds = box(*src.bounds)
             bounding_boxes = self.bounding_boxes.to_crs(src.crs)
-            bounding_boxes = bounding_boxes.loc[bounding_boxes.geometry.within(
-                img_bounds)]
+            bounding_boxes = bounding_boxes.loc[
+                bounding_boxes.geometry.within(img_bounds)
+            ]
             windows_transforms_img_names = []
             for i, geometry in enumerate(bounding_boxes.geometry):
                 initial_window = from_bounds(*geometry.bounds, src.transform)
 
-                new_col_off = _correct_window_offset(initial_window.col_off,
-                                                     initial_window.width,
-                                                     self.new_img_size_cols)
+                new_col_off = _correct_window_offset(
+                    initial_window.col_off, initial_window.width, self.new_img_size_cols
+                )
 
-                new_row_off = _correct_window_offset(initial_window.row_off,
-                                                     initial_window.height,
-                                                     self.new_img_size_rows)
+                new_row_off = _correct_window_offset(
+                    initial_window.row_off,
+                    initial_window.height,
+                    self.new_img_size_rows,
+                )
 
-                window = Window(new_col_off, new_row_off,
-                                self.new_img_size_cols, self.new_img_size_rows)
+                window = Window(
+                    new_col_off,
+                    new_row_off,
+                    self.new_img_size_cols,
+                    self.new_img_size_rows,
+                )
 
                 window_transform = src.window_transform(window)
                 new_img_name = f"{Path(source_img_name).stem}_{i}.tif"
 
                 windows_transforms_img_names.append(
-                    (window, window_transform, new_img_name))
+                    (window, window_transform, new_img_name)
+                )
 
         return windows_transforms_img_names

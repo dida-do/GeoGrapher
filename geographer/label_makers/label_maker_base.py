@@ -13,8 +13,9 @@ from tqdm.auto import tqdm
 if TYPE_CHECKING:
     from geographer.connector import Connector
 
-from geographer.base_model_dict_conversion.save_load_base_model_mixin import \
-    SaveAndLoadBaseModelMixIn
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
+    SaveAndLoadBaseModelMixIn,
+)
 
 # logger
 log = logging.getLogger(__name__)

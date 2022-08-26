@@ -12,8 +12,7 @@ from tqdm.auto import tqdm
 from geographer.utils.utils import transform_shapely_geometry
 
 
-def default_read_in_img_for_img_df_function(
-        img_path: Path) -> Tuple[int, Polygon]:
+def default_read_in_img_for_img_df_function(img_path: Path) -> Tuple[int, Polygon]:
     """Read in the crs code and the bounding rectangle that defines a GeoTIFF
     image.
 
@@ -48,8 +47,9 @@ def raster_imgs_from_imgs_dir(
     raster_imgs_crs_epsg_code: Optional[int] = None,
     img_names: Optional[List[str]] = None,
     imgs_datatype: str = "tif",
-    read_in_img_for_img_df_function: Callable[[Path], Tuple[
-        int, Polygon]] = default_read_in_img_for_img_df_function
+    read_in_img_for_img_df_function: Callable[
+        [Path], Tuple[int, Polygon]
+    ] = default_read_in_img_for_img_df_function,
 ) -> GeoDataFrame:
     """Builds and returns an associator raster_imgs from a directory of images
     (or from a data directory). Only the index (raster_imgs_index_name,
@@ -89,28 +89,31 @@ def raster_imgs_from_imgs_dir(
     # dict to keep track of information about the imgs that we will make the raster_imgs from.
     new_imgs_dict = {
         index_or_col_name: []
-        for index_or_col_name in
-        {'img_name', 'geometry', 'orig_crs_epsg_code'}
+        for index_or_col_name in {"img_name", "geometry", "orig_crs_epsg_code"}
     }
 
     # for all images in dir ...
-    for img_path in tqdm(image_paths, desc='building raster_imgs'):
+    for img_path in tqdm(image_paths, desc="building raster_imgs"):
 
-        orig_crs_epsg_code, img_bounding_rectangle_orig_crs = read_in_img_for_img_df_function(
-            img_path=img_path)
+        (
+            orig_crs_epsg_code,
+            img_bounding_rectangle_orig_crs,
+        ) = read_in_img_for_img_df_function(img_path=img_path)
 
         if orig_crs_epsg_code is None or img_bounding_rectangle_orig_crs is None:
             continue
 
         img_bounding_rectangle_raster_imgs_crs = transform_shapely_geometry(
-            img_bounding_rectangle_orig_crs, orig_crs_epsg_code,
-            raster_imgs_crs_epsg_code)
+            img_bounding_rectangle_orig_crs,
+            orig_crs_epsg_code,
+            raster_imgs_crs_epsg_code,
+        )
 
         # and put the information into a dict.
         img_info_dict = {
-            'img_name': img_path.name,
-            'geometry': img_bounding_rectangle_raster_imgs_crs,
-            'orig_crs_epsg_code': int(orig_crs_epsg_code)
+            "img_name": img_path.name,
+            "geometry": img_bounding_rectangle_raster_imgs_crs,
+            "orig_crs_epsg_code": int(orig_crs_epsg_code),
         }
 
         #  Add information about the image to new_imgs_dict ...
@@ -120,6 +123,6 @@ def raster_imgs_from_imgs_dir(
     # ... and create a raster_imgs GeoDatFrame from new_imgs_dict:
     new_raster_imgs = GeoDataFrame(new_imgs_dict)
     new_raster_imgs.set_crs(epsg=raster_imgs_crs_epsg_code, inplace=True)
-    new_raster_imgs.set_index('img_name', inplace=True)
+    new_raster_imgs.set_index("img_name", inplace=True)
 
     return new_raster_imgs

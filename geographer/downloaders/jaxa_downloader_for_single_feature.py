@@ -27,18 +27,22 @@ import numpy as np
 from shapely.geometry.base import BaseGeometry
 
 from geographer.connector import Connector
-from geographer.downloaders.base_downloader_for_single_feature import \
-    ImgDownloaderForSingleVectorFeature
+from geographer.downloaders.base_downloader_for_single_feature import (
+    ImgDownloaderForSingleVectorFeature,
+)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-JAXA_DATA_VERSIONS = ['1804', '1903', '2003',
-                      '2012']  # (attn: only 1804 has been tested so far)
+JAXA_DATA_VERSIONS = [
+    "1804",
+    "1903",
+    "2003",
+    "2012",
+]  # (attn: only 1804 has been tested so far)
 
 
-class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
-                                           ):
+class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
     """Download JAXA DEM (digital elevation) data."""
 
     def download(
@@ -50,7 +54,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         data_version: str = None,
         download_mode: str = None,
         **kwargs,
-    ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
+    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """Downloads DEM data from jaxa.jp's ftp-server for a given (vector)
         geometry and returns dict-structure compatible with the connector.
 
@@ -91,19 +95,18 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             )
 
         jaxa_file_and_folder_names = set()
-        if download_mode == 'bboxvertices':
+        if download_mode == "bboxvertices":
 
             for (x, y) in feature_geom.envelope.exterior.coords:
 
-                jaxa_folder_name = '{}/'.format(
-                    self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5))
-                jaxa_file_name = '{}.tar.gz'.format(
-                    self._obtain_jaxa_index(x, y))
+                jaxa_folder_name = "{}/".format(
+                    self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)
+                )
+                jaxa_file_name = "{}.tar.gz".format(self._obtain_jaxa_index(x, y))
 
-                jaxa_file_and_folder_names |= {(jaxa_file_name,
-                                                jaxa_folder_name)}
+                jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
 
-        elif download_mode == 'bboxgrid':
+        elif download_mode == "bboxgrid":
 
             minx, miny, maxx, maxy = feature_geom.envelope.exterior.bounds
 
@@ -117,79 +120,100 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
                     y = miny + county
 
                     jaxa_file_name = f"{self._obtain_jaxa_index(x, y)}.tar.gz"
-                    jaxa_folder_name = f"{self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)}/"
+                    jaxa_folder_name = (
+                        f"{self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)}/"
+                    )
 
-                    jaxa_file_and_folder_names |= {(jaxa_file_name,
-                                                    jaxa_folder_name)}
+                    jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
 
         else:
             raise ValueError(f"Unknown download_mode: {download_mode}")
 
-        list_img_info_dicts = [
-        ]  # to collect information per downloaded file for connector
+        list_img_info_dicts = (
+            []
+        )  # to collect information per downloaded file for connector
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
 
             # Skip download if file has already been downloaded ...
-            if jaxa_file_name[:
-                              -7] + '_DSM.tif' in previously_downloaded_imgs_set:
+            if jaxa_file_name[:-7] + "_DSM.tif" in previously_downloaded_imgs_set:
                 # in this case skip download, don't store in list_img_info_dicts
-                log.info('Skipping download for image %s', jaxa_file_name)
+                log.info("Skipping download for image %s", jaxa_file_name)
                 continue
             # ... else, download.
             else:
                 log.info(
-                    'Downloading from ftp.eorc.jaxa.jp (v%s) for geometry %s',
-                    data_version, feature_name)
-                log.info('Downloading to: %s',
-                         os.path.join(download_dir, jaxa_file_name))
+                    "Downloading from ftp.eorc.jaxa.jp (v%s) for geometry %s",
+                    data_version,
+                    feature_name,
+                )
+                log.info(
+                    "Downloading to: %s", os.path.join(download_dir, jaxa_file_name)
+                )
                 try:
-                    with closing(request.urlopen('ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_v' + data_version + '/' \
-                                                    + jaxa_folder_name + jaxa_file_name)) as remote_source:
-                        with open(os.path.join(download_dir, jaxa_file_name),
-                                  'wb') as local_file:
+                    with closing(
+                        request.urlopen(
+                            "ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_v"
+                            + data_version
+                            + "/"
+                            + jaxa_folder_name
+                            + jaxa_file_name
+                        )
+                    ) as remote_source:
+                        with open(
+                            os.path.join(download_dir, jaxa_file_name), "wb"
+                        ) as local_file:
                             shutil.copyfileobj(remote_source, local_file)
                 except Exception as exc:
                     log.warning(
-                        'File %s in folder %s could not be found on JAXA ftp or could not be opened: %s',
-                        jaxa_file_name, jaxa_folder_name, exc.args)
+                        "File %s in folder %s could not be found on JAXA ftp or could not be opened: %s",
+                        jaxa_file_name,
+                        jaxa_folder_name,
+                        exc.args,
+                    )
                     # continue
 
                 else:
                     # Extract downloaded .tar file ...
                     tar = tarfile.open(
-                        os.path.join(download_dir, jaxa_file_name), "r:gz")
-                    tar.extractall(path=download_dir,
-                                   members=[
-                                       tar.getmembers()[1]
-                                   ])  # extract only DSM.tif from archive
+                        os.path.join(download_dir, jaxa_file_name), "r:gz"
+                    )
+                    tar.extractall(
+                        path=download_dir, members=[tar.getmembers()[1]]
+                    )  # extract only DSM.tif from archive
                     tar.close()
                     # ... and after extracting delete it.
                     os.remove(os.path.join(download_dir, jaxa_file_name))
 
                     shutil.move(
-                        str(download_dir / jaxa_file_name[:-7] /
-                            (jaxa_file_name[:-7] + '_AVE_DSM.tif')),
-                        str(download_dir / (jaxa_file_name[:-7] + '_DSM.tif')))
-                    shutil.rmtree(download_dir / jaxa_file_name[:-7],
-                                  ignore_errors=True)
+                        str(
+                            download_dir
+                            / jaxa_file_name[:-7]
+                            / (jaxa_file_name[:-7] + "_AVE_DSM.tif")
+                        ),
+                        str(download_dir / (jaxa_file_name[:-7] + "_DSM.tif")),
+                    )
+                    shutil.rmtree(
+                        download_dir / jaxa_file_name[:-7], ignore_errors=True
+                    )
 
-                    date_time_now = datetime.now().strftime(
-                        "%Y-%m-%d-%H:%M:%S")
+                    date_time_now = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
                     img_info_dict = {
-                        'img_name': jaxa_file_name[:-7] + '_DSM.tif',
-                        'img_processed?': False,
-                        'timestamp': date_time_now,
+                        "img_name": jaxa_file_name[:-7] + "_DSM.tif",
+                        "img_processed?": False,
+                        "timestamp": date_time_now,
                     }
                     list_img_info_dicts.append(img_info_dict)
 
-        return {'list_img_info_dicts': list_img_info_dicts}
+        return {"list_img_info_dicts": list_img_info_dicts}
 
-    def _obtain_jaxa_index(self,
-                           x: Optional[float] = None,
-                           y: Optional[float] = None,
-                           nx: int = 3,
-                           ny: int = 3):
+    def _obtain_jaxa_index(
+        self,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        nx: int = 3,
+        ny: int = 3,
+    ):
         """Creates string for filename corresponding to jaxas naming-convention
         to download from ftp server.
 
@@ -204,16 +228,16 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             coordinates x,y
         """
         if x is not None:
-            xf = '{ew}{x:0{nx}d}'.format(ew='W' if x < 0 else 'E',
-                                         x=int(abs(np.floor(x))),
-                                         nx=nx)
+            xf = "{ew}{x:0{nx}d}".format(
+                ew="W" if x < 0 else "E", x=int(abs(np.floor(x))), nx=nx
+            )
         else:
-            xf = ''
+            xf = ""
         if y is not None:
-            yf = '{ns}{y:0{ny}d}'.format(ns='S' if y < 0 else 'N',
-                                         y=int(abs(np.floor(y))),
-                                         ny=ny)
+            yf = "{ns}{y:0{ny}d}".format(
+                ns="S" if y < 0 else "N", y=int(abs(np.floor(y))), ny=ny
+            )
         else:
-            yf = ''
+            yf = ""
         out = yf + xf
         return out

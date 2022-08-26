@@ -19,9 +19,9 @@ log = logging.getLogger(__name__)
 class AddDropRasterImgsMixIn:
     """Mix-in that implements methods to add and drop raster images."""
 
-    def add_to_raster_imgs(self,
-                           new_raster_imgs: GeoDataFrame,
-                           label_maker: Optional[LabelMaker] = None):
+    def add_to_raster_imgs(
+        self, new_raster_imgs: GeoDataFrame, label_maker: Optional[LabelMaker] = None
+    ):
         """Add images to connector's ``raster_imgs`` attribute.
 
         Adds the new_raster_imgs to the connector's :ref:`raster_imgs` keeping track of
@@ -34,7 +34,8 @@ class AddDropRasterImgsMixIn:
         """
 
         new_raster_imgs = deepcopy_gdf(
-            new_raster_imgs)  #  don't want to modify argument
+            new_raster_imgs
+        )  #  don't want to modify argument
 
         duplicates = new_raster_imgs[new_raster_imgs.index.duplicated()]
         if len(duplicates) > 0:
@@ -43,47 +44,55 @@ class AddDropRasterImgsMixIn:
             )
 
         imgs_names_in_both = list(
-            set(new_raster_imgs.index) & set(self.raster_imgs.index))
+            set(new_raster_imgs.index) & set(self.raster_imgs.index)
+        )
         if imgs_names_in_both:
-            img_names_in_both_str = ', '.join(imgs_names_in_both)
+            img_names_in_both_str = ", ".join(imgs_names_in_both)
             raise ValueError(
                 f"conflict: already have entries for raster images {img_names_in_both_str}"
             )
 
         if new_raster_imgs.geometry.isna().any():
-            imgs_with_null_geoms: str = ', '.join(
-                new_raster_imgs[new_raster_imgs.geometry.isna()].index)
+            imgs_with_null_geoms: str = ", ".join(
+                new_raster_imgs[new_raster_imgs.geometry.isna()].index
+            )
             raise ValueError(
                 f"new_raster_imgs contains rows with None geometries: {imgs_with_null_geoms}"
             )
 
-        self._check_required_df_cols_exist(df=new_raster_imgs,
-                                           df_name='new_raster_imgs',
-                                           mode='raster_imgs')
-        new_raster_imgs = self._get_df_in_crs(df=new_raster_imgs,
-                                              df_name='new_raster_imgs',
-                                              crs_epsg_code=self.crs_epsg_code)
-        _check_df_cols_agree(df=new_raster_imgs,
-                             df_name='new_raster_imgs',
-                             self_df=self.raster_imgs,
-                             self_df_name='self.raster_imgs')
+        self._check_required_df_cols_exist(
+            df=new_raster_imgs, df_name="new_raster_imgs", mode="raster_imgs"
+        )
+        new_raster_imgs = self._get_df_in_crs(
+            df=new_raster_imgs,
+            df_name="new_raster_imgs",
+            crs_epsg_code=self.crs_epsg_code,
+        )
+        _check_df_cols_agree(
+            df=new_raster_imgs,
+            df_name="new_raster_imgs",
+            self_df=self.raster_imgs,
+            self_df_name="self.raster_imgs",
+        )
 
         # go through all new imgs...
         for img_name in new_raster_imgs.index:
 
             # add new img vertex to the graph, add all connections to existing images,
             # and modify self.vector_features 'img_count' value
-            img_bounding_rectangle = new_raster_imgs.loc[img_name, 'geometry']
+            img_bounding_rectangle = new_raster_imgs.loc[img_name, "geometry"]
             self._add_img_to_graph_modify_vector_features(
-                img_name, img_bounding_rectangle=img_bounding_rectangle)
+                img_name, img_bounding_rectangle=img_bounding_rectangle
+            )
 
         # append new_raster_imgs
         self.raster_imgs = concat_gdfs([self.raster_imgs, new_raster_imgs])
-        #self.raster_imgs = self.raster_imgs.convert_dtypes()
+        # self.raster_imgs = self.raster_imgs.convert_dtypes()
 
         if label_maker is not None:
-            label_maker.make_labels(connector=self,
-                                    img_names=new_raster_imgs.index.tolist())
+            label_maker.make_labels(
+                connector=self, img_names=new_raster_imgs.index.tolist()
+            )
 
     def drop_raster_imgs(
         self,

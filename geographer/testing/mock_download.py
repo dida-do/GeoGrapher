@@ -15,10 +15,14 @@ from shapely.geometry import Polygon
 
 from geographer.connector import Connector
 from geographer.downloaders.base_download_processor import ImgDownloadProcessor
-from geographer.downloaders.base_downloader_for_single_feature import \
-    ImgDownloaderForSingleVectorFeature
-from geographer.errors import (ImgAlreadyExistsError, ImgDownloadError,
-                               NoImgsForVectorFeatureFoundError)
+from geographer.downloaders.base_downloader_for_single_feature import (
+    ImgDownloaderForSingleVectorFeature,
+)
+from geographer.errors import (
+    ImgAlreadyExistsError,
+    ImgDownloadError,
+    NoImgsForVectorFeatureFoundError,
+)
 
 
 class MockDownloadProcessor(ImgDownloadProcessor):
@@ -39,18 +43,14 @@ class MockDownloadProcessor(ImgDownloadProcessor):
         images_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
-    ) -> Dict[Union[Literal['img_name', 'geometry', 'orig_crs_epsg_code'],
-                    str], Any]:
+    ) -> Dict[Union[Literal["img_name", "geometry", "orig_crs_epsg_code"], str], Any]:
         return {
-            'img_name':
-            img_name,
-            'geometry':
-            self.source_connector.raster_imgs.loc[img_name, 'geometry'],
-            'orig_crs_epsg_code':
-            self.source_connector.raster_imgs.loc[img_name,
-                                                  'orig_crs_epsg_code'],
-            'img_processed?':
-            True
+            "img_name": img_name,
+            "geometry": self.source_connector.raster_imgs.loc[img_name, "geometry"],
+            "orig_crs_epsg_code": self.source_connector.raster_imgs.loc[
+                img_name, "orig_crs_epsg_code"
+            ],
+            "img_processed?": True,
         }
 
 
@@ -75,7 +75,7 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         download_dir: Path,
         previously_downloaded_imgs_set: Set[Union[str, int]],
         **kwargs,
-    ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
+    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """'Download' an image fully containing a vector vector feature or
         several images jointly containing it from the source_connector and
         return a dict with information to be updated in the connector, see
@@ -111,7 +111,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
         # Find the images in self.source_connector containing the vector feature
         imgs_containing_vector_feature = list(
-            self.source_connector.imgs_containing_vector_feature(feature_name))
+            self.source_connector.imgs_containing_vector_feature(feature_name)
+        )
 
         # If there isn't such an image ...
         if imgs_containing_vector_feature == []:
@@ -128,8 +129,10 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
             # With some probability the API answers our query with
             # an image that has already been downloaded...
-            if imgs_containing_vector_feature and random.random(
-            ) < self.probability_img_already_downloaded:
+            if (
+                imgs_containing_vector_feature
+                and random.random() < self.probability_img_already_downloaded
+            ):
 
                 # ... in which case we raise an error.
                 raise ImgAlreadyExistsError(
@@ -138,7 +141,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
             # Else, from not previously downloaded images ...
             remaining_imgs = [
-                img for img in imgs_containing_vector_feature
+                img
+                for img in imgs_containing_vector_feature
                 if img not in previously_downloaded_imgs_set
             ]
 
@@ -158,12 +162,12 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
                 # ... 'download' it, i.e. return the corresponding return dict.
                 img_info_dict = {
-                    'img_name': img_name,
-                    'img_processed?': False,
+                    "img_name": img_name,
+                    "img_processed?": False,
                 }
 
                 return {
-                    'list_img_info_dicts': [img_info_dict],
+                    "list_img_info_dicts": [img_info_dict],
                 }
 
             else:

@@ -7,11 +7,12 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from geographer.creator_from_source_dataset_base import \
-    DSCreatorFromSourceWithBands
+from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from geographer.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
-from geographer.cutters.img_filter_predicates import (ImgFilterPredicate,
-                                                      ImgsNotPreviouslyCutOnly)
+from geographer.cutters.img_filter_predicates import (
+    ImgFilterPredicate,
+    ImgsNotPreviouslyCutOnly,
+)
 from geographer.cutters.single_img_cutter_grid import SingleImgCutterToGrid
 from geographer.cutters.type_aliases import ImgSize
 

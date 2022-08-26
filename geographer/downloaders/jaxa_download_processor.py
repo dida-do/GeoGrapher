@@ -42,15 +42,16 @@ class JAXADownloadProcessor(ImgDownloadProcessor):
             orig_crs_epsg_code = src.crs.to_epsg()
             img_bounding_rectangle = box(*src.bounds)
         img_bounding_rectangle_in_correct_crs = transform_shapely_geometry(
-            img_bounding_rectangle, orig_crs_epsg_code, 4326)
+            img_bounding_rectangle, orig_crs_epsg_code, 4326
+        )
 
         shutil.move(download_dir / img_name, images_dir / img_name)
 
         img_info_dict = {
-            'orig_crs_epsg_code': orig_crs_epsg_code,
-            'img_name': img_name,
-            'img_processed?': True,
-            'geometry': img_bounding_rectangle_in_correct_crs
+            "orig_crs_epsg_code": orig_crs_epsg_code,
+            "img_name": img_name,
+            "img_processed?": True,
+            "geometry": img_bounding_rectangle_in_correct_crs,
         }
 
         return img_info_dict

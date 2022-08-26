@@ -21,7 +21,7 @@ class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
         download_dir: Path,
         previously_downloaded_imgs_set: Set[Union[str, int]],
         **kwargs,
-    ) -> Dict[Union[Literal['img_name', 'img_processed?'], str], Any]:
+    ) -> Dict[Union[Literal["img_name", "img_processed?"], str], Any]:
         """Download an image or a series of images for a single vector feature.
 
         Args:
