@@ -1,8 +1,11 @@
 """Utility functions.
 
-transform_shapely_geometry(geometry, from_epsg, to_epsg): Transforms a shapely geometry from one crs to another.
+transform_shapely_geometry(geometry, from_epsg, to_epsg): Transforms a shapely geometry
+    from one crs to another.
 
-round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector geometry. Useful in some cases for testing the coordinate conversion of image bounding rectangles.
+round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector
+    geometry. Useful in some cases for testing the coordinate conversion of
+    image bounding rectangles.
 """
 
 import copy

@@ -67,15 +67,19 @@ class SentinelDownloaderForSingleVectorFeature(
             resolution: One of 10, 20, or 60.
             max_percent_cloud_coverage: Integer between 0 and 100.
             date:  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
-            area_relation : See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+            area_relation : See 
+                https://sentinelsat.readthedocs.io/en/latest/api_reference.html
             credentials_ini_path: Path to ini file containing API credentials.
 
         Returns:
-            A dictionary containing information about the images. ({'list_img_info_dicts': [img_info_dict]})
+            A dictionary containing information about the images.
+            ({'list_img_info_dicts': [img_info_dict]})
 
         Raises:
             ValueError: Raised if an unkknown product type is given.
-            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud coverage less than or equal to max_percent_cloud_coverage could be found for the vector feature.
+            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud
+            coverage less than or equal to max_percent_cloud_coverage could be found
+            for the vector feature.
         """
 
         self._check_args_are_valid(producttype, resolution,
@@ -122,7 +126,8 @@ class SentinelDownloaderForSingleVectorFeature(
             product_metadata = api.get_product_odata(product_id, full=True)
 
             try:
-                # (this key might have to be 'filename' (minus the .SAFE at the end) for L1C products?)
+                # (this key might have to be 'filename'
+                # (minus the .SAFE at the end) for L1C products?)
                 img_name = product_metadata['title'] + ".tif"
             except:
                 raise Exception(
@@ -137,7 +142,8 @@ class SentinelDownloaderForSingleVectorFeature(
                     with ZipFile(zip_path) as zip_ref:
                         assert zip_ref.testzip() is None
 
-                    # And assemble the information to be updated in the returned img_info_dict:
+                    # And assemble the information to be updated
+                    # in the returned img_info_dict:
                     img_info_dict['img_name'] = img_name
                     img_info_dict['img_processed?'] = False
                     img_info_dict['timestamp'] = product_metadata[
@@ -215,7 +221,9 @@ class SentinelDownloaderForSingleVectorFeature(
             img_name: The name of the image.
             in_dir: The directory containing the zip file.
             out_dir: The directory to save the
-            convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
+            convert_to_crs_epsg: The EPSG code to use to create the image bounds
+                property.  # TODO: this name might not be appropriate as it suggests
+                that the image geometries will be converted into that crs.
             resolution: resolution
 
         Returns:
@@ -239,7 +247,8 @@ class SentinelDownloaderForSingleVectorFeature(
         orig_crs_epsg_code = int(conversion_dict["crs_epsg_code"])
         img_bounding_rectangle_orig_crs = conversion_dict[
             "img_bounding_rectangle"]
-        img_bounding_rectangle = transform_shapely_geometry(  # convert to standard crs
+        # convert to standard crs
+        img_bounding_rectangle = transform_shapely_geometry(
             img_bounding_rectangle_orig_crs,
             from_epsg=orig_crs_epsg_code,
             to_epsg=convert_to_crs_epsg)

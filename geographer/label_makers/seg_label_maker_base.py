@@ -99,7 +99,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         """Delete (pixel) labels from the connector's labels_dir.
 
         Args:
-            img_names: names of images for which to delete labels. Defaults to None, i.e. all labels.
+            img_names: names of images for which to delete labels.
+            Defaults to None, i.e. all labels.
         """
         if img_names is None:
             img_names = connector.raster_imgs.index
@@ -125,7 +126,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             if img_path.is_file()
         }
 
-        # ... then if the set of images is a strict subset of the images in raster_imgs ...
+        # ... then if the set of images is a strict subset
+        # of the images in raster_imgs ...
         if existing_images < set(connector.raster_imgs.index):
 
             # ... log a warning

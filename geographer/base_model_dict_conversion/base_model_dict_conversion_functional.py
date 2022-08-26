@@ -146,7 +146,8 @@ def get_base_model_constructor(
 
     Args:
         dict_ (dict): nested base model dict
-        constructor_symbol_table (Optional[Dict[str, Any]], optional): optional symbol table of constructors. Defaults to None.
+        constructor_symbol_table (Optional[Dict[str, Any]], optional): optional symbol
+            table of constructors. Defaults to None.
 
     Returns:
         bool: _description_

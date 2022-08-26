@@ -39,8 +39,10 @@ class AddDropVectorFeaturesMixIn(object):
         update graph encoding intersection/containment relations.
 
         Args:
-            new_vector_features: GeoDataFrame of vector features conforming to the connector's vector_features format
-            label_maker: If given generate new labels for images containing vector features that were added. Defaults to None.
+            new_vector_features: GeoDataFrame of vector features conforming to the
+                connector's vector_features format
+            label_maker: If given generate new labels for images containing vector
+                features that were added. Defaults to None.
         """
 
         duplicates = new_vector_features[
@@ -84,7 +86,8 @@ class AddDropVectorFeaturesMixIn(object):
         # For each new feature...
         for vector_feature_name in new_vector_features.index:
 
-            # ... add a vertex for the new feature to the graph and add all connections to existing images.
+            # ... add a vertex for the new feature to the graph and add all
+            # connections to existing images.
             self._add_vector_feature_to_graph(
                 vector_feature_name, vector_features=new_vector_features)
 
@@ -116,11 +119,14 @@ class AddDropVectorFeaturesMixIn(object):
         update graph encoding intersection/containment relations.
 
         Args:
-            vector_feature_names: vector_feature_names/identifiers of vector features to be dropped.
-            label_maker: If given generate new labels for images containing vector features that were dropped. Defaults to None.
+            vector_feature_names: vector_feature_names/identifiers of vector
+                features to be dropped.
+            label_maker: If given generate new labels for images containing
+                vector features that were dropped. Defaults to None.
         """
 
-        # make sure we don't interpret a string as a list of characters in the iteration below:
+        # make sure we don't interpret a string as a list of characters
+        # in the iteration below:
         if isinstance(vector_feature_names, (str, int)):
             vector_feature_names = [vector_feature_names]
         assert pd.api.types.is_list_like(vector_feature_names)

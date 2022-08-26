@@ -38,13 +38,15 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         Args:
             source_img_name (str): name of img in source dataset to be cut.
             target_connector (Connector): connector of target dataset
-            new_imgs_dict (dict): dict with keys index or column names of target_connector.raster_imgs
-            and values lists of entries correspondong to images containing information about
+            new_imgs_dict (dict): dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries corresponding
+                to images containing information about
             cut images not yet appended to target_connector.raster_imgs
             kwargs (Any): keyword arguments to be used in subclass implementations.
 
         Returns:
-            List[Tuple[Window, Affine, str]]: list of rasterio windows, window transform, and new image names.
+            List[Tuple[Window, Affine, str]]: list of rasterio windows, window
+            transform, and new image names.
         """
 
     def __call__(self,
@@ -62,8 +64,9 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         Args:
             img_name: name of img in source dataset to be cut.
             target_connector: connector of target dataset
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs
-            and values lists of entries correspondong to images containing information
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries correspondong
+                to images containing information
             about cut images not yet appended to target_connector.raster_imgs
             kwargs: optional keyword arguments for _get_windows_transforms_img_names
 
@@ -81,8 +84,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             _during_ such an iteration, we allow the call function to also depend
             on a new_imgs_dict argument which contains the information about the new
             images that have been cut. Unlike the target_connector.raster_imgs, the
-            target_connector.vector_features and graph are updated during the iteration.
-            One should thus think of the target_connector and new_imgs_dict
+            target_connector.vector_features and graph are updated during the
+            iteration. One should thus think of the target_connector and new_imgs_dict
             arguments together as the actual the target connector argument.
         """
 
@@ -139,10 +142,9 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         """Return an img info dict for a single new image.
 
         An img info dict contains the following key/value pairs:
-            - key: the index name of the raster_imgs to be created by calling dataset cutter,
-                value: the image name of the new image.
-            - keys: the columns names of the raster_imgs to be created by calling dataset cutter,
-                value: the entries to be written in those columns for the new image.
+            - keys: the columns names of the raster_img to be created by calling
+                dataset cutter,
+            - values: the entries to be written in those columns for the new image.
 
         Args:
             new_img_name: name of new image
@@ -164,7 +166,8 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             'img_processed?': True
         }
 
-        # Copy over any remaining information about the img from source_connector.raster_imgs.
+        # Copy over any remaining information about the img from
+        # source_connector.raster_imgs.
         for col in set(source_connector.raster_imgs.columns) - {
                 RASTER_IMGS_INDEX_NAME, 'geometry', 'orig_crs_epsg_code',
                 'img_processed?'

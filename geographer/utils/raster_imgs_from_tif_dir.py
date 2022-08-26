@@ -59,14 +59,18 @@ def raster_imgs_from_imgs_dir(
     by a custom written function.
 
     Args:
-        images_dir: path of the directory that the images are in (assumes the dir has no images subdir), or path to a data_dir with an images subdir.
+        images_dir: path of the directory that the images are in (assumes the dir
+            has no images subdir), or path to a data_dir with an images subdir.
         raster_imgs_crs_epsg_code: epsg code of raster_imgs crs to be returned.
-        img_names: optional list of image names. Defaults to None, i.e. all images in images_dir.
+        img_names: optional list of image names. Defaults to None,
+            i.e. all images in images_dir.
         imgs_datatype: datatype suffix of the images
-        read_in_img_for_img_df_function: function that reads in the crs code and the bounding rectangle for the images
+        read_in_img_for_img_df_function: function that reads in the crs code
+            and the bounding rectangle for the images
 
     Returns:
-        raster_imgs conforming to the associator raster_imgs format with index raster_imgs_index_name and columns geometry and orig_crs_epsg_code
+        raster_imgs conforming to the associator raster_imgs format with index
+        raster_imgs_index_name and columns geometry and orig_crs_epsg_code
     """
 
     # stupid hack to avoid (not really) circular importing python can't deal with.

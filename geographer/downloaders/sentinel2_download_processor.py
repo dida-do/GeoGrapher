@@ -34,7 +34,9 @@ class Sentinel2Processor(ImgDownloadProcessor):
             img_name: The name of the image.
             in_dir: The directory containing the zip file.
             out_dir: The directory to save the
-            convert_to_crs_epsg: The EPSG code to use to create the image bounds property.  # TODO: this name might not be appropriate as it suggests that the image geometries will be converted into that crs.
+            convert_to_crs_epsg: The EPSG code to use to create the image bounds
+                property.  # TODO: this name might not be appropriate as it
+                suggests that the image geometries will be converted into that crs.
             resolution: resolution.
 
         Returns:

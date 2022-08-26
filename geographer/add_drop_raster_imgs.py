@@ -28,7 +28,8 @@ class AddDropRasterImgsMixIn:
         which (vector) geometries are contained in which images.
 
         Args:
-            new_raster_imgs: GeoDataFrame of image information conforming to the connector's raster_imgs format
+            new_raster_imgs: GeoDataFrame of image information conforming to the
+                connector's raster_imgs format
             label_maker: If given generate labels for new images.
         """
 

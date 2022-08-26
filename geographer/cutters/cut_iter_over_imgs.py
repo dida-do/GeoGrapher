@@ -97,10 +97,11 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         using the img_filter_predicate, and then cutting using an img_cutter.
 
         Warning:
-            Make sure this does exactly what you want when updating an existing data_dir
-            (e.g. if new vector features have been addded to the source_data_dir that overlap
-            with existing labels in the target_data_dir these labels will not be updated.
-            This should be fixed!). It might be safer to just recut the source_data_dir.
+            Make sure this does exactly what you want when updating an existing
+            data_dir (e.g. if new vector features have been addded to the
+            source_data_dir that overlap with existing labels in the target_data_dir
+            these labels will not be updated. This should be fixed!). It might be safer
+            to just recut the source_data_dir.
         """
 
         # Remember information to determine for which images to generate new labels
@@ -167,7 +168,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                         img_name=new_img_name,
                         img_bounding_rectangle=img_bounding_rectangle)
 
-        # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
+        # Extract accumulated information about the imgs we've
+        # created in the target dataset into a dataframe...
         new_raster_imgs = GeoDataFrame(
             new_imgs_dict, crs=self.target_connector.raster_imgs.crs)
         new_raster_imgs.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
@@ -176,7 +178,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         self.target_connector.raster_imgs = concat_gdfs(
             [self.target_connector.raster_imgs, new_raster_imgs])
 
-        # For those images that existed before the update and now intersect with newly added vector features ...
+        # For those images that existed before the update
+        # and now intersect with newly added vector features ...
         imgs_w_new_features = [
             img_name for feature_name in added_features for img_name in self.
             target_connector.imgs_intersecting_vector_feature(feature_name)

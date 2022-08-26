@@ -32,15 +32,19 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
         Args:
             img_name: img identifier
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images 
-            source_connector: connector of source dataset that new images are being cut out from
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entriescorrespondong
+                to images
+            source_connector: connector of source dataset that new images are being
+                cut out from
             cut_imgs: list of (names of) cut images
 
         Returns:
             True should mean image is to be kept, False that it is to be filtered out
 
         Note:
-            The new_imgs_dict should be viewed as part of the target connector. See feature_filter_predicates.py for an explanation.
+            The new_imgs_dict should be viewed as part of the target connector.
+            See feature_filter_predicates.py for an explanation.
         """
         raise NotImplementedError
 
@@ -102,7 +106,9 @@ class ImgFilterRowCondition(ImgFilterPredicate):
                                              bool]) -> None:
         """
         Args:
-            row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]): predicate to apply to the row corresponding to an image (i.e. source_connector.raster_imgs.loc[img_name])
+            row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]):
+                predicate to apply to the row corresponding to an image
+                (i.e. source_connector.raster_imgs.loc[img_name])
         """
 
         super().__init__()
@@ -123,11 +129,14 @@ class ImgFilterRowCondition(ImgFilterPredicate):
 
             img_name: image name
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries
+                correspondong to images
             source_connector: source connector
 
         Returns:
-            result of aplying self.row_series_predicate to source_connector.raster_imgs[img_name]
+            result of aplying self.row_series_predicate to
+            source_connector.raster_imgs[img_name]
         """
 
         row_series: Union[GeoSeries,

@@ -118,12 +118,15 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands,
 
     def _get_npy_raster_imgs(self):
         npy_raster_imgs = self.source_assoc.raster_imgs
-        tif_assoc_raster_imgs_index_name = self.source_assoc.raster_imgs.index.name  # the next line destroys the index name of tif_assoc.raster_imgs, so we remember it ...
+        # the line after the next destroys the index name of tif_assoc.raster_imgs,
+        # so we remember it ...
+        tif_assoc_raster_imgs_index_name = self.source_assoc.raster_imgs.index.name
         tif_img_name_list = npy_raster_imgs.index.tolist().copy(
         )  # (it's either the .tolist() or .copy() operation, don't understand why)
         npy_raster_imgs.index = list(
             map(self._npy_filename_from_tif, tif_img_name_list))
-        npy_raster_imgs.index.name = tif_assoc_raster_imgs_index_name  # ... and then set it by hand
+        # ... and then set it by hand
+        npy_raster_imgs.index.name = tif_assoc_raster_imgs_index_name
         return npy_raster_imgs
 
     @staticmethod

@@ -85,14 +85,25 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
             feature_name: name of vector feature
             feature_geom: shapely geometry of vector feature
             download_dir: directory that the image file should be 'downloaded' to.
-            previously_downloaded_imgs_set: previously downloaded img_names. In some use cases when it can't be guaranteed that an image can be downloaded that fully contains the vector feature it can happen that attempts will be made to download an image that is already in the connector. Passing this argument allows the download function to make sure it doesn't try downloading an image that is already in the dataset.
+            previously_downloaded_imgs_set: previously downloaded img_names.
+                In some use cases when it can't be guaranteed that an image
+                can be downloaded that fully contains the vector feature it
+                can happen that attempts will be made to download an image
+                that is already in the connector. Passing this argument
+                allows the download function to make sure it doesn't try
+                downloading an image that is already in the dataset.
             **kwargs: optional keyword arguments depending on the application.
         Returns:
              A dict with keys and values:
-                'list_img_info_dicts': a list of dicts containing the information to be included in each row in the raster_imgs of the calling connector, one for each newly downloaded image. The keys should be the index and column names of the raster_imgs and the values the indices or entries of those columns in row that will correspond to the new image.
+                'list_img_info_dicts': a list of dicts containing the information
+                to be included in each row in the raster_imgs of the calling connector,
+                one for each newly downloaded image. The keys should be the index and
+                column names of the raster_imgs and the values the indices or entries
+                of those columns in row that will correspond to the new image.
         """
 
-        # Make sure the vector feature is in self.source_connector. This should be true by construction.
+        # Make sure the vector feature is in self.source_connector.
+        # This should be true by construction.
         if not feature_name in self.source_connector.vector_features.index:
             raise Exception(
                 f"Polygon {feature_name} not in source connector. This shouldn't have happened, since the source connector should contain all vector features of the mock test connector."
@@ -105,15 +116,18 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         # If there isn't such an image ...
         if imgs_containing_vector_feature == []:
 
-            # ... inform the calling download_missing_imgs_for_vector_features by raising an error.
+            # ... inform the calling download_missing_imgs_for_vector_features
+            # by raising an error.
             raise NoImgsForVectorFeatureFoundError(
                 f"No images containing vector feature {feature_name} found in source dataset"
             )
 
-        # Else, there is an image in the source dataset containing the vector feature.
+        # Else, there is an image in the source dataset
+        # containing the vector feature.
         else:
 
-            # With some probability the API answers our query with an image that has already been downloaded...
+            # With some probability the API answers our query with
+            # an image that has already been downloaded...
             if imgs_containing_vector_feature and random.random(
             ) < self.probability_img_already_downloaded:
 
@@ -136,7 +150,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
                 # With some probabibility  ...
                 if random.random() < self.probability_of_download_error:
 
-                    # ... an error occurs when downloading, so we raise an ImgDownloadError.
+                    # ... an error occurs when downloading,
+                    # so we raise an ImgDownloadError.
                     raise ImgDownloadError(
                         f"random.random() was less than self.probability_of_download_error={self.probability_of_download_error}."
                     )

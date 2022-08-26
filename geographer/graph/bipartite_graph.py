@@ -5,7 +5,8 @@ Example:
 A graph with
     * vertex colors 'red' and 'black'
     * red vertices 'r1', 'r2' and black vertices 'b1', 'b2', 'b3'
-    * an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data 'bar' between 'r1' and 'b3'
+    * an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data
+        'bar' between 'r1' and 'b3'
 is encoded as the dict of dicts of dicts
 
 {
@@ -73,7 +74,8 @@ class BipartiteGraph(BipartiteGraphClass):
         undirected graph with edges in both directions.
 
         Args:
-            graph_dict: dict (of dicts of dicts) defining a bipartite graph. See example in module header.
+            graph_dict: dict (of dicts of dicts) defining a bipartite graph.
+                See example in module header.
             file_path:path to .json containing such a dict.
             red: vertex color, defaults to 'red'.
             black: vertex color, defaults to 'black.
@@ -97,7 +99,7 @@ class BipartiteGraph(BipartiteGraphClass):
             # vertex colors
             self.red, self.black = tuple(self._graph_dict.keys())
 
-        elif graph_dict is not None:  # we are building the graph from a graph dict, so this determines the color
+        elif graph_dict is not None:  # color determined by graph dict
             # make sure outermost dict has right shape
             if len(graph_dict) != 2:
                 raise Exception(
@@ -310,8 +312,9 @@ class BipartiteGraph(BipartiteGraphClass):
 
         else:
 
-            # thinking of an undirected graph as a directed graph where for each edge there is an opposite edge,
-            # we first take out the edges _ending_ in vertex, i.e. the opposite edges to the outgoing ones at vertex.
+            # thinking of an undirected graph as a directed graph where for each edge
+            # there is an opposite edge, we first take out the edges _ending_ in
+            # vertex, i.e. the opposite edges to the outgoing ones at vertex.
             opposite_color = self._opposite_color(vertex_color)
             for opposite_vertex in self._graph_dict[vertex_color][
                     vertex_name].keys():

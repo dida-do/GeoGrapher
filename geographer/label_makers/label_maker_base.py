@@ -46,7 +46,8 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
         """Delete (pixel) labels from the connector's labels_dir.
 
         Args:
-            img_names: names of images for which to delete labels. Defaults to None, i.e. all labels.
+            img_names: names of images for which to delete labels.
+            Defaults to None, i.e. all labels.
         """
 
     def recompute_labels(

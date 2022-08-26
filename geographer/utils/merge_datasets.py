@@ -1,4 +1,4 @@
-"""Utility functions for merging datasets"""
+"""Utility functions for merging datasets."""
 
 import os
 import shutil
@@ -13,7 +13,7 @@ from geographer.connector import Connector
 def merge_datasets(source_data_dir: Union[Path, str],
                    target_data_dir: Union[Path, str],
                    delete_source: bool = True) -> None:
-    """Merge datasets
+    """Merge datasets.
 
     Args:
         source_data_dir: data dir of source dataset
@@ -47,7 +47,7 @@ def merge_datasets(source_data_dir: Union[Path, str],
 # TODO rewrite using pathlib
 def merge_dirs(root_src_dir: Union[Path, str],
                root_dst_dir: Union[Path, str]) -> None:
-    """Recursively merge two folders including subfolders
+    """Recursively merge two folders including subfolders.
 
     (Shamelessly copied from stackoverflow)
 

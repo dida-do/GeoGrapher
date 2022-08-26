@@ -85,14 +85,16 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                     # ... and create one band in the label for each segmentation class.
 
-                    # (if an implicit background band is to be included, it will go in band/channel 1.)
+                    # (if an implicit background band is to be included,
+                    # it will go in band/channel 1.)
                     start_band = 1 if not self.add_background_band else 2
 
                     for count, seg_class in enumerate(
                             connector.task_vector_feature_classes,
                             start=start_band):
 
-                        # To do that, first find (the df of) the geoms intersecting the image ...
+                        # To do that, first find (the df of)
+                        # the geoms intersecting the image ...
                         features_intersecting_img_df = connector.vector_features.loc[
                             connector.vector_features_intersecting_img(
                                 img_name)]

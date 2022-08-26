@@ -25,7 +25,7 @@ def get_raster_clusters(
     raster_names: Optional[List[str]] = None,
     preclustering_method: Optional[Literal[
         'x then y-axis', 'y then x-axis', 'x-axis',
-        'y-axis']] = 'y then x-axis'  #TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        'y-axis']] = 'y then x-axis'  #TODO!!!!!!!!!!
 ) -> List[Set[str]]:
     """Return clusters of raster.
 
@@ -33,7 +33,8 @@ def get_raster_clusters(
         connector: connector or path or str to data dir containing connector
         clusters_defined_by: relation between rasters defining clusters
         raster_names: optional list of raster names
-        preclustering_method (Optional[ str]): optional preclustering method to speed up clustering
+        preclustering_method (Optional[ str]): optional preclustering method to speed
+            up clustering
 
     Returns:
         (names of rasters defining) clusters
@@ -221,7 +222,8 @@ def _pre_cluster_along_axis(geoms: GeoDataFrame,
     interval_endpoints = sorted(
         mins + maxs,
         key=lambda d: (d['value'], 0 if d['type'] == 'min' else 1)
-    )  # tuple comparison ensures mins are smaller than maxes for the same values (-> smaller clusters)
+    )  # tuple comparison ensures mins are smaller than maxes for the same values
+    # (-> smaller clusters)
 
     img_clusters_along_axis = []
 
@@ -231,7 +233,7 @@ def _pre_cluster_along_axis(geoms: GeoDataFrame,
         assert rightmost_endpoint['type'] == 'max'
 
         current_cluster = set(
-        )  # Should this be {interval_endpoints.pop()}? No, think I'm fine... Check again tomorrow when im less tired
+        )  # Should this be {interval_endpoints.pop()}? No, think I'm fine...
         entered_intervals_count = 1
         exited_intervals_count = 0
 

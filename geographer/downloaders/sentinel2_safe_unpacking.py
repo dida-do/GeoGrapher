@@ -36,24 +36,30 @@ def safe_to_geotif_L2A(
     bounds.
 
     Warning:
-        The L2A band structure changed in October 2021, new products do not contain gml masks anymore. In this
+        The L2A band structure changed in October 2021, new products do not contain gml
+        masks anymore. In this
 
     ..note::
 
         - band structure of final geotif:
             if TCI: 1-3 TCI RGB
-            else sorted(jps2_masks and bands (either only desired resolution or additionally upsampled)), gml_mask_order
-        - jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m mask ist taken
+            else sorted(jps2_masks and bands (either only desired resolution or
+            additionally upsampled)), gml_mask_order
+        - jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m
+            mask ist taken
         - SNWPRB for snow masks
 
     Args:
         safe_root: is the safe folder root
         resolution: the desired resolution
-        upsample_lower_resolution: Whether to include lower resolution bands and upsample them
+        upsample_lower_resolution: Whether to include lower resolution bands and
+            upsample them
         TCI: whether to load the true color image
         requested_jp2_masks: jp2 mask to load
-        requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for which to get the mask)
-        upsampling_method_specifier: method to upsample from lower resolution to higher. Options: (nearest,bilinear,cubic,average)
+        requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for
+            which to get the mask)
+        upsampling_method_specifier: method to upsample from lower resolution to
+            higher. Options: (nearest,bilinear,cubic,average)
 
     Returns:
         dict containing tif crs and bounding rectangle
@@ -113,7 +119,8 @@ def safe_to_geotif_L2A(
 
     # # if we have both B08 and B8A remove B8A
     # if {'B8A', 'B08'} <= {name.name.split("_")[-2] for name in img_data_bands}:
-    #     img_data_bands = [path for path in img_data_bands if path.name.split("_")[-2] != 'B8A']
+    #     img_data_bands = [path for path in img_data_bands \
+    #     if path.name.split("_")[-2] != 'B8A']
 
     # set up rasterio loaders
     bands_dict = OrderedDict()

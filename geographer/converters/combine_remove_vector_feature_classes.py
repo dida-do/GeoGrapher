@@ -55,22 +55,39 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         soft-categorical label types.
 
         Warning:
-            Will only add images and vector features from the source dataset, which is assumed to have grown in size. Deletions in the source dataset will not be inherited.
+            Will only add images and vector features from the source dataset, which is
+            assumed to have grown in size. Deletions in the source dataset will not be
+            inherited.
 
         Args:
             source_data_dir: data_dir of source dataset/connector
-            target_data_dir: data_dir of target dataset/connector. If None (default value), will convert in place, i.e. overwrite source dataset and connector of tifs.
-            classes: vector feature classes in existing dataset/connector to be kept and combined in new dataset/connector. E.g. [['ct', 'ht'], 'wr', ['h']] will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h' classes. Along with the regular vector feature classes one may also use the background class here.
-            new_class_names: optional list of names of new vector feature classes corresponding to classes. Defaults to joining the names of existing using the class_separator (which defaults to class_separator).
-            class_separator: used if the new_class_names argument is not provided to join the names of existing vector feature classes that are to be kept. Defaults to class_separator.
-            new_background_class: optional new background class, defaults to None, i.e. old background class
-            remove_imgs: If True, remove images not containing vector features belonging to the vector feature classes to be kept.
+            target_data_dir: data_dir of target dataset/connector. If None (default
+                value), will convert in place, i.e. overwrite source dataset and
+                connector of tifs.
+            classes: vector feature classes in existing dataset/connector to be kept
+                and combined in new dataset/connector. E.g. [['ct', 'ht'], 'wr', ['h']]
+                will combine the 'ct' and 'ht' classes, and also keep the 'wr' and 'h'
+                classes. Along with the regular vector feature classes one may also use
+                the background class here.
+            new_class_names: optional list of names of new vector feature classes
+                corresponding to classes. Defaults to joining the names of existing
+                using the class_separator (which defaults to class_separator).
+            class_separator: used if the new_class_names argument is not provided
+                to join the names of existing vector feature classes that are to be
+                kept. Defaults to class_separator.
+            new_background_class: optional new background class, defaults to None,
+                i.e. old background class
+            remove_imgs: If True, remove images not containing vector features
+                belonging to the vector feature classes to be kept.
 
         Returns:
             The Connector of the new dataset.
 
         Note:
-            For the purposes of this function the background classes will be treated as regular vector feature classes. In particular, if you do not include them in the classes argument, vector features of the background class will be lost.
+            For the purposes of this function the background classes will be treated
+            as regular vector feature classes. In particular, if you do not include
+            them in the classes argument, vector features of the background class will
+            be lost.
         """
 
         # Determine classes
@@ -109,7 +126,8 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 self.target_connector.vector_features.index)
 
         # THINK ABOUT THIS!!!!
-        # if we are creating a new soft-categorical dataset adjust columns of empty self.target_connector.vector_features
+        # if we are creating a new soft-categorical dataset adjust columns
+        # of empty self.target_connector.vector_features
         if len(
                 self.target_connector.vector_features
         ) == 0 and self.target_connector.label_type == 'soft-categorical':
@@ -277,11 +295,13 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             cols_to_drop = prob_of_class_names(classes_to_drop)
             vector_features = vector_features.drop(columns=cols_to_drop)
 
-            # create temporary dataframe to avoid column name conflicts when renaming/deleting etc
+            # create temporary dataframe to avoid column name conflicts
+            # when renaming/deleting etc
             temp_vector_features = pd.DataFrame()
             temp_vector_features.index.name = vector_features.index.name
 
-            # for each row/(vector) geometry find sum of probabilities for the remaining vector feature classes
+            # for each row/(vector) geometry find sum of probabilities
+            # for the remaining vector feature classes
             cols_with_probs_of_remaining_classes = prob_of_class_names(
                 classes_to_keep)
             sum_of_probs_of_remaining_classes = pd.DataFrame(

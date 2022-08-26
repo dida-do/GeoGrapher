@@ -1,7 +1,4 @@
-"""
-The Connector class organizes and handles remote sensing
-datasets.
-"""
+"""The Connector class organizes and handles remote sensing datasets."""
 
 from __future__ import annotations
 
@@ -62,7 +59,8 @@ class Connector(
 
     _non_task_feature_classes = [
         "background_class"
-    ]  # vector feature classes not to be determined by a machine learning model (e.g. features that define background regions or masks)
+    ]  # vector feature classes not to be determined by a machine learning
+    # model (e.g. features that define background regions or masks)
 
     # yapf: disable
     def __init__(
@@ -81,7 +79,8 @@ class Connector(
         # path args
         data_dir: Optional[
             Union[Path, str]
-        ] = None,  # either this arg or all the path args below must be set (i.e. not None)
+        ] = None,  # either this arg or all the path args below
+        # must be set (i.e. not None)
         images_dir: Optional[Union[Path, str]] = None,
         labels_dir: Optional[Union[Path, str]] = None,
         connector_dir: Optional[Union[Path, str]] = None,
@@ -93,16 +92,19 @@ class Connector(
     ):
         """
         Note:
-            We advise you to use the following more convenient constructor methods to
-            initialize a ``Connector`` instead of using ``__init__`` directly.
+            We advise you to use the following more convenient constructor methods
+            to initialize a ``Connector`` instead of using ``__init__`` directly.
 
             To initialize a new connector use
-                - the :meth:`from_scratch` class method (:ref:`see here for an example <from_scratch>`), or
+                - the :meth:`from_scratch` class method (:ref:`see here for an
+                    example <from_scratch>`), or
                 - the :meth:`empty_connector_same_format_as` method
 
             To initialize an existing connector use
-                - the :meth:`from_data_dir` class method (:ref:`see here for an example <init_existing_connector>`), or
-                - the :meth:`from_paths` class method (:ref:`see here for an example <init_existing_connector>`)
+                - the :meth:`from_data_dir` class method (:ref:`see here for an
+                    example <init_existing_connector>`), or
+                - the :meth:`from_paths` class method (:ref:`see here for an
+                    example <init_existing_connector>`)
 
         Caution:
             Note that many methods that create new dataset from existing ones
@@ -115,15 +117,22 @@ class Connector(
 
         Args:
 
-            load_from_disk: whether to load an existing connector from disk or create a new one.
-            task_feature_classes: list of feature classes for the machine learning task (excluding mask and background classes). Defaults to None, i.e. the single class "object"
-            vector_features: vector_features. Defaults to None, i.e. (if not loading from disk) an empty vector_features.
-            raster_imgs: raster_imgs. Defaults to None, i.e. (if not loading from disk) an empty raster_imgs.
-            crs_epsg_code: EPSG code connector works with. Defaults to STANDARD_CRS_EPSG_CODE
+            load_from_disk: whether to load an existing connector from disk
+                or create a new one.
+            task_feature_classes: list of feature classes for the machine learning task
+                (excluding mask and background classes). Defaults to None,
+                i.e. the single class "object"
+            vector_features: vector_features. Defaults to None, i.e. (if not loading
+                from disk) an empty vector_features.
+            raster_imgs: raster_imgs. Defaults to None, i.e. (if not loading
+                from disk) an empty raster_imgs.
+            crs_epsg_code: EPSG code connector works with.
+                Defaults to STANDARD_CRS_EPSG_CODE
             data_dir: data directory containing images_dir, labels_dir, connector_dir.
             images_dir: path to directory containing images.
             labels_dir: path to directory containing labels.
-            connector_dir: path to directory containing (geo)json connector component files.
+            connector_dir: path to directory containing (geo)json connector component
+                files.
             \**kwargs: optional keyword args for subclass implementations.
         """
 
@@ -150,7 +159,8 @@ class Connector(
             connector_dir=connector_dir,
         )
 
-        # build attrs from all args except for raster_imgs, vector_features, the corresponding column args, and the path/dir args
+        # build attrs from all args except for raster_imgs, vector_features,
+        # the corresponding column args, and the path/dir args
         self.attrs = {}
         self.attrs.update(
             {
@@ -235,7 +245,8 @@ class Connector(
         """Initialize a connector from a data directory.
 
         Args:
-            data_dir: data directory containing 'connector_files', 'images', and 'labels' subdirectories
+            data_dir: data directory containing 'connector_files', 'images', and
+                'labels' subdirectories
 
         Returns:
             initialized connector
@@ -410,7 +421,8 @@ class Connector(
             data_dir: data directory containing images_dir, labels_dir, connector_dir.
             images_dir: path to directory containing images.
             labels_dir: path to directory containing labels.
-            connector_dir: path to directory containing (geo)json connector component files.
+            connector_dir: path to directory containing (geo)json connector
+                component files.
 
         Returns:
             new empty connector
@@ -600,7 +612,8 @@ class Connector(
             input_dict: input dict with keys strings and values of arbitrary type
 
         Returns:
-            dict with non-serializable values replaced by serializable ones (just Path -> str, for now)
+            dict with non-serializable values replaced by serializable ones
+            (just Path -> str, for now)
         """
 
         def make_val_serializable(val):

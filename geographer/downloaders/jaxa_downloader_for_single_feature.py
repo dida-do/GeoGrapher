@@ -8,7 +8,8 @@ The data is assumed to be stored on the FTP server:
 ftp://ftp.eorc.jaxa.jp/pub/ALOS/ext1/AW3D30/release_vXXXX/
 (port: 46287)
 
-There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 1804 version has been tested.
+There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 1804
+version has been tested.
 """
 
 import logging
@@ -59,10 +60,10 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
         Explanation:
             The 'bboxvertices' download_mode will download images for
             vertices of the bbox of the (vector) geometry. This is preferred for
-            small (vector) geometries, but will miss regions inbetween if a (vector) geometry spans
-            more than two images in each axis. The 'bboxgrid' mode will download
-            images for each point on a grid defined by the bbox. This overshoots
-            for small geometries, but works for large geometries.
+            small (vector) geometries, but will miss regions inbetween if a (vector)
+            geometry spans more than two images in each axis. The 'bboxgrid' mode
+            will download images for each point on a grid defined by the bbox.
+            This overshoots for small geometries, but works for large geometries.
 
         Args:
             feature_name: the name of the vector geometry
@@ -199,7 +200,8 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature
             ny: number of digits used for naming (filled with leading 0's)
 
         Returns:
-            (stem of) filename (not including filetype eg .tif) containing the coordinates x,y
+            (stem of) filename (not including filetype eg .tif) containing the
+            coordinates x,y
         """
         if x is not None:
             xf = '{ew}{x:0{nx}d}'.format(ew='W' if x < 0 else 'E',

@@ -73,8 +73,8 @@ class SegLabelMakerCategorical(SegLabelMaker):
                 with rio.open(
                         label_path,
                         'w',
-                        # for writing single bit image,
-                        # see https://gis.stackexchange.com/questions/338410/rasterio-invalid-dtype-bool
+                        # for writing single bit image, see 
+                        # https://gis.stackexchange.com/questions/338410/rasterio-invalid-dtype-bool
                         # nbits=1,
                         **profile) as dst:
 
@@ -87,7 +87,8 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     for count, seg_class in enumerate(segmentation_classes,
                                                       start=1):
 
-                        # To do that, first find (the df of) the geometries intersecting the image ...
+                        # To do that, first find (the df of) the geometries
+                        # intersecting the image ...
                         features_intersecting_img: GeoDataFrame = connector.vector_features.loc[
                             connector.vector_features_intersecting_img(
                                 img_name)]

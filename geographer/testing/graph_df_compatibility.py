@@ -67,7 +67,8 @@ def check_graph_vertices_counts(connector: Connector):
                 f"There {are_or_is} {num_elements_in_difference} {set_description[0]}{plural_s} {set_description[1]}: {set_difference}"
             )
 
-    # Now, check whether img_count column agrees with results of img_containing_polygon for each polygon
+    # Now, check whether img_count column agrees with results
+    # of img_containing_polygon for each polygon
     img_count_edges = connector.vector_features.apply(
         lambda row: len(connector.imgs_containing_vector_feature(row.name)),
         axis=1)

@@ -46,7 +46,8 @@ class SaveAndLoadBaseModelMixIn:
         if constructor_symbol_table is None:
             constructor_symbol_table = {}
 
-        ### add all classes in geographer inherited from BaseModel to constructor symbol table
+        ### add all classes in geographer inherited from BaseModel
+        # to constructor symbol table
         geographer_dir = Path(__file__).resolve().parent.parent
         for py_file_path in geographer_dir.rglob("*.py"):
             py_file_path_no_suffix = str(py_file_path.with_suffix(""))

@@ -52,10 +52,10 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         Args:
             mode: One of 'random', 'centered', 'variable'.
                 If 'random' images (or minimal image grids) will be randomly chosen
-                subject to constraint that they fully contain the vector features, if 'centered'
-                will be centered on the vector features. If 'variable' the image size will be
-                the max of some minimum size and a multiple of the bounding rectangle
-                of the vector feature. Defaults to 'random'.
+                subject to constraint that they fully contain the vector features, if
+                'centered' will be centered on the vector features. If 'variable' the
+                image size will be the max of some minimum size and a multiple of the
+                bounding rectangle of the vector feature. Defaults to 'random'.
             new_img_size: size (side length of square or rows, cols).
                 Only needed if mode is 'centered' or 'random'.
             scaling factor: factor to scale the bounding rectangle
@@ -149,7 +149,10 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
             feature_name: feature identifier
             source_img_name: name of source image
             target_connector: connector of target dataset
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images containing information about cut images not yet appended to target_connector.
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries correspondong
+                to images containing information about cut images not yet appended
+                to target_connector.
             feature_crs_epsg_code: EPSG code of the vector feature crs
             **kwargs: keyword arguments
 
@@ -212,7 +215,9 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
                     max_col=max_col,
                     transformed_feature_geom=transformed_feature_geom)
 
-            # The row and col offs and number of images in row and col direction define a grid. Iterate through the grid and accumulate windows, transforms, and img_names in a list:
+            # The row and col offs and number of images in row and col direction define
+            # a grid. Iterate through the grid and accumulate windows, transforms,
+            # and img_names in a list:
 
             windows_transforms_img_names_single_geom = []
 
@@ -299,7 +304,8 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         # Choose row and col offset
         if self.mode == 'random':
 
-            # ... choose row and col offsets randomly subject to constraint that the grid of image windows contains rectangular envelope of vector feature.
+            # ... choose row and col offsets randomly subject to constraint that the
+            # grid of image windows contains rectangular envelope of vector feature.
             row_off = random.randint(
                 max(
                     0, max_row -

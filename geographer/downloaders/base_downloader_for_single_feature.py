@@ -33,7 +33,8 @@ class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
             kwargs: other keyword arguments
 
         Returns:
-            Dict with a key 'list_img_info_dicts': The corresponding value is a list of dicts
-            containing (at least) the keys 'img_name', 'img_processed?', each corresponding
-            to the entries of raster_imgs for the row defined by the image.
+            Dict with a key 'list_img_info_dicts': The corresponding value is a list of
+            dicts containing (at least) the keys 'img_name', 'img_processed?', each
+            corresponding to the entries of raster_imgs for the row defined by the
+            image.
         """

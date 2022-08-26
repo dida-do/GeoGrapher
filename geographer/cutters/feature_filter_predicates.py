@@ -27,25 +27,31 @@ class FeatureFilterPredicate(BaseModel, Callable):
         Args:
             feature_name: vector feature identifier
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector: connector of source dataset that new images are being cut out from
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries correspondong
+                to images
+            source_connector: connector of source dataset that new images are being cut
+                out from
             kwargs: Optional keyword arguments
 
         Returns:
             True should mean feature is to be kept, False that it is to be filtered out
 
         Note:
-            The feature filter predicate should be able to return a boolean answer for a given feature
-            depending on all the information in the source and target connectors. It is used
-            by the cutting function create_or_update_dataset_from_iter_over_vector features
-            in geographer.cut.cut_iter_over_vector features. This function does not concatenate
-            the information about the new images that have been cut to the target_connector.raster_imgs
-            until after all vector features have been iterated over. We want to use
-            the feature filter predicate _during_ this iteration, so we allow the call function
-            to also depend on a new_imgs_dict argument which contains the information about
-            the new images that have been cut. Unlike the target_connector.raster_imgs, the target_connector.vector_features and graph
-            are updated during the iteration. One should thus think of the target_connector and new_imgs_dict arguments
-            together as the actual the target connector argument.
+            The feature filter predicate should be able to return a boolean answer for
+            a given feature depending on all the information in the source and target
+            connectors. It is used by the cutting function
+            create_or_update_dataset_from_iter_over_vector features in
+            geographer.cut.cut_iter_over_vector features. This function does not
+            concatenate the information about the new images that have been cut to the
+            target_connector.raster_imgs until after all vector features have been
+            iterated over. We want to use the feature filter predicate _during_
+            this iteration, so we allow the call function to also depend on a
+            new_imgs_dict argument which contains the information about the new images
+            that have been cut. Unlike the target_connector.raster_imgs, the
+            target_connector.vector_features and graph are updated during the
+            iteration. One should thus think of the target_connector and new_imgs_dict
+            arguments together as the actual the target connector argument.
         """
         raise NotImplementedError
 
@@ -65,8 +71,11 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
         Args:
             feature_name: feature identifier
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of target_connector.raster_imgs and values lists of entries correspondong to images
-            source_connector: connector of source dataset that new images are being cut out from
+            new_imgs_dict: dict with keys index or column names of
+                target_connector.raster_imgs and values lists of entries correspondong
+                to images
+            source_connector: connector of source dataset that new images are being cut
+                out from
             kwargs: Optional keyword arguments
 
         Returns:
@@ -121,9 +130,11 @@ class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
                  mode: Literal['source', 'target']) -> None:
         """
         Args:
-            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]): predicate to apply
-            to the row corresponding to a vector feature in vector_features in source_connector or target_connector.
-            mode (str) : Which GeoDataFrame the predicate should be applied to. One of 'source' or 'target'
+            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]):
+                predicate to apply to the row corresponding to a vector feature in
+                vector_features in source_connector or target_connector.
+            mode (str) : Which GeoDataFrame the predicate should be applied to.
+                One of 'source' or 'target'
         """
 
         super().__init__()

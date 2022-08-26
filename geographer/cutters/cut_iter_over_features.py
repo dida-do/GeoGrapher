@@ -107,8 +107,9 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         GeoTiffs by iterating over vector features.
 
         Warning:
-            Assumes that the vector features in the target dataset are a subset of the
-            vector features in the source dataset. Will break if the assumption is not met.
+            Assumes that the vector features in the target dataset are a subset
+            of the vector features in the source dataset. Will break if the assumption
+            is not met.
 
         Returns:
             connector of newly created or updated dataset
@@ -155,10 +156,12 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                 # ... remember it ...
                 added_features += [feature_name]
 
-                # ... and then from the images in the source dataset that containing the vector feature ...
+                # ... and then from the images in the source dataset 
+                # containing the vector feature ...
                 potential_source_images = self.source_connector.imgs_containing_vector_feature(
                     feature_name)
-                # ... but from which an image for that vector feature has not yet been cut ...
+                # ... but from which an image for that vector feature
+                # has not yet been cut ...
                 potential_source_images = self._filter_out_previously_cut_imgs(
                     feature_name=feature_name,
                     src_imgs_containing_feature=set(potential_source_images))
@@ -172,7 +175,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                         source_connector=self.source_connector,
                         cut_imgs=self.cut_imgs):
 
-                    # Cut each image (and label) and remember the information to be appended to self.target_connector raster_imgs in return dict
+                    # Cut each image (and label) and remember the information to be
+                    # appended to self.target_connector raster_imgs in return dict
                     imgs_from_single_cut_dict = self.img_cutter(
                         img_name=img_name,
                         feature_name=feature_name,
@@ -182,7 +186,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                         bands=self.bands,
                     )
 
-                    # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
+                    # Make sure img_cutter returned dict with same keys as needed
+                    # by new_imgs_dict.
                     assert {
                         RASTER_IMGS_INDEX_NAME, 'geometry',
                         'orig_crs_epsg_code'
@@ -201,7 +206,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                     for new_img_name, img_bounding_rectangle in zip(
                             new_img_names, img_bounding_rectangles):
 
-                        # Update graph and modify vector_features in self.target_connector
+                        # Update graph and modify vector_features
+                        # in self.target_connector
                         self.target_connector._add_img_to_graph_modify_vector_features(
                             img_name=new_img_name,
                             img_bounding_rectangle=img_bounding_rectangle)
@@ -211,11 +217,13 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                                 new_img_name):
                             self.cut_imgs[feature_name_] += [img_name]
 
-                    # In case the vector feature feature_name is not contained in any of the new_imgs:
+                    # In case the vector feature feature_name is not contained in any
+                    # of the new_imgs:
                     if img_name not in self.cut_imgs[feature_name]:
                         self.cut_imgs[feature_name] += [img_name]
 
-        # Extract accumulated information about the imgs we've created in the target dataset into a dataframe...
+        # Extract accumulated information about the imgs we've created in the target
+        # dataset into a dataframe...
         new_raster_imgs = GeoDataFrame(
             new_imgs_dict, crs=self.target_connector.raster_imgs.crs)
         new_raster_imgs.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
@@ -231,7 +239,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         self.target_connector.raster_imgs = concat_gdfs(
             [self.target_connector.raster_imgs, new_raster_imgs])
 
-        # For those images that existed before the update and now intersect with newly added vector features ...
+        # For those images that existed before the update and now intersect with newly
+        # added vector features ...
         imgs_w_new_features = [
             img_name for feature_name in added_features for img_name in self.
             target_connector.imgs_intersecting_vector_feature(feature_name)
@@ -258,7 +267,8 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
 
         Args:
             feature_name: name/id of vector feature
-            src_imgs_containing_feature: set of images in source dataset containing the vector feature
+            src_imgs_containing_feature: set of images in source dataset
+                containing the vector feature
             target_connector: connector of target dataset
 
         Returns:

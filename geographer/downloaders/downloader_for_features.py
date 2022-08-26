@@ -47,46 +47,67 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         """Download images for vector features so as to target a number of
         images per vector feature.
 
-        Sequentially considers the vector features for which the image count (number of images fully
-        containing a given vector feature) is less than num_target_imgs_per_feature images in the connector's
-        internal vector_features or the optional vector_features argument (if given), for each such vector feature
-        attempts to download num_target_imgs_per_feature - image_count images fully containing the vector feature
-        (or several images jointly containing the vector feature), and integrates the new image(s)
-        into the dataset/connector. Integrates images downloaded for a vector feature into the dataset/connector
-        immediately after downloading them and before downloading images for the next vector feature. In particular,
-        the image count is updated immediately after each download.
+        Sequentially considers the vector features for which the image count (number of
+        images fully containing a given vector feature) is less than
+        num_target_imgs_per_feature images in the connector's internal vector_features
+        or the optional vector_features argument (if given), for each such vector feature
+        attempts to download num_target_imgs_per_feature - image_count images fully
+        containing the vector feature (or several images jointly containing the vector
+        feature), and integrates the new image(s) into the dataset/connector.
+        Integrates images downloaded for a vector feature into the dataset/connector
+        immediately after downloading them and before downloading images for the next
+        vector feature. In particular, the image count is updated immediately after
+        each download.
 
         Warning:
             The targeted number of downloads is determined by target_img_count
             and a vector features img_count. Since the img_count is the number of
             images in the dataset fully containing a vector feature for "large"
-            vector features (polygons) the img_count will always remain zero and every call of the
-            download_imgs method that includes this vector feature will download
-            target_img_count images (or image series). To avoid this, you can use
-            the filter_out_features_contained_in_union_of_intersecting_imgs argument.
+            vector features (polygons) the img_count will always remain zero and every
+            call of the download_imgs method that includes this vector feature will
+            download target_img_count images (or image series). To avoid this, you can
+            use the filter_out_features_contained_in_union_of_intersecting_imgs
+            argument.
 
         Args:
-            feature_names: Optional feature_name or list of feature_names to download images for. Defaults to None, i.e. consider all vector features in connector.vector_features.
-            downloader: One of 'sentinel2' or 'jaxa'. Defaults, if possible, to previously used downloader.
-            target_img_count: target for number of images per vector feature in the dataset after downloading. The actual number of images for each vector feature P that fully contain it could be lower if there are not enough images available or higher if after downloading num_target_imgs_per_feature images for P P is also contained in images downloaded for other vector features.
-            filter_out_vector features_contained_in_union_of_intersecting_imgs (bool): Useful when dealing with 'large' vector features. Defaults to False.
-            shuffle: Whether to shuffle order of vector features for which images will be downloaded. Might in practice prevent an uneven distribution of the image count for repeated downloads. Defaults to True.
-            kwargs: optional additional keyword arguments passed to downloader_for_single_feature and download_processor. Defaults to self.kwarg_defaults.
+            feature_names: Optional feature_name or list of feature_names to download
+                images for. Defaults to None, i.e. consider all vector features in
+                connector.vector_features.
+            downloader: One of 'sentinel2' or 'jaxa'. Defaults, if possible, to
+                previously used downloader.
+            target_img_count: target for number of images per vector feature in
+                the dataset after downloading. The actual number of images for each
+                    vector feature P that fully contain it could be lower if there
+                    are not enough images available or higher if after downloading
+                    num_target_imgs_per_feature images for P P is also contained
+                    in images downloaded for other vector features.
+            filter_out_vector features_contained_in_union_of_intersecting_imgs:
+                Useful when dealing with 'large' vector features. Defaults to False.
+            shuffle: Whether to shuffle order of vector features for which images
+                will be downloaded. Might in practice prevent an uneven distribution
+                of the image count for repeated downloads. Defaults to True.
+            kwargs: optional additional keyword arguments passed to
+                downloader_for_single_feature and download_processor.
+                Defaults to self.kwarg_defaults.
 
         Note:
-            Any kwargs given will be saved to self.default_kwargs and become default values.
+            Any kwargs given will be saved to self.default_kwargs and become default
+            values.
 
         Returns:
             None
 
         Warning:
-            In the case that the vector vector features are polygons it's easy to come up with examples where the
-            image count distribution (i.e. distribution of images per polygon) becomes unbalanced particularly
-            if num_target_imgs_per_feature is large. These scenarios are not necessarily very likely, but possible.
-            As an example, if one wants to download say 5 images images for a polygon that is not fully contained
-            in any image in the dataset and if there does not exist an image we can download that fully contains
-            it but there are 20 disjoint sets of images we can download that jointly cover the polygon then
-            these 20 disjoint sets will all be downloaded.
+            In the case that the vector vector features are polygons it's easy to come
+            up with examples where the image count distribution (i.e. distribution of
+            images per polygon) becomes unbalanced particularly if
+            num_target_imgs_per_feature is large. These scenarios are not necessarily
+            very likely, but possible. As an example, if one wants to download say 5
+            images images for a polygon that is not fully contained in any image in the
+            dataset and if there does not exist an image we can download that fully
+            contains it but there are 20 disjoint sets of images we can download that
+            jointly cover the polygon then these 20 disjoint sets will all be
+            downloaded.
         """
 
         self.kwarg_defaults.update(kwargs)
@@ -110,9 +131,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             random.shuffle(features_for_which_to_download)
 
         previously_downloaded_imgs_set = set(connector.raster_imgs.index)
-        # (Will be used to make sure no attempt is made to download an image more than once.)
+        # (Will be used to make sure no attempt is made to download an image more
+        # than once.)
 
-        # Dict to keep track of imgs we've downloaded. We'll append this to connector.raster_imgs as a (geo)dataframe later
+        # Dict to keep track of imgs we've downloaded. We'll append this to
+        # connector.raster_imgs as a (geo)dataframe later
         new_imgs_dict = defaultdict(list)
 
         pbar = tqdm(
@@ -130,10 +153,13 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 "download_missing_imgs_for_vector_features: considering vector feature %s.",
                 feature_name)
 
-            # Since we process and connect each image after downloading it, we might not need to download
-            # an image for a vector feature that earlier was lacking an image if it is now contained in one of the already downloaded images,
-            # so need to check again that there are not enough images for the vector feature (since the iterator above is set when it is called
-            # and won't know if the "img_count" column value has been changed in the meanwhile).
+            # Since we process and connect each image after downloading it, we might
+            # not need to download an image for a vector feature that earlier was
+            # lacking an image if it is now contained in one of the already downloaded
+            # images, so need to check again that there are not enough images for the
+            # vector feature (since the iterator above is set when it is called and
+            # won't know if the "img_count" column value has been changed in the
+            # meanwhile).
             num_img_series_to_download = target_img_count - connector.vector_features.loc[
                 feature_name, "img_count"]
             if num_img_series_to_download <= 0:
@@ -153,18 +179,22 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                         "attempting to download image for vector feature. %s",
                         feature_name)
 
+                    # the previously_downloaded_imgs_set argument should be used by
+                    # downloader_for_single_feature should use this to make sure no
+                    # attempt at downloading an already downloaded image is made.
                     return_dict = self.downloader_for_single_feature.download(
                         feature_name=feature_name,
                         feature_geom=feature_geom,
                         download_dir=self.download_dir,
                         previously_downloaded_imgs_set=
-                        previously_downloaded_imgs_set,  # downloader_for_single_feature should use this to make sure no attempt at downloading an already downloaded image is made.
+                        previously_downloaded_imgs_set,
                         **self.kwarg_defaults,
                     )
 
                 # WHY DOES THIS NOT WORK?
                 # except TypeError as exc:
-                #     log.exception("Probably missing kwargs for downloader_for_single_feature: {exc}")
+                #     log.exception("Probably missing kwargs for\
+                #     downloader_for_single_feature: {exc}")
                 #     raise
 
                 # ... unless either no images could be found ...
@@ -187,7 +217,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                         feature_name, 'download_exception'] = repr(exc)
                     log.warning(exc, exc_info=True)
 
-                # ... or downloader_for_single_feature tried downloading a previously downloaded image.
+                # ... or downloader_for_single_feature tried downloading a previously
+                # downloaded image.
                 except ImgAlreadyExistsError as exc:
 
                     log.exception(
@@ -197,9 +228,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 # If the download_method call was successful ...
                 else:
 
-                    # ... we first extract the information to be appended to connector.raster_imgs.
+                    # ... we first extract the information to be appended to
+                    # connector.raster_imgs.
                     list_img_info_dicts = return_dict['list_img_info_dicts']
-                    # (each img_info_dict contains the information for a new row of connector.raster_imgs)
+                    # (each img_info_dict contains the information for a new
+                    # row of connector.raster_imgs)
 
                     # DEBUG INFO
                     log.debug("list_img_info_dicts is %s \n\n",
@@ -229,11 +262,16 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                                 **self.kwarg_defaults,
                             )
 
-                            # ... and update the img_info_dict with the returned information from processing. (This modifies list_img_info_dicts, too).
+                            # ... and update the img_info_dict with the returned
+                            # information from processing. (This modifies
+                            # list_img_info_dicts, too).
                             img_info_dict.update(
                                 single_img_processed_return_dict)
 
-                            # Connect the image: Add an image vertex to the graph, connect to all vector_features vertices for which the intersection is non-empty and modify connector.vector_features where necessary ...
+                            # Connect the image: Add an image vertex to the graph,
+                            # connect to all vector_features vertices for which
+                            # the intersection is non-empty and modify
+                            # connector.vector_features where necessary ...
                             connector._add_img_to_graph_modify_vector_features(
                                 img_name=img_name,
                                 img_bounding_rectangle=img_info_dict[
@@ -241,19 +279,6 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
                             # Finally, remember we downloaded the image.
                             previously_downloaded_imgs_set.add(img_name)
-                        """
-                        # Check the vector feature is fully contained in the union of the downloaded images
-                        # THIS MADE SENSE WHEN I WAS JUST DOWNLOADING ONE IMAGE PER POLYGON, BUT DOESN'T MAKE SENSE ANYMORE SINCE WE'RE SKIPPING IMAGES THAT WE'D LIKE TO USE FOR A POLYGON THAT ALREADY HAVE BEEN DOWNLOADED, SO WILL GET UNNECESSARY WARNINGS FOR THOSE POLYGONS. BUT COULD MODIFY DOWNLOAD FUNCTION TO RETURN A SET OF THOSE IMAGES SO WE CAN CHECK THIS IF WE WANT...
-                        list_downloaded_img_bounding_rectangles = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
-                        union_area_of_downloaded_images = unary_union(list_downloaded_img_bounding_rectangles)
-                        if not feature_geom.within(union_area_of_downloaded_images):
-
-                            downloaded_img_names = [img_info_dict['geometry'] for img_info_dict in list_img_info_dicts]
-
-                            log.warning("Polygon %s not fully contained in the union of the images that were downloaded for it!", feature_name)
-
-                            connector.vector_features.loc[feature_name, "download_exception"] += " Polygon %s not fully contained in images downloaded for it: %s", feature_name, downloaded_img_names
-                        """
 
                         # update new_imgs_dict
                         for img_info_dict in list_img_info_dicts:
@@ -288,7 +313,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             img_info_dict["img_name"] for img_info_dict in list_img_info_dicts
         ]
 
-        # ... and make sure we have not downloaded an image twice for the same vector feature.
+        # ... and make sure we have not downloaded an image twice
+        # for the same vector feature.
         if len(new_img_names_list) != len(set(new_img_names_list)):
             duplicate_imgs_dict = {
                 img_name: img_count
@@ -305,7 +331,9 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             )
 
             # Make sure we haven't downloaded an image that's already in the dataset.
-            # (the downloader_for_single_feature method should have thrown an ImgAlreadyExistsError exception in this case, but we're checking again ourselves that this hasn't happened. )
+            # (the downloader_for_single_feature method should have thrown an
+            # ImgAlreadyExistsError exception in this case, but we're checking
+            # again ourselves that this hasn't happened. )
         if set(new_img_names_list) & previously_downloaded_imgs_set:
             log.error(
                 "Something is wrong with downloader_for_single_feature: it downloaded image(s) that have already been downloaded: %s",

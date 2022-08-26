@@ -22,7 +22,8 @@ def empty_gdf(index_name,
 
     Args:
         index_name: name of the index of the new empty GeoDataFrame
-        cols_and_types: dict with keys the names of the index and columns of the GeoDataFrame and values the types of the indices/column entries.
+        cols_and_types: dict with keys the names of the index and columns of the
+            GeoDataFrame and values the types of the indices/column entries.
         crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
 
     Returns:
