@@ -1,46 +1,47 @@
-.PHONY: help env env-remove install install-dev format lint test \
-	docs-sphinx
+## Summary of available make targets:
+##
+## make help         -- Display this message
+## make -B venv      -- (Re)install a development virtual environment
+## make format       -- Run code formatter
+## make lint         -- Run linter and type checker
+## make test         -- Run tests
+## make docs         -- Run documentation
+##
+## This Makefile needs to be run inside a virtual environment
+
+ifndef VIRTUAL_ENV
+$(error "This Makefile needs to be run inside a virtual environment")
+endif
+
+.PHONY: help venv format lint test docs
 
 PROJECTNAME=geographer
 
 help:
-	@echo "Available commands:"
-	@echo "env              create the venv '$(PROJECTNAME)-env'."
-	@echo "env-remove       remove '$(PROJECTNAME)-env' venv."
-	@echo "install          install package in editable mode."
-	@echo "format           format code."
-	@echo "lint             run linters."
-	@echo "test             run unit tests."
-	@echo "docs-sphinx      build sphinx documentation."
+	@sed -rn 's/^## ?//;T;p' $(MAKEFILE_LIST)
 
-env:
-	python -m venv $(PROJECTNAME)-env && \
-		$(PROJECTNAME)-env/bin/pip install --upgrade pip
+venv: $(VIRTUAL_ENV)/timestamp
 
-env-remove:
-	rm -rf $(PROJECTNAME)-env
+$(VIRTUAL_ENV)/timestamp: pyproject.toml setup.cfg
+	pip install --upgrade pip
+	pip install -e ".[dev,docs]"
+ifneq ($(wildcard requirements/extra.txt),)
+	pip install -r requirements/extra.txt
+endif
+	touch $(VIRTUAL_ENV)/timestamp
 
-install:
-	pip install --upgrade pip wheel pip-tools &&\
-	python -m pip install -e .
-
-install-dev:
-	pip install --upgrade pip wheel pip-tools &&\
-	python -m pip install -e ".[dev]"
-
-format:
-	yapf -i --recursive $(PROJECTNAME)
-	isort -rc --atomic $(PROJECTNAME)
-	black $(PROJECTNAME)
+format: venv
+	isort $(PROJECTNAME)
 	docformatter -i -r $(PROJECTNAME)
+	black $(PROJECTNAME)
 
-lint:
-	yapf --diff --recursive $(PROJECTNAME)
+lint: venv
+	black --check $(PROJECTNAME)
 	pylint -v $(PROJECTNAME) tests
 	mypy $(PROJECTNAME) tests
 
-test:
+test: venv
 	pytest -v
 
-docs-sphinx:
+docs: venv
 	cd docs && make html
