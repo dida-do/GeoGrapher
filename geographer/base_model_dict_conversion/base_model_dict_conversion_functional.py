@@ -163,7 +163,7 @@ def is_base_model_constructor_dict(dict_: dict) -> bool:
 
 def get_base_model_constructor(
     dict_: dict, constructor_symbol_table: Optional[dict[str, Any]] = None
-) -> bool:
+) -> BaseModel:
     """Return constructor corresponding to encoded BaseModel.
 
     Args:
@@ -172,7 +172,7 @@ def get_base_model_constructor(
             table of constructors. Defaults to None.
 
     Returns:
-        bool: _description_
+        constrctor of BaseModel
     """
     symbol_table = globals() | (
         constructor_symbol_table if constructor_symbol_table is not None else {}
