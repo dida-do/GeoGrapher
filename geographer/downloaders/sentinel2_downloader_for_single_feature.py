@@ -1,5 +1,4 @@
-"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-
-hub.
+"""SingleImgDownloader for Sentinel-2 rasters from Copernicus Sci-hub.
 
 Should be easily extendable to Sentinel-1.
 """
@@ -36,6 +35,9 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
     sentinelAPIpassword to set up the sentinel API. Assumes raster_imgs
     has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
     'img_processed?'. Subclass/modify if you need other columns.
+
+    See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+    for details on args passed to the API (e.g. date).
     """
 
     def download(
@@ -47,17 +49,20 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         producttype: str,
         resolution: int,
         max_percent_cloud_coverage: int,
-        date: Any,  # See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+        date: Any,
         area_relation: str,
         credentials_ini_path: Path,
         **kwargs,
     ) -> dict:
-        """Downloads a sentinel-2 image fully containing the vector feature,
+        """Download a S-2 raster for a vector feature.
+
+        Download a sentinel-2 raster fully containing the vector feature,
         returns a dict in the format needed by the associator.
 
         Note:
-            If not given, the username and password for the Copernicus Sentinel-2 OpenAPI
-            will be read from an s2_copernicus_credentials.ini in self.associator_dir.
+            If not given, the username and password for the Copernicus Sentinel-2
+            OpenAPI will be read from an s2_copernicus_credentials.ini in
+            self.associator_dir.
 
         Args:
             feature_name: name of vector feature
@@ -82,7 +87,6 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             coverage less than or equal to max_percent_cloud_coverage could be found
             for the vector feature.
         """
-
         self._check_args_are_valid(producttype, resolution, max_percent_cloud_coverage)
 
         # Determine missing args for the sentinel query.
@@ -111,7 +115,8 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         # If we couldn't find anything, remember that, so we can deal with it later.
         if len(products) == 0:
             raise NoImgsForVectorFeatureFoundError(
-                f"No images for vector feature {feature_name} found with cloud coverage less than or equal to {max_percent_cloud_coverage}!"
+                f"No images for vector feature {feature_name} found with "
+                f"cloud coverage less than or equal to {max_percent_cloud_coverage}!"
             )
 
         # Return dicts with values to be collected in calling associator.
@@ -131,9 +136,11 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                 # (this key might have to be 'filename'
                 # (minus the .SAFE at the end) for L1C products?)
                 img_name = product_metadata["title"] + ".tif"
-            except:
+            except Exception:
                 raise Exception(
-                    "Couldn't get the filename. Are you trying to download L1C products? Try changing the key for the products dict in the line of code above this..."
+                    "Couldn't get the filename. Are you trying to download L1C "
+                    "products? Try changing the key for the products dict in the "
+                    "line of code above this..."
                 )
 
             if img_name not in previously_downloaded_imgs_set:
@@ -195,12 +202,14 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         try:
             if config_path is None:
                 raise ValueError(
-                    "Need username and password or config_path to .ini file containing username and password"
+                    "Need username and password or config_path to .ini file "
+                    "containing username and password"
                 )
             config = configparser.ConfigParser()
             if not config_path.is_file():
                 raise FileNotFoundError(
-                    f"Can't find .ini file containing username and password in {config_path}"
+                    "Can't find .ini file containing username and password in "
+                    f"{config_path}"
                 )
             config.read(config_path)
             username = config["login"]["username"]
@@ -215,59 +224,3 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         api = SentinelAPI(username, password)
 
         return api
-
-    def _process_downloaded_img_file_sentinel2(
-        self,
-        img_name: str,
-        in_dir: Union[str, Path],
-        out_dir: Union[str, Path],
-        convert_to_crs_epsg: int,
-        resolution: int,
-        **kwargs,
-    ) -> dict:
-        """Extracts downloaded sentinel-2 zip file to a .SAFE directory, then
-        processes/converts to a GeoTiff image, deletes the zip file, puts the
-        GeoTiff image in the right directory, and returns information about the
-        img in a dict.
-
-        Args:
-            img_name: The name of the image.
-            in_dir: The directory containing the zip file.
-            out_dir: The directory to save the
-            convert_to_crs_epsg: The EPSG code to use to create the image bounds
-                property.  # TODO: this name might not be appropriate as it suggests
-                that the image geometries will be converted into that crs.
-            resolution: resolution
-
-        Returns:
-            return_dict: Contains information about the downloaded product.
-        """
-
-        filename_no_extension = Path(img_name).stem
-        zip_filename = filename_no_extension + ".zip"
-        safe_path = Path(in_dir) / f"safe_files/{filename_no_extension}.SAFE"
-        zip_path = Path(in_dir) / zip_filename
-
-        # extract zip to SAFE
-        with ZipFile(zip_path) as zip_ref:
-            zip_ref.extractall(in_dir / Path("safe_files/"))
-        os.remove(zip_path)
-        # convert SAFE to GeoTiff
-        conversion_dict = safe_to_geotif_L2A(
-            safe_root=Path(safe_path), resolution=resolution, outdir=out_dir
-        )
-
-        orig_crs_epsg_code = int(conversion_dict["crs_epsg_code"])
-        img_bounding_rectangle_orig_crs = conversion_dict["img_bounding_rectangle"]
-        # convert to standard crs
-        img_bounding_rectangle = transform_shapely_geometry(
-            img_bounding_rectangle_orig_crs,
-            from_epsg=orig_crs_epsg_code,
-            to_epsg=convert_to_crs_epsg,
-        )
-        return {
-            "img_name": img_name,
-            "geometry": img_bounding_rectangle,
-            "orig_crs_epsg_code": orig_crs_epsg_code,
-            "img_processed?": True,
-        }
