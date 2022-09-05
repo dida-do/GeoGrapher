@@ -1,6 +1,4 @@
-"""
-TODO: _check_classes_in_vector_features_contained_in_all_classes
-"""
+"""Mixin that implements adding/dropping vector features."""
 
 from __future__ import annotations
 
@@ -25,8 +23,7 @@ log = logging.getLogger(__name__)
 
 
 class AddDropVectorFeaturesMixIn(object):
-    """Mix-in that implements methods to add and drop vector features or
-    images."""
+    """Mix-in that implements adding or dropping vector features."""
 
     def add_to_vector_features(
         self,
@@ -44,11 +41,11 @@ class AddDropVectorFeaturesMixIn(object):
             label_maker: If given generate new labels for images containing vector
                 features that were added. Defaults to None.
         """
-
         duplicates = new_vector_features[new_vector_features.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(
-                f"new_vector_features contains rows with duplicate vector_feature_names (indices): {duplicates.index.tolist()}"
+                "new_vector_features contains rows with duplicate "
+                f"vector_feature_names (indices): {duplicates.index.tolist()}"
             )
 
         feature_names_in_both = list(
@@ -57,12 +54,17 @@ class AddDropVectorFeaturesMixIn(object):
         if feature_names_in_both:
             feature_names_in_both_str = ", ".join(feature_names_in_both)
             raise ValueError(
-                f"conflict: already have entries for vector features {feature_names_in_both_str}"
+                "conflict: already have entries for vector features "
+                f"{feature_names_in_both_str}"
             )
 
         if len(new_vector_features[new_vector_features.geometry.isna()]) > 0:
+            rows_w_none_features = ", ".join(
+                new_vector_features[new_vector_features.geometry.isna()].index
+            )
             raise ValueError(
-                f"new_vector_features contains rows with None vector features: {', '.join(new_vector_features[new_vector_features.geometry.isna()].index)}"
+                f"new_vector_features contains rows with None vector features: "
+                f"{rows_w_none_features}"
             )
 
         new_vector_features = self._get_df_in_crs(
@@ -85,6 +87,7 @@ class AddDropVectorFeaturesMixIn(object):
             self_df=self.vector_features,
             self_df_name="self.vector_features",
         )
+        # TODO
         # self._check_classes_in_vector_features_contained_in_all_classes(
         #     new_vector_features, 'new_vector_features')
 
@@ -131,7 +134,6 @@ class AddDropVectorFeaturesMixIn(object):
             label_maker: If given generate new labels for images containing
                 vector features that were dropped. Defaults to None.
         """
-
         # make sure we don't interpret a string as a list of characters
         # in the iteration below:
         if isinstance(vector_feature_names, (str, int)):

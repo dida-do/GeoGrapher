@@ -1,5 +1,4 @@
-"""Base class for Creating or updating a dataset from an existing source
-dataset."""
+"""ABC for creating or updating a dataset from an existing source dataset."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -14,8 +13,7 @@ from geographer.connector import Connector
 
 
 class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
-    """Base class for Creating or updating a dataset from an existing source
-    dataset."""
+    """ABC for creating or updating a dataset from an existing one."""
 
     source_data_dir: Path
     target_data_dir: Path
@@ -31,11 +29,18 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     )
 
     class Config:
+        """BaseModel Config."""
+
         arbitrary_types_allowed = True
         extra = Extra.allow
         underscore_attrs_are_private = True
 
     def __init__(self, **data):
+        """Initialize from data.
+
+        Args:
+            data: data
+        """
         super().__init__(**data)
         self._source_connector = None
         self._target_connector = None
@@ -90,8 +95,10 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         return self._target_connector
 
     def _after_creating_or_updating(self):
-        """Can be used in a subclass to e.g. save parameters to the
-        target_connector."""
+        """Run hook after creating/updating.
+
+        Can be used to e.g. save parameters to the target_connector.
+        """
 
     def _set_source_connector(self):
         """Set source connector."""
@@ -109,8 +116,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
             self._target_connector = target_connector
 
     def _add_missing_vector_features_to_target(self):
-        """Add vector features in source dataset missing from target dataset to
-        target dataset.
+        """Add missing vector features from source dataset to target dataset.
 
         Only checks feature names/indices, not whether entries differ.
         """
@@ -129,11 +135,14 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
 
 class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
-    """Base class for Creating or updating a dataset from an existing source
-    dataset that includes a bands field."""
+    """ABC for creating/updating a dataset from an existing one.
+
+    Includes a bands field.
+    """
 
     bands: Optional[dict[str, Optional[list[int]]]] = Field(
         default=None,
         title="Dict of band indices",
-        description="keys: image directory names, values: list of band indices starting at 1 to keep",
+        description="keys: image directory names, values: list of band indices"
+        "starting at 1 to keep",
     )

@@ -1,5 +1,4 @@
-"""Base class for label makers that generate segmentation labels from a
-connector's vector_features."""
+"""Base class for segmentation label makers."""
 
 from __future__ import annotations
 
@@ -20,9 +19,8 @@ from geographer.label_makers.label_maker_base import LabelMaker
 log = logging.getLogger(__name__)
 
 
-class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
-    """Base class for label makers that generate segmentation labels from a
-    connector's vector_features."""
+class SegLabelMaker(ABC, LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
+    """Base class for segmentation label makers."""
 
     add_background_band: bool = Field(
         default=True, description="Whether to add implicit background band."
@@ -40,13 +38,19 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         pass
 
     def _after_make_labels(self, connector: Connector):
-        """Override this hook in subclass to apply custom logic after making
-        labels."""
+        """Run after making labels.
+
+        Override this hook in subclass to apply custom logic after
+        making labels.
+        """
         pass
 
     def _run_safety_checks(self, connector: Connector):
-        """Override to check e.g. if existing classes in vector_features
-        contained in connector.all_vector_feature_classes."""
+        """Run safety checks. Hook.
+
+        Override to check e.g. if existing classes in vector_features
+        contained in connector.all_vector_feature_classes.
+        """
         pass
 
     def make_labels(
@@ -60,7 +64,6 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
             img_names: list of image names to create labels for.
                 Defaults to None (i.e. all images without a label).
         """
-
         # safety checks
         self._run_safety_checks(connector)
         self._set_label_type_in_connector_attrs(connector)
@@ -116,12 +119,13 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
     @staticmethod
     def _compare_existing_imgs_to_raster_imgs(connector: Connector):
-        """Safety check: compare sets of images in images_dir and in
+        """Safety check.
+
+        Compare sets of images in images_dir and in
         connector.raster_imgs.
 
         Raises warnings if there is a discrepancy.
         """
-
         # Find the set of existing images in the dataset, ...
         existing_images = {
             img_path.name
@@ -135,7 +139,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
             # ... log a warning
             log.warning(
-                "There images in connector.raster_imgs that are not in the images_dir %s.",
+                "There images in connector.raster_imgs that "
+                "are not in the images_dir %s.",
                 connector.images_dir,
             )
 
@@ -143,5 +148,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         if not existing_images <= set(connector.raster_imgs.index):
 
             # ... log an warning
-            message = "Warning! There are images in the dataset's images subdirectory that are not in connector.raster_imgs."
+            message = (
+                "Warning! There are images in the dataset's images "
+                "subdirectory that are not in connector.raster_imgs."
+            )
             log.warning(message)

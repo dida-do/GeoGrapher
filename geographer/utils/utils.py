@@ -10,18 +10,14 @@ round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely
 
 import copy
 import logging
-import os
 from pathlib import Path
 from typing import Any, Callable, Union
 
 import fiona
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import pyproj
 import rasterio as rio
-import rasterio.mask
-import shapely
 from fiona.drvsupport import supported_drivers
 from geopandas import GeoDataFrame
 from shapely.geometry import (
@@ -56,7 +52,9 @@ GEOMS_UNION = Union[
 
 
 def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
-    """Serves as a unified way to instantiate a new logger. Will create a new
+    """Create a logger.
+
+    Serves as a unified way to instantiate a new logger. Will create a new
     logging instance with the name app_name. The logging output is sent to the
     console via a logging.StreamHandler() instance. The output will be
     formatted using the logging time, the logger name, the level at which the
@@ -80,7 +78,6 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
     >>> import logging
     >>> logger=create_logger(__name__,logging.DEBUG)
     """
-
     # create new up logger
     logger = logging.getLogger(app_name)
     logger.setLevel(level)
@@ -104,8 +101,7 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
 def transform_shapely_geometry(
     geometry: GEOMS_UNION, from_epsg: int, to_epsg: int
 ) -> GEOMS_UNION:
-    """Transform a shapely geometry (e.g. Polygon or Point) from one crs to
-    another.
+    """Transform a shapely geometry from one crs to another.
 
     Args:
         geometry: shapely geometry to be transformed.
@@ -115,7 +111,6 @@ def transform_shapely_geometry(
     Returns:
         transformed shapely geometry
     """
-
     # define the coordinate transform ...
     project = pyproj.Transformer.from_crs(
         f"epsg:{from_epsg}", f"epsg:{to_epsg}", always_xy=True
@@ -137,7 +132,9 @@ def transform_shapely_geometry(
 
 
 def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, Point]:
-    """Round the coordinates of a shapely geometry (e.g. Polygon or Point).
+    """Round the coordinates of a shapely geometry.
+
+    Round the coordinates of a shapely geometry (e.g. Polygon or Point).
     Useful in some cases for testing the coordinate conversion of image
     bounding rectangles.
 
@@ -148,11 +145,11 @@ def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, P
     Returns:
         geometry with all coordinates rounded to ndigits number of significant digits.
     """
-
     return transform(lambda x, y: (round(x, ndigits), round(y, ndigits)), geometry)
 
 
 def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
+    """Return deepcopy of GeoDataFrame."""
     gdf_copy = GeoDataFrame(
         columns=gdf.columns, data=copy.deepcopy(gdf.values), crs=gdf.crs
     )
@@ -169,7 +166,6 @@ def concat_gdfs(objs: list[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
     will be the crs and index name of the first GeoDataFrame in the
     list.
     """
-
     for obj in objs:
         if isinstance(obj, GeoDataFrame) and obj.crs != objs[0].crs:
             raise ValueError("all geodataframes should have the same crs")
@@ -183,6 +179,7 @@ def concat_gdfs(objs: list[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
 
 
 def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
+    """Apply function to all values of a dict."""
     return {key: fun(val) for key, val in dict_arg.items()}
 
 
@@ -195,7 +192,7 @@ def create_kml_all_geodataframes(
     """
     data_dir = Path(data_dir)
     out_path = Path(out_path)
-    if not out_path.suffix in {".kml", ".KML"}:
+    if out_path.suffix not in {".kml", ".KML"}:
         raise ValueError("out_path should have .kml suffix")
 
     raster_imgs_path = data_dir / "connector/raster_imgs.geojson"

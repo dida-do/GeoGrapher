@@ -68,6 +68,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
     )
 
     def __init__(self, **data) -> None:
+        """Initialize DSCutterIterOverFeatures."""
         super().__init__(**data)
         self._check_crs_agree()
 
@@ -107,7 +108,9 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         return self.target_connector
 
     def _create_or_update(self) -> None:
-        """Higher order general purpose method to create or update a dataset of
+        """Create or update a dataset by iterating over vector features.
+
+        Higher order general purpose method to create or update a dataset of
         GeoTiffs by iterating over vector features.
 
         Warning:
@@ -118,7 +121,6 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         Returns:
             connector of newly created or updated dataset
         """
-
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(
             self.target_connector.raster_imgs.index
@@ -201,9 +203,10 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
                         RASTER_IMGS_INDEX_NAME,
                         "geometry",
                         "orig_crs_epsg_code",
-                    } <= set(
-                        imgs_from_single_cut_dict.keys()
-                    ), "Dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
+                    } <= set(imgs_from_single_cut_dict.keys()), (
+                        "Dict returned by img_cutter needs the following keys: "
+                        "IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
+                    )
 
                     # Accumulate information for the new imgs in new_imgs_dict.
                     for key in new_imgs_dict.keys():
@@ -284,7 +287,9 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
     def _filter_out_previously_cut_imgs(
         self, feature_name: Union[str, int], src_imgs_containing_feature: set[str]
     ) -> list[str]:
-        """Filter out source images from which cutouts containing a vector
+        """Filter out previously cut images.
+
+        Filter out source images from which cutouts containing a vector
         feature have already been created.
 
         Args:
@@ -296,7 +301,6 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         Returns:
             list of filtered rasters
         """
-
         src_imgs_previously_cut_for_this_feature = set(self.cut_imgs[feature_name])
         answer = list(
             src_imgs_containing_feature - src_imgs_previously_cut_for_this_feature
@@ -305,8 +309,10 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         return answer
 
     def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and
-        target agree."""
+        """Check crss agree.
+
+        Check coordinate systems of source and target agree.
+        """
         if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
             raise ValueError(
                 "Coordinate systems of source and target connectors do not agree"

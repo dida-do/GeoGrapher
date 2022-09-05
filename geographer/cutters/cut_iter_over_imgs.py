@@ -44,10 +44,13 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
     )
     cut_imgs: list[str] = Field(
         default_factory=list,
-        description="Names of cut images in source_data_dir. Usually not to be set by hand!",
+        description=(
+            "Names of cut images in source_data_dir." "Usually not to be set by hand!"
+        ),
     )
 
     def __init__(self, **data) -> None:
+        """Initialize DSCutterIterOverImgs."""
         super().__init__(**data)
         self._check_crs_agree()
 
@@ -85,7 +88,9 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
         self.save()
 
     def _create_or_update(self) -> None:
-        """Higher order method to create or update a data set of GeoTiffs by
+        """Create or update dataset by iterating over images in source dataset.
+
+        Higher order method to create or update a data set of GeoTiffs by
         iterating over images in the source dataset.
 
         Create or update a data set of GeoTiffs (images, labels, and connector)
@@ -102,7 +107,6 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
             these labels will not be updated. This should be fixed!). It might be safer
             to just recut the source_data_dir.
         """
-
         # Remember information to determine for which images to generate new labels
         imgs_in_target_dataset_before_update = set(
             self.target_connector.raster_imgs.index
@@ -136,8 +140,8 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                 cut_imgs=self.cut_imgs,
             ):
 
-                # ... cut the images (and their labels) and remember information to be appended
-                # to self.target_connector raster_imgs in return dict
+                # ... cut the images (and their labels) and remember information
+                # to be appended to self.target_connector raster_imgs in return dict
                 imgs_from_single_cut_dict = self.img_cutter(
                     img_name=img_name,
                     source_connector=self.source_connector,
@@ -146,14 +150,16 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
                     bands=self.bands,
                 )
 
-                # Make sure img_cutter returned dict with same keys as needed by new_imgs_dict.
+                # Make sure img_cutter returned dict with same keys
+                # as needed by new_imgs_dict.
                 assert {
                     RASTER_IMGS_INDEX_NAME,
                     "geometry",
                     "orig_crs_epsg_code",
-                } <= set(
-                    imgs_from_single_cut_dict.keys()
-                ), "dict returned by img_cutter needs the following keys: IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
+                } <= set(imgs_from_single_cut_dict.keys()), (
+                    "dict returned by img_cutter needs the following keys: "
+                    "IMGS_DF_INDEX_NAME, 'geometry', 'orig_crs_epsg_code'."
+                )
 
                 # Accumulate information for the new imgs in new_imgs_dict.
                 for key in new_imgs_dict.keys():
@@ -203,8 +209,10 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
             )
 
     def _check_crs_agree(self):
-        """Simple safety check: make sure coordinate systems of source and
-        target agree."""
+        """Run safety check.
+
+        Make sure coordinate systems of source and target agree.
+        """
         if self.source_connector.crs_epsg_code != self.target_connector.crs_epsg_code:
             raise ValueError(
                 "Coordinate systems of source and target connectors do not agree"

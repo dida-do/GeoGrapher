@@ -1,5 +1,4 @@
-"""Class for downloading images for vector features targeting a given number of
-images per vector feature."""
+"""Download a targeted number of rasters per vector feature."""
 
 from __future__ import annotations
 
@@ -34,8 +33,7 @@ log.setLevel(logging.WARNING)
 
 
 class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
-    """Download images for vector features targeting a given number of images
-    per feature."""
+    """Class that downloads a targeted number of rasters per vector feature."""
 
     download_dir: Path
     downloader_for_single_feature: ImgDownloaderForSingleVectorFeature
@@ -51,16 +49,15 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         shuffle: bool = True,
         **kwargs,
     ):
-        """Download images for vector features so as to target a number of
-        images per vector feature.
+        """Download a targeted number of rasters per vector feature.
 
-        Sequentially considers the vector features for which the image count (number of
+        Sequentially consider the vector features for which the image count (number of
         images fully containing a given vector feature) is less than
         num_target_imgs_per_feature images in the connector's internal vector_features
-        or the optional vector_features argument (if given), for each such vector feature
-        attempts to download num_target_imgs_per_feature - image_count images fully
-        containing the vector feature (or several images jointly containing the vector
-        feature), and integrates the new image(s) into the dataset/connector.
+        or the optional vector_features argument (if given), for each such vector
+        feature attempt to download num_target_imgs_per_feature - image_count images
+        fully containing the vector feature (or several images jointly containing the
+        vector feature), and integrate the new image(s) into the dataset/connector.
         Integrates images downloaded for a vector feature into the dataset/connector
         immediately after downloading them and before downloading images for the next
         vector feature. In particular, the image count is updated immediately after
@@ -116,7 +113,6 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             jointly cover the polygon then these 20 disjoint sets will all be
             downloaded.
         """
-
         self.kwarg_defaults.update(kwargs)
 
         if not isinstance(connector, Connector):
@@ -130,7 +126,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             feature_names=feature_names,
             target_img_count=target_img_count,
             connector=connector,
-            filter_out_features_contained_in_union_of_intersecting_imgs=filter_out_features_contained_in_union_of_intersecting_imgs,
+            filter_out_features_contained_in_union_of_intersecting_imgs=filter_out_features_contained_in_union_of_intersecting_imgs,  # noqa: E501
         )
 
         if shuffle:
@@ -160,7 +156,8 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 f"Polygon {count}/{len(features_for_which_to_download)}",
             )
             log.debug(
-                "download_missing_imgs_for_vector_features: considering vector feature %s.",
+                "download_missing_imgs_for_vector_features: considering "
+                "vector feature %s.",
                 feature_name,
             )
 
@@ -177,7 +174,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             )
             if num_img_series_to_download <= 0:
                 log.debug(
-                    "Skipping vector feature %s since there now enough images fully containing it.",
+                    "Skipping %s since there now enough images fully containing it.",
                     feature_name,
                 )
                 continue
@@ -235,10 +232,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
 
                 # ... or downloader_for_single_feature tried downloading a previously
                 # downloaded image.
-                except ImgAlreadyExistsError as exc:
+                except ImgAlreadyExistsError:
 
                     log.exception(
-                        "downloader_for_single_feature tried downloading a previously downloaded image!"
+                        "downloader_for_single_feature tried "
+                        "downloading a previously downloaded image!"
                     )
 
                 # If the download_method call was successful ...
@@ -328,8 +326,17 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         feature_name: Union[str, int],
         list_img_info_dicts: list[dict],
     ):
-        """Check no images have been downloaded more than once."""
+        """Check no images have been downloaded more than once.
 
+        Args:
+            previously_downloaded_imgs_set: previously downloaded images
+            feature_name: name of vector feature
+            list_img_info_dicts: img_info_dicts
+
+        Raises:
+            Exception: _description_
+            Exception: _description_
+        """
         # Extract the new image names ...
         new_img_names_list = [
             img_info_dict["img_name"] for img_info_dict in list_img_info_dicts
@@ -345,13 +352,17 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             }
 
             log.error(
-                "Something is wrong with downloader_for_single_feature: it attempted to download the following images multiple times for vector feature %s: %s",
+                "Something is wrong with downloader_for_single_feature: it attempted "
+                "to download the following images multiple times for vector feature "
+                "%s: %s",
                 feature_name,
                 duplicate_imgs_dict,
             )
 
             raise Exception(
-                f"Something is wrong with downloader_for_single_feature: it attempted to download the following images multiple times for vector feature {feature_name}: {duplicate_imgs_dict}"
+                "Something is wrong with downloader_for_single_feature: it attempted "
+                "to download the following images multiple times for vector feature "
+                f"{feature_name}: {duplicate_imgs_dict}"
             )
 
             # Make sure we haven't downloaded an image that's already in the dataset.
@@ -360,12 +371,15 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             # again ourselves that this hasn't happened. )
         if set(new_img_names_list) & previously_downloaded_imgs_set:
             log.error(
-                "Something is wrong with downloader_for_single_feature: it downloaded image(s) that have already been downloaded: %s",
+                "Something is wrong with downloader_for_single_feature: it downloaded "
+                "image(s) that have already been downloaded: %s",
                 set(new_img_names_list) & previously_downloaded_imgs_set,
             )
 
             raise Exception(
-                f"Something is wrong with downloader_for_single_feature: it downloaded image(s) that have already been downloaded: {set(new_img_names_list) & previously_downloaded_imgs_set}"
+                "Something is wrong with downloader_for_single_feature: it downloaded "
+                "image(s) that have already been downloaded: "
+                f"{set(new_img_names_list) & previously_downloaded_imgs_set}"
             )
 
     def _get_features_for_which_to_download(
@@ -396,8 +410,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         if not set(features_for_which_to_download) <= set(
             connector.vector_features.index
         ):
+            missing = set(features_for_which_to_download) - set(
+                connector.vector_features.index
+            )
             raise ValueError(
-                f"Polygons {set(features_for_which_to_download) - set(connector.vector_features.index)} missing from connector.vector_features"
+                f"Polygons {missing} missing from connector.vector_features"
             )
 
         features_for_which_to_download = self._filter_out_features_with_null_geometry(

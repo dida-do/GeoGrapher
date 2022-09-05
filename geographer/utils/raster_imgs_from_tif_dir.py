@@ -15,8 +15,7 @@ from geographer.utils.utils import transform_shapely_geometry
 
 
 def default_read_in_img_for_img_df_function(img_path: Path) -> tuple[int, Polygon]:
-    """Read in the crs code and the bounding rectangle that defines a GeoTIFF
-    image.
+    """Read in crs and bbox defining a GeoTIFF image.
 
     ..note::
 
@@ -26,7 +25,6 @@ def default_read_in_img_for_img_df_function(img_path: Path) -> tuple[int, Polygo
     Returns:
         tuple: crs code of the image, bounding rectangle of the image
     """
-
     if img_path.suffix in [".tif", ".tiff"]:
 
         # ... open them in rasterio ...
@@ -53,7 +51,9 @@ def raster_imgs_from_imgs_dir(
         [Path], tuple[int, Polygon]
     ] = default_read_in_img_for_img_df_function,
 ) -> GeoDataFrame:
-    """Builds and returns an associator raster_imgs from a directory of images
+    """Return raster_imgs from a directory of GeoTiffs.
+
+    Build and return an associator raster_imgs from a directory of images
     (or from a data directory). Only the index (raster_imgs_index_name,
     defaults to img_name), geometry column (coordinates of the
     img_bounding_rectangle, and orig_crs_epsg_code (epsg code of crs the image
@@ -74,13 +74,12 @@ def raster_imgs_from_imgs_dir(
         raster_imgs conforming to the associator raster_imgs format with index
         raster_imgs_index_name and columns geometry and orig_crs_epsg_code
     """
-
     # stupid hack to avoid (not really) circular importing python can't deal with.
     from geographer.global_constants import STANDARD_CRS_EPSG_CODE
 
     images_dir = Path(images_dir)
 
-    if raster_imgs_crs_epsg_code == None:
+    if raster_imgs_crs_epsg_code is None:
         raster_imgs_crs_epsg_code = STANDARD_CRS_EPSG_CODE
 
     if img_names is None:
@@ -88,7 +87,8 @@ def raster_imgs_from_imgs_dir(
     else:
         image_paths = [images_dir / img_name for img_name in img_names]
 
-    # dict to keep track of information about the imgs that we will make the raster_imgs from.
+    # dict to keep track of information about the imgs that
+    # we will make the raster_imgs from.
     new_imgs_dict = {
         index_or_col_name: []
         for index_or_col_name in {"img_name", "geometry", "orig_crs_epsg_code"}

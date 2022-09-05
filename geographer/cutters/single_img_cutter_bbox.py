@@ -1,5 +1,4 @@
-"""A SingleImgCutter to extract one or several pre defined bounding box from an
-image."""
+"""SingleImgCutter that extracts pre defined bboxes from an image."""
 
 from __future__ import annotations
 
@@ -29,8 +28,7 @@ def _correct_window_offset(
 
 
 class SingleImgCutterFromBBoxes(SingleImgCutter):
-    """A SingleImgCutter to extract one or several pre defined bounding box
-    from an image.
+    """SingleImgCutter that extracts pre defined bboxes from an image.
 
     The new size of the images must be specified as it is used to ensure
     a standardised output.
@@ -42,18 +40,18 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
     _bboxes_df: GeoDataFrame = PrivateAttr()
 
     def __init__(self, **data) -> None:
-        """
+        """Initialize a SingleImgCutterFromBBoxes.
+
         Args:
             new_img_size: size of new image
             bbox_geojson_path: path to geojson file containing the bboxes
         """
-
         super().__init__(**data)
         self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
 
     @validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):
-        """Validator: Make sure path exists and points to geojson"""
+        """Validate path exists and points to geojson."""
         if value.suffix != ".geojson":
             raise ValueError("Path should point to .geojson file")
         if not value.is_file():
@@ -62,7 +60,7 @@ class SingleImgCutterFromBBoxes(SingleImgCutter):
 
     @validator("new_img_size")
     def new_img_size_type_correctness(cls, value: ImgSize) -> ImgSize:
-        """Validator: make sure new_img_size has correct type"""
+        """Validate new_img_size has correct type."""
         is_int: bool = isinstance(value, int)
         is_pair_of_ints: bool = (
             isinstance(value, tuple)

@@ -1,24 +1,25 @@
-"""Util functions to convert BaseModels to nested dicts keeping track of class
-constructors.
+"""Utils for conversion of BaseModels to nested dicts.
 
-Used for serializing BaseModels
+The nested dicts keep track of class constructors and are used for
+serializing BaseModels.
 """
 
 from __future__ import annotations
 
-from multiprocessing.sharedctypes import Value
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from numpy import isin
 from pydantic import BaseModel
 
 
 def get_nested_base_model_dict(
     base_model_obj_or_dict: Union[BaseModel, dict, Any]
 ) -> dict:
-    """Return nested dict of nested BaseModel containing fields and BaseModel
-    constructors or of dict."""
+    """Return nested dict for BaseModel or dict.
+
+    Return nested dict for nested BaseModel containing fields and
+    BaseModel constructors or of dict.
+    """
     if isinstance(base_model_obj_or_dict, dict):
         dict_ = base_model_obj_or_dict
         dict_items = base_model_obj_or_dict.items()
@@ -63,10 +64,12 @@ def get_nested_base_model_dict(
         )
     elif isinstance(base_model_obj_or_dict, BaseModel):
         return {
-            f"constructor_{type(base_model_obj_or_dict).__name__}": remaining_fields_dict
-            | dict_or_base_model_fields_dict
-            | path_fields_dict
-            | tuple_fields_dict
+            f"constructor_{type(base_model_obj_or_dict).__name__}": (
+                remaining_fields_dict
+                | dict_or_base_model_fields_dict
+                | path_fields_dict
+                | tuple_fields_dict
+            )
         }
 
 
@@ -78,7 +81,7 @@ def eval_nested_base_model_dict(
     dict_or_field_value: Union[dict, Any],
     constructor_symbol_table: Optional[dict[str, Any]] = None,
 ) -> Union[BaseModel, Any]:
-    """Evaluate nested BaseModel dict (or field contents)
+    """Evaluate nested BaseModel dict (or field contents).
 
     Args:
         dict_or_field_value: nested base model dict or field value

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import configparser
 import logging
-import os
 from pathlib import Path
 from typing import Any, Union
 from zipfile import ZipFile
@@ -20,9 +19,7 @@ from shapely.geometry import Polygon
 from geographer.downloaders.base_downloader_for_single_feature import (
     ImgDownloaderForSingleVectorFeature,
 )
-from geographer.downloaders.sentinel2_safe_unpacking import safe_to_geotif_L2A
 from geographer.errors import NoImgsForVectorFeatureFoundError
-from geographer.utils.utils import transform_shapely_geometry
 
 # logger
 log = logging.getLogger(__name__)

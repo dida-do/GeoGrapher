@@ -1,3 +1,5 @@
+"""Utility functions for label making code."""
+
 from geopandas import GeoDataFrame
 
 from geographer.utils.utils import deepcopy_gdf
@@ -6,9 +8,11 @@ from geographer.utils.utils import deepcopy_gdf
 def convert_vector_features_soft_cat_to_cat(
     vector_features: GeoDataFrame,
 ) -> GeoDataFrame:
-    """Take a vector_features GeoDataFrame in soft-categorical format and
-    return a copy converted to categorical format."""
+    """Convert vector features geodataframe from soft to categorical.
 
+    Take a vector_features GeoDataFrame in soft-categorical format and
+    return a copy converted to categorical format.
+    """
     new_vector_features = deepcopy_gdf(vector_features)
 
     # make 'type' column

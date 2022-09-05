@@ -1,5 +1,8 @@
-"""Base class for label makers that generate labels (for any kind of computer
-vision task) from a connector's vector_features."""
+"""Base class for label makers.
+
+Base class for label makers that generate labels (for any kind of
+computer vision task) from a connector's vector_features.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +10,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 
-from pydantic import BaseModel, Field
-from tqdm.auto import tqdm
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from geographer.connector import Connector
@@ -22,8 +24,11 @@ log = logging.getLogger(__name__)
 
 
 class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
-    """Base class for label makers that generate labels (for any kind of
-    computer vision task) from a connector's vector_features."""
+    """Base class for label makers.
+
+    Base class for label makers. that generate labels (for any kind of
+    computer vision task) from a connector's vector_features.
+    """
 
     @abstractmethod
     def make_labels(

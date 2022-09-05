@@ -1,5 +1,7 @@
-"""Label maker for soft-categorical (i.e. probabilistic multi-class)
-segmentation labels."""
+"""Label maker for soft-categorical segmentation labels.
+
+Soft-categorical are probabilistic multi-class labels.
+"""
 
 import logging
 
@@ -14,8 +16,9 @@ log = logging.getLogger(__name__)
 
 
 class SegLabelMakerSoftCategorical(SegLabelMaker):
-    """Label maker that generates soft-categorical (i.e. probabilistic multi-
-    class) segmentation labels from a connector's vector_features.
+    """Label maker for soft-categorical segmentation labels.
+
+    Soft-categorical are probabilistic multi-class labels.
 
     Assumes the connector's vector_features contains for each
     segmentation class a "prob_seg_class<seg_class>" column containing
@@ -26,6 +29,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
     @property
     def label_type(self):
+        """Return label_type."""
         return "soft-categorical"
 
     def _make_label_for_img(
@@ -33,8 +37,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         connector: Connector,
         img_name: str,
     ) -> None:
-        """Create a soft-categorical or onehot GeoTiff (pixel) label for an
-        image.
+        """Create (pixel) label for a raster image.
 
         Args:
             connector : calling Connector
@@ -44,7 +47,6 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         Returns:
             None:
         """
-
         # paths
         img_path = connector.images_dir / img_name
         label_path = connector.labels_dir / img_name
@@ -185,9 +187,11 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         return label_bands_count
 
     def _run_safety_checks(self, connector: Connector):
-        """Check existence of 'prob_of_class_<class name>' columns in
-        connector.vector_features."""
+        """Run safety checks.
 
+        Check existence of 'prob_of_class_<class name>' columns in
+        connector.vector_features.
+        """
         # check required columns exist
         required_cols = {
             f"prob_of_class_{class_}" for class_ in connector.all_vector_feature_classes
@@ -195,7 +199,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         if not set(required_cols) <= set(connector.vector_features.columns):
             missing_cols = set(required_cols) - set(connector.vector_features.columns)
             raise ValueError(
-                f"connector.vector_features.columns is missing required columns: {', '.join(missing_cols)}"
+                "connector.vector_features.columns is missing required columns: "
+                f"{', '.join(missing_cols)}"
             )
 
         # check no other columns will be mistaken for
@@ -208,7 +213,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
             connector.all_vector_feature_classes
         ):
             log.warning(
-                "Ignoring columns: %s. The corresponding classes are not in connector.all_vector_feature_classes",
+                "Ignoring columns: %s. The corresponding classes "
+                "are not in connector.all_vector_feature_classes",
                 feature_classes_in_vector_features
                 - set(connector.all_vector_feature_classes),
             )

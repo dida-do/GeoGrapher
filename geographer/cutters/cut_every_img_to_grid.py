@@ -1,13 +1,13 @@
-"""Dataset cutter that cuts images in the source dataset to a grid of
-images."""
+"""Cut images in the source dataset to a grid of images.
+
+Dataset cutter that cuts images in the source dataset to a grid of
+images.
+"""
 
 import logging
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field
-
-from geographer.creator_from_source_dataset_base import DSCreatorFromSourceWithBands
 from geographer.cutters.cut_iter_over_imgs import DSCutterIterOverImgs
 from geographer.cutters.img_filter_predicates import (
     ImgFilterPredicate,
@@ -26,8 +26,10 @@ def get_cutter_every_img_to_grid(
     new_img_size: ImgSize = 512,
     img_filter_predicate: Optional[ImgFilterPredicate] = None,
 ) -> DSCutterIterOverImgs:
-    """Return dataset cutter that cuts every image in the source dataset to a
-    grid of images.
+    """Return dataset cutter that cuts every image to a grid.
+
+    Return dataset cutter that cuts every image in the source dataset
+    to a grid of images.
 
     Args:
         source_data_dir: source data dir

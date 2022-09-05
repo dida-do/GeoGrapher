@@ -1,4 +1,6 @@
-"""ImgDownloaderForSinglePolygon that downloads digital elevation model (DEM)
+"""ImgDownloaderForSinglePolygon for JAXA DEM data.
+
+Downloads digital elevation model (DEM)
 data from jaxa.jp's ALOS data-source.
 
 See here https://www.eorc.jaxa.jp/ALOS/en/index.htm for an overview of the ALOS data.
@@ -28,7 +30,6 @@ from typing import Any, Literal, Optional, Union
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
-from geographer.connector import Connector
 from geographer.downloaders.base_downloader_for_single_feature import (
     ImgDownloaderForSingleVectorFeature,
 )
@@ -57,8 +58,10 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
         download_mode: str = None,
         **kwargs,
     ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
-        """Downloads DEM data from jaxa.jp's ftp-server for a given (vector)
-        geometry and returns dict-structure compatible with the connector.
+        """Download JAXA DEM data for a vector feature.
+
+        Download DEM data from jaxa.jp's ftp-server for a given vector
+        feature and returns dict-structure compatible with the connector.
 
         Warning:
             The downloader has only been tested for the 1804 jaxa_data_version.
@@ -90,10 +93,10 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
             log.warning: when a file cannot be found or opened on jaxa's-ftp
             (download_exception = 'file_not_available_on_JAXA_ftp')
         """
-
         if data_version not in JAXA_DATA_VERSIONS:
             raise ValueError(
-                f"Unknown data_version {data_version}. Should be one of {', '.join(JAXA_DATA_VERSIONS)}"
+                f"Unknown data_version {data_version}. "
+                f"Should be one of {', '.join(JAXA_DATA_VERSIONS)}"
             )
 
         jaxa_file_and_folder_names = set()
@@ -168,7 +171,8 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
                             shutil.copyfileobj(remote_source, local_file)
                 except Exception as exc:
                     log.warning(
-                        "File %s in folder %s could not be found on JAXA ftp or could not be opened: %s",
+                        "File %s in folder %s could not be found "
+                        "on JAXA ftp or could not be opened: %s",
                         jaxa_file_name,
                         jaxa_folder_name,
                         exc.args,
@@ -216,7 +220,9 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
         nx: int = 3,
         ny: int = 3,
     ):
-        """Creates string for filename corresponding to jaxas naming-convention
+        """Return JAXA filename of raster containing point x,y.
+
+        Creates string for filename corresponding to jaxas naming-convention
         to download from ftp server.
 
         Args:
