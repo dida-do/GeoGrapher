@@ -1,11 +1,13 @@
 __pycache__/
+.venv/
 .vscode/
 .DS_Store
-assoc/*
-rstools/*
+.envrc
+.dir-locals.el
 geographer.egg-info
 geographer-env/
 geographer/cut_old_functional/
 geographer/playground/
 geographer/img_download/.ipynb_checkpoints/
 geographer.egg-info/
+requirements/extra.txt
