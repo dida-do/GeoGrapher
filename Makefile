@@ -36,8 +36,7 @@ format: venv
 	black $(PROJECTNAME)
 
 lint: venv
-	black --check $(PROJECTNAME)
-	pylint -v $(PROJECTNAME) tests
+	flake8 $(PROJECTNAME) tests
 	mypy $(PROJECTNAME) tests
 
 test: venv
