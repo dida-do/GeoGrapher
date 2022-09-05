@@ -202,7 +202,7 @@ class BipartiteGraph(BipartiteGraphClass):
         from_vertex: VertexName,
         from_vertex_color: VertexColor,
         to_vertex: VertexName,
-        edge_data: Optional[Any]=None,
+        edge_data: Optional[Any] = None,
     ) -> bool:
         """Check whether an edge exists."""
 
