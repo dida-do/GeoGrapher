@@ -5,8 +5,8 @@ from geographer import Connector
 from geographer.utils.cluster_rasters import get_raster_clusters
 from geographer.global_constants import RASTER_IMGS_INDEX_NAME, STANDARD_CRS_EPSG_CODE, VECTOR_FEATURES_INDEX_NAME
 from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR, VECTOR_FEATURES_COLOR
-from tests.mock_download_test import MOCK_DOWNLOAD_SOURCE_DATA_DIR
-from tests.utils import get_test_dir
+from mock_download_test import MOCK_DOWNLOAD_SOURCE_DATA_DIR
+from utils import get_test_dir
 
 
 def test_cluster_rasters():

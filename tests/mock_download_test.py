@@ -21,7 +21,7 @@ from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
 from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
 from geographer.testing.mock_download import MockDownloaderForSingleFeature, MockDownloadProcessor
-from tests.utils import get_test_dir
+from utils import get_test_dir
 
 
 MOCK_DOWNLOAD_SOURCE_DATA_DIR = "mock_download_source"

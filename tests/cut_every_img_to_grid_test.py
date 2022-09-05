@@ -19,7 +19,7 @@ from geographer.cutters.img_filter_predicates import ImgsNotPreviouslyCutOnly
 from geographer.cutters.single_img_cutter_grid import SingleImgCutterToGrid
 from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
 from geographer.utils.utils import create_kml_all_geodataframes, deepcopy_gdf
-from tests.utils import get_test_dir
+from utils import get_test_dir
 
 CUT_INTO = 60 #
 CUT_SOURCE_DATA_DIR_NAME = 'cut_source'

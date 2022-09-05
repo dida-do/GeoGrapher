@@ -17,7 +17,7 @@ from geographer import Connector
 from geographer.downloaders.downloader_for_features import ImgDownloaderForVectorFeatures
 from geographer.downloaders.sentinel2_downloader_for_single_feature import SentinelDownloaderForSingleVectorFeature
 from geographer.downloaders.sentinel2_download_processor import Sentinel2Processor
-from tests.utils import get_test_dir
+from utils import get_test_dir
 
 
 def test_s2_download():

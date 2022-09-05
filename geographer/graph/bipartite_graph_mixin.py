@@ -74,7 +74,7 @@ class BipartiteGraphMixIn:
         for img_name in img_names:
             try:
                 feature_names += self._graph.vertices_opposite(
-                    vertex=img_name, vertex_color=RASTER_IMGS_COLOR
+                    vertex_name=img_name, vertex_color=RASTER_IMGS_COLOR
                 )
             except KeyError:
                 raise ValueError(f"Unknown image: {img_name}")
@@ -107,7 +107,7 @@ class BipartiteGraphMixIn:
         for feature_name in feature_names:
             try:
                 img_names += self._graph.vertices_opposite(
-                    vertex=feature_name, vertex_color=VECTOR_FEATURES_COLOR
+                    vertex_name=feature_name, vertex_color=VECTOR_FEATURES_COLOR
                 )
             except KeyError:
                 raise ValueError(f"Unknown vector feature: {feature_name}")
@@ -145,7 +145,7 @@ class BipartiteGraphMixIn:
         for img_name in img_names:
             try:
                 feature_names += self._graph.vertices_opposite(
-                    vertex=img_name,
+                    vertex_name=img_name,
                     vertex_color=RASTER_IMGS_COLOR,
                     edge_data="contains",
                 )
@@ -182,7 +182,7 @@ class BipartiteGraphMixIn:
         for feature_name in feature_names:
             try:
                 img_names = self._graph.vertices_opposite(
-                    vertex=feature_name,
+                    vertex_name=feature_name,
                     vertex_color=VECTOR_FEATURES_COLOR,
                     edge_data="contains",
                 )
