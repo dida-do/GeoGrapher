@@ -1,8 +1,8 @@
 import pytest
 import shutil
 from geographer import Connector
-from tests.cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
-from tests.utils import create_dummy_imgs, delete_dummy_images, get_test_dir
+from cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
+from utils import create_dummy_imgs, delete_dummy_images, get_test_dir
 
 @pytest.hookimpl()
 def pytest_sessionstart(session):

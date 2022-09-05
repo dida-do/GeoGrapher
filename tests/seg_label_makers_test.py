@@ -1,7 +1,7 @@
 from geographer import Connector
 from geographer.label_makers import SegLabelMakerCategorical, SegLabelMakerSoftCategorical
 from geographer.label_makers.label_type_conversion_utils import convert_vector_features_soft_cat_to_cat
-from tests.utils import get_test_dir
+from utils import get_test_dir
 
 
 def test_label_maker_categorical_seg():

@@ -202,7 +202,7 @@ class BipartiteGraph(BipartiteGraphClass):
         from_vertex: VertexName,
         from_vertex_color: VertexColor,
         to_vertex: VertexName,
-        edge_data: Optional[Any],
+        edge_data: Optional[Any]=None,
     ) -> bool:
         """Check whether an edge exists."""
 
@@ -236,7 +236,7 @@ class BipartiteGraph(BipartiteGraphClass):
         """
 
         # check if vertex already exists
-        if self.exists_vertex(vertex_name):
+        if self.exists_vertex(vertex_name, vertex_color=vertex_color):
             log.info("Vertex %s of already exists!", vertex_name)
         else:
             # create vertex w/o edges

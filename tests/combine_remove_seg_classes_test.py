@@ -10,8 +10,8 @@ from geographer import Connector
 from geographer.converters import DSConverterCombineRemoveClasses
 from geographer.label_makers import SegLabelMakerCategorical, SegLabelMakerSoftCategorical
 from geographer.utils.utils import deepcopy_gdf
-from tests.mock_download_test import MOCK_DOWNLOAD_SOURCE_DATA_DIR
-from tests.utils import create_dummy_imgs, delete_dummy_images, get_test_dir
+from mock_download_test import MOCK_DOWNLOAD_SOURCE_DATA_DIR
+from utils import create_dummy_imgs, delete_dummy_images, get_test_dir
 
 COMBINER_NAME = "combine_remove"
 

@@ -19,8 +19,8 @@ from geographer.cutters.feature_filter_predicates import IsFeatureMissingImgs
 from geographer.cutters.img_selectors import RandomImgSelector
 from geographer.cutters.single_img_cutter_around_feature import SingleImgCutterAroundFeature
 from geographer.testing.graph_df_compatibility import check_graph_vertices_counts
-from tests.cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
-from tests.utils import get_test_dir
+from cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
+from utils import get_test_dir
 
 IMG_SIZE = 128
 
