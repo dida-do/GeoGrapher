@@ -2,7 +2,9 @@
 target-version = ['py37', 'py38', 'py39']
 
 [tool.isort]
+atomic = true
 profile = "black"
+skip_gitignore = true
 
 [build-system]
 requires = ["setuptools"]
