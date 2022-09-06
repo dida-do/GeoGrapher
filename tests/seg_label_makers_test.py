@@ -1,13 +1,20 @@
-from geographer import Connector
-from geographer.label_makers import SegLabelMakerCategorical, SegLabelMakerSoftCategorical
-from geographer.label_makers.label_type_conversion_utils import convert_vector_features_soft_cat_to_cat
+"""Test segmentation label creation.
+
+Test SegLabelMakerCategorical and SegLabelMakerSoftCategorical.
+"""
+
 from utils import get_test_dir
+
+from geographer import Connector
+from geographer.label_makers import (
+    SegLabelMakerCategorical,
+    SegLabelMakerSoftCategorical,
+)
 
 
 def test_label_maker_categorical_seg():
-    """Test SegLabelMakerCategorical"""
-
-    data_dir = get_test_dir() / 'cut_source'
+    """Test SegLabelMakerCategorical."""
+    data_dir = get_test_dir() / "cut_source"
     connector = Connector.from_data_dir(data_dir)
 
     label_maker = SegLabelMakerCategorical()
@@ -16,9 +23,9 @@ def test_label_maker_categorical_seg():
         connector=connector,
     )
 
-def test_label_maker_soft_categorical_seg():
-    """Test SegLabelMakerCategorical"""
 
+def test_label_maker_soft_categorical_seg():
+    """Test SegLabelMakerSoftCategorical."""
     data_dir = get_test_dir() / "cut_source"
     connector = Connector.from_data_dir(data_dir)
     class_names = connector.all_vector_feature_classes
@@ -32,6 +39,7 @@ def test_label_maker_soft_categorical_seg():
         connector=connector,
     )
 
+
 if __name__ == "__main__":
-    # test_label_maker_categorical_seg()
+    test_label_maker_categorical_seg()
     test_label_maker_soft_categorical_seg()
