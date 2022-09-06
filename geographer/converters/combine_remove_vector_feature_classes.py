@@ -230,9 +230,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # remember original type
         if self.target_connector.label_type == "categorical":
             self.target_connector.vector_features.loc[
-                features_to_add_to_target_dataset, "orig_type"
+                list(features_to_add_to_target_dataset), "orig_type"
             ] = self.source_connector.vector_features.loc[
-                features_to_add_to_target_dataset, "type"
+                list(features_to_add_to_target_dataset), "type"
             ]
 
         return self.target_connector
