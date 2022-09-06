@@ -436,7 +436,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
     ) -> None:
         features_w_null_geometry_mask = (
-            connector.vector_features.geometry.values is None
+            connector.vector_features.geometry.values == None
         )
         features_w_null_geometry = connector.vector_features[
             features_w_null_geometry_mask

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -19,7 +19,7 @@ from geographer.label_makers.label_maker_base import LabelMaker
 log = logging.getLogger(__name__)
 
 
-class SegLabelMaker(ABC, LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
+class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     """Base class for segmentation label makers."""
 
     add_background_band: bool = Field(
