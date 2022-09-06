@@ -1,4 +1,4 @@
-"""Mock download classes for testing.
+"""Mock ImgDownloadProcessor for testing.
 
 Virtually 'download' from a dataset of images in a source directory.
 """
