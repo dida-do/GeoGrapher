@@ -110,7 +110,7 @@ class BipartiteGraph(BipartiteGraphClass):
             directed: If True the graph is directed, defaults to False.
         """
         if file_path is not None:
-            self.file_path = file_path
+            self.file_path: Optional[Path] = file_path
             self.directed = directed
             try:
                 with open(file_path, "r") as read_file:

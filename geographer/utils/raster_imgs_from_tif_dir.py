@@ -11,7 +11,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Polygon, box
 from tqdm.auto import tqdm
 
-from geographer.utils.utils import transform_shapely_geometry
+from geographer.utils.utils import GEOMS_UNION, transform_shapely_geometry
 
 
 def default_read_in_img_for_img_df_function(img_path: Path) -> tuple[int, Polygon]:
@@ -85,11 +85,11 @@ def raster_imgs_from_imgs_dir(
     if img_names is None:
         image_paths = images_dir.glob(f"*.{imgs_datatype}")
     else:
-        image_paths = [images_dir / img_name for img_name in img_names]
+        image_paths = (images_dir / img_name for img_name in img_names)
 
     # dict to keep track of information about the imgs that
     # we will make the raster_imgs from.
-    new_imgs_dict = {
+    new_imgs_dict: dict[str, Union[str, GEOMS_UNION, int]] = {
         index_or_col_name: []
         for index_or_col_name in {"img_name", "geometry", "orig_crs_epsg_code"}
     }
@@ -100,7 +100,7 @@ def raster_imgs_from_imgs_dir(
         (
             orig_crs_epsg_code,
             img_bounding_rectangle_orig_crs,
-        ) = read_in_img_for_img_df_function(img_path=img_path)
+        ) = read_in_img_for_img_df_function(img_path)
 
         if orig_crs_epsg_code is None or img_bounding_rectangle_orig_crs is None:
             continue

@@ -37,7 +37,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
     for details on args passed to the API (e.g. date).
     """
 
-    def download(
+    def download(  # type: ignore
         self,
         feature_name: Union[str, int],
         feature_geom: Polygon,

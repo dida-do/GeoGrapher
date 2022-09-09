@@ -205,7 +205,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # check no other columns will be mistaken for
         feature_classes_in_vector_features = {
-            col_name[1 + len("prob_of_class") :]
+            col_name[(1 + len("prob_of_class")) :]  # noqa: E203
             for col_name in connector.vector_features.columns
             if col_name.startswith("prob_of_class_")
         }

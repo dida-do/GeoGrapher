@@ -210,10 +210,12 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
                 new_img_size_cols = self._cols
             elif self.mode == "variable":
                 new_img_size_rows = max(
-                    self.scaling_factor * (max_row - min_row), self._rows
+                    self.scaling_factor * (max_row - min_row),  # type: ignore
+                    self._rows,
                 )
                 new_img_size_cols = max(
-                    self.scaling_factor * (max_col - min_col), self._cols
+                    self.scaling_factor * (max_col - min_col),  # type: ignore
+                    self._cols,
                 )
 
             (

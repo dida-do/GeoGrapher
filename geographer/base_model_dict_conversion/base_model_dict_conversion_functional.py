@@ -55,15 +55,16 @@ def get_nested_base_model_dict(
         if key in dict_.keys()  # to avoid excluded fields for BaseModels
         and not isinstance(val, (BaseModel, Path, dict, tuple))
     }
+
     if isinstance(base_model_obj_or_dict, dict):
-        return (
+        result = (
             remaining_fields_dict
             | dict_or_base_model_fields_dict
             | path_fields_dict
             | tuple_fields_dict
         )
     elif isinstance(base_model_obj_or_dict, BaseModel):
-        return {
+        result = {
             f"constructor_{type(base_model_obj_or_dict).__name__}": (
                 remaining_fields_dict
                 | dict_or_base_model_fields_dict
@@ -71,6 +72,8 @@ def get_nested_base_model_dict(
                 | tuple_fields_dict
             )
         }
+
+    return result
 
 
 def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:

@@ -37,10 +37,11 @@ class DSCutterBBoxes:  # noqa: E302
     """Class for creating a dataset from bboxes and a source dataset."""
 
     def create_dataset_cut_bboxes(
+            self,
             create_or_update: str,
             bounding_boxes: GeoDataFrame,
-            source_assoc: Optional[ImgPolygonAssociator] = None,
-            target_data_dir: Union[str, Path] = None,
+            source_assoc: ImgPolygonAssociator,
+            target_data_dir: Union[str, Path],
             target_assoc: Optional[ImgPolygonAssociator] = None,
             new_img_size: ImgSize = 512,
             img_bands: Optional[list[int]] = None,
@@ -92,7 +93,7 @@ class DSCutterBBoxes:  # noqa: E302
 
         # throw out images with duplicate bboxes:
         # First, find a subset of images without duplicate bboxes ...
-        imgs_to_keep = []
+        imgs_to_keep: list[str] = []
         for count, img_name in enumerate(target_assoc.raster_imgs.index):
             img_bbox = target_assoc.raster_imgs.loc[img_name, 'geometry']
             if {

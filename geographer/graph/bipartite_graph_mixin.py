@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Union
 
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
 
-from geographer.graph import BipartiteGraph
+from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +19,12 @@ RASTER_IMGS_COLOR = "raster_imgs"
 
 class BipartiteGraphMixIn:
     """Mix-in that interfaces with a connector's internal graph."""
+
+    if TYPE_CHECKING:
+        vector_features: GeoDataFrame
+        raster_imgs: GeoDataFrame
+        _graph: BipartiteGraphClass
+        images_dir: Path
 
     def have_img_for_vector_feature(self, feature_name: str) -> bool:
         """Check if there is a raster fully containing the vector feature.
@@ -259,7 +266,7 @@ class BipartiteGraphMixIn:
         contains_or_intersects: Optional[str] = None,
         vector_features: Optional[GeoDataFrame] = None,
         img_bounding_rectangle: Optional[BaseGeometry] = None,
-        graph: Optional[BipartiteGraph] = None,
+        graph: Optional[BipartiteGraphClass] = None,
         do_safety_check: bool = True,
     ):
         """Connect an image to a vector feature in the graph.
@@ -396,7 +403,7 @@ class BipartiteGraphMixIn:
         img_name: str,
         img_bounding_rectangle: Optional[BaseGeometry] = None,
         vector_features: Optional[GeoDataFrame] = None,
-        graph: Optional[BipartiteGraph] = None,
+        graph: Optional[BipartiteGraphClass] = None,
     ):
         """Add raster to graph and modify vector features.
 

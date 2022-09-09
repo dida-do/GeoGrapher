@@ -33,7 +33,7 @@ class ImgBandsGetterMixIn:
         elif img_type in bands and bands[img_type] is None:
             return self._get_all_band_indices(source_img_path)
         elif img_type in bands and bands[img_type] is not None:
-            return bands[img_type]
+            return bands[img_type]  # type: ignore
         else:
             raise ValueError(f"Missing bands key: {img_type}")
 
