@@ -1,17 +1,14 @@
 """Test compatibility of raster_imgs, vector_features, and graph."""
 
 import logging
-from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from geographer.connector import Connector
 from geographer.graph.bipartite_graph_mixin import (
     RASTER_IMGS_COLOR,
     VECTOR_FEATURES_COLOR,
 )
-
-if TYPE_CHECKING:
-    from geographer.connector import Connector
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
