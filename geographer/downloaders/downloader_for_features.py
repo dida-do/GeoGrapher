@@ -6,7 +6,7 @@ import logging
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     download_dir: Path
     downloader_for_single_feature: ImgDownloaderForSingleVectorFeature
     download_processor: ImgDownloadProcessor
-    kwarg_defaults: dict = Field(default_factory=dict)
+    kwarg_defaults: Dict = Field(default_factory=dict)
 
     def download(
         self,

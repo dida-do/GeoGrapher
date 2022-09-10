@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Extra, Field
 
@@ -142,7 +142,7 @@ class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
     Includes a bands field.
     """
 
-    bands: Optional[dict[str, Optional[list[int]]]] = Field(
+    bands: Optional[Dict[str, Optional[List[int]]]] = Field(
         default=None,
         title="Dict of band indices",
         description="keys: image directory names, values: list of band indices"
