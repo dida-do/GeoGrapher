@@ -1,7 +1,5 @@
 """Test compatibility of raster_imgs, vector_features, and graph."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 

@@ -1,5 +1,7 @@
 """Mix-in that provides methods to get image bands."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Optional
 

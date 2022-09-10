@@ -8,6 +8,8 @@ round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely
     image bounding rectangles.
 """
 
+from __future__ import annotations
+
 import copy
 import logging
 from pathlib import Path

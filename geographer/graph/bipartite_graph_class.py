@@ -1,5 +1,7 @@
 """ABC for bipartite graphs."""
 
+from __future__ import annotations
+
 from abc import ABC
 from pathlib import Path
 from typing import Any, Optional
