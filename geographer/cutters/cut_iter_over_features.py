@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -60,7 +60,7 @@ class DSCutterIterOverFeatures(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_imgs: dict[str, List[str]] = Field(
+    cut_imgs: Dict[str, List[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut images dictionary",
         description="Normally, should not be set by hand! Dict with vector features\
