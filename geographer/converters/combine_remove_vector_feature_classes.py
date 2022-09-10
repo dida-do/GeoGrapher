@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import shutil
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
@@ -31,10 +31,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     removing vector feature classes.
     """
 
-    classes: list[Union[str, list[str]]] = Field(
+    classes: List[Union[str, List[str]]] = Field(
         description="Classes to keep and combine. See docstring."
     )
-    new_class_names: Optional[list[str]] = Field(
+    new_class_names: Optional[List[str]] = Field(
         default=None, description="Names of new classes"
     )
     class_separator: str = Field(
