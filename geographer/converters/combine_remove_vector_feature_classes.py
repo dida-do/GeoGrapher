@@ -1,12 +1,14 @@
-"""Create a new dataset from an existing one by combining and/or removing
-vector feature classes."""
+"""Combine and/or remove vector feature classes.
+
+Create a new dataset from an existing one by combining and/or removing
+vector feature classes.
+"""
 
 from __future__ import annotations
 
 import logging
 import shutil
-from codecs import ignore_errors
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
@@ -17,19 +19,22 @@ from geographer import Connector
 from geographer.creator_from_source_dataset_base import DSCreatorFromSource
 from geographer.global_constants import VECTOR_FEATURES_INDEX_NAME
 from geographer.label_makers.label_maker_base import LabelMaker
-from geographer.utils.utils import concat_gdfs, deepcopy_gdf
+from geographer.utils.utils import deepcopy_gdf
 
 log = logging.Logger(__name__)
 
 
 class DSConverterCombineRemoveClasses(DSCreatorFromSource):
-    """Create a new dataset from an existing one by combining and/or removing
-    vector feature classes."""
+    """Class for combining and/or removing vector feature classes.
 
-    classes: list[Union[str, list[str]]] = Field(
+    For creating a new dataset from an existing one by combining and/or
+    removing vector feature classes.
+    """
+
+    classes: List[Union[str, List[str]]] = Field(
         description="Classes to keep and combine. See docstring."
     )
-    new_class_names: Optional[list[str]] = Field(
+    new_class_names: Optional[List[str]] = Field(
         default=None, description="Names of new classes"
     )
     class_separator: str = Field(
@@ -52,8 +57,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     def _update(self):
         self._create_or_update()
 
-    def _create_or_update(self):
-        """Create a new dataset/connector from an existing one by combining
+    def _create_or_update(self) -> Connector:
+        """Combine and/or remove vector feature classes.
+
+        Create a new dataset/connector from an existing one by combining
         and/or removing vector feature classes. Works for both categorical and
         soft-categorical label types.
 
@@ -92,7 +99,6 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             them in the classes argument, vector features of the background class will
             be lost.
         """
-
         # Determine classes
         classes = list(  # convert strings in classes to singleton lists
             map(lambda x: x if isinstance(x, list) else [x], self.classes)
@@ -119,7 +125,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         features_from_source_df = self._combine_or_remove_classes_from_vector_features(
             label_type=self.source_connector.label_type,
             vector_features=self.source_connector.vector_features,
-            all_source_vector_feature_classes=self.source_connector.all_vector_feature_classes,
+            all_source_vector_feature_classes=(
+                self.source_connector.all_vector_feature_classes
+            ),
             classes=classes,
             new_class_names=new_class_names,
         )
@@ -136,10 +144,14 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             len(self.target_connector.vector_features) == 0
             and self.target_connector.label_type == "soft-categorical"
         ):
-            empty_vector_features_with_corrected_columns = self._combine_or_remove_classes_from_vector_features(
+            (
+                empty_vector_features_with_corrected_columns
+            ) = self._combine_or_remove_classes_from_vector_features(
                 label_type="soft-categorical",
                 vector_features=self.target_connector.vector_features,
-                all_source_vector_feature_classes=self.source_connector.all_vector_feature_classes,
+                all_source_vector_feature_classes=(
+                    self.source_connector.all_vector_feature_classes
+                ),
                 classes=classes,
                 new_class_names=new_class_names,
             )
@@ -202,7 +214,8 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             for (
                 img_name
             ) in imgs_in_target_dataset_before_addings_imgs_from_source_dataset:
-                # ... if among the vector features intersecting it in the target dataset ...
+                # ... if among the vector features intersecting it
+                # in the target dataset ...
                 vector_features_intersecting_img = set(
                     self.target_connector.vector_features_intersecting_img(img_name)
                 )
@@ -211,7 +224,8 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                     vector_features_intersecting_img & features_to_add_to_target_dataset
                     != set()
                 ):
-                    # ... then we need to update the label for it, so we delete the current label.
+                    # ... then we need to update the label for it,
+                    # so we delete the current label.
                     self.label_maker.delete_labels(
                         connector=self.target_connector, img_names=[img_name]
                     )
@@ -222,9 +236,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         # remember original type
         if self.target_connector.label_type == "categorical":
             self.target_connector.vector_features.loc[
-                features_to_add_to_target_dataset, "orig_type"
+                list(features_to_add_to_target_dataset), "orig_type"
             ] = self.source_connector.vector_features.loc[
-                features_to_add_to_target_dataset, "type"
+                list(features_to_add_to_target_dataset), "type"
             ]
 
         return self.target_connector
@@ -254,11 +268,14 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 self.source_connector.all_vector_feature_classes
             )
             raise ValueError(
-                f"The following classes are not in self.source_connector.all_vector_feature_classes: {classes_not_in_source_dataset}"
+                "The following classes are not in "
+                "self.source_connector.all_vector_feature_classes: "
+                f"{classes_not_in_source_dataset}"
             )
         if not len(classes_to_keep) == len(set(classes_to_keep)):
             raise ValueError(
-                "a vector feature class in the source dataset can only be in at most one of the new classes"
+                "a vector feature class in the source dataset "
+                "can only be in at most one of the new classes"
             )
 
         if (
@@ -275,7 +292,8 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         new_class_names: list[str],
         all_source_vector_feature_classes: list[str],
     ) -> GeoDataFrame:
-        """
+        """Combine and/or remove classes from vector_features geodataframe.
+
         Args:
             label_type: [description]
             vector_features: [description]

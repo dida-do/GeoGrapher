@@ -1,12 +1,13 @@
+"""Mixin that implements adding/dropping rasters."""
+
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Sequence
 
 import pandas as pd
 from geopandas import GeoDataFrame
 
-from geographer.graph.bipartite_graph_mixin import RASTER_IMGS_COLOR
 from geographer.utils.connector_utils import _check_df_cols_agree
 from geographer.utils.utils import concat_gdfs, deepcopy_gdf
 
@@ -32,15 +33,13 @@ class AddDropRasterImgsMixIn:
                 connector's raster_imgs format
             label_maker: If given generate labels for new images.
         """
-
-        new_raster_imgs = deepcopy_gdf(
-            new_raster_imgs
-        )  #  don't want to modify argument
+        new_raster_imgs = deepcopy_gdf(new_raster_imgs)  # don't want to modify argument
 
         duplicates = new_raster_imgs[new_raster_imgs.index.duplicated()]
         if len(duplicates) > 0:
             raise ValueError(
-                f"new_raster_imgs contains rows with duplicate img_names: {duplicates.index.tolist()}"
+                "new_raster_imgs contains rows with duplicate img_names: "
+                f"{duplicates.index.tolist()}"
             )
 
         imgs_names_in_both = list(
@@ -49,7 +48,8 @@ class AddDropRasterImgsMixIn:
         if imgs_names_in_both:
             img_names_in_both_str = ", ".join(imgs_names_in_both)
             raise ValueError(
-                f"conflict: already have entries for raster images {img_names_in_both_str}"
+                "conflict: already have entries for raster images "
+                f"{img_names_in_both_str}"
             )
 
         if new_raster_imgs.geometry.isna().any():
@@ -57,7 +57,8 @@ class AddDropRasterImgsMixIn:
                 new_raster_imgs[new_raster_imgs.geometry.isna()].index
             )
             raise ValueError(
-                f"new_raster_imgs contains rows with None geometries: {imgs_with_null_geoms}"
+                "new_raster_imgs contains rows with None geometries: "
+                f"{imgs_with_null_geoms}"
             )
 
         self._check_required_df_cols_exist(
@@ -100,8 +101,7 @@ class AddDropRasterImgsMixIn:
         remove_imgs_from_disk: bool = True,
         label_maker: Optional[LabelMaker] = None,
     ):
-        """Drop images from connector's ``raster_imgs`` attribute and from
-        dataset.
+        """Drop rasters from ``raster_imgs`` and from dataset.
 
         Remove rows from the connector's raster_imgs, delete the corresponding
         vertices in the graph, and delete the image from disk (unless
@@ -114,8 +114,8 @@ class AddDropRasterImgsMixIn:
             label_maker: If given, will use label_makers
                 delete_labels method. Defaults to None.
         """
-
-        # make sure we don't interpret a string as a list of characters in the iteration below:
+        # make sure we don't interpret a string as a list of characters
+        # in the iteration below:
         if isinstance(img_names, str):
             img_names = [img_names]
         assert pd.api.types.is_list_like(img_names)

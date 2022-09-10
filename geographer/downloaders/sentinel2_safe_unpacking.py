@@ -32,7 +32,9 @@ def safe_to_geotif_L2A(
     requested_jp2_masks: list[str] = ["CLDPRB", "SNWPRB"],
     requested_gml_mask: list[tuple[str, str]] = [("CLOUDS", "B00")],
 ) -> dict:
-    """Converts a .SAFE file with L2A sentinel-2 data to geotif and returns a
+    """Convert a L2A-level .SAFE file to geotif.
+
+    Convert a .SAFE file with L2A sentinel-2 data to geotif and return a
     dict with the crs epsg code and a shapely polygon defined by the image
     bounds.
 
@@ -63,7 +65,6 @@ def safe_to_geotif_L2A(
     Returns:
         dict containing tif crs and bounding rectangle
     """
-
     # assert resolution is within available
     assert resolution in [10, 20, 60, "10", "20", "60"]
 
@@ -157,8 +158,8 @@ def safe_to_geotif_L2A(
     # add invalid paths for missing gml masks (will result in zero bands later)
     for pair in requested_gml_mask:
         if pair not in gml_mask_paths_dict:
-            gml_mask_paths_dict[pair] = Path(f"/path/to/nowhere")
-            gml_mask_paths.append(Path(f"/path/to/nowhere"))
+            gml_mask_paths_dict[pair] = Path("/path/to/nowhere")
+            gml_mask_paths.append(Path("/path/to/nowhere"))
 
     # reader for tci
     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")

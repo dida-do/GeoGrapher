@@ -1,5 +1,8 @@
-"""Create a dataset with soft-categorical labels from one with categorical
-labels."""
+"""Create a dataset with soft-categorical labels.
+
+Create a dataset with soft-categorical labels from a dataset with
+categorical labels.
+"""
 
 import logging
 import shutil
@@ -17,8 +20,10 @@ log = logging.Logger(__name__)
 
 
 class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
-    """Create a dataset with soft-categorical labels from one with categorical
-    labels."""
+    """Create a dataset with soft-categorical labels.
+
+    Assumes source dataset has categorical labels.
+    """
 
     def _create(self):
         self._create_or_update()
@@ -82,7 +87,8 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
                 geoms_intersecting_img & geoms_that_will_be_added_to_target_dataset
                 != set()
             ):
-                # ... then we need to update the label for it, so we delete the current label.
+                # ... then we need to update the label for it,
+                # so we delete the current label.
                 (self.target_assoc.labels_dir / img_name).unlink(missing_ok=True)
 
         # Finally, we make all missing categorical labels in target dataset.

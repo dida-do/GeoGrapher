@@ -1,7 +1,4 @@
-"""
-ImgsAroundPolygonCutter - SingleImgCutter that creates a cutout around a
-given vector feature from a source image.
-"""
+"""SingleImgCutter that creates a cutout around a vector feature."""
 
 from __future__ import annotations
 
@@ -13,7 +10,7 @@ from typing import Any, Literal, Optional, Union
 
 import rasterio as rio
 from affine import Affine
-from pydantic import Field, PrivateAttr
+from pydantic import PrivateAttr
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
 from shapely.geometry import box
@@ -28,9 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class SingleImgCutterAroundFeature(SingleImgCutter):
-    """SingleImgCutter that cuts a small image (or several contiguous such
-    images if the vector feature does not fit into a single one) around each
-    vector feature in the image accepted by the feature filter predicate."""
+    """SingleImgCutter that creates a cutout around a vector feature.
+
+    SingleImgCutter that cuts a small image (or several contiguous such
+    images if the vector feature does not fit into a single one) around
+    each vector feature in the image accepted by the feature filter
+    predicate.
+    """
 
     mode: Literal["random", "centered", "variable"]
     new_img_size: Optional[ImgSize] = None
@@ -50,7 +51,8 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         random_seed: int = 42,
         **kwargs,
     ) -> None:
-        """
+        """Initialize SingleImgCutterAroundFeature.
+
         Args:
             mode: One of 'random', 'centered', 'variable'.
                 If 'random' images (or minimal image grids) will be randomly chosen
@@ -68,7 +70,6 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         Raises:
             ValueError: If the mode is unknown.
         """
-
         super().__init__(
             mode=mode,
             new_img_size=new_img_size,
@@ -126,7 +127,6 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
 
     @staticmethod
     def _get_size_rows_cols(img_size: Union[int, tuple[int, int]]) -> tuple[int, int]:
-
         if isinstance(img_size, tuple):
             new_img_size_rows = img_size[0]
             new_img_size_cols = img_size[1]
@@ -144,7 +144,9 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
     ) -> list[tuple[Window, Affine, str]]:
-        """Given a vector feature and a GeoTiff image fully containing it
+        """Return windwos, transforms, and names of new images.
+
+        Given a vector feature and a GeoTiff image fully containing it
         return a list of windows, window transforms, and new img_names defining
         a minimal rectangular grid in the image covering the feature.
 
@@ -198,19 +200,22 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
                 img=src, transformed_feature_geom=transformed_feature_geom
             )
 
-            assert (
-                min(min_row, max_row, min_col, max_col) >= 0
-            ), f"nonsensical negative max/min row/col values. sth went wrong cutting {source_img_name} for {feature_name}"
+            assert min(min_row, max_row, min_col, max_col) >= 0, (
+                "nonsensical negative max/min row/col values. "
+                "sth went wrong cutting {source_img_name} for {feature_name}"
+            )
 
             if self.mode in {"centered", "random"}:
                 new_img_size_rows = self._rows
                 new_img_size_cols = self._cols
             elif self.mode == "variable":
                 new_img_size_rows = max(
-                    self.scaling_factor * (max_row - min_row), self._rows
+                    self.scaling_factor * (max_row - min_row),  # type: ignore
+                    self._rows,
                 )
                 new_img_size_cols = max(
-                    self.scaling_factor * (max_col - min_col), self._cols
+                    self.scaling_factor * (max_col - min_col),  # type: ignore
+                    self._cols,
                 )
 
             (
@@ -259,7 +264,10 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
                     ):
                         new_img_name = f"{img_name_no_extension}_{feature_name}.tif"
                     else:
-                        new_img_name = f"{img_name_no_extension}_{feature_name}_{img_row}_{img_col}.tif"
+                        new_img_name = (
+                            f"{img_name_no_extension}_{feature_name}_"
+                            f"{img_row}_{img_col}.tif"
+                        )
 
                     window_bounding_rectangle = box(
                         *rio.windows.bounds(window, src.transform)
@@ -277,9 +285,10 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
     def _get_min_max_row_col(
         self, img: DatasetReader, transformed_feature_geom: BaseGeometry
     ) -> tuple[int, int, int, int]:
-        """Return min_row, max_row, min_col, max_col of enveloping rectangle of
-        vector feature."""
+        """Return bounds of enveloping rectangle of vector feature.
 
+        Bounds returned are min_row, max_row, min_col, max_col.
+        """
         # Find min and max row of rectangular envelope of vector feature
         list_of_rectangle_corner_coords = list(
             transformed_feature_geom.envelope.exterior.coords
@@ -313,10 +322,12 @@ class SingleImgCutterAroundFeature(SingleImgCutter):
         min_col: int,
         max_col: int,
     ) -> tuple[int, int, int, int]:
-        """Return row and col offsets and number of windows in row and in col
-        direction such that the resulting grid is minimal grid fully covering
-        the vector feature."""
+        """Return row and col offsets and number of windows.
 
+        Return row and col offsets and number of windows in row and in
+        col direction such that the resulting grid is minimal grid fully
+        covering the vector feature.
+        """
         num_small_imgs_in_row_direction = math.ceil(
             float(max_row - min_row) / new_img_size_rows
         )

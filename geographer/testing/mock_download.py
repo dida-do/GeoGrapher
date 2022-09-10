@@ -1,5 +1,4 @@
-"""Mock ImgDownloaderForSingleVectorFeature and ImgDownloadProcessor for
-testing.
+"""Mock ImgDownloadProcessor for testing.
 
 Virtually 'download' from a dataset of images in a source directory.
 """
@@ -8,10 +7,8 @@ from __future__ import annotations
 
 import random
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Union
 
-import shapely
-from geopandas.geodataframe import GeoDataFrame
 from pydantic import Field
 from shapely.geometry import Polygon
 
@@ -36,6 +33,8 @@ class MockDownloadProcessor(ImgDownloadProcessor):
     source_connector: Connector = Field(exclude=True)
 
     class Config:
+        """BaseModel Config."""
+
         arbitrary_types_allowed = True
 
     def process(
@@ -46,6 +45,11 @@ class MockDownloadProcessor(ImgDownloadProcessor):
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
     ) -> Dict[Union[Literal["img_name", "geometry", "orig_crs_epsg_code"], str], Any]:
+        """Process "downloaded" file, i.e. does nothing.
+
+        Returns:
+            return dict
+        """
         return {
             "img_name": img_name,
             "geometry": self.source_connector.raster_imgs.loc[img_name, "geometry"],
@@ -68,6 +72,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
     probability_img_already_downloaded: float = 0.1
 
     class Config:
+        """BaseModel Config."""
+
         arbitrary_types_allowed = True
 
     def download(
@@ -78,7 +84,9 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
         previously_downloaded_imgs_set: set[Union[str, int]],
         **kwargs,
     ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
-        """'Download' an image fully containing a vector vector feature or
+        """Mock download an image.
+
+        Mock download an image fully containing a vector vector feature or
         several images jointly containing it from the source_connector and
         return a dict with information to be updated in the connector, see
         below for details.
@@ -95,6 +103,7 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
                 allows the download function to make sure it doesn't try
                 downloading an image that is already in the dataset.
             **kwargs: optional keyword arguments depending on the application.
+
         Returns:
              A dict with keys and values:
                 'list_img_info_dicts': a list of dicts containing the information
@@ -103,12 +112,13 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
                 column names of the raster_imgs and the values the indices or entries
                 of those columns in row that will correspond to the new image.
         """
-
         # Make sure the vector feature is in self.source_connector.
         # This should be true by construction.
-        if not feature_name in self.source_connector.vector_features.index:
+        if feature_name not in self.source_connector.vector_features.index:
             raise Exception(
-                f"Polygon {feature_name} not in source connector. This shouldn't have happened, since the source connector should contain all vector features of the mock test connector."
+                f"Vector feature {feature_name} not in source connector. "
+                "This shouldn't have happened, since the source connector "
+                "should contain all vector features of the mock test connector."
             )
 
         # Find the images in self.source_connector containing the vector feature
@@ -122,7 +132,8 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
             # ... inform the calling download_missing_imgs_for_vector_features
             # by raising an error.
             raise NoImgsForVectorFeatureFoundError(
-                f"No images containing vector feature {feature_name} found in source dataset"
+                f"No images containing vector feature {feature_name} "
+                "found in source dataset"
             )
 
         # Else, there is an image in the source dataset
@@ -138,7 +149,9 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
 
                 # ... in which case we raise an error.
                 raise ImgAlreadyExistsError(
-                    f"random.random() was less than self.probability_img_already_downloaded= {self.probability_img_already_downloaded}."
+                    "random.random() was less than "
+                    "self.probability_img_already_downloaded= "
+                    f"{self.probability_img_already_downloaded}."
                 )
 
             # Else, from not previously downloaded images ...
@@ -159,7 +172,9 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
                     # ... an error occurs when downloading,
                     # so we raise an ImgDownloadError.
                     raise ImgDownloadError(
-                        f"random.random() was less than self.probability_of_download_error={self.probability_of_download_error}."
+                        "random.random() was less than "
+                        "self.probability_of_download_error= "
+                        f"{self.probability_of_download_error}."
                     )
 
                 # ... 'download' it, i.e. return the corresponding return dict.
@@ -175,5 +190,6 @@ class MockDownloaderForSingleFeature(ImgDownloaderForSingleVectorFeature):
             else:
 
                 raise NoImgsForVectorFeatureFoundError(
-                    f"No new images containing vector feature {feature_name} found in source dataset"
+                    "No new images containing vector feature "
+                    f"{feature_name} found in source dataset"
                 )

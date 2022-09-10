@@ -55,7 +55,6 @@ def get_cutter_imgs_around_every_feature(
     Returns:
         DSCutterIterOverFeatures: dataset cutter
     """
-
     is_feature_missing_imgs: FeatureFilterPredicate = IsFeatureMissingImgs(
         target_img_count=target_img_count
     )

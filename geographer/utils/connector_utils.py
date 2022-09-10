@@ -22,7 +22,9 @@ def empty_gdf(
     cols_and_types: dict,
     crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
 ):
-    """Return a empty GeoDataFrame with specified index and column names and
+    """Return an empty GeoDataFrame.
+
+    Return an empty GeoDataFrame with specified index and column names and
     types and crs.
 
     Args:
@@ -34,7 +36,6 @@ def empty_gdf(
     Returns:
         new_empty_df: the empty vector_features_df GeoDataFrame.
     """
-
     new_empty_gdf_dict = {
         index_name: str,
         "geometry": GeoSeries([]),
@@ -51,8 +52,17 @@ def empty_gdf(
 
 
 def empty_gdf_same_format_as(df: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty df of the same format (index name, columns, column
-    types) as the df argument."""
+    """Create an empty df of the same format as df.
+
+    Create an empty df of the same format (index name, columns, column
+    types) as the df argument.
+
+    Args:
+        df: input GeoDataFrame.
+
+    Return:
+        empty GeoDataFrame of same format as input.
+    """
     df_index_name = df.index.name
 
     df_cols_and_index_types = {df.index.name: df.index.dtype, **df.dtypes.to_dict()}
@@ -67,7 +77,9 @@ def empty_gdf_same_format_as(df: GeoDataFrame) -> GeoDataFrame:
 
 
 def empty_vector_features_same_format_as(vector_features: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty vector_features of the same format (index name,
+    """Create an empty vector_features of the same format.
+
+    Create an empty vector_features of the same format (index name,
     columns, column types) as the vector_features argument.
 
     Args:
@@ -76,12 +88,13 @@ def empty_vector_features_same_format_as(vector_features: GeoDataFrame) -> GeoDa
     Returns:
         New empty dataframe
     """
-
     return empty_gdf_same_format_as(vector_features)
 
 
 def empty_raster_imgs_same_format_as(raster_imgs: GeoDataFrame) -> GeoDataFrame:
-    """Creates an empty raster_imgs of the same format (index name, columns,
+    """Create an empty raster_imgs of the same format.
+
+    Create an empty raster_imgs of the same format (index name, columns,
     column types) as the raster_imgs argument.
 
     Args:
@@ -90,7 +103,6 @@ def empty_raster_imgs_same_format_as(raster_imgs: GeoDataFrame) -> GeoDataFrame:
     Returns:
         New empty images datagrame
     """
-
     return empty_gdf_same_format_as(raster_imgs)
 
 
