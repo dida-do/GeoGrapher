@@ -9,8 +9,6 @@ from typing import Any, Literal, Union
 from pydantic import BaseModel
 from shapely.geometry import Polygon
 
-from geographer.connector import Connector
-
 
 class ImgDownloaderForSingleVectorFeature(ABC, BaseModel):
     """Base class for downloaders for a single vector feature."""

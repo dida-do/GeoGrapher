@@ -1,9 +1,13 @@
 """
 TODO: Include as method in ImgPolygonAssociator.
 
-Functions to cut datasets of GeoTiffs (or update previously cut datasets) by cutting each image in the source dataset to a grid of images.
-    - cut_dataset_img_to_grid_of_imgs. Updates a dataset of GeoTiffs that was created with new_tif_dataset_img2grid_imgs.
-    - update_dataset_img_to_grid_of_imgs: customizable general function to create or update datasets of GeoTiffs from existing ones by iterating over vector features.
+Functions to cut datasets of GeoTiffs (or update previously cut datasets)
+by cutting each image in the source dataset to a grid of images.
+    - cut_dataset_img_to_grid_of_imgs. Updates a dataset of
+        GeoTiffs that was created with new_tif_dataset_img2grid_imgs.
+    - update_dataset_img_to_grid_of_imgs: customizable general function
+        to create or update datasets of GeoTiffs from existing ones
+        by iterating over vector features.
 """
 
 # yapf: disable
@@ -12,32 +16,32 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from geopandas import GeoDataFrame
 
-from geographer.cut.single_img_cutter_bbox import SingleImgCutterFromBBoxes
-from geographer.cut.type_aliases import ImgSize
-from geographer.global_constants import DATA_DIR_SUBDIRS
+from geographer.cutters.single_img_cutter_bbox import SingleImgCutterFromBBoxes
+from geographer.cutters.type_aliases import ImgSize
 
 if TYPE_CHECKING:
     from geographer.img_geom_associator import ImgPolygonAssociator
 
-from geographer.cut.img_filter_predicates import AlwaysTrue
-from geographer.cut.single_img_cutter_grid import SingleImgCutterToGrid
 from geographer.cutteres.cut_iter_over_imgs import (
     create_or_update_dataset_iter_over_imgs,
 )
+from geographer.cutters.img_filter_predicates import AlwaysTrue
 
 logger = logging.getLogger(__name__)
 
-class DSCutterBBoxes(): #TODO
+class DSCutterBBoxes:  # noqa: E302
+    """Class for creating a dataset from bboxes and a source dataset."""
 
     def create_dataset_cut_bboxes(
+            self,
             create_or_update: str,
             bounding_boxes: GeoDataFrame,
-            source_assoc: Optional[ImgPolygonAssociator] = None,
-            target_data_dir: Union[str, Path] = None,
+            source_assoc: ImgPolygonAssociator,
+            target_data_dir: Union[str, Path],
             target_assoc: Optional[ImgPolygonAssociator] = None,
             new_img_size: ImgSize = 512,
             img_bands: Optional[list[int]] = None,
@@ -45,31 +49,38 @@ class DSCutterBBoxes(): #TODO
         """TODO.
 
         Warning:
-            TODO! update is not going to work because should be iter over (vector) geometries but uses iter over imgs.
+            TODO! update is not going to work because should be iter over
+            (vector) geometries but uses iter over imgs.
 
 
         Args:
-            source_data_dir: data directory (images, labels, associator) containing the GeoTiffs to be cut from.
+            source_data_dir: data directory (images, labels, associator) containing
+                the GeoTiffs to be cut from.
             source_assoc: associator of dataset containing the GeoTiffs to be cut from.
-            target_data_dir: path to data directory where the new dataset (images, labels, associator) will be created. If the directory does not exist it will be created.
-            target_assoc associator of target dataset.
-            new_img_size: size of new images (side length or (rows, col)) for 'centered' and 'random' modes. Defaults to 512.
-            img_bands: list of bands to extract from source images. Defaults to None (i.e. all bands).
-            label_bands:  list of bands to extract from source labels. Defaults to None (i.e. all bands).
+            target_data_dir: path to data directory where the new dataset
+                (images, labels, associator) will be created. If the directory
+                does not exist it will be created.
+            target_assoc: associator of target dataset.
+            new_img_size: size of new images (side length or (rows, col))
+                for 'centered' and 'random' modes. Defaults to 512.
+            img_bands: list of bands to extract from source images.
+                Defaults to None (i.e. all bands).
+            label_bands:  list of bands to extract from source labels.
+                Defaults to None (i.e. all bands).
 
         Returns:
             connector of new dataset in target_data_dir
         """
-
         target_data_dir = Path(target_data_dir)
 
-        bbox_cutter = SingleImgCutterFromBBoxes(source_assoc=source_assoc,
-                                    target_images_dir=target_data_dir / 'images',
-                                    target_labels_dir=target_data_dir / 'labels',
-                                    new_img_size=new_img_size,
-                                    bounding_boxes=bounding_boxes,
-                                    img_bands=img_bands,
-                                    label_bands=label_bands)
+        bbox_cutter = SingleImgCutterFromBBoxes(
+            source_assoc=source_assoc,
+            target_images_dir=target_data_dir / 'images',
+            target_labels_dir=target_data_dir / 'labels',
+            new_img_size=new_img_size,
+            bounding_boxes=bounding_boxes,
+            img_bands=img_bands,
+            label_bands=label_bands)
         always_true = AlwaysTrue()
 
         target_assoc = create_or_update_dataset_iter_over_imgs(
@@ -82,14 +93,14 @@ class DSCutterBBoxes(): #TODO
 
         # throw out images with duplicate bboxes:
         # First, find a subset of images without duplicate bboxes ...
-        imgs_to_keep = []
+        imgs_to_keep: list[str] = []
         for count, img_name in enumerate(target_assoc.raster_imgs.index):
             img_bbox = target_assoc.raster_imgs.loc[img_name, 'geometry']
             if {
                     img_name_
                     for img_name_ in imgs_to_keep
-                    if img_bbox.equals(target_assoc.raster_imgs.loc[img_name_,
-                                                                'geometry'])
+                    if img_bbox.equals(target_assoc.raster_imgs.loc[
+                        img_name_, 'geometry'])
             } == set():
                 imgs_to_keep += [img_name]
         # ... and delete the remaining images, which have duplicate bboxes

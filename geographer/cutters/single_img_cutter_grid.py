@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import rasterio as rio
 from affine import Affine
-from pydantic import BaseModel, validator
+from pydantic import validator
 from rasterio.windows import Window
 
 from geographer.connector import Connector
@@ -80,7 +80,8 @@ class SingleImgCutterToGrid(SingleImgCutter):
 
             if not src.height % self.new_img_size_rows == 0:
                 logger.warning(
-                    "number of rows in source image not divisible by number of rows in new images"
+                    "number of rows in source image not divisible by "
+                    "number of rows in new images"
                 )
             if not src.width % self.new_img_size_cols == 0:
                 logger.warning(

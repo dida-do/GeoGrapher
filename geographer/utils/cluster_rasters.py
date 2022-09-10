@@ -1,11 +1,13 @@
-"""Given a dataset and an optional list of rasters partition the rasters into
-equivalence classes ('clusters') that need to be respected when generating the
-train-validation split."""
+"""Cluster rasters.
+
+Given a dataset and an optional list of rasters partition the rasters
+into equivalence classes ('clusters') that need to be respected when
+generating the train-validation split.
+"""
 
 from __future__ import annotations
 
 import itertools
-from functools import partial
 from pathlib import Path
 from typing import Any, Literal, Optional, Tuple, Union
 
@@ -13,7 +15,6 @@ import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame
 from networkx import Graph
-from shapely.geometry.polygon import Point, Polygon
 
 from geographer import Connector
 from geographer.utils.utils import deepcopy_gdf
@@ -42,7 +43,6 @@ def get_raster_clusters(
     Returns:
         (names of rasters defining) clusters
     """
-
     allowed_clusters_defined_by_args = {
         "rasters_that_share_vector_features",
         "rasters_that_share_vector_features_or_overlap",
@@ -103,7 +103,7 @@ def get_raster_clusters(
 def _refine_preclustering_along_second_axis(
     preclusters: list[set[str]], second_axis: Literal["x", "y"], connector: Connector
 ) -> Tuple[list[set[str]], list[set[str]]]:
-    """
+    """Refine preclustering along the second axis.
 
     Args:
         preclusters: preclusters
@@ -112,7 +112,6 @@ def _refine_preclustering_along_second_axis(
     Returns:
         singleton and non-singleton pre-clusters
     """
-
     singletons, preclusters_along_2nd_axis = [], []
 
     for precluster in preclusters:
@@ -211,7 +210,7 @@ def _pre_cluster_along_axis(
 ) -> list[set[str]]:
 
     if axis not in {"x", "y"}:
-        raise ValueError(f"axis arg should be one of 'x', 'y'.")
+        raise ValueError("axis arg should be one of 'x', 'y'.")
 
     mins = geoms[["name", f"min{axis}", "img_or_polygon"]].copy()
     mins["type"] = "min"
@@ -264,19 +263,17 @@ def _extract_graph_of_rasters(
     clusters_defined_by: str,
     img_names: list[str] = None,
 ) -> Graph:
-    """Extract graph of images with edges determined by the clusters_defined_by
-    arg."""
-
+    """Extract graph of images determined by clusters_defined_by."""
     img_graph = Graph()
     img_graph.add_nodes_from(img_names)
 
     # add edges to graph
     pairs_of_imgs = itertools.combinations(img_names, 2)
-    are_connected = lambda s: partial(
-        _are_connected_by_an_edge,
+    are_connected = lambda s: _are_connected_by_an_edge(  # noqa: E731
+        *s,
         clusters_defined_by=clusters_defined_by,
         connector=connector,
-    )(*s)
+    )
     pairs_of_connected_imgs = filter(are_connected, pairs_of_imgs)
     img_graph.add_edges_from(pairs_of_connected_imgs)
 
@@ -289,9 +286,11 @@ def _are_connected_by_an_edge(
     clusters_defined_by: str,
     connector: Connector,
 ) -> bool:
-    """Return True if there is an edge in the graph of images determined by the
-    clusters_defined_by relation."""
+    """Return True if images are connected, else False.
 
+    Return True if there is an edge in the graph of images determined by
+    the clusters_defined_by relation, else return False.
+    """
     img_bbox = connector.raster_imgs.loc[img].geometry
     other_img_bbox = connector.raster_imgs.loc[another_img].geometry
 

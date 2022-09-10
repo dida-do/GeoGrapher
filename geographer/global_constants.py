@@ -1,3 +1,5 @@
+"""Global constants."""
+
 from pathlib import Path
 
 STANDARD_CRS_EPSG_CODE = 4326  # WGS84

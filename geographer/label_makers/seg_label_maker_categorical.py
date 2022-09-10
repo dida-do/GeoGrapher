@@ -16,8 +16,7 @@ log = logging.getLogger(__name__)
 
 
 class SegLabelMakerCategorical(SegLabelMaker):
-    """Label maker that generates categorical segmentation labels from a
-    connector's vector_features."""
+    """Label maker for categorical segmentation labels."""
 
     @property
     def label_type(self) -> str:
@@ -34,7 +33,6 @@ class SegLabelMakerCategorical(SegLabelMaker):
         Returns:
             None:
         """
-
         img_path = connector.images_dir / img_name
         label_path = connector.labels_dir / img_name
 
@@ -147,12 +145,16 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     dst.write(label, 1)
 
     def _run_safety_checks(self, connector: Connector):
-        """Check existence of 'type' column in connector.vector_features and
-        make sure entries are allowed."""
+        """Run safety checks.
 
+        Check existence of 'type' column in connector.vector_features
+        and make sure entries are allowed.
+        """
         if "type" not in connector.vector_features.columns:
             raise ValueError(
-                "connector.vector_features needs a 'type' column containing the ML task (e.g. segmentation or object detection) class of the geometries"
+                "connector.vector_features needs a 'type' column containing "
+                "the ML task (e.g. segmentation or object detection) "
+                "class of the geometries."
             )
 
         feature_classes_in_vector_features = set(
@@ -161,6 +163,10 @@ class SegLabelMakerCategorical(SegLabelMaker):
         if not feature_classes_in_vector_features <= set(
             connector.all_vector_feature_classes
         ):
+            unrecognized_classes = feature_classes_in_vector_features - set(
+                self.all_vector_feature_classes
+            )
             raise ValueError(
-                f"Unrecognized classes in connector.vector_features: {feature_classes_in_vector_features - set(self.all_vector_feature_classes)}"
+                f"Unrecognized classes in connector.vector_features: "
+                f" {unrecognized_classes}."
             )

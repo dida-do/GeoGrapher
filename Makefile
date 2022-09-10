@@ -37,7 +37,6 @@ format: venv
 
 lint: venv
 	flake8 $(PROJECTNAME) tests
-	mypy $(PROJECTNAME) tests
 
 test: venv
 	pytest -v
