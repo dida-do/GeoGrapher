@@ -216,3 +216,10 @@ def create_kml_all_geodataframes(
 
     with fiona.drivers():
         combined.to_file(out_path, driver="KML")
+
+
+def removeprefix(input_str: str, prefix: str) -> str:
+    """Remove prefix from string."""
+    if prefix and input_str.startswith(prefix):
+        return input_str[len(prefix) :]  # noqa: E203
+    return input_str

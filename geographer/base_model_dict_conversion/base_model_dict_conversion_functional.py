@@ -11,6 +11,8 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
+from geographer.utils.utils import removeprefix
+
 
 def get_nested_base_model_dict(
     base_model_obj_or_dict: Union[BaseModel, dict, Any]
@@ -57,20 +59,20 @@ def get_nested_base_model_dict(
     }
 
     if isinstance(base_model_obj_or_dict, dict):
-        result = (
-            remaining_fields_dict
-            | dict_or_base_model_fields_dict
-            | path_fields_dict
-            | tuple_fields_dict
-        )
+        result = {
+            **remaining_fields_dict,
+            **dict_or_base_model_fields_dict,
+            **path_fields_dict,
+            **tuple_fields_dict,
+        }
     elif isinstance(base_model_obj_or_dict, BaseModel):
         result = {
-            f"constructor_{type(base_model_obj_or_dict).__name__}": (
-                remaining_fields_dict
-                | dict_or_base_model_fields_dict
-                | path_fields_dict
-                | tuple_fields_dict
-            )
+            f"constructor_{type(base_model_obj_or_dict).__name__}": {
+                **remaining_fields_dict,
+                **dict_or_base_model_fields_dict,
+                **path_fields_dict,
+                **tuple_fields_dict,
+            }
         }
 
     return result
@@ -163,7 +165,7 @@ def is_base_model_constructor_dict(dict_: dict) -> bool:
         and len(dict_) == 1
         and isinstance(key, str)
         and key.startswith("constructor_")
-        and not key.removeprefix("constructor_").startswith("constructor_")
+        and not removeprefix(key, "constructor_").startswith("constructor_")
     )
 
 
@@ -180,10 +182,10 @@ def get_base_model_constructor(
     Returns:
         constrctor of BaseModel
     """
-    symbol_table = globals() | (
-        constructor_symbol_table if constructor_symbol_table is not None else {}
-    )
-    constructor_name = list(dict_.keys())[0].removeprefix("constructor_")
+    symbol_table = globals()
+    if constructor_symbol_table is not None:
+        symbol_table.update(constructor_symbol_table)
+    constructor_name = removeprefix(list(dict_.keys())[0], "constructor_")
     return symbol_table[constructor_name]
 
 
@@ -205,6 +207,6 @@ def add_escape_str(key: Any) -> Any:
 def remove_escape_str(key: Any) -> Any:
     """Decrement by 1 the number of 'constructor_' prefixes."""
     if isinstance(key, str) and key.startswith("constructor_"):
-        return key.removeprefix("constructor_")
+        return removeprefix(key, "constructor_")
     else:
         return key
