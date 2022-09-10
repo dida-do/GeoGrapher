@@ -23,7 +23,6 @@ def merge_datasets(
         delete_source: Whether to delete source dataset after merging.
             Defaults to True.
     """
-
     source_connector = Connector.from_data_dir(source_data_dir)
     target_connector = Connector.from_data_dir(target_data_dir)
 
@@ -56,7 +55,6 @@ def merge_dirs(root_src_dir: Union[Path, str], root_dst_dir: Union[Path, str]) -
         root_src_dir: root source directory
         root_dst_dir: root target directory
     """
-
     pbar = tqdm(os.walk(root_src_dir))
     for src_dir, dirs, files in pbar:
         pbar.set_description(str(src_dir))

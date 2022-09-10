@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import collections
 from abc import abstractmethod
-from collections.abc import Callable
 from typing import Any, Literal, Union
 
 from geopandas import GeoSeries
@@ -13,9 +13,10 @@ from pydantic import BaseModel
 from geographer.connector import Connector
 
 
-class FeatureFilterPredicate(BaseModel, Callable):
-    """Abstract base class for predicates used to filter vector features in
-    cutting functions.
+class FeatureFilterPredicate(BaseModel, collections.abc.Callable):
+    """ABC for predicates for filtering vector features.
+
+    To be used in cutting functions.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.
@@ -30,7 +31,8 @@ class FeatureFilterPredicate(BaseModel, Callable):
         source_connector: Connector,
         **kwargs: Any,
     ) -> bool:
-        """
+        """Return True if the vector feature is to be kept, else False.
+
         Args:
             feature_name: vector feature identifier
             target_connector: connector of target dataset.
@@ -64,8 +66,11 @@ class FeatureFilterPredicate(BaseModel, Callable):
 
 
 class IsFeatureMissingImgs(FeatureFilterPredicate):
-    """Simple vector feature filter predicate that tests whether a feature has
-    fewer images than a specified target image count."""
+    """FeatureFilterPredicate that uses image counts as criterion.
+
+    Checks whether a feature has fewer images than a specified target
+    image count.
+    """
 
     target_img_count: int = 1
 
@@ -77,8 +82,10 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
         source_connector: Connector,
         **kwargs: Any,
     ) -> bool:
-        """Return True if the image count of the vector feature under
-        consideration is strictly less than target_img_count, False otherwise.
+        """Return True if image count < target_img_count, else False.
+
+        Return True if the image count of the vector feauture is stricitly less than
+        the target_img_count, else False.
 
         Args:
             feature_name: feature identifier
@@ -93,7 +100,6 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
         Returns:
             answer
         """
-
         return (
             target_connector.vector_features.loc[feature_name, "img_count"]
             < self.target_img_count
@@ -116,7 +122,9 @@ class AlwaysTrue(FeatureFilterPredicate):
 
 
 class OnlyThisVectorFeature(FeatureFilterPredicate):
-    """Simple vector feature filter initialized with a feature
+    """Filter out all vector features except a given one.
+
+    Simple vector feature filter initialized with a feature
     this_feature_name.
 
     Returns True if and only if the feature under consideration is equal
@@ -124,7 +132,8 @@ class OnlyThisVectorFeature(FeatureFilterPredicate):
     """
 
     def __init__(self, this_feature_name: Union[str, int]) -> None:
-        """
+        """Initialize OnlyThisVectorFeature.
+
         Args:
             this_feature_name (str): (name of) vector feature to be compared to.
         """
@@ -139,21 +148,27 @@ class OnlyThisVectorFeature(FeatureFilterPredicate):
         source_connector: Connector,
         **kwargs: Any,
     ) -> bool:
-
+        """Return True if the feature_name matches."""
         return feature_name == self.this_feature_name
 
 
 class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
-    """Simple GeomFilterPredicate that applies a given predicate to the row in
-    the source or target vector_features corresponding to the vector feature
-    name in question."""
+    """Simple GeomFilterPredicate that uses a predicate on rows.
+
+    Applies a predicate to the row in the source or target
+    vector_features corresponding to the vector feature name in
+    question.
+    """
 
     def __init__(
         self,
-        row_series_predicate: Callable[[Union[GeoSeries, Series]], bool],
+        row_series_predicate: collections.abc.Callable[
+            [Union[GeoSeries, Series]], bool
+        ],
         mode: Literal["source", "target"],
     ) -> None:
-        """
+        """Initialize FilterVectorFeatureByRowCondition.
+
         Args:
             row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]):
                 predicate to apply to the row corresponding to a vector feature in
@@ -161,7 +176,6 @@ class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
             mode (str) : Which GeoDataFrame the predicate should be applied to.
                 One of 'source' or 'target'
         """
-
         super().__init__()
 
         self.row_series_predicate = row_series_predicate
@@ -179,7 +193,7 @@ class FilterVectorFeatureByRowCondition(FeatureFilterPredicate):
         source_connector: Connector,
         **kwargs: Any,
     ) -> bool:
-
+        """Return results of applying predicate to row."""
         if self.mode == "target":
             connector = target_connector
         elif self.mode == "source":

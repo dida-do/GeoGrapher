@@ -34,7 +34,9 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         new_imgs_dict: Optional[dict] = None,
         **kwargs: Any,
     ) -> list[Tuple[Window, Affine, str]]:
-        """Return a list of rasterio windows, window transformations, and new
+        """Return windows, window transforms, and new images.
+
+        Return a list of rasterio windows, window transformations, and new
         image names. The returned list will be used to create the new images
         and labels. Override to subclass.
 
@@ -60,7 +62,9 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         bands: Optional[dict[str, Optional[list[int]]]] = None,
         **kwargs: Any,
     ) -> dict:
-        """Cut new images from source image and return a dict with keys the
+        """Cut new images and return return_dict.
+
+        Cut new images from source image and return a dict with keys the
         index and column names of the raster_imgs to be created by the calling
         dataset cutter and values lists containing the new image names and
         corresponding entries for the new images.
@@ -92,7 +96,6 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
             iteration. One should thus think of the target_connector and new_imgs_dict
             arguments together as the actual the target connector argument.
         """
-
         # dict to accumulate information about the newly created images
         imgs_from_cut_dict = {
             index_or_col_name: []
@@ -160,7 +163,6 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         Returns:
             dict: img info dict (see above)
         """
-
         img_bounding_rectangle_in_raster_imgs_crs = box(
             *transform_bounds(
                 img_crs, source_connector.raster_imgs.crs, *img_bounds_in_img_crs
@@ -198,7 +200,9 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         window_transform: Affine,
         bands: Optional[dict[str, Optional[list[int]]]],
     ) -> Tuple[Tuple[float, float, float, float], CRS]:
-        """Make a new image and label with given image name from the given
+        """Make a new image and label.
+
+        Make a new image and label with given image name from the given
         window and transform.
 
         Args:
@@ -210,7 +214,6 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         Returns:
             tuple of bounds (in image CRS) and CRS of new image
         """
-
         for count, (source_images_dir, target_images_dir) in enumerate(
             zip(source_connector.image_data_dirs, target_connector.image_data_dirs)
         ):
@@ -263,7 +266,6 @@ class SingleImgCutter(ABC, BaseModel, ImgBandsGetterMixIn):
         Returns:
             bounds (in image CRS) and CRS of new image
         """
-
         # Open source ...
         with rio.open(src_img_path) as src:
 

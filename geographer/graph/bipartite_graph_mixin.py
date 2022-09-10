@@ -1,15 +1,15 @@
-"""Mix-in that implements the private methods used to manipulate a connector's
-bipartite graph."""
+"""Mix-in for manipulating a connector's internal graph."""
 
 from __future__ import annotations
 
 import logging
-from typing import Optional, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Union
 
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
 
-from geographer.graph import BipartiteGraph
+from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 
 log = logging.getLogger(__name__)
 
@@ -18,12 +18,16 @@ RASTER_IMGS_COLOR = "raster_imgs"
 
 
 class BipartiteGraphMixIn:
-    """Mix-in that implements the public and private interface to the internal
-    bipartite graph."""
+    """Mix-in that interfaces with a connector's internal graph."""
+
+    if TYPE_CHECKING:
+        vector_features: GeoDataFrame
+        raster_imgs: GeoDataFrame
+        _graph: BipartiteGraphClass
+        images_dir: Path
 
     def have_img_for_vector_feature(self, feature_name: str) -> bool:
-        """Return whether there exists an image fully containing the vector
-        feature.
+        """Check if there is a raster fully containing the vector feature.
 
         Args:
             feature_name: Name of vector feature
@@ -32,7 +36,6 @@ class BipartiteGraphMixIn:
             `True` if there is an image in the dataset fully containing the vector
             feature, False otherwise.
         """
-
         return self.vector_features.loc[feature_name, "img_count"] > 0
 
     def rectangle_bounding_img(self, img_name: str) -> BaseGeometry:
@@ -47,14 +50,12 @@ class BipartiteGraphMixIn:
             shapely geometry giving the bounds of the image in the standard crs
             of the connector
         """
-
         return self.raster_imgs.loc[img_name, "geometry"]
 
     def vector_features_intersecting_img(
         self, img_name: Union[str, list[str]]
     ) -> list[str]:
-        """Return the vector features which intersect one or (any of) several
-        images.
+        """Return vector features intersecting one or (any of) several rasters.
 
         Args:
             img_name: name/id of image or list names/ids
@@ -63,7 +64,6 @@ class BipartiteGraphMixIn:
             list of feature_names/ids of all vector features in connector which
             have non-empty intersection with the raster(s)
         """
-
         if isinstance(img_name, str):
             img_names = [img_name]
         else:
@@ -74,7 +74,7 @@ class BipartiteGraphMixIn:
         for img_name in img_names:
             try:
                 feature_names += self._graph.vertices_opposite(
-                    vertex=img_name, vertex_color=RASTER_IMGS_COLOR
+                    vertex_name=img_name, vertex_color=RASTER_IMGS_COLOR
                 )
             except KeyError:
                 raise ValueError(f"Unknown image: {img_name}")
@@ -84,8 +84,10 @@ class BipartiteGraphMixIn:
     def imgs_intersecting_vector_feature(
         self, feature_name: Union[str, list[str]], mode: str = "names"
     ) -> list[str]:
-        """Return names or paths of all raster images which intersect one or
-        (any of) several vector features.
+        """Return raster images intersecting several vector feature(s).
+
+        If more than one vector feature is given, return images intersecting
+        at least one of the vector features.
 
         Args:
             feature_name: name/id (or list) of vector feature(s)
@@ -96,7 +98,6 @@ class BipartiteGraphMixIn:
             feature_names/identifiers of all vector features in connector with
             non-empty intersection with the image.
         """
-
         if isinstance(feature_name, str):
             feature_names = [feature_name]
         else:
@@ -107,7 +108,7 @@ class BipartiteGraphMixIn:
         for feature_name in feature_names:
             try:
                 img_names += self._graph.vertices_opposite(
-                    vertex=feature_name, vertex_color=VECTOR_FEATURES_COLOR
+                    vertex_name=feature_name, vertex_color=VECTOR_FEATURES_COLOR
                 )
             except KeyError:
                 raise ValueError(f"Unknown vector feature: {feature_name}")
@@ -124,8 +125,10 @@ class BipartiteGraphMixIn:
     def vector_features_contained_in_img(
         self, img_name: Union[str, list[str]]
     ) -> list[str]:
-        """Return vector features fully containing a given image (or any of
-        several images).
+        """Return vector features fully containing a given image.
+
+        If several rasters are given return vector features fully containing
+        any of the rasters.
 
         Args:
             img_name: name/id of image or list of names/ids of images
@@ -134,7 +137,6 @@ class BipartiteGraphMixIn:
             feature_names/identifiers of all vector features in connector
             contained in the image(s).
         """
-
         if isinstance(img_name, str):
             img_names = [img_name]
         else:
@@ -145,7 +147,7 @@ class BipartiteGraphMixIn:
         for img_name in img_names:
             try:
                 feature_names += self._graph.vertices_opposite(
-                    vertex=img_name,
+                    vertex_name=img_name,
                     vertex_color=RASTER_IMGS_COLOR,
                     edge_data="contains",
                 )
@@ -159,8 +161,10 @@ class BipartiteGraphMixIn:
         feature_name: Union[str, list[str]],
         mode: str = "names",
     ) -> list[str]:
-        """Return names or paths of all images in which a given vector feature
-        (or any of several) is fully contained.
+        """Return rasters in which a given vector feature is fully contained.
+
+        If multiple vector features are given, return raster which contain
+        at least one of the vector features.
 
         Args:
             feature_name: name/id (or list of names) of vector feature(s)
@@ -171,7 +175,6 @@ class BipartiteGraphMixIn:
             img_names/identifiers of all images in connector containing
             the vector feature(s)
         """
-
         if not isinstance(feature_name, list):
             feature_names = [feature_name]
         else:
@@ -182,7 +185,7 @@ class BipartiteGraphMixIn:
         for feature_name in feature_names:
             try:
                 img_names = self._graph.vertices_opposite(
-                    vertex=feature_name,
+                    vertex_name=feature_name,
                     vertex_color=VECTOR_FEATURES_COLOR,
                     edge_data="contains",
                 )
@@ -209,14 +212,12 @@ class BipartiteGraphMixIn:
             True or False depending on whether the image contains the vector
             feature or not
         """
-
         return feature_name in self.vector_features_contained_in_img(img_name)
 
     def is_vector_feature_contained_in_img(
         self, feature_name: str, img_name: str
     ) -> bool:
-        """Return whether a vector feature is fully contained in a raster
-        image.
+        """Return True if a vector feature is fully contained in a raster.
 
         Args:
             img_name: Name of image
@@ -226,7 +227,6 @@ class BipartiteGraphMixIn:
             True or False depending on whether the vector feature contains
             the image or not
         """
-
         return self.does_img_contain_vector_feature(img_name, feature_name)
 
     def does_img_intersect_vector_feature(
@@ -242,7 +242,6 @@ class BipartiteGraphMixIn:
             True or False depending on whether the image intersects the
             vector feature or not
         """
-
         return feature_name in self.vector_features_intersecting_img(img_name)
 
     def does_vector_feature_intersect_img(
@@ -258,7 +257,6 @@ class BipartiteGraphMixIn:
             True or False depending on whether the vector feature intersects
             the image or not
         """
-
         return self.does_img_intersect_vector_feature(img_name, feature_name)
 
     def _connect_img_to_vector_feature(
@@ -268,7 +266,7 @@ class BipartiteGraphMixIn:
         contains_or_intersects: Optional[str] = None,
         vector_features: Optional[GeoDataFrame] = None,
         img_bounding_rectangle: Optional[BaseGeometry] = None,
-        graph: Optional[BipartiteGraph] = None,
+        graph: Optional[BipartiteGraphClass] = None,
         do_safety_check: bool = True,
     ):
         """Connect an image to a vector feature in the graph.
@@ -287,10 +285,10 @@ class BipartiteGraphMixIn:
             graph: optional bipartied graph
             ignore_safety_check: whether to check contains_or_intersects relation
         """
-
         if contains_or_intersects not in {"contains", "intersects", None}:
             raise ValueError(
-                f"contains_or_intersects should be one of 'contains' or 'intersects' or None, is {contains_or_intersects}"
+                "contains_or_intersects should be one of 'contains' or 'intersects' "
+                f"or None, is {contains_or_intersects}"
             )
 
         # default vector_features
@@ -313,7 +311,8 @@ class BipartiteGraphMixIn:
             non_empty_intersection = feature_feature.intersects(img_bounding_rectangle)
             if not non_empty_intersection:
                 log.info(
-                    "_connect_img_to_feature: not connecting, since img  %s and vector feature %s do not overlap.",
+                    "_connect_img_to_feature: not connecting, since "
+                    "img  %s and vector feature %s do not overlap.",
                     img_name,
                     feature_name,
                 )
@@ -345,14 +344,12 @@ class BipartiteGraphMixIn:
     def _add_vector_feature_to_graph(
         self, feature_name: str, vector_features: Optional[GeoDataFrame] = None
     ):
-        """Connects a vector feature to those images in self.raster_imgs with
-        which it has non-empty intersection.
+        """Connect a vector feature all intersecting rasters.
 
         Args:
             feature_name: name/id of vector feature to add
             vector_features: Defaults to None (i.e. self.vector_features).
         """
-
         # default vector_features
         if vector_features is None:
             vector_features = self.vector_features
@@ -364,7 +361,9 @@ class BipartiteGraphMixIn:
         # raise an exception if the vector feature already has connections
         if list(self._graph.vertices_opposite(feature_name, VECTOR_FEATURES_COLOR)):
             log.warning(
-                "_add_feature_to_graph: !!!Warning (connect_feature): vector feature %s already has connections! Probably _add_feature_to_graph is being used wrongly. Check your code!",
+                "_add_feature_to_graph: !!!Warning (connect_feature): "
+                "vector feature %s already has connections! Probably "
+                "_add_feature_to_graph is being used wrongly. Check your code!",
                 feature_name,
             )
 
@@ -404,9 +403,11 @@ class BipartiteGraphMixIn:
         img_name: str,
         img_bounding_rectangle: Optional[BaseGeometry] = None,
         vector_features: Optional[GeoDataFrame] = None,
-        graph: Optional[BipartiteGraph] = None,
+        graph: Optional[BipartiteGraphClass] = None,
     ):
-        """Create a vertex in the graph for the image if one does not yet exist
+        """Add raster to graph and modify vector features.
+
+        Create a vertex in the graph for the image if one does not yet exist
         and connect it to all vector features in the graph while modifying the
         img_counts in vector_features where appropriate. The default values
         None for vector_features and graph will be interpreted as
@@ -420,7 +421,6 @@ class BipartiteGraphMixIn:
             vector_features: Optional vector features dataframe
             graph: optional bipartied graph
         """
-
         # default vector_features
         if vector_features is None:
             vector_features = self.vector_features
@@ -481,7 +481,9 @@ class BipartiteGraphMixIn:
     def _remove_vector_feature_from_graph_modify_vector_features(
         self, feature_name: str, set_img_count_to_zero: bool = True
     ):
-        """Removes a vector feature from the graph (i.e. removes the vertex and
+        """Remove vector feature from the graph & modify self.vector_features.
+
+        Removes a vector feature from the graph (i.e. removes the vertex and
         all incident edges) and (if set_img_count_to_zero == True) sets the
         vector_features field 'img_count' to 0.
 
@@ -489,23 +491,23 @@ class BipartiteGraphMixIn:
             feature_name: vector feature name/id
             set_img_count_to_zero: Whether to set img_count to 0.
         """
-
         self._graph.delete_vertex(
             feature_name, VECTOR_FEATURES_COLOR, force_delete_with_edges=True
         )
 
-        if set_img_count_to_zero == True:
+        if set_img_count_to_zero:
             self.vector_features.loc[feature_name, "img_count"] = 0
 
     def _remove_img_from_graph_modify_vector_features(self, img_name: str):
-        """Removes an img from the graph (i.e. removes the vertex and all
-        incident edges) and modifies the vector_features fields 'img_count' for
+        """Remove raster from graph & modify self.vector_features accordingly.
+
+        Remove an img from the graph (i.e. remove the vertex and all
+        incident edges) and modifiy the vector_features fields 'img_count' for
         the vector features contained in the image.
 
         Args:
             img_name: name/id of image to remove
         """
-
         for feature_name in self.vector_features_contained_in_img(img_name):
             self.vector_features.loc[feature_name, "img_count"] -= 1
 

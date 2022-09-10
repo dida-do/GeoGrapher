@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import json
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from importlib import import_module
 from inspect import getmro, isabstract, isclass
 from pathlib import Path
-from pkgutil import walk_packages
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
-from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import (
+from geographer.base_model_dict_conversion.base_model_dict_conversion_functional import (  # noqa: E501
     eval_nested_base_model_dict,
     get_nested_base_model_dict,
 )
@@ -26,6 +25,7 @@ class SaveAndLoadBaseModelMixIn:
 
     @abstractmethod
     def save(self):
+        """Save instance to file."""
         pass
 
     def _save(self, json_file_path: Union[str, Path]) -> None:
@@ -46,11 +46,10 @@ class SaveAndLoadBaseModelMixIn:
         constructor_symbol_table: Optional[dict[str, Any]] = None,
     ) -> Any:
         """Load and return saved BaseModel."""
-
         if constructor_symbol_table is None:
             constructor_symbol_table = {}
 
-        ### add all classes in geographer inherited from BaseModel
+        # add all classes in geographer inherited from BaseModel
         # to constructor symbol table
         geographer_dir = Path(__file__).resolve().parent.parent
         for py_file_path in geographer_dir.rglob("*.py"):
@@ -71,10 +70,10 @@ class SaveAndLoadBaseModelMixIn:
                         and not isabstract(attribute)
                     ):
                         constructor_symbol_table[attribute_name] = attribute
-            except:
+            except Exception:
                 logger.debug(f"Error when importing {module_import_str}")
 
-        ### open json and load
+        # open json and load
         with open(json_file_path) as file:
             saved_base_model_dict = json.load(file)
             loaded_base_model = eval_nested_base_model_dict(

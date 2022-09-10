@@ -1,24 +1,27 @@
-"""Util functions to convert BaseModels to nested dicts keeping track of class
-constructors.
+"""Utils for conversion of BaseModels to nested dicts.
 
-Used for serializing BaseModels
+The nested dicts keep track of class constructors and are used for
+serializing BaseModels.
 """
 
 from __future__ import annotations
 
-from multiprocessing.sharedctypes import Value
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from numpy import isin
 from pydantic import BaseModel
+
+from geographer.utils.utils import removeprefix
 
 
 def get_nested_base_model_dict(
     base_model_obj_or_dict: Union[BaseModel, dict, Any]
 ) -> dict:
-    """Return nested dict of nested BaseModel containing fields and BaseModel
-    constructors or of dict."""
+    """Return nested dict for BaseModel or dict.
+
+    Return nested dict for nested BaseModel containing fields and
+    BaseModel constructors or of dict.
+    """
     if isinstance(base_model_obj_or_dict, dict):
         dict_ = base_model_obj_or_dict
         dict_items = base_model_obj_or_dict.items()
@@ -54,20 +57,25 @@ def get_nested_base_model_dict(
         if key in dict_.keys()  # to avoid excluded fields for BaseModels
         and not isinstance(val, (BaseModel, Path, dict, tuple))
     }
+
     if isinstance(base_model_obj_or_dict, dict):
-        return (
-            remaining_fields_dict
-            | dict_or_base_model_fields_dict
-            | path_fields_dict
-            | tuple_fields_dict
-        )
-    elif isinstance(base_model_obj_or_dict, BaseModel):
-        return {
-            f"constructor_{type(base_model_obj_or_dict).__name__}": remaining_fields_dict
-            | dict_or_base_model_fields_dict
-            | path_fields_dict
-            | tuple_fields_dict
+        result = {
+            **remaining_fields_dict,
+            **dict_or_base_model_fields_dict,
+            **path_fields_dict,
+            **tuple_fields_dict,
         }
+    elif isinstance(base_model_obj_or_dict, BaseModel):
+        result = {
+            f"constructor_{type(base_model_obj_or_dict).__name__}": {
+                **remaining_fields_dict,
+                **dict_or_base_model_fields_dict,
+                **path_fields_dict,
+                **tuple_fields_dict,
+            }
+        }
+
+    return result
 
 
 def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:
@@ -78,7 +86,7 @@ def eval_nested_base_model_dict(
     dict_or_field_value: Union[dict, Any],
     constructor_symbol_table: Optional[dict[str, Any]] = None,
 ) -> Union[BaseModel, Any]:
-    """Evaluate nested BaseModel dict (or field contents)
+    """Evaluate nested BaseModel dict (or field contents).
 
     Args:
         dict_or_field_value: nested base model dict or field value
@@ -157,13 +165,13 @@ def is_base_model_constructor_dict(dict_: dict) -> bool:
         and len(dict_) == 1
         and isinstance(key, str)
         and key.startswith("constructor_")
-        and not key.removeprefix("constructor_").startswith("constructor_")
+        and not removeprefix(key, "constructor_").startswith("constructor_")
     )
 
 
 def get_base_model_constructor(
     dict_: dict, constructor_symbol_table: Optional[dict[str, Any]] = None
-) -> bool:
+) -> BaseModel:
     """Return constructor corresponding to encoded BaseModel.
 
     Args:
@@ -172,12 +180,12 @@ def get_base_model_constructor(
             table of constructors. Defaults to None.
 
     Returns:
-        bool: _description_
+        constrctor of BaseModel
     """
-    symbol_table = globals() | (
-        constructor_symbol_table if constructor_symbol_table is not None else {}
-    )
-    constructor_name = list(dict_.keys())[0].removeprefix("constructor_")
+    symbol_table = globals()
+    if constructor_symbol_table is not None:
+        symbol_table.update(constructor_symbol_table)
+    constructor_name = removeprefix(list(dict_.keys())[0], "constructor_")
     return symbol_table[constructor_name]
 
 
@@ -199,6 +207,6 @@ def add_escape_str(key: Any) -> Any:
 def remove_escape_str(key: Any) -> Any:
     """Decrement by 1 the number of 'constructor_' prefixes."""
     if isinstance(key, str) and key.startswith("constructor_"):
-        return key.removeprefix("constructor_")
+        return removeprefix(key, "constructor_")
     else:
         return key

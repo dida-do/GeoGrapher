@@ -5,20 +5,20 @@ Used by cutting functions.
 
 from __future__ import annotations
 
+import collections
 import random
 from abc import abstractmethod
-from collections.abc import Callable
-from typing import Any, Literal, Union
+from typing import Any, Union
 
-from geopandas import GeoSeries
-from pandas import Series
 from pydantic import BaseModel
 
 from geographer.connector import Connector
 
 
-class ImgSelector(Callable, BaseModel):
-    """Abstract base class for selecting from a list of images. Subclasses are
+class ImgSelector(collections.abc.Callable, BaseModel):
+    """ABC for selecting from a list of images.
+
+    Subclasses are
     used by DSCutterIterOverFeatures.
 
     Subclasses should implement a __call__method that has the arguments
@@ -97,7 +97,6 @@ class RandomImgSelector(ImgSelector):
         Select target_img_count - #{img_count of vector feature in target_connector}
         images (or if not possible less) from img_names_list.
         """
-
         target_num_imgs_to_sample = (
             self.target_img_count
             - len(target_connector.imgs_containing_vector_feature(feature_name))

@@ -1,5 +1,4 @@
-"""SingleImgDownloader for downloading Sentinel-2 images form Copernicus Sci-
-hub.
+"""ImgDownloadProcessor for Sentinel-2 data from Copernicus Sci-hub.
 
 Should be easily extendable to Sentinel-1.
 """
@@ -27,9 +26,11 @@ class Sentinel2Processor(ImgDownloadProcessor):
         resolution: int,
         **kwargs,
     ) -> dict:
-        """Extracts downloaded sentinel-2 zip file to a .SAFE directory, then
-        processes/converts to a GeoTiff image, deletes the zip file, puts the
-        GeoTiff image in the right directory, and returns information about the
+        """Process Sentinel-2 download.
+
+        Extract downloaded sentinel-2 zip file to a .SAFE directory, then
+        process/convert to a GeoTiff image, delete the zip file, put the
+        GeoTiff image in the right directory, and return information about the
         img in a dict.
 
         Args:
@@ -44,7 +45,6 @@ class Sentinel2Processor(ImgDownloadProcessor):
         Returns:
             return_dict: Contains information about the downloaded product.
         """
-
         filename_no_extension = Path(img_name).stem
         zip_filename = filename_no_extension + ".zip"
         safe_path = download_dir / f"safe_files/{filename_no_extension}.SAFE"

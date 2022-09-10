@@ -6,6 +6,17 @@ atomic = true
 profile = "black"
 skip_gitignore = true
 
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+show_error_codes = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+ignore_missing_imports = true
+warn_unused_ignores = false
+warn_return_any = false
+warn_unreachable = false
+strict_optional=true
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"

@@ -27,7 +27,7 @@ class JAXADownloadProcessor(ImgDownloadProcessor):
         return_bounds_in_crs_epsg_code: int,
         **kwargs,
     ) -> dict:
-        """Processes a downloaded JAXA file.
+        """Process a downloaded JAXA file.
 
         Args:
             img_name: image name
@@ -38,7 +38,6 @@ class JAXADownloadProcessor(ImgDownloadProcessor):
         Returns:
             img_info_dict containing information about the image
         """
-
         geotif_filename = download_dir / img_name
         with rio.open(geotif_filename) as src:
             orig_crs_epsg_code = src.crs.to_epsg()
