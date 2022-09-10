@@ -20,16 +20,16 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from geopandas import GeoDataFrame
 
-from geographer.cut.single_img_cutter_bbox import SingleImgCutterFromBBoxes
-from geographer.cut.type_aliases import ImgSize
+from geographer.cutters.single_img_cutter_bbox import SingleImgCutterFromBBoxes
+from geographer.cutters.type_aliases import ImgSize
 
 if TYPE_CHECKING:
     from geographer.img_geom_associator import ImgPolygonAssociator
 
-from geographer.cut.img_filter_predicates import AlwaysTrue
 from geographer.cutteres.cut_iter_over_imgs import (
     create_or_update_dataset_iter_over_imgs,
 )
+from geographer.cutters.img_filter_predicates import AlwaysTrue
 
 logger = logging.getLogger(__name__)
 
