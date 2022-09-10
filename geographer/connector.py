@@ -93,7 +93,7 @@ class Connector(
 
         # yapf: enable
     ):
-        r"""Initialize Connector.
+        """Initialize Connector.
 
         Note:
             We advise you to use the following more convenient constructor methods
@@ -136,7 +136,7 @@ class Connector(
             labels_dir: path to directory containing labels.
             connector_dir: path to directory containing (geo)json connector component
                 files.
-            \**kwargs: optional keyword args for subclass implementations.
+            kwargs: optional keyword args for subclass implementations.
         """
         super().__init__()
 
@@ -389,7 +389,7 @@ class Connector(
 
     @property
     def graph_str(self) -> str:
-        """Return string rep of internal graph.
+        """Return a string representation of the internal graph.
 
         Note that the representation might change if the internal
         representation changes.
@@ -586,7 +586,7 @@ class Connector(
 
         if not (component_dirs_all_not_None ^ (data_dir is not None)):
             raise ValueError(
-                "Either the data_dir arg must be given (i.e. not None) or all"
+                "Either the data_dir arg must be given (i.e. not None) or all "
                 "of the images_dir, labels_dir, and connector_dir args."
             )
 

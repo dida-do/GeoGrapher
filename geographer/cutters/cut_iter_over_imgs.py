@@ -45,7 +45,7 @@ class DSCutterIterOverImgs(DSCreatorFromSourceWithBands):
     cut_imgs: list[str] = Field(
         default_factory=list,
         description=(
-            "Names of cut images in source_data_dir." "Usually not to be set by hand!"
+            "Names of cut images in source_data_dir. Usually not to be set by hand!"
         ),
     )
 

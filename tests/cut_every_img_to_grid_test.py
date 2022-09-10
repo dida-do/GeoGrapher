@@ -24,14 +24,13 @@ from geographer.testing.graph_df_compatibility import check_graph_vertices_count
 from geographer.utils.utils import deepcopy_gdf
 
 CUT_INTO = 60  # number of intervals to cut side lengths into
-CUT_SOURCE_DATA_DIR_NAME = "cut_source"
 
 
-def test_cut_every_img_to_grid():
+def test_cut_every_img_to_grid(dummy_cut_source_data_dir):
     """Test get_cutter_every_img_to_grid."""
     assert 10980 % CUT_INTO == 0
 
-    source_data_dir = get_test_dir() / CUT_SOURCE_DATA_DIR_NAME
+    source_data_dir = dummy_cut_source_data_dir
     target_data_dir = get_test_dir() / "temp/cut_every_img_to_grid"
     shutil.rmtree(target_data_dir, ignore_errors=True)
 
@@ -75,7 +74,3 @@ def test_cut_every_img_to_grid():
     cutter.cut()
 
     assert (target_connector.raster_imgs == raster_imgs_before_cutting).all().all()
-
-
-if __name__ == "__main__":
-    test_cut_every_img_to_grid()

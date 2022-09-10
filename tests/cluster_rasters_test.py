@@ -16,6 +16,9 @@ from geographer.global_constants import (
 )
 from geographer.utils.cluster_rasters import get_raster_clusters
 
+# def test_delete_this():
+#     assert True == False
+
 
 def test_cluster_rasters():
     """Test get_raster_clusters.

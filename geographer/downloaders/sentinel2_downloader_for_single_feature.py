@@ -133,12 +133,12 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                 # (this key might have to be 'filename'
                 # (minus the .SAFE at the end) for L1C products?)
                 img_name = product_metadata["title"] + ".tif"
-            except Exception:
+            except Exception as exc:
                 raise Exception(
                     "Couldn't get the filename. Are you trying to download L1C "
                     "products? Try changing the key for the products dict in the "
                     "line of code above this..."
-                )
+                ) from exc
 
             if img_name not in previously_downloaded_imgs_set:
                 try:

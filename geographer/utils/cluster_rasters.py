@@ -8,7 +8,6 @@ generating the train-validation split.
 from __future__ import annotations
 
 import itertools
-from functools import partial
 from pathlib import Path
 from typing import Any, Literal, Optional, Tuple, Union
 
@@ -270,11 +269,11 @@ def _extract_graph_of_rasters(
 
     # add edges to graph
     pairs_of_imgs = itertools.combinations(img_names, 2)
-    are_connected = lambda s: partial(  # noqa: E731
-        _are_connected_by_an_edge,
+    are_connected = lambda s: _are_connected_by_an_edge(  # noqa: E731
+        *s,
         clusters_defined_by=clusters_defined_by,
         connector=connector,
-    )(*s)
+    )
     pairs_of_connected_imgs = filter(are_connected, pairs_of_imgs)
     img_graph.add_edges_from(pairs_of_connected_imgs)
 

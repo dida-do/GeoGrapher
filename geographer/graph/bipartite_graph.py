@@ -121,7 +121,7 @@ class BipartiteGraph(BipartiteGraphClass):
                 log.exception("Json file %s could not be decoded.", file_path)
 
             if len(self._graph_dict) != 2:
-                raise Exception(
+                raise ValueError(
                     "__init__: input argument graph_dict must have outer dict be "
                     "of length two!"
                 )
@@ -131,7 +131,7 @@ class BipartiteGraph(BipartiteGraphClass):
         elif graph_dict is not None:  # color determined by graph dict
             # make sure outermost dict has right shape
             if len(graph_dict) != 2:
-                raise Exception(
+                raise ValueError(
                     "__init__: input argument graph_dict must have "
                     "outer dict be of length two!"
                 )

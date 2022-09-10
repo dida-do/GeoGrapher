@@ -14,14 +14,13 @@ TODO: write more assert statements!
 import shutil
 from typing import List
 
-from cut_every_img_to_grid_test import CUT_SOURCE_DATA_DIR_NAME
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from utils import get_test_dir
 
 from geographer.connector import Connector
 from geographer.cutters.cut_imgs_around_every_feature import (
-    get_cutter_imgs_around_every_feature,  # , DSCutterImgsAroundEveryFeature,
+    get_cutter_imgs_around_every_feature,
 )
 from geographer.cutters.cut_iter_over_features import DSCutterIterOverFeatures
 from geographer.cutters.feature_filter_predicates import IsFeatureMissingImgs
@@ -34,13 +33,10 @@ from geographer.testing.graph_df_compatibility import check_graph_vertices_count
 IMG_SIZE = 128
 
 
-def test_imgs_around_every_feature():
+def test_imgs_around_every_feature(dummy_cut_source_data_dir):
     """Test get_cutter_imgs_around_every_feature."""
-    source_data_dir = get_test_dir() / CUT_SOURCE_DATA_DIR_NAME
+    source_data_dir = dummy_cut_source_data_dir
     target_data_dir = get_test_dir() / "temp/imgs_around_every_feature"
-    shutil.rmtree(target_data_dir, ignore_errors=True)
-
-    # TODO: remove
     shutil.rmtree(target_data_dir, ignore_errors=True)
 
     cutter = get_cutter_imgs_around_every_feature(
@@ -133,7 +129,3 @@ def test_imgs_around_every_feature():
     ].tolist()
     union_imgs: Polygon = unary_union(bboxes)
     assert tempelhofer_feld.within(union_imgs)
-
-
-if __name__ == "__main__":
-    test_imgs_around_every_feature()

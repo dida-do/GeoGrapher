@@ -125,7 +125,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         features_from_source_df = self._combine_or_remove_classes_from_vector_features(
             label_type=self.source_connector.label_type,
             vector_features=self.source_connector.vector_features,
-            all_source_vector_feature_classes=self.source_connector.all_vector_feature_classes,  # noqa: E501
+            all_source_vector_feature_classes=(
+                self.source_connector.all_vector_feature_classes
+            ),
             classes=classes,
             new_class_names=new_class_names,
         )
@@ -142,10 +144,14 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             len(self.target_connector.vector_features) == 0
             and self.target_connector.label_type == "soft-categorical"
         ):
-            empty_vector_features_with_corrected_columns = self._combine_or_remove_classes_from_vector_features(  # noqa: E501
+            (
+                empty_vector_features_with_corrected_columns
+            ) = self._combine_or_remove_classes_from_vector_features(
                 label_type="soft-categorical",
                 vector_features=self.target_connector.vector_features,
-                all_source_vector_feature_classes=self.source_connector.all_vector_feature_classes,  # noqa: E501
+                all_source_vector_feature_classes=(
+                    self.source_connector.all_vector_feature_classes
+                ),
                 classes=classes,
                 new_class_names=new_class_names,
             )
