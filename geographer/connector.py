@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import pathlib
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Type, TypeVar, Union
@@ -434,8 +433,13 @@ class Connector(
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
         with open(self.attrs_path, "w", encoding='utf-8') as write_file:
-            saveattrs = self._make_dict_json_serializable(self.attrs)
-            json.dump(saveattrs, write_file, ensure_ascii=False, indent=4)
+            saveattrs = self._replace_path_values(self.attrs)
+            try:
+                json.dump(saveattrs, write_file, ensure_ascii=False, indent=4)
+            except TypeError as exc:
+                raise TypeError(
+                    "User defined attributes must be JSON-serializable."
+                    ) from exc
 
     def empty_connector_same_format(
         self,
@@ -642,26 +646,23 @@ class Connector(
         return images_dir, labels_dir, connector_dir
 
     @staticmethod
-    def _make_dict_json_serializable(input_dict: dict) -> dict:
-        """Make dict serializable as JSON by replacing Path with strings.
+    def _replace_path_values(input_dict: dict) -> dict:
+        """Replace data_dir, images_dir, etc Paths with strings.
 
         Args:
             input_dict: input dict with keys strings and values of arbitrary type
 
         Returns:
-            dict with non-serializable values replaced by serializable ones
-            (just Path -> str, for now)
+            dict
         """
+        path_keys = {"data_dir", "images_dir", "labels_dir", "connector_dir"}
 
-        def make_val_serializable(val):
-            return str(val) if isinstance(val, pathlib.PurePath) else val
-
-        serializable_dict = {
-            key: make_val_serializable(val)
+        output_dict = {
+            key: str(val) if key in path_keys else val
             for key, val in input_dict.items()
         }
 
-        return serializable_dict
+        return output_dict
 
     def _check_no_non_task_feature_classes_are_task_classes(
         self,
