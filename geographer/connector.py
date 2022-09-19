@@ -78,6 +78,7 @@ class Connector(
         task_feature_classes: Optional[Sequence[str]] = None,
         background_class: Optional[str] = None,
         crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
+        img_count_col_name: str = "img_count",
 
         # path args
         data_dir: Optional[
@@ -388,6 +389,16 @@ class Connector(
         return self._image_data_dirs
 
     @property
+    def img_count_col_name(self) -> str:
+        """Name of column in vector_features containing img counts."""
+        return self.attrs["img_count_col_name"]
+
+    @img_count_col_name.setter
+    def set_img_count_col_name(self, new_col_name: str):
+        """Set name of column in vector_features containing img counts."""
+        self.attrs["img_count_col_name"] = new_col_name
+
+    @property
     def graph_str(self) -> str:
         """Return a string representation of the internal graph.
 
@@ -502,7 +513,7 @@ class Connector(
 
         # type of "geometry" column is ignored
         if df_name.endswith("vector_features"):
-            cols_and_types = {"geometry": None, "img_count": int}
+            cols_and_types = {"geometry": None, self.img_count_col_name: int}
         elif df_name.endswith("raster_imgs"):
             cols_and_types = {"geometry": None}
 
