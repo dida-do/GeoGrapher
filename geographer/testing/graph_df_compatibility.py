@@ -78,12 +78,15 @@ def check_graph_vertices_counts(connector: Connector):
     )
     img_count_edges.rename("img_count_edges", inplace=True)
 
-    counts_correct = connector.vector_features["img_count"] == img_count_edges
+    counts_correct = (
+        connector.vector_features[connector.img_count_col_name] == img_count_edges
+    )
 
     if not counts_correct.all():
 
         return_df = pd.concat(
-            [connector.vector_features["img_count"], img_count_edges], axis=1
+            [connector.vector_features[connector.img_count_col_name], img_count_edges],
+            axis=1,
         )
         return_df = return_df.loc[~counts_correct]
 
