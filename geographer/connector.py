@@ -69,6 +69,9 @@ class Connector(
         self,
         load_from_disk: bool,
 
+        # data dir
+        data_dir: Union[Path, str],
+
         # args w/o default values
         vector_features: Optional[GeoDataFrame] = None,
         raster_imgs: Optional[GeoDataFrame] = None,
@@ -78,15 +81,6 @@ class Connector(
         background_class: Optional[str] = None,
         crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
         img_count_col_name: str = "img_count",
-
-        # path args
-        data_dir: Optional[
-            Union[Path, str]
-        ] = None,  # either this arg or all the path args below
-        # must be set (i.e. not None)
-        images_dir: Optional[Union[Path, str]] = None,
-        labels_dir: Optional[Union[Path, str]] = None,
-        connector_dir: Optional[Union[Path, str]] = None,
 
         # optional kwargs
         **kwargs: Any,
@@ -107,17 +101,7 @@ class Connector(
             To initialize an existing connector use
                 - the :meth:`from_data_dir` class method (:ref:`see here for an
                     example <init_existing_connector>`), or
-                - the :meth:`from_paths` class method (:ref:`see here for an
-                    example <init_existing_connector>`)
 
-        Caution:
-            Note that many methods that create new dataset from existing ones
-            won't work if you use a nonstandard directory format (i.e. set the
-            ``images_dir``, ``labels_dir``, ``connector_dir`` arguments by hand instead
-            of setting the data_dir arg).
-
-        Either all four of the images_dir, labels_dir, and connector_dir args
-        or the data_dir arg should be given (i.e. not None).
 
         Args:
             load_from_disk: whether to load an existing connector from disk
@@ -132,10 +116,6 @@ class Connector(
             crs_epsg_code: EPSG code connector works with.
                 Defaults to STANDARD_CRS_EPSG_CODE
             data_dir: data directory containing images_dir, labels_dir, connector_dir.
-            images_dir: path to directory containing images.
-            labels_dir: path to directory containing labels.
-            connector_dir: path to directory containing (geo)json connector component
-                files.
             kwargs: optional keyword args for subclass implementations.
         """
         super().__init__()
@@ -148,19 +128,9 @@ class Connector(
             **kwargs
         )
 
-        self._check_dir_args(
-            data_dir=data_dir,
-            images_dir=images_dir,
-            labels_dir=labels_dir,
-            connector_dir=connector_dir,
-        )
-
         # set paths
         self._init_set_paths(
             data_dir=data_dir,
-            images_dir=images_dir,
-            labels_dir=labels_dir,
-            connector_dir=connector_dir,
         )
 
         # build attrs from all args except for raster_imgs, vector_features,
@@ -226,13 +196,25 @@ class Connector(
             raise AttributeError(f"No such attribute: {key}")
 
     @classmethod
-    def from_paths(
+    def from_data_dir(
         cls: Type[ConnectorType],
-        connector_dir: Union[Path, str],
-        images_dir: Union[Path, str],
-        labels_dir: Union[Path, str],
+        data_dir: Union[Path, str],
     ) -> ConnectorType:
-        """Initialize a connector from paths."""
+        """Initialize a connector from a data directory.
+
+        Args:
+            data_dir: data directory containing 'connector_files', 'images', and
+                'labels' subdirectories
+
+        Returns:
+            initialized connector
+        """
+        data_dir = Path(data_dir)
+
+        images_dir, labels_dir, connector_dir = cls._get_default_dirs_from_data_dir(
+            data_dir
+        )
+
         # read args from json
         try:
             attrs_path = Path(connector_dir) / \
@@ -253,41 +235,11 @@ class Connector(
 
         new_connector = cls(
             load_from_disk=True,
-            connector_dir=connector_dir,
-            images_dir=images_dir,
-            labels_dir=labels_dir,
+            data_dir=data_dir,
             **kwargs,
         )
 
         return new_connector
-
-    @classmethod
-    def from_data_dir(
-        cls: Type[ConnectorType],
-        data_dir: Union[Path, str],
-    ) -> ConnectorType:
-        """Initialize a connector from a data directory.
-
-        Args:
-            data_dir: data directory containing 'connector_files', 'images', and
-                'labels' subdirectories
-
-        Returns:
-            initialized connector
-        """
-        data_dir = Path(data_dir)
-
-        images_dir, labels_dir, connector_dir = cls._get_default_dirs_from_data_dir(
-            data_dir
-        )
-
-        connector = cls.from_paths(
-            images_dir=images_dir,
-            labels_dir=labels_dir,
-            connector_dir=connector_dir,
-        )
-
-        return connector
 
     @classmethod
     def from_scratch(cls, **kwargs: Any) -> Connector:
@@ -444,12 +396,7 @@ class Connector(
 
     def empty_connector_same_format(
         self,
-        data_dir: Optional[
-            Union[Path, str]
-        ] = None,  # either this arg or all four path args below must be set
-        connector_dir: Optional[Union[Path, str]] = None,
-        images_dir: Optional[Union[Path, str]] = None,
-        labels_dir: Optional[Union[Path, str]] = None,
+        data_dir: Union[Path, str]
     ) -> Connector:
         """Return an empty connector of the same format.
 
@@ -466,13 +413,6 @@ class Connector(
         Returns:
             new empty connector
         """
-        self._check_dir_args(
-            data_dir=data_dir,
-            connector_dir=connector_dir,
-            images_dir=images_dir,
-            labels_dir=labels_dir,
-        )
-
         if data_dir is not None:
             (
                 images_dir,
@@ -484,10 +424,7 @@ class Connector(
         new_empty_raster_imgs = empty_gdf_same_format_as(self.raster_imgs)
 
         new_empty_connector = self.__class__.from_scratch(
-            # dir args
-            images_dir=images_dir,
-            labels_dir=labels_dir,
-            connector_dir=connector_dir,
+            data_dir=data_dir,
             # empty dataframes
             vector_features=new_empty_vector_features,
             raster_imgs=new_empty_raster_imgs,
@@ -586,43 +523,19 @@ class Connector(
 
         return return_df
 
-    def _check_dir_args(
-        self,
-        data_dir: Union[Path, str],
-        images_dir: Union[Path, str],
-        labels_dir: Union[Path, str],
-        connector_dir: Union[Path, str],
-    ):
-
-        component_dirs_all_not_None = (
-            images_dir is not None
-            and labels_dir is not None
-            and connector_dir is not None
-        )
-
-        if not (component_dirs_all_not_None ^ (data_dir is not None)):
-            raise ValueError(
-                "Either the data_dir arg must be given (i.e. not None) or all "
-                "of the images_dir, labels_dir, and connector_dir args."
-            )
-
     def _init_set_paths(
         self,
         data_dir: Union[Path, str],
-        images_dir: Union[Path, str],
-        labels_dir: Union[Path, str],
-        connector_dir: Union[Path, str],
     ):
         """Set paths to image/label data and connector component files.
 
         Used during initialization.
         """
-        if data_dir is not None:
-            (
-                images_dir,
-                labels_dir,
-                connector_dir,
-            ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
+        (
+            images_dir,
+            labels_dir,
+            connector_dir,
+        ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
         self._images_dir = Path(images_dir)
         self._labels_dir = Path(labels_dir)
