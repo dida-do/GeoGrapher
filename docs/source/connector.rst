@@ -130,21 +130,9 @@ The newly created connector is empty: the ``vector_feates`` and ``raster_imgs`` 
 Initializing an existing connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To initialize an existing connector you can use either the ``from_data_dir`` or ``from_paths`` class method::
+To initialize an existing connector use the ``from_data_dir`` class method::
 
     connector = Connector.from_data_dir(data_dir=<DATA_DIR>)
-
-The ``from_paths`` class method allows you to work with datasets that do not lie in a data directory::
-
-    connector = Connector.from_paths(
-        connector_dir=<CONNECTOR_DIR>,
-        images_dir=<IMAGES_DIR>))
-
-You can pass an optional crs_eps
-
-.. todo::
-
-    explain data_dir vs from_paths
 
 Saving a connector
 ~~~~~~~~~~~~~~~~~~
