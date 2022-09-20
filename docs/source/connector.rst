@@ -178,5 +178,5 @@ As with adding or dropping vector features, you can supply an optional a :doc:`L
     The connector only knows about the ``raster_imgs`` GeoDataFrame, not
     whether the images actually exist in the ``connector.images_dir``
     directory.  You can use the ``raster_imgs_from_tif_dir`` function in
-    ``utils/utils.py`` to create a ``new_raster_imgs`` GeoDataFrame from a
-    directory of GeoTiffs you can add to the connector.
+    ``utils/utils.py`` to create a GeoDataFrame from a directory of
+    GeoTiffs, which you can then pass as the ``new_raster_imgs`` argument.
