@@ -29,7 +29,6 @@
       ~Connector.imgs_containing_vector_feature
       ~Connector.imgs_intersecting_vector_feature
       ~Connector.is_vector_feature_contained_in_img
-      ~Connector.print_graph
       ~Connector.rectangle_bounding_img
       ~Connector.save
       ~Connector.vector_features_contained_in_img
@@ -46,10 +45,13 @@
       ~Connector.all_vector_feature_classes
       ~Connector.connector_dir
       ~Connector.crs_epsg_code
+      ~Connector.graph_str
       ~Connector.image_data_dirs
       ~Connector.images_dir
+      ~Connector.img_count_col_name
       ~Connector.labels_dir
       ~Connector.raster_imgs
+      ~Connector.set_img_count_col_name
       ~Connector.task_vector_feature_classes
       ~Connector.vector_features
    
