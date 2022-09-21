@@ -101,9 +101,7 @@ class IsFeatureMissingImgs(FeatureFilterPredicate):
             answer
         """
         return (
-            target_connector.vector_features.loc[
-                feature_name, target_connector.img_count_col_name
-            ]
+            target_connector.vector_features.loc[feature_name, "img_count"]
             < self.target_img_count
         )
 
