@@ -4,6 +4,5 @@
     ],
     "background_class": null,
     "crs_epsg_code": 4326,
-    "img_count_col_name": "img_count",
     "label_type": "soft-categorical"
 }

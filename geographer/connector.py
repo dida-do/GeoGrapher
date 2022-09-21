@@ -171,7 +171,6 @@ class Connector(
                 "task_feature_classes": task_feature_classes,
                 "background_class": background_class,
                 "crs_epsg_code": crs_epsg_code,
-                "img_count_col_name": img_count_col_name,
                 **kwargs,
             }
         )
