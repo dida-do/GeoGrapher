@@ -275,7 +275,7 @@ class Connector(
 
     @property
     def data_dir(self) -> str:
-        """Data directory."""
+        """Data directory."""  # noqa: D401
         return self._data_dir
 
     @property
