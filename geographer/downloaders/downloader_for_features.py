@@ -170,9 +170,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             # in the meanwhile).
             num_img_series_to_download = (
                 target_img_count
-                - connector.vector_features.loc[
-                    feature_name, connector.img_count_col_name
-                ]
+                - connector.vector_features.loc[feature_name, self.img_count_col_name]
             )
             if num_img_series_to_download <= 0:
                 log.debug(
@@ -395,7 +393,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         if feature_names is None:
             features_for_which_to_download = list(
                 connector.vector_features.loc[
-                    connector.vector_features[connector.img_count_col_name]
+                    connector.vector_features[self.img_count_col_name]
                     < target_img_count
                 ].index
             )
