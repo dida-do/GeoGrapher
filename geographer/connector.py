@@ -274,6 +274,11 @@ class Connector(
         self._raster_imgs = new_raster_imgs
 
     @property
+    def data_dir(self) -> str:
+        """Data directory."""
+        return self._data_dir
+
+    @property
     def images_dir(self) -> Path:
         """Directory containing the raster images."""
         return self._images_dir
@@ -537,6 +542,7 @@ class Connector(
             connector_dir,
         ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
+        self._data_dir = Path(data_dir)
         self._images_dir = Path(images_dir)
         self._labels_dir = Path(labels_dir)
         self._connector_dir = Path(connector_dir)
