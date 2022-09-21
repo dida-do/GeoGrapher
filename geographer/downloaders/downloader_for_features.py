@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 import random
+import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
-import shutil
 from typing import Dict, Optional, Union
 
 from geopandas import GeoDataFrame
@@ -121,9 +121,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             connector = Connector.from_data_dir(connector)
         connector.images_dir.mkdir(parents=True, exist_ok=True)
         temp_download_dir = connector.data_dir / DEFAULT_TEMP_DOWNLOAD_DIR_NAME
-        temp_download_dir.mkdir(
-            parents=True, exist_ok=True
-        )
+        temp_download_dir.mkdir(parents=True, exist_ok=True)
 
         features_for_which_to_download = self._get_features_for_which_to_download(
             feature_names=feature_names,
