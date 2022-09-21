@@ -146,7 +146,6 @@ def test_mock_download_many_features():
         source_connector=source_connector
     )
     downloader = ImgDownloaderForVectorFeatures(
-        download_dir=data_dir / "download",
         downloader_for_single_feature=downloader_for_single_feature,
         download_processor=download_processor,
     )

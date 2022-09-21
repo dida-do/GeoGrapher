@@ -6,6 +6,7 @@ import logging
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
+import shutil
 from typing import Dict, Optional, Union
 
 from geopandas import GeoDataFrame
@@ -28,6 +29,8 @@ from geographer.errors import (
 )
 from geographer.utils.utils import concat_gdfs
 
+DEFAULT_TEMP_DOWNLOAD_DIR_NAME = "temp_download_dir"
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.WARNING)
 
@@ -35,7 +38,6 @@ log.setLevel(logging.WARNING)
 class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
     """Class that downloads a targeted number of rasters per vector feature."""
 
-    download_dir: Path
     downloader_for_single_feature: ImgDownloaderForSingleVectorFeature
     download_processor: ImgDownloadProcessor
     kwarg_defaults: Dict = Field(default_factory=dict)
@@ -118,9 +120,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         if not isinstance(connector, Connector):
             connector = Connector.from_data_dir(connector)
         connector.images_dir.mkdir(parents=True, exist_ok=True)
-        self.download_dir.mkdir(
+        temp_download_dir = connector.data_dir / DEFAULT_TEMP_DOWNLOAD_DIR_NAME
+        temp_download_dir.mkdir(
             parents=True, exist_ok=True
-        )  # TODO: connector.data_dir / 'downloads' or whatever
+        )
 
         features_for_which_to_download = self._get_features_for_which_to_download(
             feature_names=feature_names,
@@ -199,7 +202,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                     return_dict = self.downloader_for_single_feature.download(
                         feature_name=feature_name,
                         feature_geom=feature_geom,
-                        download_dir=self.download_dir,
+                        download_dir=temp_download_dir,
                         previously_downloaded_imgs_set=previously_downloaded_imgs_set,
                         **self.kwarg_defaults,
                     )
@@ -274,7 +277,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                             single_img_processed_return_dict = (
                                 self.download_processor.process(
                                     img_name,
-                                    self.download_dir,
+                                    temp_download_dir,
                                     connector.images_dir,
                                     connector.crs_epsg_code,
                                     **self.kwarg_defaults,
@@ -313,6 +316,10 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
                 [connector.raster_imgs, new_raster_imgs]
             )
             connector.save()
+
+        # clean up
+        if not list(temp_download_dir.iterdir()):
+            shutil.rmtree(temp_download_dir)
 
     def save(self, file_path: Union[Path, str]):
         """Save downloader.

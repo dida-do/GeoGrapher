@@ -54,7 +54,6 @@ def test_s2_download():
     s2_download_processor = Sentinel2Processor()
     s2_downloader_for_single_feature = SentinelDownloaderForSingleVectorFeature()
     s2_downloader = ImgDownloaderForVectorFeatures(
-        download_dir=data_dir / "download",
         downloader_for_single_feature=s2_downloader_for_single_feature,
         download_processor=s2_download_processor,
         kwarg_defaults={
@@ -63,7 +62,7 @@ def test_s2_download():
             "max_percent_cloud_coverage": 10,
             "date": ("NOW-364DAYS", "NOW"),
             "area_relation": "Contains",
-            "credentials_ini_path": credentials_ini_path,
+            "credentials": credentials_ini_path,
         },
     )
 

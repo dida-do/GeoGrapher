@@ -46,7 +46,6 @@ def test_jaxa_download():
     jaxa_download_processor = JAXADownloadProcessor()
     jaxa_downloader_for_single_feature = JAXADownloaderForSingleVectorFeature()
     jaxa_downloader = ImgDownloaderForVectorFeatures(
-        download_dir=data_dir / "download",
         downloader_for_single_feature=jaxa_downloader_for_single_feature,
         download_processor=jaxa_download_processor,
         kwarg_defaults={
