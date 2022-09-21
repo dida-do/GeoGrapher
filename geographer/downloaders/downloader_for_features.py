@@ -166,11 +166,11 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
             # lacking an image if it is now contained in one of the already downloaded
             # images, so need to check again that there are not enough images for the
             # vector feature (since the iterator above is set when it is called and
-            # won't know if the self.img_count_col_name column value has been changed
-            # in the meanwhile).
+            # won't know if the "img_count" column value has been changed in the
+            # meanwhile).
             num_img_series_to_download = (
                 target_img_count
-                - connector.vector_features.loc[feature_name, self.img_count_col_name]
+                - connector.vector_features.loc[feature_name, "img_count"]
             )
             if num_img_series_to_download <= 0:
                 log.debug(
@@ -393,8 +393,7 @@ class ImgDownloaderForVectorFeatures(BaseModel, SaveAndLoadBaseModelMixIn):
         if feature_names is None:
             features_for_which_to_download = list(
                 connector.vector_features.loc[
-                    connector.vector_features[self.img_count_col_name]
-                    < target_img_count
+                    connector.vector_features["img_count"] < target_img_count
                 ].index
             )
         elif isinstance(feature_names, (str, int)):
