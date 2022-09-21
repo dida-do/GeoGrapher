@@ -48,7 +48,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         max_percent_cloud_coverage: int,
         date: Any,
         area_relation: str,
-        credentials_ini_path: Path,
+        credentials: Union[tuple[str, str], Path, str],
         **kwargs,
     ) -> dict:
         """Download a S-2 raster for a vector feature.
@@ -72,7 +72,8 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             date:  See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
             area_relation : See
                 https://sentinelsat.readthedocs.io/en/latest/api_reference.html
-            credentials_ini_path: Path to ini file containing API credentials.
+            credentials: Tuple of username and password or
+                Path or str to ini file containing API credentials.
 
         Returns:
             A dictionary containing information about the images.
@@ -90,7 +91,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         rectangle_wkt: str = wkt.dumps(feature_geom.envelope)
         producttype = self._get_longform_producttype(producttype)
 
-        api = self._get_api(credentials_ini_path)
+        api = self._get_api(credentials)
 
         try:
 
@@ -194,27 +195,35 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
         if producttype not in {"L1C", "S2MSI1C", "L2A", "S2MSI2A"}:
             raise ValueError(f"Unknown producttype: {producttype}")
 
-    def _get_api(self, config_path: Path):
+    def _get_api(self, credentials: Union[tuple[str, str], Path, str]):
         # Get username and password to set up the sentinel API ...
-        try:
-            if config_path is None:
-                raise ValueError(
-                    "Need username and password or config_path to .ini file "
-                    "containing username and password"
+        if (
+            isinstance(credentials, tuple)
+            and len(credentials) == 2
+            and all(isinstance(cred, str) for cred in credentials)
+        ):
+            username, password = credentials
+        elif isinstance(credentials, (str, Path)):
+            try:
+                config = configparser.ConfigParser()
+                if not credentials.is_file():
+                    raise FileNotFoundError(
+                        "Can't find .ini file containing username and password in "
+                        f"{credentials}"
+                    )
+                config.read(credentials)
+                username = config["login"]["username"]
+                password = config["login"]["password"]
+            except KeyError as exc:
+                log.error(
+                    "Missing entry in 'sentinel_scihub.ini' file. "
+                    "Need API credentials. %s",
+                    exc,
                 )
-            config = configparser.ConfigParser()
-            if not config_path.is_file():
-                raise FileNotFoundError(
-                    "Can't find .ini file containing username and password in "
-                    f"{config_path}"
-                )
-            config.read(config_path)
-            username = config["login"]["username"]
-            password = config["login"]["password"]
-        except KeyError as exc:
-            log.error(
-                "Missing entry in 'sentinel_scihub.ini' file. Need API credentials. %s",
-                exc,
+        else:
+            raise TypeError(
+                "Need username and password or config_path to .ini file "
+                "containing username and password"
             )
 
         # ... and instantiate the API.
