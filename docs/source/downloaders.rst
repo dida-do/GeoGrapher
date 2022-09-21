@@ -18,7 +18,6 @@ Example usage::
     downloader_for_single_feature=SentinelDownloaderForSingleVectorFeature()
     download_processor=Sentinel2Processor()
     downloader = ImgDownloaderForVectorFeatures(
-        download_dir=<DOWNLOAD_DIR>,
         downloader_for_single_feature=downloader_for_single_feature,
         download_processor=download_processor,
     )
