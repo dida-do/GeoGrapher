@@ -36,7 +36,7 @@ class BipartiteGraphMixIn:
             `True` if there is an image in the dataset fully containing the vector
             feature, False otherwise.
         """
-        return self.vector_features.loc[feature_name, self.img_count_col_name] > 0
+        return self.vector_features.loc[feature_name, "img_count"] > 0
 
     def rectangle_bounding_img(self, img_name: str) -> BaseGeometry:
         """Return shapely geometry bounding an image.
@@ -339,7 +339,7 @@ class BipartiteGraphMixIn:
         # if the vector feature is fully contained in the image
         # increment the image counter in self.vector_features
         if contains_or_intersects == "contains":
-            vector_features.loc[feature_name, self.img_count_col_name] += 1
+            vector_features.loc[feature_name, "img_count"] += 1
 
     def _add_vector_feature_to_graph(
         self, feature_name: str, vector_features: Optional[GeoDataFrame] = None
@@ -496,7 +496,7 @@ class BipartiteGraphMixIn:
         )
 
         if set_img_count_to_zero:
-            self.vector_features.loc[feature_name, self.img_count_col_name] = 0
+            self.vector_features.loc[feature_name, "img_count"] = 0
 
     def _remove_img_from_graph_modify_vector_features(self, img_name: str):
         """Remove raster from graph & modify self.vector_features accordingly.
@@ -509,7 +509,7 @@ class BipartiteGraphMixIn:
             img_name: name/id of image to remove
         """
         for feature_name in self.vector_features_contained_in_img(img_name):
-            self.vector_features.loc[feature_name, self.img_count_col_name] -= 1
+            self.vector_features.loc[feature_name, "img_count"] -= 1
 
         self._graph.delete_vertex(
             img_name, RASTER_IMGS_COLOR, force_delete_with_edges=True

@@ -74,15 +74,7 @@ class AddDropVectorFeaturesMixIn(object):
         )
 
         new_vector_features = deepcopy_gdf(new_vector_features)
-        if (
-            self.img_count_col_name in new_vector_features.columns
-            and (new_vector_features[self.img_count_col_name] != 0).any()
-        ):
-            raise ValueError(
-                f"Name conflict! Column {self.img_count_col_name} of "
-                "new_vector_features already exists and has non zero entries!"
-            )
-        new_vector_features[self.img_count_col_name] = 0
+        new_vector_features["img_count"] = 0
 
         self._check_required_df_cols_exist(
             df=new_vector_features,
