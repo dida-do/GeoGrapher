@@ -96,8 +96,9 @@ class RastersNotPreviouslyCutOnly(RasterFilterPredicate):
 
 class RowSeriesPredicate(ABC, BaseModel):
     """Row series predicate.
-    
-    Apply to single row (series)."""
+
+    Apply to series, i.e. single row.
+    """
 
     @abstractmethod
     def __call__(*args, **kwargs):
