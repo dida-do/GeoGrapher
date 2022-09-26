@@ -1,16 +1,11 @@
 Cutting Datasets: Basic
 #######################
 
-.. todo::
-
-    - make it clear we are creating new datasets from old ones and not operating in place.
-    - other options.
-    - saving and loading etc.
-    - add entry for 'cutting' in gloassary
-
-Use the ``DSCutter`` classes to create a new dataset from an existing source dataset by cutting the source dataset.
-GeoGrapher has two general customizable ``DSCutter`` classes: :class:`geographer.cutter`.
-There are two helper functions that return ``DSCutter``s customized for the following two common use cases:
+The ``DSCutter`` classes are used for :term:`cutting` datasets.
+ GeoGrapher has two general customizable
+``DSCutter`` classes: :class:`geographer.cutter`. There are two helper
+functions that return ``DSCutter`` s customized for the following two common
+use cases:
 
 - :ref:`cutting_every_img_to_a_grid`
 - :ref:`cutting_images_around_vector_features`
@@ -20,7 +15,10 @@ There are two helper functions that return ``DSCutter``s customized for the foll
 Cutting Every Image To A Grid of Images
 =======================================
 
-To create a new dataset in ``target_data_dir`` from a source dataset in ``source_data_dir`` by cutting every image in the dataset to a grid of images use the :func:`geographer.cutters.get_cutter_every_img_to_grid` function::
+To create a new dataset in ``target_data_dir`` from a source dataset in
+``source_data_dir`` by cutting every image in the dataset to a grid of
+images use the :func:`geographer.cutters.get_cutter_every_img_to_grid`
+function::
 
     from geographer.cutters import get_cutter_every_img_to_grid
     cutter = get_cutter_every_img_to_grid(
@@ -30,14 +28,22 @@ To create a new dataset in ``target_data_dir`` from a source dataset in ``source
         name=<OPTIONAL_NAME_FOR_SAVING>)
     cutter.cut()
 
-Updating the ``target_data_dir`` after the ``source_data_dir`` has
-grown since it was cut::
+The :func:`geographer.cutters.get_cutter_every_img_to_grid`
+function returns a :class:`geographer.cutters.DSCutterIterOverImgs` instance.
+The :meth:`cut` method will save the cutter to a json file in
+``connector.connector_dir / <NAME>.json``.
+To update the target dataset after the source dataset has grown, first read the json file
+and then run :meth:`update`::
 
-    cutter.update()
+    from geographer.cutters import DSCutterIterOverImgs
+    dataset_cutter = DSCutterIterOverImgs.from_json_file(<path/to/saved.json>)
+    dataset_cutter.update()
 
 .. warning::
 
-    The ``update`` method assumes that that no vector_features or raster images that remain in the target dataset have been removed from the source dataset.
+    The ``update`` method assumes that that no vector_features or raster
+    images that remain in the target dataset have been removed from the
+    source dataset.
 
 .. _cutting_images_around_vector_features:
 
@@ -58,10 +64,16 @@ cutouts around vector features from 10980 x 10980 Sentinel-2 tiles)::
         mode: "random")
     cutter.cut()
 
-Updating the ``target_data_dir`` after the ``source_data_dir``
-has grown (more images or vector features) since it was cut::
+The :func:`geographer.cutters.get_cutter_imgs_around_every_feature`
+function returns a :class:`geographer.cutters.DSCutterIterOverFeatures` instance.
+The :meth:`cut` method will save the cutter to a json file in
+``connector.connector_dir / <NAME>.json``.
+To update the target dataset after the source dataset has grown, first read the json file
+and then run :meth:`update`::
 
-    cutter.update()
+    from geographer.cutters import DSCutterIterOverFeatures
+    dataset_cutter = DSCutterIterOverFeatures.from_json_file(<path/to/saved.json>)
+    dataset_cutter.update()
 
 .. warning::
 

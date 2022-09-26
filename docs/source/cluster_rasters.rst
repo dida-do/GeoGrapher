@@ -1,10 +1,6 @@
 Cluster rasters
 ###############
 
-.. todo::
-
-    explain clsuters defined by, preclustering methods
-
 To get a list of the raster clusters that need to be respected in the
 train/validation split to avoid data leakage use the
 :func:`geographer.utils.cluster_rasters.get_raster_clusters` function::
@@ -19,8 +15,15 @@ train/validation split to avoid data leakage use the
     are the minimal clusters of rasters that need to be consistently assigned
     to the train or validation splits to avoid data leakage.
 
+::
+
     from geographer.utils.cluster_rasters.= import get_raster_clusters
     clusters : List[Set[str]] = get_raster_clusters(
         connector=connector,
         clusters_defined_by='rasters_that_share_vector_features',
         preclustering_method='y then x-axis')
+
+The ``clusters_defined_by`` argument defines how clusters are defined.
+It must be one of ``"rasters_that_share_vector_features"`` or 
+``"rasters_that_share_vector_features_or_overlap"``. Setting optional
+``preclustering_method`` argument speeds up clustering and is recommended.
