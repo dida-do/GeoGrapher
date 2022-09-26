@@ -1,9 +1,10 @@
 # GeoGrapher
 
 *GeoGrapher* is a Python library for building remote sensing
-computer vision datasets assembled from vector features and raster images.
-It connects the features and images by a bipartite graph that keeps track of
-the containment and intersection relations between them making it particularly
+computer vision datasets starting from vector features (e.g. georeferenced coordinates,
+bounding boxes, or segmentation maks). It connects the features and images
+by a bipartite graph that keeps track of
+the containment and intersection relations between them making it
 suited for *object-centric* vision tasks. GeoGrapher also provides highly
 general and customizable dataset cutting functionality as well as other utility
 functions.
