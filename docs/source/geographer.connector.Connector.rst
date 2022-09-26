@@ -23,7 +23,6 @@
       ~Connector.drop_vector_features
       ~Connector.empty_connector_same_format
       ~Connector.from_data_dir
-      ~Connector.from_paths
       ~Connector.from_scratch
       ~Connector.have_img_for_vector_feature
       ~Connector.imgs_containing_vector_feature
@@ -45,6 +44,7 @@
       ~Connector.all_vector_feature_classes
       ~Connector.connector_dir
       ~Connector.crs_epsg_code
+      ~Connector.data_dir
       ~Connector.graph_str
       ~Connector.image_data_dirs
       ~Connector.images_dir

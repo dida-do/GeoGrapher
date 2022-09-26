@@ -94,13 +94,11 @@ class Connector(
             to initialize a ``Connector`` instead of using ``__init__`` directly.
 
             To initialize a new connector use
-                - the :meth:`from_scratch` class method (:ref:`see here for an
-                    example <from_scratch>`), or
+                - the :meth:`from_scratch` class method, or
                 - the :meth:`empty_connector_same_format_as` method
 
             To initialize an existing connector use
-                - the :meth:`from_data_dir` class method (:ref:`see here for an
-                    example <init_existing_connector>`), or
+                - the :meth:`from_data_dir` class method
 
 
         Args:

@@ -14,25 +14,12 @@
    .. autosummary::
    
       ~DSCutterIterOverFeatures.__init__
-      ~DSCutterIterOverFeatures.construct
-      ~DSCutterIterOverFeatures.copy
       ~DSCutterIterOverFeatures.create
       ~DSCutterIterOverFeatures.create_or_update
       ~DSCutterIterOverFeatures.cut
-      ~DSCutterIterOverFeatures.dict
-      ~DSCutterIterOverFeatures.from_json_file
-      ~DSCutterIterOverFeatures.from_orm
-      ~DSCutterIterOverFeatures.json
-      ~DSCutterIterOverFeatures.parse_file
-      ~DSCutterIterOverFeatures.parse_obj
-      ~DSCutterIterOverFeatures.parse_raw
       ~DSCutterIterOverFeatures.save
-      ~DSCutterIterOverFeatures.schema
-      ~DSCutterIterOverFeatures.schema_json
       ~DSCutterIterOverFeatures.update
-      ~DSCutterIterOverFeatures.update_forward_refs
-      ~DSCutterIterOverFeatures.validate
-   
+
    
 
    

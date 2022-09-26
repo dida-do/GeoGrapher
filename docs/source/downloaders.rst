@@ -3,7 +3,12 @@ Downloading Raster Images
 
 To download images for vector features use ``ImgDownloaderForVectorFeatures``. 
 
-By plugging in different ``DownloaderForSingleVectorFeature`` and ``Processor`` components it can interface with different sources of remote sensing imagery. Currently, it can interface with the Copernicus Open Access Hub for Sentinel-2 imagery, and JAXA for ALOS DEM (digital elevation model) data, and can easily be extended to other data sources by writing custom ``DownloaderForSingleSingleVectorFeature`` and ``Processor`` classes.
+By plugging in different ``DownloaderForSingleVectorFeature`` and ``Processor``
+components it can interface with different sources of remote sensing imagery.
+Currently, it can interface with the Copernicus Open Access Hub for Sentinel-2
+imagery, and JAXA for ALOS DEM (digital elevation model) data, and can easily
+be extended to other data sources by writing custom
+``DownloaderForSingleSingleVectorFeature`` and ``Processor`` classes.
 
 Example usage
 +++++++++++++
@@ -32,9 +37,16 @@ Example usage::
         area_relation='Contains'
     )
 
-The image counts for all vector features are updated after every download, so that unnecessary downloads and an imbalance in the dataset due to clustering of nearby vector features are avoided.
+The image counts for all vector features are updated after every download,
+so that unnecessary downloads and an imbalance in the dataset due to clustering
+of nearby vector features are avoided.
 
-You can supply default values for dataset/data source specific ``download`` arguments (e.g. ``producttype``, ``max_percent_cloud_coverage`` for the ``SentinelDownloaderForSingleVectorFeature``) in the ``ImgDownloaderForVectorFeatures``'s ``kwarg_defaults`` arguments dict, so that one doesn't have to pass them by hand to the ``download`` method, for example::
+You can supply default values for dataset/data source specific ``download``
+arguments (e.g. ``producttype``, ``max_percent_cloud_coverage`` for the
+``SentinelDownloaderForSingleVectorFeature``) in the
+``ImgDownloaderForVectorFeatures``'s ``kwarg_defaults`` arguments dict,
+so that one doesn't have to pass them by hand to the ``download`` method,
+for example::
     
         downloader = ImgDownloaderForVectorFeatures(
             download_dir=<DOWNLOAD_DIR>,
@@ -54,31 +66,34 @@ You can supply default values for dataset/data source specific ``download`` argu
 Data sources
 ++++++++++++
 
-The ``DownloaderForSingleSingleVectorFeature`` class interfaces with the raster image data source's API and the ``Processor`` class processes downloaded files to GeoTiffs. 
+The ``DownloaderForSingleSingleVectorFeature`` class interfaces with the raster
+image data source's API and the ``Processor`` class processes downloaded files
+to GeoTiffs. 
 
 Sentinel-2
 ~~~~~~~~~~
 
-For *Sentinel-2* data, use the ``SentinelDownloaderForSingleVectorFeature`` to download images from the Copernicus Open Access Hub and the ``Sentinel2Processor``.
+For *Sentinel-2* data, use the ``SentinelDownloaderForSingleVectorFeature``
+to download images from the Copernicus Open Access Hub and the ``Sentinel2Processor``.
 
 Sentinel-1
 ~~~~~~~~~~
 
-The ``SentinelDownloaderForSingleVectorFeature`` should work with slight modifications for downloading Sentinel-1 data from Copernicus Open Access Hub as well. Feel free to submit a pull request for this feature.
+The ``SentinelDownloaderForSingleVectorFeature`` should work with slight modifications
+for downloading Sentinel-1 data from Copernicus Open Access Hub as well. Feel free to
+submit a pull request for this feature.
 
 JAXA DEM data
 ~~~~~~~~~~~~~
 
-For *JAXA* DEM (digital elevation model) data use ``JAXADownloaderForSingleVectorFeature`` and ``JAXADownloadProcessor``.
+For *JAXA* DEM (digital elevation model) data use ``JAXADownloaderForSingleVectorFeature``
+and ``JAXADownloadProcessor``.
 
 Other sources for remote sensing imagery:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Subclass ``DownloaderForSingleSingleVectorFeature`` and ``Processor`` to interface with other API's for remote sensing data.
-
-.. todo::
-
-    describe the Sentinel and JAXA 
+Subclass ``DownloaderForSingleSingleVectorFeature`` and ``Processor`` to interface with
+other API's for remote sensing data.
 
 Saving and loading a downloader
 +++++++++++++++++++++++++++++++
