@@ -1,4 +1,4 @@
-"""ABC for predicates for filtering images.
+"""ABC for predicates for filtering rasters.
 
 Used in cutting functions.
 """
@@ -17,8 +17,8 @@ from pydantic import BaseModel
 from geographer.connector import Connector
 
 
-class ImgFilterPredicate(ABC, Callable, BaseModel):
-    """ABC for predicates used to filter images in cutting functions.
+class RasterFilterPredicate(ABC, Callable, BaseModel):
+    """ABC for predicates used to filter rasters in cutting functions.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.
@@ -27,30 +27,30 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
     @abstractmethod
     def __call__(
         self,
-        img_name: str,
+        raster_name: str,
         target_connector: Connector,
-        new_img_dict: dict,
+        new_raster_dict: dict,
         source_connector: Connector,
-        cut_imgs: list[str],
+        cut_rasters: list[str],
     ) -> bool:
-        """Return if the image is to be kept, else False.
+        """Return if the raster is to be kept, else False.
 
         Args:
-            img_name: img identifier
+            raster_name: raster identifier
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of
-                target_connector.raster_imgs and values lists of entries
-                correspondong to images
-            source_connector: connector of source dataset that new images are being
+            new_rasters_dict: dict with keys index or column names of
+                target_connector.rasters and values lists of entries
+                correspondong to rasters
+            source_connector: connector of source dataset that new rasters are being
                 cut out from
-            cut_imgs: list of (names of) cut images
+            cut_rasters: list of (names of) cut rasters
 
         Returns:
-            True should mean image is to be kept, False that it is to be filtered out
+            True should mea raster is to be kept, False that it is to be filtered out
 
         Note:
-            The new_imgs_dict should be viewed as part of the target connector.
-            See feature_filter_predicates.py for an explanation.
+            The new_rasters_dict should be viewed as part of the target connector.
+            See vector_filter_predicates.py for an explanation.
         """
         raise NotImplementedError
 
@@ -61,41 +61,43 @@ class ImgFilterPredicate(ABC, Callable, BaseModel):
             f.write(self.json(indent=2))
 
 
-class AlwaysTrue(ImgFilterPredicate):
-    """Default image filter predicate that always returns True.
+class AlwaysTrue(RasterFilterPredicate):
+    """Default raster filter predicate that always returns True.
 
     Used when filtering is not desired.
     """
 
     def __call__(
         self,
-        img_name: str,
+        raster_name: str,
         target_connector: Connector,
-        new_img_dict: dict,
+        new_raster_dict: dict,
         source_connector: Connector,
-        cut_imgs: list[str],
+        cut_rasters: list[str],
     ) -> bool:
         """Return True."""
         return True
 
 
-class ImgsNotPreviouslyCutOnly(ImgFilterPredicate):
-    """Select images not previously cut."""
+class RastersNotPreviouslyCutOnly(RasterFilterPredicate):
+    """Select rasters not previously cut."""
 
     def __call__(
         self,
-        img_name: str,
+        raster_name: str,
         target_connector: Connector,
-        new_img_dict: dict,
+        new_raster_dict: dict,
         source_connector: Connector,
-        cut_imgs: list[str],
+        cut_rasters: list[str],
     ) -> bool:
-        """Return True if the image was not previously cut, else False."""
-        return img_name not in cut_imgs
+        """Return True if the raster was not previously cut, else False."""
+        return raster_name not in cut_rasters
 
 
 class RowSeriesPredicate(ABC, BaseModel):
-    """Row series predicate."""
+    """Row series predicate.
+    
+    Apply to single row (series)."""
 
     @abstractmethod
     def __call__(*args, **kwargs):
@@ -103,11 +105,11 @@ class RowSeriesPredicate(ABC, BaseModel):
         pass
 
 
-class ImgFilterRowCondition(ImgFilterPredicate):
-    """Simple ImgFilter based on row condition.
+class sRasterFilterRowCondition(RasterFilterPredicate):
+    """Simple RasterFilter based on row condition.
 
-    Applies a given predicate to the row in source_connector.raster_imgs
-    corresponding to the image name in question.
+    Applies a given predicate to the row in source_connector.rasters
+    corresponding to the raster name in question.
     """
 
     row_series_predicate: RowSeriesPredicate
@@ -115,45 +117,43 @@ class ImgFilterRowCondition(ImgFilterPredicate):
     def __init__(
         self, row_series_predicate: Callable[[Union[GeoSeries, Series]], bool]
     ) -> None:
-        """Initialize an instance of ImgFilterRowCondition.
+        """Initialize an instance of RasterFilterRowCondition.
 
         Args:
             row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]):
-                predicate to apply to the row corresponding to an image
-                (i.e. source_connector.raster_imgs.loc[img_name])
+                predicate to apply to the row corresponding to a raster
+                (i.e. source_connector.rasters.loc[raster_name])
         """
         super().__init__()
         self.row_series_predicate = row_series_predicate
 
     def __call__(
         self,
-        img_name: str,
+        raster_name: str,
         target_connector: Connector,
-        new_img_dict: dict,
+        new_raster_dict: dict,
         source_connector: Connector,
-        cut_imgs: list[str],
+        cut_rasters: list[str],
     ) -> bool:
         """Apply predicate to row.
 
         Apply self.row_series_predicate to
-        source_connector.raster_imgs[img_name]
+        source_connector.rasters[raster_name]
 
         Args:
 
-            img_name: image name
+            raster_name: raster name
             target_connector: connector of target dataset.
-            new_imgs_dict: dict with keys index or column names of
-                target_connector.raster_imgs and values lists of entries
-                correspondong to images
+            new_rasters_dict: dict with keys index or column names of
+                target_connector.rasters and values lists of entries
+                correspondong to rasters
             source_connector: source connector
 
         Returns:
             result of aplying self.row_series_predicate to
-            source_connector.raster_imgs[img_name]
+            source_connector.rasters[raster_name]
         """
-        row_series: Union[GeoSeries, Series] = source_connector.raster_imgs.loc[
-            img_name
-        ]
+        row_series: Union[GeoSeries, Series] = source_connector.rasters.loc[raster_name]
         answer = self.row_series_predicate(row_series)
 
         return answer

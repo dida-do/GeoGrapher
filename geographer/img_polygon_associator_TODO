@@ -3,25 +3,25 @@
 TODO: README.MD etc.
 TODO: SHOULD I COMBINE THE DOWNLOAD AND PROCESSING FUNCTIONS?
 TODO: THE __make_geotif_label__ FUNCTION ASSUMES THERE IS A "TYPE" COLUMN GIVING THE SEGMENTATION TYPE OF A POLYGON IN POLYGONS_DF, AND THAT LABELS ARE CATEGORICAL. THIS WILL NOT COVER EVERY USE CASE. HOW BEST TO MAKE THIS MODULAR/ADAPTABLE? SHOULD I TAKE OUT THE __make_geotif_label__ FUNCTION AND PASS IT AS A PARAMETER WHEN CONSTRUCTING A CLASS INSTANCE? AGAIN< WE CAN TAKE A FUNCTIONAL OR OBJECT ORIENTED APPROACH. 
-TODO: add failsafe/assert statements that coordinates have been converted correctly by comparing img_bounding_rectangle with box from metadata... why does this not work?
+TODO: add failsafe/assert statements that coordinates have been converted correctly by comparing raster_bounding_rectangle with box from metadata... why does this not work?
 TODO: type checking not yet implemented
 TODO: make sure column and index types are what they should be. 
         Not sure how best to deal with dtype being 'object' or 'O' when it should be str??
-TODO: Check we add a vertex in the graph whenever we add a polygon or an img!
-    and take out 'have_img?' and 'have_img_downloaded?' values in self.polygons_df when we delete a polygon vertex
-    more generally, treat the rows of polygons as "glued" to the polygon vertices, and similarly for the images
+TODO: Check we add a vertex in the graph whenever we add a polygon or an raster!
+    and take out 'have_raster?' and 'have_raster_downloaded?' values in self.polygons_df when we delete a polygon vertex
+    more generally, treat the rows of polygons as "glued" to the polygon vertices, and similarly for the rasters
     there should be no public (i.e. non dunder) methods which break the abstraction barrier 
     by creating an associator that 
 
-    how to make precise what I mean? whenever we drop or add a polygon or image or 
+    how to make precise what I mean? whenever we drop or add a polygon or raster or 
     change the polygon geometries appropriate connections (edges in the graph) should be added as well.
     Or: the following invariants should be maintained by all methods: 
         - rows in self.polygons_df correspond to (bijectively) polygon vertices, all polygons are connected 
-            (i.e. the polygon vertices are) to all images (i.e. image vertices) they should be connected to, 
-            and if there exists an image fully containing a polygon that should be reflected in that 
-            polygon's entry in the "have_img?" column (what about have_img_downloaded?)
-        - rows in self.raster_imgs correspond (bijectively) to image vertices, and all images are connected to all
+            (i.e. the polygon vertices are) to all rasters (i.e. raster vertices) they should be connected to, 
+            and if there exists a raster fully containing a polygon that should be reflected in that 
+            polygon's entry in the "have_raster?" column (what about have_raster_downloaded?)
+        - rows in self.rasters correspond (bijectively) to raster vertices, and all rasters are connected to all
             polygons they should be connected to.
-    Another way of thinking aout this: One should never be able to manipulate the graph from outside the associator. One can only add or delete images, and the connections should be taken care of automatically.
+    Another way of thinking aout this: One should never be able to manipulate the graph from outside the associator. One can only add or delete rasters, and the connections should be taken care of automatically.
 TODO: index names of associator dataframes can be set (is this still true?). this should be reflected in the documentation
 TODO: be consistent with capitalization, punctuation (full stops after descriptions?)

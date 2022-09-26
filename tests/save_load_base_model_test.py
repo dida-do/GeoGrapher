@@ -7,12 +7,10 @@ from pathlib import Path
 
 import git
 
-from geographer.downloaders.downloader_for_features import (
-    ImgDownloaderForVectorFeatures,
-)
+from geographer.downloaders.downloader_for_vectors import RasterDownloaderForVectors
 from geographer.downloaders.sentinel2_download_processor import Sentinel2Processor
-from geographer.downloaders.sentinel2_downloader_for_single_feature import (
-    SentinelDownloaderForSingleVectorFeature,
+from geographer.downloaders.sentinel2_downloader_for_single_vector import (
+    SentinelDownloaderForSingleVector,
 )
 
 
@@ -25,10 +23,10 @@ def test_save_load_nested_base_model():
 
     # define nested BaseModel
     s2_download_processor = Sentinel2Processor()
-    s2_downloader_for_single_feature = SentinelDownloaderForSingleVectorFeature()
-    s2_downloader = ImgDownloaderForVectorFeatures(
+    s2_downloader_for_single_vector = SentinelDownloaderForSingleVector()
+    s2_downloader = RasterDownloaderForVectors(
         download_dir=download_test_data_dir / "download",
-        downloader_for_single_feature=s2_downloader_for_single_feature,
+        downloader_for_single_vector=s2_downloader_for_single_vector,
         download_processor=s2_download_processor,
         kwarg_defaults={  # further nesting: dictionary
             "producttype": "L2A",
@@ -55,7 +53,7 @@ def test_save_load_nested_base_model():
     s2_downloader.save(s2_downloader_json_path)
 
     # load
-    s2_downloader_from_json = ImgDownloaderForVectorFeatures.from_json_file(
+    s2_downloader_from_json = RasterDownloaderForVectors.from_json_file(
         s2_downloader_json_path,
     )
     # make sure saving and loading again doesn't change anything

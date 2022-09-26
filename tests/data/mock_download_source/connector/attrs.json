@@ -1,5 +1,5 @@
 {
-    "task_feature_classes": [
+    "task_vector_classes": [
         "object"
     ],
     "background_class": null,

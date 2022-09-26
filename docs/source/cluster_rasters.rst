@@ -20,10 +20,10 @@ train/validation split to avoid data leakage use the
     from geographer.utils.cluster_rasters.= import get_raster_clusters
     clusters : List[Set[str]] = get_raster_clusters(
         connector=connector,
-        clusters_defined_by='rasters_that_share_vector_features',
+        clusters_defined_by='rasters_that_share_vectors',
         preclustering_method='y then x-axis')
 
 The ``clusters_defined_by`` argument defines how clusters are defined.
-It must be one of ``"rasters_that_share_vector_features"`` or 
-``"rasters_that_share_vector_features_or_overlap"``. Setting optional
+It must be one of ``"rasters_that_share_vectors"`` or 
+``"rasters_that_share_vectors_or_overlap"``. Setting optional
 ``preclustering_method`` argument speeds up clustering and is recommended.

@@ -1,4 +1,4 @@
-from geographer.converters.combine_remove_vector_feature_classes import (
+from geographer.converters.combine_remove_vector_classes import (
     DSConverterCombineRemoveClasses,
 )
 from geographer.converters.label_type_soft_to_categorical import DSConverterSoftCatToCat

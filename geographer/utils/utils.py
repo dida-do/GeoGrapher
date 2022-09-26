@@ -5,7 +5,7 @@ transform_shapely_geometry(geometry, from_epsg, to_epsg): Transforms a shapely g
 
 round_shapely_geometry(geometry, ndigits=1): Rounds the coordinates of a shapely vector
     geometry. Useful in some cases for testing the coordinate conversion of
-    image bounding rectangles.
+    raster bounding rectangles.
 """
 
 from __future__ import annotations
@@ -137,7 +137,7 @@ def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, P
     """Round the coordinates of a shapely geometry.
 
     Round the coordinates of a shapely geometry (e.g. Polygon or Point).
-    Useful in some cases for testing the coordinate conversion of image
+    Useful in some cases for testing the coordinate conversion of raster
     bounding rectangles.
 
     Args:
@@ -188,7 +188,7 @@ def map_dict_values(fun: Callable, dict_arg: dict) -> dict:
 def create_kml_all_geodataframes(
     data_dir: Union[Path, str], out_path: Union[Path, str]
 ) -> None:
-    """Create KML file from a dataset's raster_imgs and vector_features.
+    """Create KML file from a dataset's rasters and vectors.
 
     Can be used to visualize data in Google Earth Pro.
     """
@@ -197,22 +197,22 @@ def create_kml_all_geodataframes(
     if out_path.suffix not in {".kml", ".KML"}:
         raise ValueError("out_path should have .kml suffix")
 
-    raster_imgs_path = data_dir / "connector/raster_imgs.geojson"
-    vector_features_path = data_dir / "connector/vector_features.geojson"
+    rasters_path = data_dir / "connector/rasters.geojson"
+    vectors_path = data_dir / "connector/vectors.geojson"
 
-    raster_imgs = gpd.read_file(raster_imgs_path, driver="GeoJSON")[
+    rasters = gpd.read_file(rasters_path, driver="GeoJSON")[
         ["geometry", RASTER_IMGS_INDEX_NAME]
     ]
-    vector_features = gpd.read_file(vector_features_path, driver="GeoJSON")[
+    vectors = gpd.read_file(vectors_path, driver="GeoJSON")[
         ["geometry", VECTOR_FEATURES_INDEX_NAME]
     ]
 
-    raster_imgs["Description"] = "image"
-    raster_imgs["Name"] = raster_imgs[RASTER_IMGS_INDEX_NAME]
-    vector_features["Description"] = "vector feature"
-    vector_features["Name"] = vector_features[VECTOR_FEATURES_INDEX_NAME]
+    rasters["Description"] = "raster"
+    rasters["Name"] = rasters[RASTER_IMGS_INDEX_NAME]
+    vectors["Description"] = "vector feature"
+    vectors["Name"] = vectors[VECTOR_FEATURES_INDEX_NAME]
 
-    combined = concat_gdfs([raster_imgs, vector_features])
+    combined = concat_gdfs([rasters, vectors])
 
     with fiona.drivers():
         combined.to_file(out_path, driver="KML")

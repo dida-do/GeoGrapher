@@ -23,34 +23,34 @@ class SegLabelMakerCategorical(SegLabelMaker):
         """Return label type."""
         return "categorical"
 
-    def _make_label_for_img(self, connector: Connector, img_name: str):
-        """Create a categorical GeoTiff (pixel) label for an image.
+    def _make_label_for_raster(self, connector: Connector, raster_name: str):
+        """Create a categorical GeoTiff (pixel) label for a raster.
 
         Args:
             connector:
-            img_name: Name of image for which a label should be created.
+            raster_name: Name of raster for which a label should be created.
 
         Returns:
             None:
         """
-        img_path = connector.images_dir / img_name
-        label_path = connector.labels_dir / img_name
+        raster_path = connector.rasters_dir / raster_name
+        label_path = connector.labels_dir / raster_name
 
         classes_to_ignore = {
             class_ for class_ in [connector.background_class] if class_ is not None
         }
         segmentation_classes = [
             class_
-            for class_ in connector.task_vector_feature_classes
+            for class_ in connector.task_vector_classes
             if class_ not in classes_to_ignore
         ]
 
-        # If the image does not exist ...
-        if not img_path.is_file():
+        # If the raster does not exist ...
+        if not raster_path.is_file():
 
             # ... log error to file.
             log.error(
-                "SegLabelMakerCategorical: input image %s does not exist!", img_path
+                "SegLabelMakerCategorical: input raster %s does not exist!", raster_path
             )
 
         # Else, if the label already exists ...
@@ -62,8 +62,8 @@ class SegLabelMakerCategorical(SegLabelMaker):
         # Else, ...
         else:
 
-            # ...open the image, ...
-            with rio.open(img_path) as src:
+            # ...open the raster, ...
+            with rio.open(raster_path) as src:
 
                 profile = src.profile
                 profile.update({"count": 1, "dtype": rio.uint8})
@@ -72,7 +72,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
                 with rio.open(
                     label_path,
                     "w",
-                    # for writing single bit image, see
+                    # for writing single bit raster, see
                     # https://gis.stackexchange.com/questions/338410/rasterio-invalid-dtype-bool
                     # nbits=1,
                     **profile,
@@ -87,41 +87,41 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     for count, seg_class in enumerate(segmentation_classes, start=1):
 
                         # To do that, first find (the df of) the geometries
-                        # intersecting the image ...
-                        features_intersecting_img: GeoDataFrame = (
-                            connector.vector_features.loc[
-                                connector.vector_features_intersecting_img(img_name)
+                        # intersecting the raster ...
+                        vectors_intersecting_raster: GeoDataFrame = (
+                            connector.vectors.loc[
+                                connector.vectors_intersecting_raster(raster_name)
                             ]
                         )
 
                         # ... then restrict to (the subdf of) geometries
                         # with the given class.
-                        features_intersecting_img_of_type: GeoDataFrame = (
-                            features_intersecting_img.loc[
-                                features_intersecting_img["type"] == seg_class
+                        vectors_intersecting_raster_of_type: GeoDataFrame = (
+                            vectors_intersecting_raster.loc[
+                                vectors_intersecting_raster["type"] == seg_class
                             ]
                         )
 
                         # Extract those geometries ...
-                        feature_geoms_in_std_crs = list(
-                            features_intersecting_img_of_type["geometry"]
+                        vector_geoms_in_std_crs = list(
+                            vectors_intersecting_raster_of_type["geometry"]
                         )
 
-                        # ... and convert them to the crs of the source image.
-                        feature_geoms_in_src_crs = list(
+                        # ... and convert them to the crs of the source raster.
+                        vector_geoms_in_src_crs = list(
                             map(
                                 lambda geom: transform_shapely_geometry(
                                     geom,
-                                    connector.vector_features.crs.to_epsg(),
+                                    connector.vectors.crs.to_epsg(),
                                     src.crs.to_epsg(),
                                 ),
-                                feature_geoms_in_std_crs,
+                                vector_geoms_in_std_crs,
                             )
                         )
 
                         shapes_for_seg_class = [
-                            (feature_geom, count)
-                            for feature_geom in feature_geoms_in_src_crs
+                            (vector_geom, count)
+                            for vector_geom in vector_geoms_in_src_crs
                         ]
 
                         shapes += shapes_for_seg_class
@@ -147,26 +147,22 @@ class SegLabelMakerCategorical(SegLabelMaker):
     def _run_safety_checks(self, connector: Connector):
         """Run safety checks.
 
-        Check existence of 'type' column in connector.vector_features
-        and make sure entries are allowed.
+        Check existence of 'type' column in connector.vectors and make
+        sure entries are allowed.
         """
-        if "type" not in connector.vector_features.columns:
+        if "type" not in connector.vectors.columns:
             raise ValueError(
-                "connector.vector_features needs a 'type' column containing "
+                "connector.vectors needs a 'type' column containing "
                 "the ML task (e.g. segmentation or object detection) "
                 "class of the geometries."
             )
 
-        feature_classes_in_vector_features = set(
-            connector.vector_features["type"].unique()
-        )
-        if not feature_classes_in_vector_features <= set(
-            connector.all_vector_feature_classes
-        ):
-            unrecognized_classes = feature_classes_in_vector_features - set(
-                self.all_vector_feature_classes
+        vector_classes_in_vectors = set(connector.vectors["type"].unique())
+        if not vector_classes_in_vectors <= set(connector.all_vector_classes):
+            unrecognized_classes = vector_classes_in_vectors - set(
+                self.all_vector_classes
             )
             raise ValueError(
-                f"Unrecognized classes in connector.vector_features: "
+                f"Unrecognized classes in connector.vectors: "
                 f" {unrecognized_classes}."
             )

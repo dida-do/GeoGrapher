@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "raster_name": "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif", "raster_processed?": true, "timestamp": "2022-03-09-10:08:41", "orig_crs_epsg_code": 32632 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 13.531032170806659, 52.175484718678582 ], [ 13.634183017872079, 53.159421967147352 ], [ 11.994640922835734, 53.211992871403481 ], [ 11.927820031382028, 52.226225390811273 ], [ 13.531032170806659, 52.175484718678582 ] ] ] } }
+]
+}
