@@ -1,6 +1,6 @@
 # GeoGrapher
 
-*GeoGrapher* is a Python library for building and handling remote sensing
+*GeoGrapher* is a Python library for building remote sensing
 computer vision datasets assembled from vector features and raster images.
 It connects the features and images by a bipartite graph that keeps track of
 the containment and intersection relations between them making it particularly
@@ -11,9 +11,12 @@ functions.
 # Installation
 
 This package has two external dependencies:
-- Python 3.X or newer [where X is to be determined, possibly X=7]
-- GDAL development files.  On most Linux distros, this is provided by
-  the `gdal-devel` or `libgdal-dev` packages.
+- Python 3.8 or newer.
+- The geopandas and rasterio libraries might depend on GDAL base C libraries.
+See [https://geopandas.org/en/stable/getting_started/install.html#dependencies](https://geopandas.org/en/stable/getting_started/install.html#dependencies)
+and [https://pypi.org/project/rasterio/](https://pypi.org/project/rasterio/)
+for instructions on installing these. On many Linux distros, you can use the
+the `gdal-devel` or `libgdal-dev` packages.
 
 The package itself (and its Python dependencies) can be installed with
 
@@ -24,7 +27,7 @@ pip install GeoGrapher
 To install the package for development work, clone this repo and run
 
 ```
-make env
+make venv
 source geographer-env/bin/activate # activate the environment
 make install-dev
 ```
