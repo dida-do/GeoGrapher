@@ -6,12 +6,15 @@ categorical labels.
 
 import logging
 import shutil
+from typing import Optional
 
+from pydantic import Field
 from tqdm.auto import tqdm
 
 from geographer import Connector
 from geographer.creator_from_source_dataset_base import DSCreatorFromSource
 from geographer.img_bands_getter_mixin import ImgBandsGetterMixIn
+from geographer.label_makers.label_maker_base import LabelMaker
 from geographer.label_makers.label_type_conversion_utils import (
     convert_vector_features_soft_cat_to_cat,
 )
@@ -24,6 +27,12 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
 
     Assumes source dataset has categorical labels.
     """
+
+    label_maker: Optional[LabelMaker] = Field(
+        default=None,
+        description="Optional LabelMaker. If given, will create labels"
+        "in target dataset.",
+    )
 
     def _create(self):
         self._create_or_update()
@@ -91,8 +100,11 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, ImgBandsGetterMixIn):
                 # so we delete the current label.
                 (self.target_assoc.labels_dir / img_name).unlink(missing_ok=True)
 
-        # Finally, we make all missing categorical labels in target dataset.
-        self.target_assoc.make_labels()
         self.target_assoc.save()
+
+        # Finally, we make all missing categorical labels in target dataset.
+        # make labels
+        if self.label_maker is not None:
+            self.label_maker.make_labels(connector=self.target_connector)
 
         return self.target_assoc
