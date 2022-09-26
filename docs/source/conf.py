@@ -63,7 +63,7 @@ html_static_path = ['_static']
 
 # autodoc settings
 autodoc_default_options = {
-    'inherited-members': ['pydantic.BaseModel', 'BaseModel'],
+    'inherited-members': 'pydantic.BaseModel,BaseModel',
 }
 
 

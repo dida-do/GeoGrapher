@@ -12,14 +12,6 @@ rs\_tools.utils.connector\_utils module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.utils.geoserver\_utils module
----------------------------------------
-
-.. automodule:: geographer.utils.geoserver_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 rs\_tools.utils.merge\_datasets module
 --------------------------------------
 
