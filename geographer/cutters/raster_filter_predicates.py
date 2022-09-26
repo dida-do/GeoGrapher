@@ -106,7 +106,7 @@ class RowSeriesPredicate(ABC, BaseModel):
         pass
 
 
-class sRasterFilterRowCondition(RasterFilterPredicate):
+class RasterFilterRowCondition(RasterFilterPredicate):
     """Simple RasterFilter based on row condition.
 
     Applies a given predicate to the row in source_connector.rasters
