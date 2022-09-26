@@ -14,24 +14,11 @@
    .. autosummary::
    
       ~DSCutterIterOverImgs.__init__
-      ~DSCutterIterOverImgs.construct
-      ~DSCutterIterOverImgs.copy
       ~DSCutterIterOverImgs.create
       ~DSCutterIterOverImgs.create_or_update
       ~DSCutterIterOverImgs.cut
-      ~DSCutterIterOverImgs.dict
-      ~DSCutterIterOverImgs.from_json_file
-      ~DSCutterIterOverImgs.from_orm
-      ~DSCutterIterOverImgs.json
-      ~DSCutterIterOverImgs.parse_file
-      ~DSCutterIterOverImgs.parse_obj
-      ~DSCutterIterOverImgs.parse_raw
       ~DSCutterIterOverImgs.save
-      ~DSCutterIterOverImgs.schema
-      ~DSCutterIterOverImgs.schema_json
       ~DSCutterIterOverImgs.update
-      ~DSCutterIterOverImgs.update_forward_refs
-      ~DSCutterIterOverImgs.validate
    
    
 
