@@ -1,9 +1,9 @@
 {
-    "task_feature_classes": [
+    "task_vector_classes": [
         "object"
     ],
     "background_class": null,
     "crs_epsg_code": 4326,
-    "img_count_col_name": "img_count",
+    "raster_count_col_name": "raster_count",
     "label_type": "soft-categorical"
 }

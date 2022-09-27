@@ -35,7 +35,7 @@ def safe_to_geotif_L2A(
     """Convert a L2A-level .SAFE file to geotif.
 
     Convert a .SAFE file with L2A sentinel-2 data to geotif and return a
-    dict with the crs epsg code and a shapely polygon defined by the image
+    dict with the crs epsg code and a shapely polygon defined by the raster
     bounds.
 
     Warning:
@@ -57,7 +57,7 @@ def safe_to_geotif_L2A(
         resolution: the desired resolution
         upsample_lower_resolution: Whether to include lower resolution bands and
             upsample them
-        TCI: whether to load the true color image
+        TCI: whether to load the true color raster
         requested_jp2_masks: jp2 mask to load
         requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for
             which to get the mask)
@@ -100,13 +100,13 @@ def safe_to_geotif_L2A(
     )
 
     # add missing higher res jps paths
-    img_data_bands = list(
+    raster_data_bands = list(
         filter(
             lambda path: path.stem.split("_")[-2] not in ["TCI"],
             jp2_path_desired_resolution.glob("*.jp2"),
         )
     )
-    out_default_reader = rio.open(img_data_bands[0], driver="JP2OpenJPEG")
+    out_default_reader = rio.open(raster_data_bands[0], driver="JP2OpenJPEG")
 
     # include lower resolution bands
     if upsample_lower_resolution:
@@ -116,11 +116,11 @@ def safe_to_geotif_L2A(
                 os.listdir(granule_dir)[0], higher_res
             )
 
-            img_data_bands += list(
+            raster_data_bands += list(
                 filter(
                     lambda path: path.stem.split("_")[-2]
                     not in itertools.chain(
-                        map(lambda path: path.stem.split("_")[-2], img_data_bands),
+                        map(lambda path: path.stem.split("_")[-2], raster_data_bands),
                         ["TCI"],
                     ),
                     jp2_higher_res_path.glob("*.jp2"),
@@ -128,15 +128,15 @@ def safe_to_geotif_L2A(
             )
 
     # # if we have both B08 and B8A remove B8A
-    # if {'B8A', 'B08'} <= {name.name.split("_")[-2] for name in img_data_bands}:
-    #     img_data_bands = [path for path in img_data_bands \
+    # if {'B8A', 'B08'} <= {name.name.split("_")[-2] for name in raster_data_bands}:
+    #     raster_data_bands = [path for path in raster_data_bands \
     #     if path.name.split("_")[-2] != 'B8A']
 
     # set up rasterio loaders
     bands_dict = OrderedDict()
     max_width = 0
     max_height = 0
-    for file in img_data_bands + jp2_mask_paths:
+    for file in raster_data_bands + jp2_mask_paths:
         band = rio.open(file, driver="JP2OpenJPEG")
         max_width = max(max_width, band.width)
         max_height = max(max_height, band.height)
@@ -165,7 +165,7 @@ def safe_to_geotif_L2A(
     tci_band = rio.open(tci_path, driver="JP2OpenJPEG")
 
     # number of bands in final geotif
-    count = len(img_data_bands + jp2_mask_paths + gml_mask_paths) + 3 * TCI
+    count = len(raster_data_bands + jp2_mask_paths + gml_mask_paths) + 3 * TCI
 
     # write geotif
     tif_band_names = {}
@@ -218,20 +218,20 @@ def safe_to_geotif_L2A(
                 assert res % int(resolution) == 0
                 factor = res // int(resolution)
 
-                img = dst_reader.read(1)
-                img = zoom(img, factor, order=3)
+                raster = dst_reader.read(1)
+                raster = zoom(raster, factor, order=3)
 
-                assert img.shape == (10980, 10980)
+                assert raster.shape == (10980, 10980)
 
             else:
-                img = dst_reader.read(1)
+                raster = dst_reader.read(1)
 
             if not dst_reader.dtypes[0] == out_default_reader.dtypes[0]:
-                img = (img * (65535.0 / 255.0)).astype(np.uint16)
+                raster = (raster * (65535.0 / 255.0)).astype(np.uint16)
 
             band_idx = 3 * TCI + idx + 1
             tif_band_names[band_idx] = band_name
-            dst.write(img, band_idx)
+            dst.write(raster, band_idx)
             dst_reader.close()
 
         # write tci
@@ -239,10 +239,10 @@ def safe_to_geotif_L2A(
             for i in range(3):
 
                 band_idx = i + 1
-                img = (tci_band.read(band_idx) * (65535.0 / 255.0)).astype(np.uint16)
+                raster = (tci_band.read(band_idx) * (65535.0 / 255.0)).astype(np.uint16)
                 tif_band_names[band_idx] = f"tci_{band_idx}"
 
-                dst.write(img, band_idx)
+                dst.write(raster, band_idx)
 
         # add tags and descriptions
         for band_idx, name in tif_band_names.items():
@@ -250,11 +250,11 @@ def safe_to_geotif_L2A(
             dst.set_band_description(bidx=band_idx, value=name)
 
         crs_epsg_code = dst.crs.to_epsg()
-        img_bounding_rectangle = box(*dst.bounds)
+        raster_bounding_rectangle = box(*dst.bounds)
 
     outfile.rename(out_file_parent_dir / (safe_root.stem + ".tif"))
 
     return {
         "crs_epsg_code": crs_epsg_code,
-        "img_bounding_rectangle": img_bounding_rectangle,
+        "raster_bounding_rectangle": raster_bounding_rectangle,
     }

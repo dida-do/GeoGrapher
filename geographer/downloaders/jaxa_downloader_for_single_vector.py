@@ -1,4 +1,4 @@
-"""ImgDownloaderForSinglePolygon for JAXA DEM data.
+"""RasterDownloaderForSinglePolygon for JAXA DEM data.
 
 Downloads digital elevation model (DEM)
 data from jaxa.jp's ALOS data-source.
@@ -30,8 +30,8 @@ from typing import Any, Literal, Optional, Union
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
-from geographer.downloaders.base_downloader_for_single_feature import (
-    ImgDownloaderForSingleVectorFeature,
+from geographer.downloaders.base_downloader_for_single_vector import (
+    RasterDownloaderForSingleVector,
 )
 
 log = logging.getLogger(__name__)
@@ -45,19 +45,19 @@ JAXA_DATA_VERSIONS = [
 ]  # (attn: only 1804 has been tested so far)
 
 
-class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
+class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
     """Download JAXA DEM (digital elevation) data."""
 
     def download(
         self,
-        feature_name: Union[int, str],
-        feature_geom: BaseGeometry,
+        vector_name: Union[int, str],
+        vector_geom: BaseGeometry,
         download_dir: Path,
-        previously_downloaded_imgs_set: set[Union[str, int]],
+        previously_downloaded_rasters_set: set[Union[str, int]],
         data_version: str = None,
         download_mode: str = None,
         **kwargs,
-    ) -> dict[Union[Literal["img_name", "img_processed?"], str], Any]:
+    ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
         """Download JAXA DEM data for a vector feature.
 
         Download DEM data from jaxa.jp's ftp-server for a given vector
@@ -67,17 +67,17 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
             The downloader has only been tested for the 1804 jaxa_data_version.
 
         Explanation:
-            The 'bboxvertices' download_mode will download images for
+            The 'bboxvertices' download_mode will download rasters for
             vertices of the bbox of the (vector) geometry. This is preferred for
             small (vector) geometries, but will miss regions inbetween if a (vector)
-            geometry spans more than two images in each axis. The 'bboxgrid' mode
-            will download images for each point on a grid defined by the bbox.
+            geometry spans more than two rasters in each axis. The 'bboxgrid' mode
+            will download rasters for each point on a grid defined by the bbox.
             This overshoots for small geometries, but works for large geometries.
 
         Args:
-            feature_name: the name of the vector geometry
-            feature_geometry:
-            download_dir: directory that the image file should be downloaded to
+            vector_name: the name of the vector geometry
+            vector_geometry:
+            download_dir: directory that the raster file should be downloaded to
             data_version: One of '1804', '1903', '2003', or '2012'.
                 1804 is the only version that has been tested.
                 Defaults if possible to whichever choice you made last time.
@@ -87,7 +87,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
 
         Returns:
             dict of dicts according to the connector convention
-            (containing list_img_info_dict).
+            (containing list_raster_info_dict).
 
         Raises:
             log.warning: when a file cannot be found or opened on jaxa's-ftp
@@ -102,7 +102,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
         jaxa_file_and_folder_names = set()
         if download_mode == "bboxvertices":
 
-            for (x, y) in feature_geom.envelope.exterior.coords:
+            for (x, y) in vector_geom.envelope.exterior.coords:
 
                 jaxa_folder_name = "{}/".format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)
@@ -113,7 +113,7 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
 
         elif download_mode == "bboxgrid":
 
-            minx, miny, maxx, maxy = feature_geom.envelope.exterior.bounds
+            minx, miny, maxx, maxy = vector_geom.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
             deltay = math.ceil(maxy - miny)
@@ -134,23 +134,23 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
         else:
             raise ValueError(f"Unknown download_mode: {download_mode}")
 
-        list_img_info_dicts = (
+        list_raster_info_dicts = (
             []
         )  # to collect information per downloaded file for connector
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
 
             # Skip download if file has already been downloaded ...
-            if jaxa_file_name[:-7] + "_DSM.tif" in previously_downloaded_imgs_set:
-                # in this case skip download, don't store in list_img_info_dicts
-                log.info("Skipping download for image %s", jaxa_file_name)
+            if jaxa_file_name[:-7] + "_DSM.tif" in previously_downloaded_rasters_set:
+                # in this case skip download, don't store in list_raster_info_dicts
+                log.info("Skipping download for raster %s", jaxa_file_name)
                 continue
             # ... else, download.
             else:
                 log.info(
                     "Downloading from ftp.eorc.jaxa.jp (v%s) for geometry %s",
                     data_version,
-                    feature_name,
+                    vector_name,
                 )
                 log.info(
                     "Downloading to: %s", os.path.join(download_dir, jaxa_file_name)
@@ -204,14 +204,14 @@ class JAXADownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
                     )
 
                     date_time_now = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
-                    img_info_dict = {
-                        "img_name": jaxa_file_name[:-7] + "_DSM.tif",
-                        "img_processed?": False,
+                    raster_info_dict = {
+                        "raster_name": jaxa_file_name[:-7] + "_DSM.tif",
+                        "raster_processed?": False,
                         "timestamp": date_time_now,
                     }
-                    list_img_info_dicts.append(img_info_dict)
+                    list_raster_info_dicts.append(raster_info_dict)
 
-        return {"list_img_info_dicts": list_img_info_dicts}
+        return {"list_raster_info_dicts": list_raster_info_dicts}
 
     def _obtain_jaxa_index(
         self,

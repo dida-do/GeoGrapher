@@ -81,7 +81,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         """Connector in source_data_dir."""
         if (
             self._source_connector is None
-            or self._source_connector.images_dir.parent != self.source_data_dir
+            or self._source_connector.rasters_dir.parent != self.source_data_dir
         ):
             self._set_source_connector()
         return self._source_connector
@@ -91,7 +91,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         """Connector in target_data_dir."""
         if (
             self._target_connector is None
-            or self._target_connector.images_dir.parent != self.target_data_dir
+            or self._target_connector.rasters_dir.parent != self.target_data_dir
         ):
             self._set_target_connector()
         return self._target_connector
@@ -117,22 +117,23 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         finally:
             self._target_connector = target_connector
 
-    def _add_missing_vector_features_to_target(self):
+    def _add_missing_vectors_to_target(self):
         """Add missing vector features from source dataset to target dataset.
 
-        Only checks feature names/indices, not whether entries differ.
+        Only checks vector feature names/indices, not whether entries
+        differ.
         """
-        source_features = self.source_connector.vector_features
-        target_features = self.target_connector.vector_features
-        features_to_add = source_features[
-            ~source_features.index.isin(target_features.index)
+        source_vectors = self.source_connector.vectors
+        target_vectors = self.target_connector.vectors
+        vectors_to_add = source_vectors[
+            ~source_vectors.index.isin(target_vectors.index)
         ]
-        self.target_connector.add_to_vector_features(features_to_add)
+        self.target_connector.add_to_vectors(vectors_to_add)
 
     def _create_target_dirs(self):
         """Create target_data_dir and subdirectories."""
         self.target_connector.connector_dir.mkdir(parents=True, exist_ok=True)
-        for dir_ in self.target_connector.image_data_dirs:
+        for dir_ in self.target_connector.raster_data_dirs:
             dir_.mkdir(parents=True, exist_ok=True)
 
 
@@ -145,6 +146,6 @@ class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
     bands: Optional[Dict[str, Optional[List[int]]]] = Field(
         default=None,
         title="Dict of band indices",
-        description="keys: image directory names, values: list of band indices"
+        description="keys: raster directory names, values: list of band indices"
         "starting at 1 to keep",
     )

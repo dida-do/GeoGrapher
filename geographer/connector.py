@@ -12,8 +12,8 @@ import geopandas as gpd
 from geopandas import GeoDataFrame
 
 # Mix-in classes:
-from geographer.add_drop_raster_imgs import AddDropRasterImgsMixIn
-from geographer.add_drop_vector_features_mixin import AddDropVectorFeaturesMixIn
+from geographer.add_drop_rasters_mixin import AddDropRastersMixIn
+from geographer.add_drop_vectors_mixin import AddDropVectorsMixIn
 from geographer.global_constants import (
     RASTER_IMGS_INDEX_NAME,
     STANDARD_CRS_EPSG_CODE,
@@ -28,11 +28,11 @@ from geographer.utils.connector_utils import (
 )
 
 DEFAULT_CONNECTOR_DIR_NAME = "connector"
-DEFAULT_IMAGES_DIR_NAME = "images"
+DEFAULT_IMAGES_DIR_NAME = "rasters"
 DEFAULT_LABELS_DIR_NAME = "labels"
 INFERRED_PATH_ATTR_FILENAMES = {
-    "_vector_features_path": "vector_features.geojson",
-    "_raster_imgs_path": "raster_imgs.geojson",
+    "_vectors_path": "vectors.geojson",
+    "_rasters_path": "rasters.geojson",
     "attrs_path": "attrs.json",
     "_graph_path": "graph.json",
 }
@@ -44,25 +44,25 @@ log = logging.getLogger(__name__)
 
 
 class Connector(
-    AddDropVectorFeaturesMixIn,
-    AddDropRasterImgsMixIn,
+    AddDropVectorsMixIn,
+    AddDropRastersMixIn,
     BipartiteGraphMixIn,  # Needs to be last
 ):
     """Dataset class that connects vector features and raster data.
 
     A ``Connector`` represents a remote sensing computer vision dataset
-    composed of vector features and raster images. It connects the
-    features and images by a bipartite graph encoding the containment or
-    intersection relationships between them and is a container for
-    tabular information about the features and images as well as for
-    metadata about the dataset.
+    composed of vector features and rasters. It connects the vector
+    features and rasters by a bipartite graph encoding the containment
+    or intersection relationships between them and is a container for
+    tabular information about the vector features and rasters as well as
+    for metadata about the dataset.
     """
 
-    _non_task_feature_classes = [
+    _non_task_vector_classes = [
         "background_class"
     ]  # vector feature classes not to be determined by a machine learning
 
-    # model (e.g. features that define background regions or masks)
+    # model (e.g. vector features that define background regions or masks)
 
     # yapf: disable
     def __init__(
@@ -73,14 +73,14 @@ class Connector(
         data_dir: Union[Path, str],
 
         # args w/o default values
-        vector_features: Optional[GeoDataFrame] = None,
-        raster_imgs: Optional[GeoDataFrame] = None,
+        vectors: Optional[GeoDataFrame] = None,
+        rasters: Optional[GeoDataFrame] = None,
 
         # remaining non-path args w/ default values
-        task_feature_classes: Optional[Sequence[str]] = None,
+        task_vector_classes: Optional[Sequence[str]] = None,
         background_class: Optional[str] = None,
         crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
-        img_count_col_name: str = "img_count",
+        raster_count_col_name: str = "raster_count",
 
         # optional kwargs
         **kwargs: Any,
@@ -104,24 +104,24 @@ class Connector(
         Args:
             load_from_disk: whether to load an existing connector from disk
                 or create a new one.
-            task_feature_classes: list of feature classes for the machine learning task
-                (excluding mask and background classes). Defaults to None,
-                i.e. the single class "object"
-            vector_features: vector_features. Defaults to None, i.e. (if not loading
-                from disk) an empty vector_features.
-            raster_imgs: raster_imgs. Defaults to None, i.e. (if not loading
-                from disk) an empty raster_imgs.
+            task_vector_classes: list of vector feature classes for the machine
+                learning task (excluding mask and background classes). Defaults to
+                None, i.e. the single class "object"
+            vectors: vectors. Defaults to None, i.e. (if not loading
+                from disk) an empty vectors.
+            rasters: rasters. Defaults to None, i.e. (if not loading
+                from disk) an empty rasters.
             crs_epsg_code: EPSG code connector works with.
                 Defaults to STANDARD_CRS_EPSG_CODE
-            data_dir: data directory containing images_dir, labels_dir, connector_dir.
+            data_dir: data directory containing rasters_dir, labels_dir, connector_dir.
             kwargs: optional keyword args for subclass implementations.
         """
         super().__init__()
 
-        if task_feature_classes is None:
-            task_feature_classes = ["object"]
-        self._check_no_non_task_feature_classes_are_task_classes(
-            task_feature_classes=task_feature_classes,
+        if task_vector_classes is None:
+            task_vector_classes = ["object"]
+        self._check_no_non_task_vector_classes_are_task_classes(
+            task_vector_classes=task_vector_classes,
             background_class=background_class,
             **kwargs
         )
@@ -131,58 +131,58 @@ class Connector(
             data_dir=data_dir,
         )
 
-        # build attrs from all args except for raster_imgs, vector_features,
+        # build attrs from all args except for rasters, vectors,
         # the corresponding column args, and the path/dir args
         self.attrs = {}
         self.attrs.update(
             {
-                "task_feature_classes": task_feature_classes,
+                "task_vector_classes": task_vector_classes,
                 "background_class": background_class,
                 "crs_epsg_code": crs_epsg_code,
-                "img_count_col_name": img_count_col_name,
+                "raster_count_col_name": raster_count_col_name,
                 **kwargs,
             }
         )
 
-        # get vector_features and raster_imgs
+        # get vectors and rasters
         if load_from_disk:
-            vector_features = self._load_df_from_disk("vector_features")
-            raster_imgs = self._load_df_from_disk("raster_imgs")
+            vectors = self._load_df_from_disk("vectors")
+            rasters = self._load_df_from_disk("rasters")
         else:
-            if vector_features is None:
-                vector_features = self._get_empty_df("vector_features")
-            if raster_imgs is None:
-                raster_imgs = self._get_empty_df("raster_imgs")
+            if vectors is None:
+                vectors = self._get_empty_df("vectors")
+            if rasters is None:
+                rasters = self._get_empty_df("rasters")
 
-        vector_features = self._get_df_in_crs(
-            df=vector_features,
-            df_name="vector_features",
+        vectors = self._get_df_in_crs(
+            df=vectors,
+            df_name="vectors",
             crs_epsg_code=self.crs_epsg_code)
-        raster_imgs = self._get_df_in_crs(
-            df=raster_imgs,
-            df_name="raster_imgs",
+        rasters = self._get_df_in_crs(
+            df=rasters,
+            df_name="rasters",
             crs_epsg_code=self.crs_epsg_code)
 
-        # set self.vector_features, self.raster_imgs
+        # set self.vectors, self.rasters
         self._set_remaining_connector_components(
             load_from_disk=load_from_disk,
-            vector_features=vector_features,
-            raster_imgs=raster_imgs
+            vectors=vectors,
+            rasters=rasters
         )
 
         # safety checks
         self._check_required_df_cols_exist(
-            df=raster_imgs,
-            df_name='self.raster_imgs',
-            mode='raster_imgs')
+            df=rasters,
+            df_name='self.rasters',
+            mode='rasters')
         self._check_required_df_cols_exist(
-            df=vector_features,
-            df_name='self.vector_features',
-            mode='vector_features')
+            df=vectors,
+            df_name='self.vectors',
+            mode='vectors')
 
-        # directories containing image data
-        self._image_data_dirs = [
-            self.images_dir,
+        # directories containing raster data
+        self._raster_data_dirs = [
+            self.rasters_dir,
             self.labels_dir,
         ]  # in subclass implementation, can add e.g. mask_dir
 
@@ -201,7 +201,7 @@ class Connector(
         """Initialize a connector from a data directory.
 
         Args:
-            data_dir: data directory containing 'connector_files', 'images', and
+            data_dir: data directory containing 'connector_files', 'rasters', and
                 'labels' subdirectories
 
         Returns:
@@ -209,7 +209,7 @@ class Connector(
         """
         data_dir = Path(data_dir)
 
-        images_dir, labels_dir, connector_dir = cls._get_default_dirs_from_data_dir(
+        rasters_dir, labels_dir, connector_dir = cls._get_default_dirs_from_data_dir(
             data_dir
         )
 
@@ -254,22 +254,22 @@ class Connector(
         return cls(**kwargs)
 
     @property
-    def vector_features(self) -> GeoDataFrame:
-        """Vector features geodataframe, see :ref:`vector_features`."""
-        return self._vector_features
+    def vectors(self) -> GeoDataFrame:
+        """Vector features geodataframe, see :ref:`vectors`."""
+        return self._vectors
 
-    @vector_features.setter
-    def vector_features(self, new_vector_features: GeoDataFrame) -> None:
-        self._vector_features = new_vector_features
+    @vectors.setter
+    def vectors(self, new_vectors: GeoDataFrame) -> None:
+        self._vectors = new_vectors
 
     @property
-    def raster_imgs(self) -> GeoDataFrame:
-        """Raster images geodataframe, see :ref:`raster_imgs`."""
-        return self._raster_imgs
+    def rasters(self) -> GeoDataFrame:
+        """Raster rasters geodataframe, see :ref:`rasters`."""
+        return self._rasters
 
-    @raster_imgs.setter
-    def raster_imgs(self, new_raster_imgs: GeoDataFrame) -> None:
-        self._raster_imgs = new_raster_imgs
+    @rasters.setter
+    def rasters(self, new_rasters: GeoDataFrame) -> None:
+        self._rasters = new_rasters
 
     @property
     def data_dir(self) -> str:
@@ -277,9 +277,9 @@ class Connector(
         return self._data_dir
 
     @property
-    def images_dir(self) -> Path:
-        """Directory containing the raster images."""
-        return self._images_dir
+    def rasters_dir(self) -> Path:
+        """Directory containing the rasters."""
+        return self._rasters_dir
 
     @property
     def labels_dir(self) -> Path:
@@ -296,7 +296,7 @@ class Connector(
         """EPSG code of connector's :term:`crs`.
 
         Setting ``crs_epsg_code`` will set automatically set the
-        connector's ``raster_imgs`` and ``vector_features`` crs.
+        connector's ``rasters`` and ``vectors`` crs.
         """
         return self.attrs["crs_epsg_code"]
 
@@ -305,30 +305,30 @@ class Connector(
         # set value in params dict
         self.attrs["crs_epsg_code"] = epsg_code
 
-        # reproject raster_imgs and vector_features GeoDataFrames
-        self.vector_features = self.vector_features.to_crs(epsg=epsg_code)
-        self.raster_imgs = self.raster_imgs.to_crs(epsg=epsg_code)
+        # reproject rasters and vectors GeoDataFrames
+        self.vectors = self.vectors.to_crs(epsg=epsg_code)
+        self.rasters = self.rasters.to_crs(epsg=epsg_code)
 
     @property
-    def task_vector_feature_classes(self):
+    def task_vector_classes(self):
         """All classes for the :term:`ML` task."""
-        return self.attrs["task_feature_classes"]
+        return self.attrs["task_vector_classes"]
 
-    @task_vector_feature_classes.setter
-    def task_vector_feature_classes(self, new_task_feature_classes: list[str]):
-        if not len(new_task_feature_classes) == len(set(new_task_feature_classes)):
-            raise ValueError("no duplicates in list of task_feature_classes allowed")
-        self.attrs["task_feature_classes"] = new_task_feature_classes
+    @task_vector_classes.setter
+    def task_vector_classes(self, new_task_vector_classes: list[str]):
+        if not len(new_task_vector_classes) == len(set(new_task_vector_classes)):
+            raise ValueError("no duplicates in list of task_vector_classes allowed")
+        self.attrs["task_vector_classes"] = new_task_vector_classes
 
     @property
-    def all_vector_feature_classes(self):
-        """All allowed classes in vector_features.
+    def all_vector_classes(self):
+        """All allowed classes in vectors.
 
         Includes those not related to the :term:`ML` task (e.g. the
         background class)
         """
-        answer = self.task_vector_feature_classes.copy()
-        for class_name in self._non_task_feature_classes:
+        answer = self.task_vector_classes.copy()
+        for class_name in self._non_task_vector_classes:
             class_value = getattr(self, class_name)
             if class_value is not None:
                 answer += [class_value]
@@ -336,22 +336,22 @@ class Connector(
         return answer
 
     @property
-    def image_data_dirs(self) -> list[Path]:
-        """All directories containing image data.
+    def raster_data_dirs(self) -> list[Path]:
+        """All directories containing raster data.
 
         Includes e.g. segmentation labels.
         """
-        return self._image_data_dirs
+        return self._raster_data_dirs
 
     @property
-    def img_count_col_name(self) -> str:
-        """Name of column in vector_features containing img counts."""
-        return self.attrs["img_count_col_name"]
+    def raster_count_col_name(self) -> str:
+        """Name of column in vectors containing raster counts."""
+        return self.attrs["raster_count_col_name"]
 
-    @img_count_col_name.setter
-    def set_img_count_col_name(self, new_col_name: str):
-        """Set name of column in vector_features containing img counts."""
-        self.attrs["img_count_col_name"] = new_col_name
+    @raster_count_col_name.setter
+    def set_raster_count_col_name(self, new_col_name: str):
+        """Set name of column in vectors containing raster counts."""
+        self.attrs["raster_count_col_name"] = new_col_name
 
     @property
     def graph_str(self) -> str:
@@ -369,12 +369,12 @@ class Connector(
         # Make sure connector_dir exists.
         self._connector_dir.mkdir(parents=True, exist_ok=True)
 
-        raster_imgs_non_geometry_columns = [
-            col for col in self.raster_imgs.columns
+        rasters_non_geometry_columns = [
+            col for col in self.rasters.columns
             if col != "geometry"
         ]
-        self.raster_imgs[raster_imgs_non_geometry_columns] = self.raster_imgs[
-            raster_imgs_non_geometry_columns
+        self.rasters[rasters_non_geometry_columns] = self.rasters[
+            rasters_non_geometry_columns
         ].convert_dtypes(
             infer_objects=True,
             convert_string=True,
@@ -382,10 +382,10 @@ class Connector(
             convert_boolean=True,
             convert_floating=False,
         )
-        self.raster_imgs.index.name = RASTER_IMGS_INDEX_NAME
-        self.raster_imgs.to_file(Path(self._raster_imgs_path), driver="GeoJSON")
-        self.vector_features.index.name = VECTOR_FEATURES_INDEX_NAME
-        self.vector_features.to_file(Path(self._vector_features_path), driver="GeoJSON")
+        self.rasters.index.name = RASTER_IMGS_INDEX_NAME
+        self.rasters.to_file(Path(self._rasters_path), driver="GeoJSON")
+        self.vectors.index.name = VECTOR_FEATURES_INDEX_NAME
+        self.vectors.to_file(Path(self._vectors_path), driver="GeoJSON")
         self._graph.save_to_file(Path(self._graph_path))
         # Save params dict
         with open(self.attrs_path, "w", encoding='utf-8') as write_file:
@@ -404,11 +404,11 @@ class Connector(
         """Return an empty connector of the same format.
 
         Return an empty connector of the same format
-        (i.e. same columns in vector_features and raster_imgs).
+        (i.e. same columns in vectors and rasters).
 
         Args:
-            data_dir: data directory containing images_dir, labels_dir, connector_dir.
-            images_dir: path to directory containing images.
+            data_dir: data directory containing rasters_dir, labels_dir, connector_dir.
+            rasters_dir: path to directory containing rasters.
             labels_dir: path to directory containing labels.
             connector_dir: path to directory containing (geo)json connector
                 component files.
@@ -418,19 +418,19 @@ class Connector(
         """
         if data_dir is not None:
             (
-                images_dir,
+                rasters_dir,
                 labels_dir,
                 connector_dir,
             ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
-        new_empty_vector_features = empty_gdf_same_format_as(self.vector_features)
-        new_empty_raster_imgs = empty_gdf_same_format_as(self.raster_imgs)
+        new_empty_vectors = empty_gdf_same_format_as(self.vectors)
+        new_empty_rasters = empty_gdf_same_format_as(self.rasters)
 
         new_empty_connector = self.__class__.from_scratch(
             data_dir=data_dir,
             # empty dataframes
-            vector_features=new_empty_vector_features,
-            raster_imgs=new_empty_raster_imgs,
+            vectors=new_empty_vectors,
+            rasters=new_empty_rasters,
             # remaining kwargs
             **self.attrs,
         )
@@ -439,12 +439,12 @@ class Connector(
 
     def _get_empty_df(self, df_name: str) -> GeoDataFrame:
 
-        if df_name == "vector_features":
+        if df_name == "vectors":
             index_name = VECTOR_FEATURES_INDEX_NAME
-            cols_and_types = self._get_required_df_cols_and_types("vector_features")
-        elif df_name == "raster_imgs":
+            cols_and_types = self._get_required_df_cols_and_types("vectors")
+        elif df_name == "rasters":
             index_name = RASTER_IMGS_INDEX_NAME
-            cols_and_types = self._get_required_df_cols_and_types("raster_imgs")
+            cols_and_types = self._get_required_df_cols_and_types("rasters")
 
         df = empty_gdf(
             index_name=index_name,
@@ -457,9 +457,9 @@ class Connector(
     def _get_required_df_cols_and_types(self, df_name: str) -> dict:
 
         # type of "geometry" column is ignored
-        if df_name.endswith("vector_features"):
-            cols_and_types = {"geometry": None, self.img_count_col_name: int}
-        elif df_name.endswith("raster_imgs"):
+        if df_name.endswith("vectors"):
+            cols_and_types = {"geometry": None, self.raster_count_col_name: int}
+        elif df_name.endswith("rasters"):
             cols_and_types = {"geometry": None}
 
         return cols_and_types
@@ -467,28 +467,28 @@ class Connector(
     def _set_remaining_connector_components(
         self,
         load_from_disk: bool,
-        vector_features: GeoDataFrame,
-        raster_imgs: GeoDataFrame
+        vectors: GeoDataFrame,
+        rasters: GeoDataFrame
     ):
 
         if load_from_disk:
 
             self._graph = BipartiteGraph(file_path=self._graph_path)
-            self.vector_features = vector_features
-            self._raster_imgs = raster_imgs
+            self.vectors = vectors
+            self._rasters = rasters
 
         else:
 
             self._graph = empty_graph()
-            self._vector_features = empty_gdf_same_format_as(vector_features)
-            self._raster_imgs = empty_gdf_same_format_as(raster_imgs)
+            self._vectors = empty_gdf_same_format_as(vectors)
+            self._rasters = empty_gdf_same_format_as(rasters)
 
-            self.add_to_vector_features(vector_features)
-            self.add_to_raster_imgs(raster_imgs)
+            self.add_to_vectors(vectors)
+            self.add_to_rasters(rasters)
 
     def _check_required_df_cols_exist(
             self, df: GeoDataFrame, df_name: str,
-            mode: Literal["vector_features", "raster_imgs"]) -> bool:
+            mode: Literal["vectors", "rasters"]) -> bool:
         """Check if required columns exist."""
         required_cols = list(self._get_required_df_cols_and_types(df_name).keys())
 
@@ -503,8 +503,8 @@ class Connector(
         """Standardize CRS of dataframe (i.e. set to CRS of connector).
 
         Args:
-            vector_features: vector_features
-            raster_imgs: raster_imgs
+            vectors: vectors
+            rasters: rasters
         """
         if df.crs.to_epsg() != crs_epsg_code:
             log.info("Transforming %s to crs: EPSG=%s", df_name, crs_epsg_code)
@@ -514,10 +514,10 @@ class Connector(
             return df
 
     def _load_df_from_disk(self, df_name: str) -> GeoDataFrame:
-        """Load vector_features or raster_imgs from disk."""
-        if df_name == "vector_features":
+        """Load vectors or rasters from disk."""
+        if df_name == "vectors":
             df_index_name = VECTOR_FEATURES_INDEX_NAME
-        elif df_name == "raster_imgs":
+        elif df_name == "rasters":
             df_index_name = RASTER_IMGS_INDEX_NAME
 
         df_json_path = getattr(self, f"_{df_name}_path")
@@ -530,18 +530,18 @@ class Connector(
         self,
         data_dir: Union[Path, str],
     ):
-        """Set paths to image/label data and connector component files.
+        """Set paths to raster/label data and connector component files.
 
         Used during initialization.
         """
         (
-            images_dir,
+            rasters_dir,
             labels_dir,
             connector_dir,
         ) = self.__class__._get_default_dirs_from_data_dir(data_dir)
 
         self._data_dir = Path(data_dir)
-        self._images_dir = Path(images_dir)
+        self._rasters_dir = Path(rasters_dir)
         self._labels_dir = Path(labels_dir)
         self._connector_dir = Path(connector_dir)
 
@@ -557,15 +557,15 @@ class Connector(
 
         data_dir = Path(data_dir)
 
-        images_dir = data_dir / DEFAULT_IMAGES_DIR_NAME
+        rasters_dir = data_dir / DEFAULT_IMAGES_DIR_NAME
         labels_dir = data_dir / DEFAULT_LABELS_DIR_NAME
         connector_dir = data_dir / DEFAULT_CONNECTOR_DIR_NAME
 
-        return images_dir, labels_dir, connector_dir
+        return rasters_dir, labels_dir, connector_dir
 
     @staticmethod
     def _replace_path_values(input_dict: dict) -> dict:
-        """Replace data_dir, images_dir, etc Paths with strings.
+        """Replace data_dir, rasters_dir, etc Paths with strings.
 
         Args:
             input_dict: input dict with keys strings and values of arbitrary type
@@ -573,7 +573,7 @@ class Connector(
         Returns:
             dict
         """
-        path_keys = {"data_dir", "images_dir", "labels_dir", "connector_dir"}
+        path_keys = {"data_dir", "rasters_dir", "labels_dir", "connector_dir"}
 
         output_dict = {
             key: str(val) if key in path_keys else val
@@ -582,38 +582,38 @@ class Connector(
 
         return output_dict
 
-    def _check_no_non_task_feature_classes_are_task_classes(
+    def _check_no_non_task_vector_classes_are_task_classes(
         self,
-        task_feature_classes: list[str],
+        task_vector_classes: list[str],
         background_class: str, **kwargs
     ):
         """TODO.
 
         Args:
-            task_feature_classes: [description]
+            task_vector_classes: [description]
             background_class: [description]
         """
-        if not len(task_feature_classes) == len(set(task_feature_classes)):
-            raise ValueError("task_feature_classes list contains duplicates.")
+        if not len(task_vector_classes) == len(set(task_vector_classes)):
+            raise ValueError("task_vector_classes list contains duplicates.")
 
-        non_task_feature_classes = {"background_class": background_class}
+        non_task_vector_classes = {"background_class": background_class}
         for key, val in kwargs.items():
             if (
-                key in self._non_task_feature_classes
+                key in self._non_task_vector_classes
                 and val is not None
-                and val not in non_task_feature_classes
+                and val not in non_task_vector_classes
             ):
-                non_task_feature_classes[key] = val
+                non_task_vector_classes[key] = val
 
-        if not set(non_task_feature_classes.values()).isdisjoint(
-                set(task_feature_classes)):
+        if not set(non_task_vector_classes.values()).isdisjoint(
+                set(task_vector_classes)):
 
             bad_values = {
                 class_name: value
-                for class_name, value in non_task_feature_classes.items()
-                if value in set(task_feature_classes)
+                for class_name, value in non_task_vector_classes.items()
+                if value in set(task_vector_classes)
             }
             raise ValueError(
-                "The following task_feature_classes are also classes unrelated "
+                "The following task_vector_classes are also classes unrelated "
                 f"to the machine learning task: {bad_values}"
             )

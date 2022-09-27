@@ -1,5 +1,5 @@
 {
-    "vector_features": {
+    "vectors": {
         "berlin_brandenburg_gate": {
             "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
         },
@@ -21,7 +21,7 @@
             "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": "contains"
         }
     },
-    "raster_imgs": {
+    "rasters": {
         "S2A_MSIL2A_20220309T100841_N0400_R022_T32UQD_20220309T121849.tif": {
             "berlin_reichstag": "contains",
             "berlin_brandenburg_gate": "contains",

@@ -5,14 +5,14 @@ Conversion
 
     All converters operate on two datasets: a source and a target dataset. At the moment in place operations are not supported.
 
-Combining And/Or Removing Vector Feature Classes
+Combining And/Or Removing Vector Vector Classes
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-Assume your dataset has ``task_vector_feature_classes`` given by
+Assume your dataset has ``task_vector_classes`` given by
 ``['class1', 'class2', 'class3', 'class4']``. Suppose you want to combine
 ``'class1'`` and ``'class2'`` to a new class ``'new_class_name1'``, rename
 ``class3`` to ``'new_class_name2'``, drop all vector features belonging to
-``'class4'``, and remove all images not containing and of the new classes
+``'class4'``, and remove all rasters not containing and of the new classes
 ``'new_class_name1'`` and  ``'new_class_name2'``. This can be accomplished
 using the ``DSConverterCombineRemoveClasses`` as follows (see :doc:`here <label_makers>`
 for creating a label maker). ::
@@ -25,7 +25,7 @@ for creating a label maker). ::
         seg_classes=[['class1', 'class2'], 'class3'],
         new_seg_classes=['new_class_name1', 'new_class_name2'],
         label_maker=label_maker,
-        remove_imgs=True
+        remove_rasters=True
         )
     converter.convert()
     converter.save(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
@@ -35,7 +35,7 @@ Updating the target dataset after the source dataset has grown::
     converter = DSConverterCombineRemoveClasses.from_json_file(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
     converter.update()
 
-Converting Vector Feature Class Types
+Converting Vector Vector Class Types
 +++++++++++++++++++++++++++++++++++++
 
 Soft-Categorical To Categorical

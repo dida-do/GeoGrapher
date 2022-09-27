@@ -20,10 +20,10 @@ rs\_tools.utils.merge\_datasets module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.utils.raster\_imgs\_from\_tif\_dir module
+rs\_tools.utils.raster\_rasters\_from\_tif\_dir module
 ---------------------------------------------------
 
-.. automodule:: geographer.utils.raster_imgs_from_tif_dir
+.. automodule:: geographer.utils.rasters_from_tif_dir
    :members:
    :undoc-members:
    :show-inheritance:

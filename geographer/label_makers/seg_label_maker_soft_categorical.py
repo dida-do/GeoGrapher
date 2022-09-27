@@ -20,7 +20,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
     Soft-categorical are probabilistic multi-class labels.
 
-    Assumes the connector's vector_features contains for each
+    Assumes the connector's vectors contains for each
     segmentation class a "prob_seg_class<seg_class>" column containing
     the probabilities for that class.
     """
@@ -32,32 +32,32 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         """Return label_type."""
         return "soft-categorical"
 
-    def _make_label_for_img(
+    def _make_label_for_raster(
         self,
         connector: Connector,
-        img_name: str,
+        raster_name: str,
     ) -> None:
-        """Create (pixel) label for a raster image.
+        """Create (pixel) label for a raster.
 
         Args:
             connector : calling Connector
-            img_name: name of image for which a label should be created
+            raster_name: name of raster for which a label should be created
 
 
         Returns:
             None:
         """
         # paths
-        img_path = connector.images_dir / img_name
-        label_path = connector.labels_dir / img_name
+        raster_path = connector.rasters_dir / raster_name
+        label_path = connector.labels_dir / raster_name
 
-        # If the image does not exist ...
-        if not img_path.is_file():
+        # If the raster does not exist ...
+        if not raster_path.is_file():
 
             # ... log error to file.
             log.error(
-                "_make_geotif_label_soft_categorical: input image %s does not exist!",
-                img_path,
+                "_make_geotif_label_soft_categorical: input raster %s does not exist!",
+                raster_path,
             )
 
         # Else, if the label already exists ...
@@ -74,8 +74,8 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
             label_bands_count = self._get_label_bands_count(connector)
 
-            # ...open the image, ...
-            with rio.open(img_path) as src:
+            # ...open the raster, ...
+            with rio.open(raster_path) as src:
 
                 # Create profile for the label.
                 profile = src.profile
@@ -91,45 +91,45 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                     start_band = 1 if not self.add_background_band else 2
 
                     for count, seg_class in enumerate(
-                        connector.task_vector_feature_classes, start=start_band
+                        connector.task_vector_classes, start=start_band
                     ):
 
                         # To do that, first find (the df of)
-                        # the geoms intersecting the image ...
-                        features_intersecting_img_df = connector.vector_features.loc[
-                            connector.vector_features_intersecting_img(img_name)
+                        # the geoms intersecting the raster ...
+                        vectors_intersecting_raster_df = connector.vectors.loc[
+                            connector.vectors_intersecting_raster(raster_name)
                         ]
 
                         # ... extract the geometries ...
-                        feature_geoms_in_std_crs = list(
-                            features_intersecting_img_df["geometry"]
+                        vector_geoms_in_std_crs = list(
+                            vectors_intersecting_raster_df["geometry"]
                         )
 
-                        # ... and convert them to the crs of the source image.
-                        feature_geoms_in_src_crs = list(
+                        # ... and convert them to the crs of the source raster.
+                        vector_geoms_in_src_crs = list(
                             map(
                                 lambda geom: transform_shapely_geometry(
                                     geom,
-                                    connector.vector_features.crs.to_epsg(),
+                                    connector.vectors.crs.to_epsg(),
                                     src.crs.to_epsg(),
                                 ),
-                                feature_geoms_in_std_crs,
+                                vector_geoms_in_std_crs,
                             )
                         )
 
                         # Extract the class probabilities ...
                         class_probabilities = list(
-                            features_intersecting_img_df[f"prob_of_class_{seg_class}"]
+                            vectors_intersecting_raster_df[f"prob_of_class_{seg_class}"]
                         )
 
                         # .. and combine with the geometries
                         # to a list of (geometry, value) pairs.
                         geom_value_pairs = list(
-                            zip(feature_geoms_in_src_crs, class_probabilities)
+                            zip(vector_geoms_in_src_crs, class_probabilities)
                         )
 
-                        # If there are no geoms of seg_type intersecting the image ...
-                        if len(feature_geoms_in_src_crs) == 0:
+                        # If there are no geoms of seg_type intersecting the raster ...
+                        if len(vector_geoms_in_src_crs) == 0:
                             # ... the label raster is empty.
                             mask = np.zeros((src.height, src.width), dtype=np.uint8)
                         # Else, burn the values for those geoms into the band.
@@ -154,7 +154,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                         non_background_band_indices = list(
                             range(
                                 start_band,
-                                2 + len(connector.task_vector_feature_classes),
+                                2 + len(connector.task_vector_classes),
                             )
                         )
 
@@ -176,13 +176,13 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         if self.add_background_band:
 
             # ... add a band for the implicit background segmentation class, ...
-            label_bands_count = 1 + len(connector.task_vector_feature_classes)
+            label_bands_count = 1 + len(connector.task_vector_classes)
 
         # ... if the background *is* included, ...
         elif not self.add_background_band:
 
             # ... don't.
-            label_bands_count = len(connector.task_vector_feature_classes)
+            label_bands_count = len(connector.task_vector_classes)
 
         return label_bands_count
 
@@ -190,31 +190,28 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
         """Run safety checks.
 
         Check existence of 'prob_of_class_<class name>' columns in
-        connector.vector_features.
+        connector.vectors.
         """
         # check required columns exist
         required_cols = {
-            f"prob_of_class_{class_}" for class_ in connector.all_vector_feature_classes
+            f"prob_of_class_{class_}" for class_ in connector.all_vector_classes
         }
-        if not set(required_cols) <= set(connector.vector_features.columns):
-            missing_cols = set(required_cols) - set(connector.vector_features.columns)
+        if not set(required_cols) <= set(connector.vectors.columns):
+            missing_cols = set(required_cols) - set(connector.vectors.columns)
             raise ValueError(
-                "connector.vector_features.columns is missing required columns: "
+                "connector.vectors.columns is missing required columns: "
                 f"{', '.join(missing_cols)}"
             )
 
         # check no other columns will be mistaken for
-        feature_classes_in_vector_features = {
+        vector_classes_in_vectors = {
             col_name[(1 + len("prob_of_class")) :]  # noqa: E203
-            for col_name in connector.vector_features.columns
+            for col_name in connector.vectors.columns
             if col_name.startswith("prob_of_class_")
         }
-        if not feature_classes_in_vector_features <= set(
-            connector.all_vector_feature_classes
-        ):
+        if not vector_classes_in_vectors <= set(connector.all_vector_classes):
             log.warning(
                 "Ignoring columns: %s. The corresponding classes "
-                "are not in connector.all_vector_feature_classes",
-                feature_classes_in_vector_features
-                - set(connector.all_vector_feature_classes),
+                "are not in connector.all_vector_classes",
+                vector_classes_in_vectors - set(connector.all_vector_classes),
             )
