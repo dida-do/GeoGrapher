@@ -7,75 +7,75 @@ The ``DSCutter`` classes are used for :term:`cutting` datasets.
 functions that return ``DSCutter`` s customized for the following two common
 use cases:
 
-- :ref:`cutting_every_img_to_a_grid`
-- :ref:`cutting_images_around_vector_features`
+- :ref:`cutting_every_raster_to_a_grid`
+- :ref:`cutting_rasters_around_vectors`
 
-.. _cutting_every_img_to_a_grid:
+.. _cutting_every_raster_to_a_grid:
 
-Cutting Every Image To A Grid of Images
-=======================================
+Cutting Every Raster To A Grid of Rasters
+=========================================
 
 To create a new dataset in ``target_data_dir`` from a source dataset in
-``source_data_dir`` by cutting every image in the dataset to a grid of
-images use the :func:`geographer.cutters.get_cutter_every_img_to_grid`
+``source_data_dir`` by cutting every raster in the dataset to a grid of
+rasters use the :func:`geographer.cutters.get_cutter_every_raster_to_grid`
 function::
 
-    from geographer.cutters import get_cutter_every_img_to_grid
-    cutter = get_cutter_every_img_to_grid(
-        new_img_size=512,
+    from geographer.cutters import get_cutter_every_raster_to_grid
+    cutter = get_cutter_every_raster_to_grid(
+        new_raster_size=512,
         source_data_dir=<SOURCE_DATA_DIR>,
         target_data_dir=<TARGET_DATA_DIR>,
         name=<OPTIONAL_NAME_FOR_SAVING>)
     cutter.cut()
 
-The :func:`geographer.cutters.get_cutter_every_img_to_grid`
-function returns a :class:`geographer.cutters.DSCutterIterOverImgs` instance.
+The :func:`geographer.cutters.get_cutter_every_raster_to_grid`
+function returns a :class:`geographer.cutters.DSCutterIterOverRasters` instance.
 The :meth:`cut` method will save the cutter to a json file in
 ``connector.connector_dir / <NAME>.json``.
 To update the target dataset after the source dataset has grown, first read the json file
 and then run :meth:`update`::
 
-    from geographer.cutters import DSCutterIterOverImgs
-    dataset_cutter = DSCutterIterOverImgs.from_json_file(<path/to/saved.json>)
+    from geographer.cutters import DSCutterIterOverRasters
+    dataset_cutter = DSCutterIterOverRasters.from_json_file(<path/to/saved.json>)
     dataset_cutter.update()
 
 .. warning::
 
-    The ``update`` method assumes that that no vector_features or raster
-    images that remain in the target dataset have been removed from the
+    The ``update`` method assumes that that no vectors or raster
+    rasters that remain in the target dataset have been removed from the
     source dataset.
 
-.. _cutting_images_around_vector_features:
+.. _cutting_rasters_around_vectors:
 
-Cutting Images Around Vector Features
+Cutting Rasters Around Vector Vectors
 ====================================================
 
-Cutting images around vector features (e.g. create 512 x 512 pixel
+Cutting rasters around vector features (e.g. create 512 x 512 pixel
 cutouts around vector features from 10980 x 10980 Sentinel-2 tiles)::
 
-    from geographer.cutters import get_cutter_imgs_around_every_feature
-    cutter = get_cutter_imgs_around_every_feature(
+    from geographer.cutters import get_cutter_rasters_around_every_vector
+    cutter = get_cutter_rasters_around_every_vector(
         source_data_dir=<SOURCE_DATA_DIR>,
         target_data_dir=<TARGET_DATA_DIR>,
         name=<OPTIONAL_NAME_FOR_SAVING>
-        new_img_size: Optional[ImgSize]
-        new_img_size=512,
-        target_img_count=2,
+        new_raster_size: Optional[RasterSize]
+        new_raster_size=512,
+        target_raster_count=2,
         mode: "random")
     cutter.cut()
 
-The :func:`geographer.cutters.get_cutter_imgs_around_every_feature`
-function returns a :class:`geographer.cutters.DSCutterIterOverFeatures` instance.
+The :func:`geographer.cutters.get_cutter_rasters_around_every_vector`
+function returns a :class:`geographer.cutters.DSCutterIterOverVectors` instance.
 The :meth:`cut` method will save the cutter to a json file in
 ``connector.connector_dir / <NAME>.json``.
 To update the target dataset after the source dataset has grown, first read the json file
 and then run :meth:`update`::
 
-    from geographer.cutters import DSCutterIterOverFeatures
-    dataset_cutter = DSCutterIterOverFeatures.from_json_file(<path/to/saved.json>)
+    from geographer.cutters import DSCutterIterOverVectors
+    dataset_cutter = DSCutterIterOverVectors.from_json_file(<path/to/saved.json>)
     dataset_cutter.update()
 
 .. warning::
 
-    The ``update`` method assumes that that no vector_features or raster images that remain in the target dataset have been removed from the source dataset.
+    The ``update`` method assumes that that no vectors or rasters that remain in the target dataset have been removed from the source dataset.
 

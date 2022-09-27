@@ -18,18 +18,18 @@ Subpackages
 Submodules
 ----------
 
-rs\_tools.add\_drop\_raster\_imgs module
+rs\_tools.add\_drop\_raster\_rasters\_mixin module
 ----------------------------------------
 
-.. automodule:: geographer.add_drop_raster_imgs
+.. automodule:: geographer.add_drop_rasters_mixin
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.add\_drop\_vector\_features\_mixin module
+rs\_tools.add\_drop\_vector\_vectors\_mixin module
 ---------------------------------------------------
 
-.. automodule:: geographer.add_drop_vector_features_mixin
+.. automodule:: geographer.add_drop_vectors_mixin
    :members:
    :undoc-members:
    :show-inheritance:
@@ -66,10 +66,10 @@ rs\_tools.global\_constants module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.img\_bands\_getter\_mixin module
+rs\_tools.raster\_bands\_getter\_mixin module
 ------------------------------------------
 
-.. automodule:: geographer.img_bands_getter_mixin
+.. automodule:: geographer.raster_bands_getter_mixin
    :members:
    :undoc-members:
    :show-inheritance:

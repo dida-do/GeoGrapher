@@ -1,4 +1,4 @@
-"""SingleImgDownloader for Sentinel-2 rasters from Copernicus Sci-hub.
+"""SingleRasterDownloader for Sentinel-2 rasters from Copernicus Sci-hub.
 
 Should be easily extendable to Sentinel-1.
 """
@@ -16,22 +16,22 @@ from sentinelsat.exceptions import ServerError, UnauthorizedError
 from shapely import wkt
 from shapely.geometry import Polygon
 
-from geographer.downloaders.base_downloader_for_single_feature import (
-    ImgDownloaderForSingleVectorFeature,
+from geographer.downloaders.base_downloader_for_single_vector import (
+    RasterDownloaderForSingleVector,
 )
-from geographer.errors import NoImgsForVectorFeatureFoundError
+from geographer.errors import NoRastersForVectorFoundError
 
 # logger
 log = logging.getLogger(__name__)
 
 
-class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeature):
-    """Downloader for Sentinel-2 images.
+class SentinelDownloaderForSingleVector(RasterDownloaderForSingleVector):
+    """Downloader for Sentinel-2 rasters.
 
     Requires environment variables sentinelAPIusername and
-    sentinelAPIpassword to set up the sentinel API. Assumes raster_imgs
+    sentinelAPIpassword to set up the sentinel API. Assumes rasters
     has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
-    'img_processed?'. Subclass/modify if you need other columns.
+    'raster_processed?'. Subclass/modify if you need other columns.
 
     See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
     for details on args passed to the API (e.g. date).
@@ -39,10 +39,10 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
 
     def download(  # type: ignore
         self,
-        feature_name: Union[str, int],
-        feature_geom: Polygon,
+        vector_name: Union[str, int],
+        vector_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_imgs_set: set[str],
+        previously_downloaded_rasters_set: set[str],
         producttype: str,
         resolution: int,
         max_percent_cloud_coverage: int,
@@ -62,10 +62,10 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             self.associator_dir.
 
         Args:
-            feature_name: name of vector feature
-            feature_geom: geometry of vector feature
+            vector_name: name of vector feature
+            vector_geom: geometry of vector feature
             download_dir: Directory Sentinel-2 products will be downloaded to.
-            previously_downloaded_imgs_set: Set of already downloaded products.
+            previously_downloaded_rasters_set: Set of already downloaded products.
             producttype: One of 'L1C'/'S2MSI1C' or 'L2A'/'S2MSI2A'
             resolution: One of 10, 20, or 60.
             max_percent_cloud_coverage: Integer between 0 and 100.
@@ -76,19 +76,19 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                 Path or str to ini file containing API credentials.
 
         Returns:
-            A dictionary containing information about the images.
-            ({'list_img_info_dicts': [img_info_dict]})
+            A dictionary containing information about the rasters.
+            ({'list_raster_info_dicts': [raster_info_dict]})
 
         Raises:
             ValueError: Raised if an unkknown product type is given.
-            NoImgsForPolygonFoundError: Raised if no downloadable images with cloud
+            NoRastersForPolygonFoundError: Raised if no downloadable rasters with cloud
             coverage less than or equal to max_percent_cloud_coverage could be found
             for the vector feature.
         """
         self._check_args_are_valid(producttype, resolution, max_percent_cloud_coverage)
 
         # Determine missing args for the sentinel query.
-        rectangle_wkt: str = wkt.dumps(feature_geom.envelope)
+        rectangle_wkt: str = wkt.dumps(vector_geom.envelope)
         producttype = self._get_longform_producttype(producttype)
 
         api = self._get_api(credentials)
@@ -112,13 +112,13 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
 
         # If we couldn't find anything, remember that, so we can deal with it later.
         if len(products) == 0:
-            raise NoImgsForVectorFeatureFoundError(
-                f"No images for vector feature {feature_name} found with "
+            raise NoRastersForVectorFoundError(
+                f"No rasters for vector feature {vector_name} found with "
                 f"cloud coverage less than or equal to {max_percent_cloud_coverage}!"
             )
 
         # Return dicts with values to be collected in calling associator.
-        img_info_dict = {}
+        raster_info_dict = {}
 
         # If the query was succesful, ...
         products_list = list(products.keys())
@@ -133,7 +133,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
             try:
                 # (this key might have to be 'filename'
                 # (minus the .SAFE at the end) for L1C products?)
-                img_name = product_metadata["title"] + ".tif"
+                raster_name = product_metadata["title"] + ".tif"
             except Exception as exc:
                 raise Exception(
                     "Couldn't get the filename. Are you trying to download L1C "
@@ -141,7 +141,7 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                     "line of code above this..."
                 ) from exc
 
-            if img_name not in previously_downloaded_imgs_set:
+            if raster_name not in previously_downloaded_rasters_set:
                 try:
                     api.download(product_id, directory_path=download_dir)
                     zip_path = download_dir / (product_metadata["title"] + ".zip")
@@ -149,14 +149,14 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                         assert zip_ref.testzip() is None
 
                     # And assemble the information to be updated
-                    # in the returned img_info_dict:
-                    img_info_dict["img_name"] = img_name
-                    img_info_dict["img_processed?"] = False
-                    img_info_dict["timestamp"] = product_metadata["Date"].strftime(
+                    # in the returned raster_info_dict:
+                    raster_info_dict["raster_name"] = raster_name
+                    raster_info_dict["raster_processed?"] = False
+                    raster_info_dict["timestamp"] = product_metadata["Date"].strftime(
                         "%Y-%m-%d-%H:%M:%S"
                     )
 
-                    return {"list_img_info_dicts": [img_info_dict]}
+                    return {"list_raster_info_dicts": [raster_info_dict]}
                 except Exception as exc:
                     log.warning(
                         "Failed to download or unzip %s: %s",
@@ -164,8 +164,8 @@ class SentinelDownloaderForSingleVectorFeature(ImgDownloaderForSingleVectorFeatu
                         str(exc),
                     )
 
-        raise NoImgsForVectorFeatureFoundError(
-            f"All images for {feature_name} failed to download."
+        raise NoRastersForVectorFoundError(
+            f"All rasters for {vector_name} failed to download."
         )
 
     def _get_longform_producttype(self, producttype: str):

@@ -1,5 +1,5 @@
 {
-    "vector_features": {
+    "vectors": {
         "35": {
             "188_18_1.tif": "contains",
             "190_17_1.tif": "contains",
@@ -4255,7 +4255,7 @@
             "187_17_2.tif": "intersects"
         }
     },
-    "raster_imgs": {
+    "rasters": {
         "190_19_1.tif": {},
         "189_19_1.tif": {},
         "188_19_1.tif": {},

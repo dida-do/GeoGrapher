@@ -1,9 +1,9 @@
-﻿geographer.cutters.DSCutterIterOverFeatures
+﻿geographer.cutters.DSCutterIterOverVectors
 ===========================================
 
 .. currentmodule:: geographer.cutters
 
-.. autoclass:: DSCutterIterOverFeatures
+.. autoclass:: DSCutterIterOverVectors
 
    
    .. automethod:: __init__
@@ -13,12 +13,12 @@
 
    .. autosummary::
    
-      ~DSCutterIterOverFeatures.__init__
-      ~DSCutterIterOverFeatures.create
-      ~DSCutterIterOverFeatures.create_or_update
-      ~DSCutterIterOverFeatures.cut
-      ~DSCutterIterOverFeatures.save
-      ~DSCutterIterOverFeatures.update
+      ~DSCutterIterOverVectors.__init__
+      ~DSCutterIterOverVectors.create
+      ~DSCutterIterOverVectors.create_or_update
+      ~DSCutterIterOverVectors.cut
+      ~DSCutterIterOverVectors.save
+      ~DSCutterIterOverVectors.update
 
    
 
@@ -28,16 +28,16 @@
 
    .. autosummary::
    
-      ~DSCutterIterOverFeatures.source_connector
-      ~DSCutterIterOverFeatures.target_connector
-      ~DSCutterIterOverFeatures.feature_filter_predicate
-      ~DSCutterIterOverFeatures.img_selector
-      ~DSCutterIterOverFeatures.img_cutter
-      ~DSCutterIterOverFeatures.label_maker
-      ~DSCutterIterOverFeatures.cut_imgs
-      ~DSCutterIterOverFeatures.bands
-      ~DSCutterIterOverFeatures.source_data_dir
-      ~DSCutterIterOverFeatures.target_data_dir
-      ~DSCutterIterOverFeatures.name
+      ~DSCutterIterOverVectors.source_connector
+      ~DSCutterIterOverVectors.target_connector
+      ~DSCutterIterOverVectors.vector_filter_predicate
+      ~DSCutterIterOverVectors.raster_selector
+      ~DSCutterIterOverVectors.raster_cutter
+      ~DSCutterIterOverVectors.label_maker
+      ~DSCutterIterOverVectors.cut_rasters
+      ~DSCutterIterOverVectors.bands
+      ~DSCutterIterOverVectors.source_data_dir
+      ~DSCutterIterOverVectors.target_data_dir
+      ~DSCutterIterOverVectors.name
    
    

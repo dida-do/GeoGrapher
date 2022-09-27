@@ -14,24 +14,24 @@
    .. autosummary::
    
       ~Connector.__init__
-      ~Connector.add_to_raster_imgs
-      ~Connector.add_to_vector_features
-      ~Connector.does_img_contain_vector_feature
-      ~Connector.does_img_intersect_vector_feature
-      ~Connector.does_vector_feature_intersect_img
-      ~Connector.drop_raster_imgs
-      ~Connector.drop_vector_features
+      ~Connector.add_to_rasters
+      ~Connector.add_to_vectors
+      ~Connector.does_raster_contain_vector
+      ~Connector.does_raster_intersect_vector
+      ~Connector.does_vector_intersect_raster
+      ~Connector.drop_rasters
+      ~Connector.drop_vectors
       ~Connector.empty_connector_same_format
       ~Connector.from_data_dir
       ~Connector.from_scratch
-      ~Connector.have_img_for_vector_feature
-      ~Connector.imgs_containing_vector_feature
-      ~Connector.imgs_intersecting_vector_feature
-      ~Connector.is_vector_feature_contained_in_img
-      ~Connector.rectangle_bounding_img
+      ~Connector.have_raster_for_vector
+      ~Connector.rasters_containing_vector
+      ~Connector.rasters_intersecting_vector
+      ~Connector.is_vector_contained_in_raster
+      ~Connector.rectangle_bounding_raster
       ~Connector.save
-      ~Connector.vector_features_contained_in_img
-      ~Connector.vector_features_intersecting_img
+      ~Connector.vectors_contained_in_raster
+      ~Connector.vectors_intersecting_raster
    
    
 
@@ -41,18 +41,18 @@
 
    .. autosummary::
    
-      ~Connector.all_vector_feature_classes
+      ~Connector.all_vector_classes
       ~Connector.connector_dir
       ~Connector.crs_epsg_code
       ~Connector.data_dir
       ~Connector.graph_str
-      ~Connector.image_data_dirs
-      ~Connector.images_dir
-      ~Connector.img_count_col_name
+      ~Connector.raster_data_dirs
+      ~Connector.rasters_dir
+      ~Connector.raster_count_col_name
       ~Connector.labels_dir
-      ~Connector.raster_imgs
-      ~Connector.set_img_count_col_name
-      ~Connector.task_vector_feature_classes
-      ~Connector.vector_features
+      ~Connector.rasters
+      ~Connector.set_raster_count_col_name
+      ~Connector.task_vector_classes
+      ~Connector.vectors
    
    

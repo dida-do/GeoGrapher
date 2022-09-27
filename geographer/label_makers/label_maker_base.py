@@ -1,7 +1,7 @@
 """Base class for label makers.
 
 Base class for label makers that generate labels (for any kind of
-computer vision task) from a connector's vector_features.
+computer vision task) from a connector's vectors.
 """
 
 from __future__ import annotations
@@ -27,19 +27,19 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     """Base class for label makers.
 
     Base class for label makers. that generate labels (for any kind of
-    computer vision task) from a connector's vector_features.
+    computer vision task) from a connector's vectors.
     """
 
     @abstractmethod
     def make_labels(
         self,
         connector: Connector,
-        img_names: Optional[list[str]] = None,
+        raster_names: Optional[list[str]] = None,
     ):
         """Create segmentation labels.
 
         Args:
-            img_names: raster names to create labels for.
+            raster_names: raster names to create labels for.
                 Defaults to None (i.e. all raster without a label).
         """
 
@@ -47,23 +47,23 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        img_names: Optional[list[str]] = None,
+        raster_names: Optional[list[str]] = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 
         Args:
-            img_names: names of images for which to delete labels.
+            raster_names: names of rasters for which to delete labels.
             Defaults to None, i.e. all labels.
         """
 
     def recompute_labels(
         self,
         connector: Connector,
-        img_names: Optional[list[str]] = None,
+        raster_names: Optional[list[str]] = None,
     ):
         """Recompute labels.
 
         Equivalent to delete_labels followed by make_labels
         """
-        self.delete_labels(connector, img_names)
-        self.make_labels(connector, img_names)
+        self.delete_labels(connector, raster_names)
+        self.make_labels(connector, raster_names)

@@ -7,19 +7,19 @@ class Error(Exception):
     pass
 
 
-class ImgAlreadyExistsError(Error):
-    """Image already exists in dataset."""
+class RasterAlreadyExistsError(Error):
+    """Raster already exists in dataset."""
 
     pass
 
 
-class NoImgsForVectorFeatureFoundError(Error):
+class NoRastersForVectorFoundError(Error):
     """No rasters found or none could be downloaded."""
 
     pass
 
 
-class ImgDownloadError(Error):
+class RasterDownloadError(Error):
     """Error occurs while downloading raster."""
 
     pass

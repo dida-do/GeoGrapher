@@ -1,11 +1,11 @@
 """
-TODO: Include as method in ImgPolygonAssociator.
+TODO: Include as method in RasterPolygonAssociator.
 
 Functions to cut datasets of GeoTiffs (or update previously cut datasets)
-by cutting each image in the source dataset to a grid of images.
-    - cut_dataset_img_to_grid_of_imgs. Updates a dataset of
-        GeoTiffs that was created with new_tif_dataset_img2grid_imgs.
-    - update_dataset_img_to_grid_of_imgs: customizable general function
+by cutting each raster in the source dataset to a grid of rasters.
+    - cut_dataset_raster_to_grid_of_rasters. Updates a dataset of
+        GeoTiffs that was created with new_tif_dataset_raster2grid_rasters.
+    - update_dataset_raster_to_grid_of_rasters: customizable general function
         to create or update datasets of GeoTiffs from existing ones
         by iterating over vector features.
 """
@@ -20,16 +20,16 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from geopandas import GeoDataFrame
 
-from geographer.cutters.single_img_cutter_bbox import SingleImgCutterFromBBoxes
-from geographer.cutters.type_aliases import ImgSize
+from geographer.cutters.single_raster_cutter_bbox import SingleRasterCutterFromBBoxes
+from geographer.cutters.type_aliases import RasterSize
 
 if TYPE_CHECKING:
-    from geographer.img_geom_associator import ImgPolygonAssociator
+    from geographer.raster_geom_associator import RasterPolygonAssociator
 
-from geographer.cutteres.cut_iter_over_imgs import (
-    create_or_update_dataset_iter_over_imgs,
+from geographer.cutteres.cut_iter_over_rasters import (
+    create_or_update_dataset_iter_over_rasters,
 )
-from geographer.cutters.img_filter_predicates import AlwaysTrue
+from geographer.cutters.raster_filter_predicates import AlwaysTrue
 
 logger = logging.getLogger(__name__)
 
@@ -40,30 +40,30 @@ class DSCutterBBoxes:  # noqa: E302
             self,
             create_or_update: str,
             bounding_boxes: GeoDataFrame,
-            source_assoc: ImgPolygonAssociator,
+            source_assoc: RasterPolygonAssociator,
             target_data_dir: Union[str, Path],
-            target_assoc: Optional[ImgPolygonAssociator] = None,
-            new_img_size: ImgSize = 512,
-            img_bands: Optional[list[int]] = None,
-            label_bands: Optional[list[int]] = None) -> ImgPolygonAssociator:
+            target_assoc: Optional[RasterPolygonAssociator] = None,
+            new_raster_size: RasterSize = 512,
+            raster_bands: Optional[list[int]] = None,
+            label_bands: Optional[list[int]] = None) -> RasterPolygonAssociator:
         """TODO.
 
         Warning:
             TODO! update is not going to work because should be iter over
-            (vector) geometries but uses iter over imgs.
+            (vector) geometries but uses iter over rasters.
 
 
         Args:
-            source_data_dir: data directory (images, labels, associator) containing
+            source_data_dir: data directory (rasters, labels, associator) containing
                 the GeoTiffs to be cut from.
             source_assoc: associator of dataset containing the GeoTiffs to be cut from.
             target_data_dir: path to data directory where the new dataset
-                (images, labels, associator) will be created. If the directory
+                (rasters, labels, associator) will be created. If the directory
                 does not exist it will be created.
             target_assoc: associator of target dataset.
-            new_img_size: size of new images (side length or (rows, col))
+            new_raster_size: size of new rasters (side length or (rows, col))
                 for 'centered' and 'random' modes. Defaults to 512.
-            img_bands: list of bands to extract from source images.
+            raster_bands: list of bands to extract from source rasters.
                 Defaults to None (i.e. all bands).
             label_bands:  list of bands to extract from source labels.
                 Defaults to None (i.e. all bands).
@@ -73,58 +73,58 @@ class DSCutterBBoxes:  # noqa: E302
         """
         target_data_dir = Path(target_data_dir)
 
-        bbox_cutter = SingleImgCutterFromBBoxes(
+        bbox_cutter = SingleRasterCutterFromBBoxes(
             source_assoc=source_assoc,
-            target_images_dir=target_data_dir / 'images',
+            target_rasters_dir=target_data_dir / 'rasters',
             target_labels_dir=target_data_dir / 'labels',
-            new_img_size=new_img_size,
+            new_raster_size=new_raster_size,
             bounding_boxes=bounding_boxes,
-            img_bands=img_bands,
+            raster_bands=raster_bands,
             label_bands=label_bands)
         always_true = AlwaysTrue()
 
-        target_assoc = create_or_update_dataset_iter_over_imgs(
+        target_assoc = create_or_update_dataset_iter_over_rasters(
             create_or_update=create_or_update,
             source_assoc=source_assoc,
             target_data_dir=target_data_dir,
             target_assoc=target_assoc,
-            img_cutter=bbox_cutter,
-            img_filter_predicate=always_true)
+            raster_cutter=bbox_cutter,
+            raster_filter_predicate=always_true)
 
-        # throw out images with duplicate bboxes:
-        # First, find a subset of images without duplicate bboxes ...
-        imgs_to_keep: list[str] = []
-        for count, img_name in enumerate(target_assoc.raster_imgs.index):
-            img_bbox = target_assoc.raster_imgs.loc[img_name, 'geometry']
+        # throw out rasters with duplicate bboxes:
+        # First, find a subset of rasters without duplicate bboxes ...
+        rasters_to_keep: list[str] = []
+        for count, raster_name in enumerate(target_assoc.rasters.index):
+            raster_bbox = target_assoc.rasters.loc[raster_name, 'geometry']
             if {
-                    img_name_
-                    for img_name_ in imgs_to_keep
-                    if img_bbox.equals(target_assoc.raster_imgs.loc[
-                        img_name_, 'geometry'])
+                    raster_name_
+                    for raster_name_ in rasters_to_keep
+                    if raster_bbox.equals(target_assoc.rasters.loc[
+                        raster_name_, 'geometry'])
             } == set():
-                imgs_to_keep += [img_name]
-        # ... and delete the remaining images, which have duplicate bboxes
-        imgs_to_delete = [
-            img_name for img_name in target_assoc.raster_imgs.index
-            if img_name not in imgs_to_keep
+                rasters_to_keep += [raster_name]
+        # ... and delete the remaining rasters, which have duplicate bboxes
+        rasters_to_delete = [
+            raster_name for raster_name in target_assoc.rasters.index
+            if raster_name not in rasters_to_keep
         ]
-        target_assoc.drop_imgs(imgs_to_delete, remove_imgs_from_disk=True)
+        target_assoc.drop_rasters(rasters_to_delete, remove_rasters_from_disk=True)
 
         # remember the cutting params.
         target_assoc._update_from_source_dataset_dict.update({
             'update_method':
-            'update_dataset_imgs_around_every_polygon',
+            'update_dataset_rasters_around_every_polygon',
             'source_data_dir':
-            source_assoc.images_dir.
+            source_assoc.rasters_dir.
             parent,  # Assuming standard data directory format
-            'new_img_size':
-            new_img_size,
-            'img_bands':
-            img_bands,
+            'new_raster_size':
+            new_raster_size,
+            'raster_bands':
+            raster_bands,
             'label_bands':
             label_bands,
         })
-        target_assoc._params_dict['img_size'] = new_img_size
+        target_assoc._params_dict['raster_size'] = new_raster_size
         target_assoc.save()
 
         return target_assoc
