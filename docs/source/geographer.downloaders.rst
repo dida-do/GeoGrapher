@@ -12,18 +12,18 @@ rs\_tools.downloaders.base\_download\_processor module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.downloaders.base\_downloader\_for\_single\_feature module
+rs\_tools.downloaders.base\_downloader\_for\_single\_vector module
 -------------------------------------------------------------------
 
-.. automodule:: geographer.downloaders.base_downloader_for_single_feature
+.. automodule:: geographer.downloaders.base_downloader_for_single_vector
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.downloaders.downloader\_for\_features module
+rs\_tools.downloaders.downloader\_for\_vectors module
 ------------------------------------------------------
 
-.. automodule:: geographer.downloaders.downloader_for_features
+.. automodule:: geographer.downloaders.downloader_for_vectors
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,10 +36,10 @@ rs\_tools.downloaders.jaxa\_download\_processor module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.downloaders.jaxa\_downloader\_for\_single\_feature module
+rs\_tools.downloaders.jaxa\_downloader\_for\_single\_vector module
 -------------------------------------------------------------------
 
-.. automodule:: geographer.downloaders.jaxa_downloader_for_single_feature
+.. automodule:: geographer.downloaders.jaxa_downloader_for_single_vector
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,10 +52,10 @@ rs\_tools.downloaders.sentinel2\_download\_processor module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.downloaders.sentinel2\_downloader\_for\_single\_feature module
+rs\_tools.downloaders.sentinel2\_downloader\_for\_single\_vector module
 ------------------------------------------------------------------------
 
-.. automodule:: geographer.downloaders.sentinel2_downloader_for_single_feature
+.. automodule:: geographer.downloaders.sentinel2_downloader_for_single_vector
    :members:
    :undoc-members:
    :show-inheritance:

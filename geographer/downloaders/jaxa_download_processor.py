@@ -1,4 +1,4 @@
-"""ImgDownloadProcessor for JAXA downloads."""
+"""RasterDownloadProcessor for JAXA downloads."""
 
 from __future__ import annotations
 
@@ -9,50 +9,50 @@ from pathlib import Path
 import rasterio as rio
 from shapely.geometry import box
 
-from geographer.downloaders.base_download_processor import ImgDownloadProcessor
+from geographer.downloaders.base_download_processor import RasterDownloadProcessor
 from geographer.utils.utils import transform_shapely_geometry
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class JAXADownloadProcessor(ImgDownloadProcessor):
-    """ImgDownloadProcessor for JAXA downloads."""
+class JAXADownloadProcessor(RasterDownloadProcessor):
+    """RasterDownloadProcessor for JAXA downloads."""
 
     def process(
         self,
-        img_name: str,
+        raster_name: str,
         download_dir: Path,
-        images_dir: Path,
+        rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs,
     ) -> dict:
         """Process a downloaded JAXA file.
 
         Args:
-            img_name: image name
+            raster_name: raster name
             download_dir: download directory
-            images_dir: images directory
-            return_bounds_in_crs_epsg_code: EPSG code of crs to return image bounds in
+            rasters_dir: rasters directory
+            return_bounds_in_crs_epsg_code: EPSG code of crs to return raster bounds in
 
         Returns:
-            img_info_dict containing information about the image
+            raster_info_dict containing information about the raster
         """
-        geotif_filename = download_dir / img_name
+        geotif_filename = download_dir / raster_name
         with rio.open(geotif_filename) as src:
             orig_crs_epsg_code = src.crs.to_epsg()
-            img_bounding_rectangle = box(*src.bounds)
-        img_bounding_rectangle_in_correct_crs = transform_shapely_geometry(
-            img_bounding_rectangle, orig_crs_epsg_code, 4326
+            raster_bounding_rectangle = box(*src.bounds)
+        raster_bounding_rectangle_in_correct_crs = transform_shapely_geometry(
+            raster_bounding_rectangle, orig_crs_epsg_code, 4326
         )
 
-        shutil.move(download_dir / img_name, images_dir / img_name)
+        shutil.move(download_dir / raster_name, rasters_dir / raster_name)
 
-        img_info_dict = {
+        raster_info_dict = {
             "orig_crs_epsg_code": orig_crs_epsg_code,
-            "img_name": img_name,
-            "img_processed?": True,
-            "geometry": img_bounding_rectangle_in_correct_crs,
+            "raster_name": raster_name,
+            "raster_processed?": True,
+            "geometry": raster_bounding_rectangle_in_correct_crs,
         }
 
-        return img_info_dict
+        return raster_info_dict

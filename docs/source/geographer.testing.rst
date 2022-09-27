@@ -12,10 +12,10 @@ rs\_tools.testing.graph\_df\_compatibility module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.testing.mock\_testing\_img\_polygon\_associator\_aubesa\_s2 module
+rs\_tools.testing.mock\_testing\_raster\_polygon\_associator\_aubesa\_s2 module
 ----------------------------------------------------------------------------
 
-.. automodule:: geographer.testing.mock_testing_img_polygon_associator_aubesa_s2
+.. automodule:: geographer.testing.mock_testing_raster_polygon_associator_aubesa_s2
    :members:
    :undoc-members:
    :show-inheritance:

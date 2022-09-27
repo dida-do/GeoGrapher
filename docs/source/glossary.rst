@@ -8,7 +8,7 @@ Glossary
 
     cutting a dataset
         Creating a new dataset from an existing one by cutting the
-        images in the source dataset
+        rasters in the source dataset
 
     ML
         machine learning

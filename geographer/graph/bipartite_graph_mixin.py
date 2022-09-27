@@ -13,152 +13,152 @@ from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 
 log = logging.getLogger(__name__)
 
-VECTOR_FEATURES_COLOR = "vector_features"
-RASTER_IMGS_COLOR = "raster_imgs"
+VECTOR_FEATURES_COLOR = "vectors"
+RASTER_IMGS_COLOR = "rasters"
 
 
 class BipartiteGraphMixIn:
     """Mix-in that interfaces with a connector's internal graph."""
 
     if TYPE_CHECKING:
-        vector_features: GeoDataFrame
-        raster_imgs: GeoDataFrame
+        vectors: GeoDataFrame
+        rasters: GeoDataFrame
         _graph: BipartiteGraphClass
-        images_dir: Path
+        rasters_dir: Path
 
-    def have_img_for_vector_feature(self, feature_name: str) -> bool:
+    def have_raster_for_vector(self, vector_name: str) -> bool:
         """Check if there is a raster fully containing the vector feature.
 
         Args:
-            feature_name: Name of vector feature
+            vector_name: Name of vector feature
 
         Returns:
-            `True` if there is an image in the dataset fully containing the vector
+            `True` if there is a raster in the dataset fully containing the vector
             feature, False otherwise.
         """
-        return self.vector_features.loc[feature_name, self.img_count_col_name] > 0
+        return self.vectors.loc[vector_name, self.raster_count_col_name] > 0
 
-    def rectangle_bounding_img(self, img_name: str) -> BaseGeometry:
-        """Return shapely geometry bounding an image.
+    def rectangle_bounding_raster(self, raster_name: str) -> BaseGeometry:
+        """Return shapely geometry bounding a raster.
 
         The geometry is with respect to the connector's (standard) :term:`crs`.
 
         Args:
-            img_name: the img_name/identifier of the image
+            raster_name: the raster_name/identifier of the raster
 
         Returns:
-            shapely geometry giving the bounds of the image in the standard crs
+            shapely geometry giving the bounds of the raster in the standard crs
             of the connector
         """
-        return self.raster_imgs.loc[img_name, "geometry"]
+        return self.rasters.loc[raster_name, "geometry"]
 
-    def vector_features_intersecting_img(
-        self, img_name: Union[str, list[str]]
+    def vectors_intersecting_raster(
+        self, raster_name: Union[str, list[str]]
     ) -> list[str]:
         """Return vector features intersecting one or (any of) several rasters.
 
         Args:
-            img_name: name/id of image or list names/ids
+            raster_name: name/id of raster or list names/ids
 
         Returns:
-            list of feature_names/ids of all vector features in connector which
+            list of vector_names/ids of all vector features in connector which
             have non-empty intersection with the raster(s)
         """
-        if isinstance(img_name, str):
-            img_names = [img_name]
+        if isinstance(raster_name, str):
+            raster_names = [raster_name]
         else:
-            img_names = img_name
+            raster_names = raster_name
 
-        feature_names = []
+        vector_names = []
 
-        for img_name in img_names:
+        for raster_name in raster_names:
             try:
-                feature_names += self._graph.vertices_opposite(
-                    vertex_name=img_name, vertex_color=RASTER_IMGS_COLOR
+                vector_names += self._graph.vertices_opposite(
+                    vertex_name=raster_name, vertex_color=RASTER_IMGS_COLOR
                 )
             except KeyError:
-                raise ValueError(f"Unknown image: {img_name}")
+                raise ValueError(f"Unknown raster: {raster_name}")
 
-        return feature_names
+        return vector_names
 
-    def imgs_intersecting_vector_feature(
-        self, feature_name: Union[str, list[str]], mode: str = "names"
+    def rasters_intersecting_vector(
+        self, vector_name: Union[str, list[str]], mode: str = "names"
     ) -> list[str]:
-        """Return raster images intersecting several vector feature(s).
+        """Return rasters intersecting several vector feature(s).
 
-        If more than one vector feature is given, return images intersecting
+        If more than one vector feature is given, return rasters intersecting
         at least one of the vector features.
 
         Args:
-            feature_name: name/id (or list) of vector feature(s)
-            mode: One of 'names' or 'paths'. In the former case the image names are
-            returned in the latter case paths to the images. Defaults to 'names'.
+            vector_name: name/id (or list) of vector feature(s)
+            mode: One of 'names' or 'paths'. In the former case the raster names are
+            returned in the latter case paths to the rasters. Defaults to 'names'.
 
         Returns:
-            feature_names/identifiers of all vector features in connector with
-            non-empty intersection with the image.
+            vector_names/identifiers of all vector features in connector with
+            non-empty intersection with the raster.
         """
-        if isinstance(feature_name, str):
-            feature_names = [feature_name]
+        if isinstance(vector_name, str):
+            vector_names = [vector_name]
         else:
-            feature_names = feature_name
+            vector_names = vector_name
 
-        img_names = []
+        raster_names = []
 
-        for feature_name in feature_names:
+        for vector_name in vector_names:
             try:
-                img_names += self._graph.vertices_opposite(
-                    vertex_name=feature_name, vertex_color=VECTOR_FEATURES_COLOR
+                raster_names += self._graph.vertices_opposite(
+                    vertex_name=vector_name, vertex_color=VECTOR_FEATURES_COLOR
                 )
             except KeyError:
-                raise ValueError(f"Unknown vector feature: {feature_name}")
+                raise ValueError(f"Unknown vector feature: {vector_name}")
 
         if mode == "names":
-            answer = img_names
+            answer = raster_names
         elif mode == "paths":
-            answer = [self.images_dir / img_name for img_name in img_names]
+            answer = [self.rasters_dir / raster_name for raster_name in raster_names]
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
         return answer
 
-    def vector_features_contained_in_img(
-        self, img_name: Union[str, list[str]]
+    def vectors_contained_in_raster(
+        self, raster_name: Union[str, list[str]]
     ) -> list[str]:
-        """Return vector features fully containing a given image.
+        """Return vector features fully containing a given raster.
 
         If several rasters are given return vector features fully containing
         any of the rasters.
 
         Args:
-            img_name: name/id of image or list of names/ids of images
+            raster_name: name/id of raster or list of names/ids of rasters
 
         Returns:
-            feature_names/identifiers of all vector features in connector
-            contained in the image(s).
+            vector_names/identifiers of all vector features in connector
+            contained in the raster(s).
         """
-        if isinstance(img_name, str):
-            img_names = [img_name]
+        if isinstance(raster_name, str):
+            raster_names = [raster_name]
         else:
-            img_names = img_name
+            raster_names = raster_name
 
-        feature_names = []
+        vector_names = []
 
-        for img_name in img_names:
+        for raster_name in raster_names:
             try:
-                feature_names += self._graph.vertices_opposite(
-                    vertex_name=img_name,
+                vector_names += self._graph.vertices_opposite(
+                    vertex_name=raster_name,
                     vertex_color=RASTER_IMGS_COLOR,
                     edge_data="contains",
                 )
             except KeyError:
-                raise ValueError(f"Unknown image: {img_name}")
+                raise ValueError(f"Unknown raster: {raster_name}")
 
-        return feature_names
+        return vector_names
 
-    def imgs_containing_vector_feature(
+    def rasters_containing_vector(
         self,
-        feature_name: Union[str, list[str]],
+        vector_name: Union[str, list[str]],
         mode: str = "names",
     ) -> list[str]:
         """Return rasters in which a given vector feature is fully contained.
@@ -167,121 +167,115 @@ class BipartiteGraphMixIn:
         at least one of the vector features.
 
         Args:
-            feature_name: name/id (or list of names) of vector feature(s)
-            mode: One of 'names' or 'paths'. In the former case the image names are
-            returned in the latter case paths to the images. Defaults to 'names'.
+            vector_name: name/id (or list of names) of vector feature(s)
+            mode: One of 'names' or 'paths'. In the former case the raster names are
+            returned in the latter case paths to the rasters. Defaults to 'names'.
 
         Returns:
-            img_names/identifiers of all images in connector containing
+            raster_names/identifiers of all rasters in connector containing
             the vector feature(s)
         """
-        if not isinstance(feature_name, list):
-            feature_names = [feature_name]
+        if not isinstance(vector_name, list):
+            vector_names = [vector_name]
         else:
-            feature_names = feature_name
+            vector_names = vector_name
 
-        img_names = []
+        raster_names = []
 
-        for feature_name in feature_names:
+        for vector_name in vector_names:
             try:
-                img_names = self._graph.vertices_opposite(
-                    vertex_name=feature_name,
+                raster_names = self._graph.vertices_opposite(
+                    vertex_name=vector_name,
                     vertex_color=VECTOR_FEATURES_COLOR,
                     edge_data="contains",
                 )
             except KeyError:
-                raise ValueError(f"Unknown vector feature: {feature_name}")
+                raise ValueError(f"Unknown vector feature: {vector_name}")
 
         if mode == "names":
-            answer = img_names
+            answer = raster_names
         elif mode == "paths":
-            answer = [self.images_dir / img_name for img_name in img_names]
+            answer = [self.rasters_dir / raster_name for raster_name in raster_names]
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
         return answer
 
-    def does_img_contain_vector_feature(self, img_name: str, feature_name: str) -> bool:
-        """Return whether a raster image fully contains a vector feature.
+    def does_raster_contain_vector(self, raster_name: str, vector_name: str) -> bool:
+        """Return whether a raster fully contains a vector feature.
 
         Args:
-            img_name: Name of image
-            feature_name: name of vector feature
+            raster_name: Name of raster
+            vector_name: name of vector feature
 
         Returns:
-            True or False depending on whether the image contains the vector
+            True or False depending on whether the raster contains the vector
             feature or not
         """
-        return feature_name in self.vector_features_contained_in_img(img_name)
+        return vector_name in self.vectors_contained_in_raster(raster_name)
 
-    def is_vector_feature_contained_in_img(
-        self, feature_name: str, img_name: str
-    ) -> bool:
+    def is_vector_contained_in_raster(self, vector_name: str, raster_name: str) -> bool:
         """Return True if a vector feature is fully contained in a raster.
 
         Args:
-            img_name: Name of image
-            feature_name: name of vector feature
+            raster_name: Name of raster
+            vector_name: name of vector feature
 
         Returns:
             True or False depending on whether the vector feature contains
-            the image or not
+            the raster or not
         """
-        return self.does_img_contain_vector_feature(img_name, feature_name)
+        return self.does_raster_contain_vector(raster_name, vector_name)
 
-    def does_img_intersect_vector_feature(
-        self, img_name: str, feature_name: str
-    ) -> bool:
-        """Return whether a vector feature intersects a raster image.
+    def does_raster_intersect_vector(self, raster_name: str, vector_name: str) -> bool:
+        """Return whether a vector feature intersects a raster.
 
         Args:
-            img_name: Name of image
-            feature_name: name of vector feature
+            raster_name: Name of raster
+            vector_name: name of vector feature
 
         Returns:
-            True or False depending on whether the image intersects the
+            True or False depending on whether the raster intersects the
             vector feature or not
         """
-        return feature_name in self.vector_features_intersecting_img(img_name)
+        return vector_name in self.vectors_intersecting_raster(raster_name)
 
-    def does_vector_feature_intersect_img(
-        self, feature_name: str, img_name: str
-    ) -> bool:
-        """Return whether a vector feature intersects a raster image.
+    def does_vector_intersect_raster(self, vector_name: str, raster_name: str) -> bool:
+        """Return whether a vector feature intersects a raster.
 
         Args:
-            img_name: Name of image
-            feature_name: name of vector feature
+            raster_name: Name of raster
+            vector_name: name of vector feature
 
         Returns:
             True or False depending on whether the vector feature intersects
-            the image or not
+            the raster or not
         """
-        return self.does_img_intersect_vector_feature(img_name, feature_name)
+        return self.does_raster_intersect_vector(raster_name, vector_name)
 
-    def _connect_img_to_vector_feature(
+    def _connect_raster_to_vector(
         self,
-        img_name: str,
-        feature_name: str,
+        raster_name: str,
+        vector_name: str,
         contains_or_intersects: Optional[str] = None,
-        vector_features: Optional[GeoDataFrame] = None,
-        img_bounding_rectangle: Optional[BaseGeometry] = None,
+        vectors: Optional[GeoDataFrame] = None,
+        raster_bounding_rectangle: Optional[BaseGeometry] = None,
         graph: Optional[BipartiteGraphClass] = None,
         do_safety_check: bool = True,
     ):
-        """Connect an image to a vector feature in the graph.
+        """Connect a raster to a vector feature in the graph.
 
-        Remember (i.e. create a connection in the graph) whether the image
+        Remember (i.e. create a connection in the graph) whether the raster
         fully contains or just has non-empty intersection with the vector
-        feature, i.e. add an edge of the approriate type between the image
+        feature, i.e. add an edge of the approriate type between the raster
         and the vector feature.
 
         Args:
-            img_name: Name of image to connect
-            feature_name: Name of vector feature to connect
+            raster_name: Name of raster to connect
+            vector_name: Name of vector feature to connect
             contains_or_intersects: Optional connection criteria
-            vector_features: Optional vector feature dataframe
-            img_bounding_rectangle: vector feature decribing image footprint
+            vectors: Optional vector feature dataframe
+            raster_bounding_rectangle: vector feature decribing raster footprint
             graph: optional bipartied graph
             ignore_safety_check: whether to check contains_or_intersects relation
         """
@@ -291,226 +285,225 @@ class BipartiteGraphMixIn:
                 f"or None, is {contains_or_intersects}"
             )
 
-        # default vector_features
-        if vector_features is None:
-            vector_features = self.vector_features
+        # default vectors
+        if vectors is None:
+            vectors = self.vectors
 
         # default graph
         if graph is None:
             graph = self._graph
 
-        # default img_bounding_rectangle
-        if img_bounding_rectangle is None:
-            img_bounding_rectangle = self.raster_imgs.loc[img_name, "geometry"]
+        # default raster_bounding_rectangle
+        if raster_bounding_rectangle is None:
+            raster_bounding_rectangle = self.rasters.loc[raster_name, "geometry"]
 
         # get containment relation if not given
         if contains_or_intersects is None:
 
-            feature_feature = vector_features.loc[feature_name, "geometry"]
+            vector_geom = vectors.loc[vector_name, "geometry"]
 
-            non_empty_intersection = feature_feature.intersects(img_bounding_rectangle)
+            non_empty_intersection = vector_geom.intersects(raster_bounding_rectangle)
             if not non_empty_intersection:
                 log.info(
-                    "_connect_img_to_feature: not connecting, since "
-                    "img  %s and vector feature %s do not overlap.",
-                    img_name,
-                    feature_name,
+                    "_connect_raster_to_vector: not connecting, since "
+                    "raster  %s and vector feature %s do not overlap.",
+                    raster_name,
+                    vector_name,
                 )
             else:
                 contains_or_intersects = (
                     "contains"
-                    if img_bounding_rectangle.contains(feature_feature)
+                    if raster_bounding_rectangle.contains(vector_geom)
                     else "intersects"
                 )
 
         elif do_safety_check:
-            feature_feature = vector_features.loc[feature_name, "geometry"]
-            assert img_bounding_rectangle.intersects(feature_feature)
+            vector_geom = vectors.loc[vector_name, "geometry"]
+            assert raster_bounding_rectangle.intersects(vector_geom)
             assert (
                 contains_or_intersects == "contains"
-                if img_bounding_rectangle.contains(feature_feature)
+                if raster_bounding_rectangle.contains(vector_geom)
                 else "intersects"
             )
 
         graph.add_edge(
-            img_name, RASTER_IMGS_COLOR, feature_name, contains_or_intersects
+            raster_name, RASTER_IMGS_COLOR, vector_name, contains_or_intersects
         )
 
-        # if the vector feature is fully contained in the image
-        # increment the image counter in self.vector_features
+        # if the vector feature is fully contained in the raster
+        # increment the raster counter in self.vectors
         if contains_or_intersects == "contains":
-            vector_features.loc[feature_name, self.img_count_col_name] += 1
+            vectors.loc[vector_name, self.raster_count_col_name] += 1
 
-    def _add_vector_feature_to_graph(
-        self, feature_name: str, vector_features: Optional[GeoDataFrame] = None
+    def _add_vector_to_graph(
+        self, vector_name: str, vectors: Optional[GeoDataFrame] = None
     ):
         """Connect a vector feature all intersecting rasters.
 
         Args:
-            feature_name: name/id of vector feature to add
-            vector_features: Defaults to None (i.e. self.vector_features).
+            vector_name: name/id of vector feature to add
+            vectors: Defaults to None (i.e. self.vectors).
         """
-        # default vector_features
-        if vector_features is None:
-            vector_features = self.vector_features
+        # default vectors
+        if vectors is None:
+            vectors = self.vectors
 
         # add vertex if one does not yet exist
-        if not self._graph.exists_vertex(feature_name, VECTOR_FEATURES_COLOR):
-            self._graph.add_vertex(feature_name, VECTOR_FEATURES_COLOR)
+        if not self._graph.exists_vertex(vector_name, VECTOR_FEATURES_COLOR):
+            self._graph.add_vertex(vector_name, VECTOR_FEATURES_COLOR)
 
         # raise an exception if the vector feature already has connections
-        if list(self._graph.vertices_opposite(feature_name, VECTOR_FEATURES_COLOR)):
+        if list(self._graph.vertices_opposite(vector_name, VECTOR_FEATURES_COLOR)):
             log.warning(
-                "_add_feature_to_graph: !!!Warning (connect_feature): "
+                "_add_vector_to_graph: !!!Warning (connect_vector): "
                 "vector feature %s already has connections! Probably "
-                "_add_feature_to_graph is being used wrongly. Check your code!",
-                feature_name,
+                "_add_vector_to_graph is being used wrongly. Check your code!",
+                vector_name,
             )
 
-        feature_feature = vector_features.geometry.loc[feature_name]
+        vector_geom = vectors.geometry.loc[vector_name]
 
-        # determine intersecting and containing imgs
-        intersection_mask = self.raster_imgs.geometry.intersects(feature_feature)
-        containment_mask = self.raster_imgs.loc[intersection_mask].geometry.contains(
-            feature_feature
+        # determine intersecting and containing rasters
+        intersection_mask = self.rasters.geometry.intersects(vector_geom)
+        containment_mask = self.rasters.loc[intersection_mask].geometry.contains(
+            vector_geom
         )
 
-        intersecting_imgs = set(self.raster_imgs.loc[intersection_mask].index)
-        containing_imgs = set(
-            self.raster_imgs.loc[intersection_mask].loc[containment_mask].index
+        intersecting_rasters = set(self.rasters.loc[intersection_mask].index)
+        containing_rasters = set(
+            self.rasters.loc[intersection_mask].loc[containment_mask].index
         )
 
         # add edges in graph
-        for img_name in containing_imgs:
-            self._connect_img_to_vector_feature(
-                img_name,
-                feature_name,
+        for raster_name in containing_rasters:
+            self._connect_raster_to_vector(
+                raster_name,
+                vector_name,
                 "contains",
-                vector_features=vector_features,
+                vectors=vectors,
                 do_safety_check=False,
             )
-        for img_name in intersecting_imgs - containing_imgs:
-            self._connect_img_to_vector_feature(
-                img_name,
-                feature_name,
+        for raster_name in intersecting_rasters - containing_rasters:
+            self._connect_raster_to_vector(
+                raster_name,
+                vector_name,
                 "intersects",
-                vector_features=vector_features,
+                vectors=vectors,
                 do_safety_check=False,
             )
 
-    def _add_img_to_graph_modify_vector_features(
+    def _add_raster_to_graph_modify_vectors(
         self,
-        img_name: str,
-        img_bounding_rectangle: Optional[BaseGeometry] = None,
-        vector_features: Optional[GeoDataFrame] = None,
+        raster_name: str,
+        raster_bounding_rectangle: Optional[BaseGeometry] = None,
+        vectors: Optional[GeoDataFrame] = None,
         graph: Optional[BipartiteGraphClass] = None,
     ):
         """Add raster to graph and modify vector features.
 
-        Create a vertex in the graph for the image if one does not yet exist
+        Create a vertex in the graph for the raster if one does not yet exist
         and connect it to all vector features in the graph while modifying the
-        img_counts in vector_features where appropriate. The default values
-        None for vector_features and graph will be interpreted as
-        self.vector_features and self.graph. If img_bounding_rectangle is None,
-        we assume we can get it from self. If the image already exists and
+        raster_counts in vectors where appropriate. The default values
+        None for vectors and graph will be interpreted as
+        self.vectors and self.graph. If raster_bounding_rectangle is None,
+        we assume we can get it from self. If the raster already exists and
         already has connections a warning will be logged.
 
         Args:
-            img_name: Name of image to add
-            img_bounding_rectangle: vector feature decribing image footprint
-            vector_features: Optional vector features dataframe
+            raster_name: Name of raster to add
+            raster_bounding_rectangle: vector feature decribing raster footprint
+            vectors: Optional vector features dataframe
             graph: optional bipartied graph
         """
-        # default vector_features
-        if vector_features is None:
-            vector_features = self.vector_features
+        # default vectors
+        if vectors is None:
+            vectors = self.vectors
 
         # default graph:
         if graph is None:
             graph = self._graph
 
-        # default img_bounding_rectangle
-        if img_bounding_rectangle is None:
-            img_bounding_rectangle = self.raster_imgs.geometry.loc[img_name]
+        # default raster_bounding_rectangle
+        if raster_bounding_rectangle is None:
+            raster_bounding_rectangle = self.rasters.geometry.loc[raster_name]
 
         # add vertex if it does not yet exist
-        if not graph.exists_vertex(img_name, RASTER_IMGS_COLOR):
-            graph.add_vertex(img_name, RASTER_IMGS_COLOR)
+        if not graph.exists_vertex(raster_name, RASTER_IMGS_COLOR):
+            graph.add_vertex(raster_name, RASTER_IMGS_COLOR)
 
-        # check if img already has connections
-        if list(graph.vertices_opposite(img_name, RASTER_IMGS_COLOR)) != []:
+        # check if raster already has connections
+        if list(graph.vertices_opposite(raster_name, RASTER_IMGS_COLOR)) != []:
             log.warning(
-                "!!!Warning (connect_img): image %s already has connections!", img_name
+                "!!!Warning (connect_raster): raster %s already has connections!",
+                raster_name,
             )
 
-        # # determine intersecting and containing imgs
-        intersection_mask = self.vector_features.geometry.intersects(
-            img_bounding_rectangle
-        )
-        containment_mask = self.vector_features.loc[intersection_mask].geometry.within(
-            img_bounding_rectangle
+        # # determine intersecting and containing rasters
+        intersection_mask = self.vectors.geometry.intersects(raster_bounding_rectangle)
+        containment_mask = self.vectors.loc[intersection_mask].geometry.within(
+            raster_bounding_rectangle
         )
 
-        intersecting_features = set(self.vector_features.loc[intersection_mask].index)
-        contained_features = set(
-            self.vector_features.loc[intersection_mask].loc[containment_mask].index
+        intersecting_vectors = set(self.vectors.loc[intersection_mask].index)
+        contained_vectors = set(
+            self.vectors.loc[intersection_mask].loc[containment_mask].index
         )
 
         # add edges in graph
-        for feature_name in contained_features:
-            self._connect_img_to_vector_feature(
-                img_name,
-                feature_name,
+        for vector_name in contained_vectors:
+            self._connect_raster_to_vector(
+                raster_name,
+                vector_name,
                 "contains",
-                vector_features=vector_features,
-                img_bounding_rectangle=img_bounding_rectangle,
+                vectors=vectors,
+                raster_bounding_rectangle=raster_bounding_rectangle,
                 graph=graph,
                 do_safety_check=False,
             )
-        for feature_name in intersecting_features - contained_features:
-            self._connect_img_to_vector_feature(
-                img_name,
-                feature_name,
+        for vector_name in intersecting_vectors - contained_vectors:
+            self._connect_raster_to_vector(
+                raster_name,
+                vector_name,
                 "intersects",
-                vector_features=vector_features,
-                img_bounding_rectangle=img_bounding_rectangle,
+                vectors=vectors,
+                raster_bounding_rectangle=raster_bounding_rectangle,
                 graph=graph,
                 do_safety_check=False,
             )
 
-    def _remove_vector_feature_from_graph_modify_vector_features(
-        self, feature_name: str, set_img_count_to_zero: bool = True
+    def _remove_vector_from_graph_modify_vectors(
+        self, vector_name: str, set_raster_count_to_zero: bool = True
     ):
-        """Remove vector feature from the graph & modify self.vector_features.
+        """Remove vector feature from the graph & modify self.vectors.
 
         Removes a vector feature from the graph (i.e. removes the vertex and
-        all incident edges) and (if set_img_count_to_zero == True) sets the
-        vector_features field 'img_count' to 0.
+        all incident edges) and (if set_raster_count_to_zero == True) sets the
+        vectors field 'raster_count' to 0.
 
         Args:
-            feature_name: vector feature name/id
-            set_img_count_to_zero: Whether to set img_count to 0.
+            vector_name: vector feature name/id
+            set_raster_count_to_zero: Whether to set raster_count to 0.
         """
         self._graph.delete_vertex(
-            feature_name, VECTOR_FEATURES_COLOR, force_delete_with_edges=True
+            vector_name, VECTOR_FEATURES_COLOR, force_delete_with_edges=True
         )
 
-        if set_img_count_to_zero:
-            self.vector_features.loc[feature_name, self.img_count_col_name] = 0
+        if set_raster_count_to_zero:
+            self.vectors.loc[vector_name, self.raster_count_col_name] = 0
 
-    def _remove_img_from_graph_modify_vector_features(self, img_name: str):
-        """Remove raster from graph & modify self.vector_features accordingly.
+    def _remove_raster_from_graph_modify_vectors(self, raster_name: str):
+        """Remove raster from graph & modify self.vectors accordingly.
 
-        Remove an img from the graph (i.e. remove the vertex and all
-        incident edges) and modifiy the vector_features fields 'img_count' for
-        the vector features contained in the image.
+        Remove an raster from the graph (i.e. remove the vertex and all
+        incident edges) and modifiy the vectors fields 'raster_count' for
+        the vector features contained in the raster.
 
         Args:
-            img_name: name/id of image to remove
+            raster_name: name/id of raster to remove
         """
-        for feature_name in self.vector_features_contained_in_img(img_name):
-            self.vector_features.loc[feature_name, self.img_count_col_name] -= 1
+        for vector_name in self.vectors_contained_in_raster(raster_name):
+            self.vectors.loc[vector_name, self.raster_count_col_name] -= 1
 
         self._graph.delete_vertex(
-            img_name, RASTER_IMGS_COLOR, force_delete_with_edges=True
+            raster_name, RASTER_IMGS_COLOR, force_delete_with_edges=True
         )

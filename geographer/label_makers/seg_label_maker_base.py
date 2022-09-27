@@ -27,8 +27,8 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     )
 
     @abstractmethod
-    def _make_label_for_img(self, connector: Connector, img_name: str):
-        """Make label for single image."""
+    def _make_label_for_raster(self, connector: Connector, raster_name: str):
+        """Make label for single raster."""
         pass
 
     @property
@@ -48,50 +48,51 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def _run_safety_checks(self, connector: Connector):
         """Run safety checks. Hook.
 
-        Override to check e.g. if existing classes in vector_features
-        contained in connector.all_vector_feature_classes.
+        Override to check e.g. if existing classes in vectors contained
+        in connector.all_vector_classes.
         """
         pass
 
     def make_labels(
         self,
         connector: Connector,
-        img_names: Optional[list[str]] = None,
+        raster_names: Optional[list[str]] = None,
     ):
         """Create segmentation labels.
 
         Args:
-            img_names: list of image names to create labels for.
-                Defaults to None (i.e. all images without a label).
+            raster_names: list of raster names to create labels for.
+                Defaults to None (i.e. all rasters without a label).
         """
         # safety checks
         self._run_safety_checks(connector)
         self._set_label_type_in_connector_attrs(connector)
-        self._compare_existing_imgs_to_raster_imgs(connector)
+        self._compare_existing_rasters_to_rasters(connector)
 
         connector.labels_dir.mkdir(parents=True, exist_ok=True)
 
-        existing_images = {
-            img_path.name
-            for img_path in connector.images_dir.iterdir()
-            if img_path.is_file() and img_path.name in connector.raster_imgs.index
+        existing_rasters = {
+            raster_path.name
+            for raster_path in connector.rasters_dir.iterdir()
+            if raster_path.is_file() and raster_path.name in connector.rasters.index
         }
 
-        if img_names is None:
-            # Find images without labels
+        if raster_names is None:
+            # Find rasters without labels
             existing_labels = {
-                img_path.name
-                for img_path in connector.labels_dir.iterdir()
-                if img_path.is_file() and img_path.name in connector.raster_imgs.index
+                raster_path.name
+                for raster_path in connector.labels_dir.iterdir()
+                if raster_path.is_file() and raster_path.name in connector.rasters.index
             }
-            img_names = existing_images - existing_labels
-        elif not set(img_names) <= existing_images:
+            raster_names = existing_rasters - existing_labels
+        elif not set(raster_names) <= existing_rasters:
             raise FileNotFoundError(
-                f"Can't make labels for missing images: {existing_images - img_names}"
+                "Can't make labels for missing rasters: "
+                f"{existing_rasters - raster_names}"
             )
 
-        for img_name in tqdm(img_names, desc="Making labels: "):
-            self._make_label_for_img(connector=connector, img_name=img_name)
+        for raster_name in tqdm(raster_names, desc="Making labels: "):
+            self._make_label_for_raster(connector=connector, raster_name=raster_name)
 
         connector.attrs["label_type"] = self.label_type
         self._after_make_labels(connector)
@@ -100,56 +101,56 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        img_names: Optional[list[str]] = None,
+        raster_names: Optional[list[str]] = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 
         Args:
-            img_names: names of images for which to delete labels.
+            raster_names: names of rasters for which to delete labels.
             Defaults to None, i.e. all labels.
         """
-        if img_names is None:
-            img_names = connector.raster_imgs.index
+        if raster_names is None:
+            raster_names = connector.rasters.index
 
-        for img_name in tqdm(img_names, desc="Deleting labels: "):
-            (connector.labels_dir / img_name).unlink(missing_ok=True)
+        for raster_name in tqdm(raster_names, desc="Deleting labels: "):
+            (connector.labels_dir / raster_name).unlink(missing_ok=True)
 
     def _set_label_type_in_connector_attrs(self, connector: Connector):
         connector.attrs["label_type"] = self.label_type
 
     @staticmethod
-    def _compare_existing_imgs_to_raster_imgs(connector: Connector):
+    def _compare_existing_rasters_to_rasters(connector: Connector):
         """Safety check.
 
-        Compare sets of images in images_dir and in
-        connector.raster_imgs.
+        Compare sets of rasters in rasters_dir and in
+        connector.rasters.
 
         Raises warnings if there is a discrepancy.
         """
-        # Find the set of existing images in the dataset, ...
-        existing_images = {
-            img_path.name
-            for img_path in connector.images_dir.iterdir()
-            if img_path.is_file()
+        # Find the set of existing rasters in the dataset, ...
+        existing_rasters = {
+            raster_path.name
+            for raster_path in connector.rasters_dir.iterdir()
+            if raster_path.is_file()
         }
 
-        # ... then if the set of images is a strict subset
-        # of the images in raster_imgs ...
-        if existing_images < set(connector.raster_imgs.index):
+        # ... then if the set of rasters is a strict subset
+        # of the rasters in rasters ...
+        if existing_rasters < set(connector.rasters.index):
 
             # ... log a warning
             log.warning(
-                "There images in connector.raster_imgs that "
-                "are not in the images_dir %s.",
-                connector.images_dir,
+                "There rasters in connector.rasters that "
+                "are not in the rasters_dir %s.",
+                connector.rasters_dir,
             )
 
         # ... and if it is not a subset, ...
-        if not existing_images <= set(connector.raster_imgs.index):
+        if not existing_rasters <= set(connector.rasters.index):
 
             # ... log an warning
             message = (
-                "Warning! There are images in the dataset's images "
-                "subdirectory that are not in connector.raster_imgs."
+                "Warning! There are rasters in the dataset's rasters "
+                "subdirectory that are not in connector.rasters."
             )
             log.warning(message)

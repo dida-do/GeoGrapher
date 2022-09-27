@@ -26,22 +26,22 @@ def merge_datasets(
     source_connector = Connector.from_data_dir(source_data_dir)
     target_connector = Connector.from_data_dir(target_data_dir)
 
-    # copy over image_data_dirs
+    # copy over raster_data_dirs
     for source_dir, target_dir in zip(
-        source_connector.image_data_dirs, target_connector.image_data_dirs
+        source_connector.raster_data_dirs, target_connector.raster_data_dirs
     ):
-        files_in_target_dir = {img.name for img in target_dir.iterdir()}
+        files_in_target_dir = {raster.name for raster in target_dir.iterdir()}
         pbar = tqdm(source_dir.iterdir())
         pbar.set_description(f"copying {str(source_dir.name)}")
-        for img_path in pbar:
-            if img_path.name not in files_in_target_dir:
-                shutil.copy2(img_path, target_dir)
+        for raster_path in pbar:
+            if raster_path.name not in files_in_target_dir:
+                shutil.copy2(raster_path, target_dir)
 
     # merge/copy over downloads (e.g. safe_files)
     merge_dirs(str(source_connector.download_dir), str(target_connector.download_dir))
 
     target_connector.add_to_polygons_df(source_connector.polygons_df)
-    target_connector.add_to_raster_imgs(source_connector.raster_imgs)
+    target_connector.add_to_rasters(source_connector.rasters)
     target_connector.save()
 
 

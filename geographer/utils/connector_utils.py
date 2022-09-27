@@ -34,7 +34,7 @@ def empty_gdf(
         crs_epsg_code: EPSG code of the crs the empty GeoDataFrame should have.
 
     Returns:
-        new_empty_df: the empty vector_features_df GeoDataFrame.
+        new_empty_df: the empty vectors_df GeoDataFrame.
     """
     new_empty_gdf_dict = {
         index_name: str,
@@ -76,34 +76,34 @@ def empty_gdf_same_format_as(df: GeoDataFrame) -> GeoDataFrame:
     return new_empty_df
 
 
-def empty_vector_features_same_format_as(vector_features: GeoDataFrame) -> GeoDataFrame:
-    """Create an empty vector_features of the same format.
+def empty_vectors_same_format_as(vectors: GeoDataFrame) -> GeoDataFrame:
+    """Create an empty vectors of the same format.
 
-    Create an empty vector_features of the same format (index name,
-    columns, column types) as the vector_features argument.
+    Create an empty vectors of the same format (index name,
+    columns, column types) as the vectors argument.
 
     Args:
-        vector_features: Example polygon dataframe
+        vectors: Example polygon dataframe
 
     Returns:
         New empty dataframe
     """
-    return empty_gdf_same_format_as(vector_features)
+    return empty_gdf_same_format_as(vectors)
 
 
-def empty_raster_imgs_same_format_as(raster_imgs: GeoDataFrame) -> GeoDataFrame:
-    """Create an empty raster_imgs of the same format.
+def empty_rasters_same_format_as(rasters: GeoDataFrame) -> GeoDataFrame:
+    """Create an empty rasters of the same format.
 
-    Create an empty raster_imgs of the same format (index name, columns,
-    column types) as the raster_imgs argument.
+    Create an empty rasters of the same format (index name, columns,
+    column types) as the rasters argument.
 
     Args:
-        raster_imgs: Example images dataframe
+        rasters: Example rasters dataframe
 
     Returns:
-        New empty images datagrame
+        New empty rasters datagrame
     """
-    return empty_gdf_same_format_as(raster_imgs)
+    return empty_gdf_same_format_as(rasters)
 
 
 def empty_graph() -> BipartiteGraph:

@@ -23,8 +23,8 @@ from geographer.utils.utils import deepcopy_gdf
 def get_raster_clusters(
     connector: Union[Connector, Path, str],
     clusters_defined_by: Literal[
-        "rasters_that_share_vector_features",
-        "rasters_that_share_vector_features_or_overlap",
+        "rasters_that_share_vectors",
+        "rasters_that_share_vectors_or_overlap",
     ],
     raster_names: Optional[list[str]] = None,
     preclustering_method: Optional[
@@ -44,8 +44,8 @@ def get_raster_clusters(
         (names of rasters defining) clusters
     """
     allowed_clusters_defined_by_args = {
-        "rasters_that_share_vector_features",
-        "rasters_that_share_vector_features_or_overlap",
+        "rasters_that_share_vectors",
+        "rasters_that_share_vectors_or_overlap",
     }
     if clusters_defined_by not in allowed_clusters_defined_by_args:
         raise ValueError(f"Unknown clusters_defined_by arg: {clusters_defined_by}")
@@ -53,7 +53,7 @@ def get_raster_clusters(
     if not isinstance(connector, Connector):
         connector = Connector.from_data_dir(connector)
     if raster_names is None:
-        raster_names = connector.raster_imgs.index.tolist()
+        raster_names = connector.rasters.index.tolist()
 
     if preclustering_method is None:
 
@@ -63,7 +63,7 @@ def get_raster_clusters(
     elif preclustering_method in {"x-axis", "y-axis"}:
 
         axis = preclustering_method[0]  # 'x' or 'y'
-        geoms = _get_preclustering_geoms(connector=connector, img_names=raster_names)
+        geoms = _get_preclustering_geoms(connector=connector, raster_names=raster_names)
 
         preclusters = _pre_cluster_along_axis(geoms, axis)
         singletons, non_singletons = _separate_non_singletons(preclusters)
@@ -74,7 +74,7 @@ def get_raster_clusters(
         second_axis = "y" if first_axis == "x" else "x"
 
         # cluster along first axis
-        geoms = _get_preclustering_geoms(connector=connector, img_names=raster_names)
+        geoms = _get_preclustering_geoms(connector=connector, raster_names=raster_names)
         preclusters = _pre_cluster_along_axis(geoms, first_axis)
 
         # cluster along 2nd axis
@@ -86,17 +86,17 @@ def get_raster_clusters(
         raise ValueError(f"Unknown preclustering_method: {preclustering_method}")
 
     # build graph
-    img_clusters = singletons
+    raster_clusters = singletons
     for non_singleton in non_singletons:
         graph_of_non_singleton = _extract_graph_of_rasters(
             connector=connector,
             clusters_defined_by=clusters_defined_by,
-            img_names=list(non_singleton),
+            raster_names=list(non_singleton),
         )
 
-        img_clusters += list(nx.connected_components(graph_of_non_singleton))
+        raster_clusters += list(nx.connected_components(graph_of_non_singleton))
 
-    return img_clusters
+    return raster_clusters
 
 
 # TODO: rename to refine pre clustering?
@@ -123,7 +123,7 @@ def _refine_preclustering_along_second_axis(
         else:
 
             precluster_geoms = _get_preclustering_geoms(
-                connector=connector, img_names=list(precluster)
+                connector=connector, raster_names=list(precluster)
             )
             refined_precluster = _pre_cluster_along_axis(precluster_geoms, second_axis)
 
@@ -138,41 +138,41 @@ def _refine_preclustering_along_second_axis(
 
 
 def _get_preclustering_geoms(
-    connector: Connector, img_names: list[str]
+    connector: Connector, raster_names: list[str]
 ) -> GeoDataFrame:
 
-    # image geoms
-    raster_imgs = deepcopy_gdf(connector.raster_imgs[["geometry"]].loc[img_names])
-    raster_imgs["name"] = raster_imgs.index
-    raster_imgs["img_or_polygon"] = "img"
+    # raster geoms
+    rasters = deepcopy_gdf(connector.rasters[["geometry"]].loc[raster_names])
+    rasters["name"] = rasters.index
+    rasters["raster_or_polygon"] = "raster"
 
-    img_names_set = set(img_names)
-    del img_names
+    raster_names_set = set(raster_names)
+    del raster_names
 
-    # determine polygons that overlap w several images
-    polygons_overlapping_imgs = []
-    for polygon_name in connector.vector_features.index:
-        imgs_intersect_but_dont_contain_polygon = set(
-            connector.imgs_intersecting_vector_feature(polygon_name)
-        ) - set(connector.imgs_containing_vector_feature(polygon_name))
+    # determine polygons that overlap w several rasters
+    polygons_overlapping_rasters = []
+    for polygon_name in connector.vectors.index:
+        rasters_intersect_but_dont_contain_polygon = set(
+            connector.rasters_intersecting_vector(polygon_name)
+        ) - set(connector.rasters_containing_vector(polygon_name))
         if (
-            len(imgs_intersect_but_dont_contain_polygon) >= 2
-            and img_names_set & imgs_intersect_but_dont_contain_polygon != set()
+            len(rasters_intersect_but_dont_contain_polygon) >= 2
+            and raster_names_set & rasters_intersect_but_dont_contain_polygon != set()
         ):
-            polygons_overlapping_imgs.append(polygon_name)
+            polygons_overlapping_rasters.append(polygon_name)
 
     # geoms for those polygons
-    vector_features = deepcopy_gdf(
-        connector.vector_features.loc[polygons_overlapping_imgs][["geometry"]]
+    vectors = deepcopy_gdf(
+        connector.vectors.loc[polygons_overlapping_rasters][["geometry"]]
     )
-    vector_features["name"] = vector_features.index
-    vector_features["img_or_polygon"] = "polygon"
+    vectors["name"] = vectors.index
+    vectors["raster_or_polygon"] = "polygon"
 
     # make sure there are no duplicate names
-    assert set(vector_features["name"]) & set(raster_imgs["name"]) == set()
+    assert set(vectors["name"]) & set(rasters["name"]) == set()
 
     # combine geoms
-    geoms = GeoDataFrame(pd.concat([raster_imgs, vector_features]), crs=raster_imgs.crs)
+    geoms = GeoDataFrame(pd.concat([rasters, vectors]), crs=rasters.crs)
 
     # don't need ?
     geoms = deepcopy_gdf(geoms)
@@ -212,13 +212,13 @@ def _pre_cluster_along_axis(
     if axis not in {"x", "y"}:
         raise ValueError("axis arg should be one of 'x', 'y'.")
 
-    mins = geoms[["name", f"min{axis}", "img_or_polygon"]].copy()
+    mins = geoms[["name", f"min{axis}", "raster_or_polygon"]].copy()
     mins["type"] = "min"
     mins = mins.rename(columns={f"min{axis}": "value"})
     mins = mins.to_dict(orient="records")
     # mins = list(mins.itertuples())
 
-    maxs = geoms[["name", f"max{axis}", "img_or_polygon"]].copy()
+    maxs = geoms[["name", f"max{axis}", "raster_or_polygon"]].copy()
     maxs["type"] = "max"
     maxs = maxs.rename(columns={f"max{axis}": "value"})
     maxs = maxs.to_dict(orient="records")
@@ -228,7 +228,7 @@ def _pre_cluster_along_axis(
     )  # tuple comparison ensures mins are smaller than maxes for the same values
     # (-> smaller clusters)
 
-    img_clusters_along_axis = []
+    raster_clusters_along_axis = []
 
     while interval_endpoints != []:
 
@@ -243,7 +243,7 @@ def _pre_cluster_along_axis(
 
         while entered_intervals_count - exited_intervals_count > 0:
             next_smaller_endpoint = interval_endpoints.pop()
-            if next_smaller_endpoint["img_or_polygon"] == "img":
+            if next_smaller_endpoint["raster_or_polygon"] == "raster":
                 current_cluster.add(next_smaller_endpoint["name"])
 
             if next_smaller_endpoint["type"] == "max":
@@ -253,70 +253,70 @@ def _pre_cluster_along_axis(
             else:
                 raise Exception("something is wrong")
 
-        img_clusters_along_axis.append(current_cluster)
+        raster_clusters_along_axis.append(current_cluster)
 
-    return img_clusters_along_axis
+    return raster_clusters_along_axis
 
 
 def _extract_graph_of_rasters(
     connector: Connector,
     clusters_defined_by: str,
-    img_names: list[str] = None,
+    raster_names: list[str] = None,
 ) -> Graph:
-    """Extract graph of images determined by clusters_defined_by."""
-    img_graph = Graph()
-    img_graph.add_nodes_from(img_names)
+    """Extract graph of rasters determined by clusters_defined_by."""
+    raster_graph = Graph()
+    raster_graph.add_nodes_from(raster_names)
 
     # add edges to graph
-    pairs_of_imgs = itertools.combinations(img_names, 2)
+    pairs_of_rasters = itertools.combinations(raster_names, 2)
     are_connected = lambda s: _are_connected_by_an_edge(  # noqa: E731
         *s,
         clusters_defined_by=clusters_defined_by,
         connector=connector,
     )
-    pairs_of_connected_imgs = filter(are_connected, pairs_of_imgs)
-    img_graph.add_edges_from(pairs_of_connected_imgs)
+    pairs_of_connected_rasters = filter(are_connected, pairs_of_rasters)
+    raster_graph.add_edges_from(pairs_of_connected_rasters)
 
-    return img_graph
+    return raster_graph
 
 
 def _are_connected_by_an_edge(
-    img: str,
-    another_img: str,
+    raster: str,
+    another_raster: str,
     clusters_defined_by: str,
     connector: Connector,
 ) -> bool:
-    """Return True if images are connected, else False.
+    """Return True if rasters are connected, else False.
 
-    Return True if there is an edge in the graph of images determined by
-    the clusters_defined_by relation, else return False.
+    Return True if there is an edge in the graph of rasters determined
+    by the clusters_defined_by relation, else return False.
     """
-    img_bbox = connector.raster_imgs.loc[img].geometry
-    other_img_bbox = connector.raster_imgs.loc[another_img].geometry
+    raster_bbox = connector.rasters.loc[raster].geometry
+    other_raster_bbox = connector.rasters.loc[another_raster].geometry
 
-    if clusters_defined_by == "imgs_that_overlap":
+    if clusters_defined_by == "rasters_that_overlap":
 
-        connected = img_bbox.intersects(other_img_bbox)
+        connected = raster_bbox.intersects(other_raster_bbox)
 
-    elif clusters_defined_by == "rasters_that_share_vector_features":
+    elif clusters_defined_by == "rasters_that_share_vectors":
 
-        vector_features_in_img = set(connector.vector_features_intersecting_img(img))
-        vector_features_in_other_img = set(
-            connector.vector_features_intersecting_img(another_img)
+        vectors_in_raster = set(connector.vectors_intersecting_raster(raster))
+        vectors_in_other_raster = set(
+            connector.vectors_intersecting_raster(another_raster)
         )
 
-        connected = vector_features_in_img & vector_features_in_other_img != set()
+        connected = vectors_in_raster & vectors_in_other_raster != set()
 
-    elif clusters_defined_by == "rasters_that_share_vector_features_or_overlap":
+    elif clusters_defined_by == "rasters_that_share_vectors_or_overlap":
 
-        connected_bc_imgs_overlap = _are_connected_by_an_edge(
-            img, another_img, "imgs_that_overlap", connector
+        connected_bc_rasters_overlap = _are_connected_by_an_edge(
+            raster, another_raster, "rasters_that_overlap", connector
         )
         connected_bc_of_shared_polygons = _are_connected_by_an_edge(
-            img, another_img, "rasters_that_share_vector_features", connector
+            raster, another_raster, "rasters_that_share_vectors", connector
         )
 
-        connected = connected_bc_imgs_overlap or connected_bc_of_shared_polygons
+        connected = connected_bc_rasters_overlap or connected_bc_of_shared_polygons
 
     else:
 

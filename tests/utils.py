@@ -21,55 +21,57 @@ def get_test_dir():
     return Path(repo.working_tree_dir) / "tests/data"
 
 
-def create_dummy_imgs(
-    data_dir: Union[Path, str], img_size: int, img_names: Optional[list[str]] = None
+def create_dummy_rasters(
+    data_dir: Union[Path, str],
+    raster_size: int,
+    raster_names: Optional[list[str]] = None,
 ) -> None:
-    """Create dummy images.
+    """Create dummy rasters.
 
-    Create dummy images for a dataset from the connector's
-    raster_imgs geodataframe.
+    Create dummy rasters for a dataset from the connector's
+    rasters geodataframe.
     """
     connector = Connector.from_data_dir(data_dir)
-    connector.images_dir.mkdir(parents=True, exist_ok=True)
+    connector.rasters_dir.mkdir(parents=True, exist_ok=True)
 
-    if img_names is None:
-        img_names = connector.raster_imgs.index.tolist()
+    if raster_names is None:
+        raster_names = connector.rasters.index.tolist()
 
-    for img_name, bbox_geom, epsg_code in tqdm(
+    for raster_name, bbox_geom, epsg_code in tqdm(
         list(
-            connector.raster_imgs[["geometry", "orig_crs_epsg_code"]]
-            .loc[img_names]
+            connector.rasters[["geometry", "orig_crs_epsg_code"]]
+            .loc[raster_names]
             .itertuples()
         ),
-        desc="Creating dummy images",
+        desc="Creating dummy rasters",
     ):
 
-        img_array = np.stack(
-            [np.ones((img_size, img_size), dtype=np.uint8) * n for n in range(3)]
+        raster_array = np.stack(
+            [np.ones((raster_size, raster_size), dtype=np.uint8) * n for n in range(3)]
         )
-        bbox_geom_in_img_crs = transform_shapely_geometry(
+        bbox_geom_in_raster_crs = transform_shapely_geometry(
             bbox_geom, from_epsg=connector.crs_epsg_code, to_epsg=epsg_code
         )
         transform = rio.transform.from_bounds(
-            *bbox_geom_in_img_crs.bounds, img_size, img_size
+            *bbox_geom_in_raster_crs.bounds, raster_size, raster_size
         )
 
         with rio.open(
-            connector.images_dir / img_name,
+            connector.rasters_dir / raster_name,
             "w",
             driver="GTiff",
-            height=img_size,
-            width=img_size,
+            height=raster_size,
+            width=raster_size,
             count=3,
             dtype=np.uint8,
             crs=f"EPSG:{epsg_code}",
             transform=transform,
         ) as dst:
             for idx in range(3):
-                dst.write(img_array[idx, :, :], idx + 1)
+                dst.write(raster_array[idx, :, :], idx + 1)
 
 
-def delete_dummy_images(data_dir: Union[Path, str]) -> None:
-    """Delete dummy image data (images and segmentation labels) from dataset."""
-    shutil.rmtree(data_dir / "images", ignore_errors=True)
+def delete_dummy_rasters(data_dir: Union[Path, str]) -> None:
+    """Delete dummy raster data (rasters and segmentation labels) from dataset."""
+    shutil.rmtree(data_dir / "rasters", ignore_errors=True)
     shutil.rmtree(data_dir / "labels", ignore_errors=True)

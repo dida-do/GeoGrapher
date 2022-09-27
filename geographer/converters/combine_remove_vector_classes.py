@@ -43,9 +43,9 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     new_background_class: Optional[str] = Field(
         default=None, description="Class to be set as new background class"
     )
-    remove_imgs: bool = Field(
+    remove_rasters: bool = Field(
         default=True,
-        description="Whether to remove images not containing new classes from disk",
+        description="Whether to remove rasters not containing new classes from disk",
     )
     label_maker: Optional[LabelMaker] = Field(
         default=None, description="Optional LabelMaker. If given, will update labels."
@@ -65,7 +65,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         soft-categorical label types.
 
         Warning:
-            Will only add images and vector features from the source dataset, which is
+            Will only add rasters and vector features from the source dataset, which is
             assumed to have grown in size. Deletions in the source dataset will not be
             inherited.
 
@@ -87,7 +87,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 kept. Defaults to class_separator.
             new_background_class: optional new background class, defaults to None,
                 i.e. old background class
-            remove_imgs: If True, remove images not containing vector features
+            remove_rasters: If True, remove rasters not containing vector features
                 belonging to the vector feature classes to be kept.
 
         Returns:
@@ -116,118 +116,116 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         elif self.source_connector.background_class not in new_class_names:
             self.target_connector.attrs["background_class"] = None
         # ... and vector feature classes in self.target_connector.
-        self.target_connector.task_vector_feature_classes = [
+        self.target_connector.task_vector_classes = [
             class_
             for class_ in new_class_names
             if class_ != self.target_connector.background_class
         ]
 
-        features_from_source_df = self._combine_or_remove_classes_from_vector_features(
+        vectors_from_source_df = self._combine_or_remove_classes_from_vectors(
             label_type=self.source_connector.label_type,
-            vector_features=self.source_connector.vector_features,
-            all_source_vector_feature_classes=(
-                self.source_connector.all_vector_feature_classes
-            ),
+            vectors=self.source_connector.vectors,
+            all_source_vector_classes=(self.source_connector.all_vector_classes),
             classes=classes,
             new_class_names=new_class_names,
         )
 
         # need this later
-        features_to_add_to_target_dataset = set(features_from_source_df.index) - set(
-            self.target_connector.vector_features.index
+        vectors_to_add_to_target_dataset = set(vectors_from_source_df.index) - set(
+            self.target_connector.vectors.index
         )
 
         # THINK ABOUT THIS!!!!
         # if we are creating a new soft-categorical dataset adjust columns
-        # of empty self.target_connector.vector_features
+        # of empty self.target_connector.vectors
         if (
-            len(self.target_connector.vector_features) == 0
+            len(self.target_connector.vectors) == 0
             and self.target_connector.label_type == "soft-categorical"
         ):
             (
-                empty_vector_features_with_corrected_columns
-            ) = self._combine_or_remove_classes_from_vector_features(
+                empty_vectors_with_corrected_columns
+            ) = self._combine_or_remove_classes_from_vectors(
                 label_type="soft-categorical",
-                vector_features=self.target_connector.vector_features,
-                all_source_vector_feature_classes=(
-                    self.source_connector.all_vector_feature_classes
-                ),
+                vectors=self.target_connector.vectors,
+                all_source_vector_classes=(self.source_connector.all_vector_classes),
                 classes=classes,
                 new_class_names=new_class_names,
             )
-            self.target_connector.vector_features = (
-                empty_vector_features_with_corrected_columns
-            )
+            self.target_connector.vectors = empty_vectors_with_corrected_columns
 
-        self.target_connector.add_to_vector_features(
-            features_from_source_df.loc[list(features_to_add_to_target_dataset)]
+        self.target_connector.add_to_vectors(
+            vectors_from_source_df.loc[list(vectors_to_add_to_target_dataset)]
         )
 
-        # Determine which images to copy to target dataset
-        imgs_in_target_dataset_before_addings_imgs_from_source_dataset = (
-            {img_path.name for img_path in self.target_connector.images_dir.iterdir()}
-            if self.target_connector.images_dir.exists()
+        # Determine which rasters to copy to target dataset
+        rasters_in_target_dataset_before_addings_rasters_from_source_dataset = (
+            {
+                raster_path.name
+                for raster_path in self.target_connector.rasters_dir.iterdir()
+            }
+            if self.target_connector.rasters_dir.exists()
             else set()
         )
-        imgs_in_source_images_dir = {
-            img_path.name for img_path in self.source_connector.images_dir.iterdir()
+        rasters_in_source_rasters_dir = {
+            raster_path.name
+            for raster_path in self.source_connector.rasters_dir.iterdir()
         }
-        if self.remove_imgs:
-            imgs_in_source_that_should_be_in_target = {
-                # all images in the source dataset ...
-                img_name
-                for img_name in self.source_connector.raster_imgs.index
+        if self.remove_rasters:
+            rasters_in_source_that_should_be_in_target = {
+                # all rasters in the source dataset ...
+                raster_name
+                for raster_name in self.source_connector.rasters.index
                 # ... that intersect with the vector features that will be kept.
                 if (
                     not set(
-                        self.source_connector.vector_features_intersecting_img(img_name)
-                    ).isdisjoint(features_from_source_df.index)
+                        self.source_connector.vectors_intersecting_raster(raster_name)
+                    ).isdisjoint(vectors_from_source_df.index)
                 )
-                and (self.source_connector.images_dir / img_name).exists()
+                and (self.source_connector.rasters_dir / raster_name).exists()
             }
         else:
-            imgs_in_source_that_should_be_in_target = imgs_in_source_images_dir
-        imgs_to_copy_to_target_dataset = (
-            imgs_in_source_that_should_be_in_target
-            - imgs_in_target_dataset_before_addings_imgs_from_source_dataset
+            rasters_in_source_that_should_be_in_target = rasters_in_source_rasters_dir
+        rasters_to_copy_to_target_dataset = (
+            rasters_in_source_that_should_be_in_target
+            - rasters_in_target_dataset_before_addings_rasters_from_source_dataset
         )
 
-        # Copy those images
-        self.target_connector.images_dir.mkdir(parents=True, exist_ok=True)
-        for img_name in tqdm(
-            imgs_to_copy_to_target_dataset, desc="Copying raster images"
+        # Copy those rasters
+        self.target_connector.rasters_dir.mkdir(parents=True, exist_ok=True)
+        for raster_name in tqdm(
+            rasters_to_copy_to_target_dataset, desc="Copying rasters"
         ):
-            source_img_path = self.source_connector.images_dir / img_name
-            target_img_path = self.target_connector.images_dir / img_name
-            shutil.copyfile(source_img_path, target_img_path)
+            source_raster_path = self.source_connector.rasters_dir / raster_name
+            target_raster_path = self.target_connector.rasters_dir / raster_name
+            shutil.copyfile(source_raster_path, target_raster_path)
 
-        # add images to self.target_connector
-        df_of_imgs_to_add_to_target_dataset = self.source_connector.raster_imgs.loc[
-            list(imgs_to_copy_to_target_dataset)
+        # add rasters to self.target_connector
+        df_of_rasters_to_add_to_target_dataset = self.source_connector.rasters.loc[
+            list(rasters_to_copy_to_target_dataset)
         ]
-        self.target_connector.add_to_raster_imgs(df_of_imgs_to_add_to_target_dataset)
+        self.target_connector.add_to_rasters(df_of_rasters_to_add_to_target_dataset)
 
         if self.label_maker is not None:
 
             # Determine labels to delete:
-            # For each image that already existed in the target dataset ...
+            # For each raster that already existed in the target dataset ...
             for (
-                img_name
-            ) in imgs_in_target_dataset_before_addings_imgs_from_source_dataset:
+                raster_name
+            ) in rasters_in_target_dataset_before_addings_rasters_from_source_dataset:
                 # ... if among the vector features intersecting it
                 # in the target dataset ...
-                vector_features_intersecting_img = set(
-                    self.target_connector.vector_features_intersecting_img(img_name)
+                vectors_intersecting_raster = set(
+                    self.target_connector.vectors_intersecting_raster(raster_name)
                 )
                 # ... there is a *new* (vector) geometry ...
                 if (
-                    vector_features_intersecting_img & features_to_add_to_target_dataset
+                    vectors_intersecting_raster & vectors_to_add_to_target_dataset
                     != set()
                 ):
                     # ... then we need to update the label for it,
                     # so we delete the current label.
                     self.label_maker.delete_labels(
-                        connector=self.target_connector, img_names=[img_name]
+                        connector=self.target_connector, raster_names=[raster_name]
                     )
 
             # make labels
@@ -235,10 +233,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
 
         # remember original type
         if self.target_connector.label_type == "categorical":
-            self.target_connector.vector_features.loc[
-                list(features_to_add_to_target_dataset), "orig_type"
-            ] = self.source_connector.vector_features.loc[
-                list(features_to_add_to_target_dataset), "type"
+            self.target_connector.vectors.loc[
+                list(vectors_to_add_to_target_dataset), "orig_type"
+            ] = self.source_connector.vectors.loc[
+                list(vectors_to_add_to_target_dataset), "type"
             ]
 
         return self.target_connector
@@ -261,15 +259,13 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         self, classes_to_keep: list[str], new_class_names: list[str]
     ):
 
-        if not set(classes_to_keep) <= set(
-            self.source_connector.all_vector_feature_classes
-        ):
+        if not set(classes_to_keep) <= set(self.source_connector.all_vector_classes):
             classes_not_in_source_dataset = set(classes_to_keep) - set(
-                self.source_connector.all_vector_feature_classes
+                self.source_connector.all_vector_classes
             )
             raise ValueError(
                 "The following classes are not in "
-                "self.source_connector.all_vector_feature_classes: "
+                "self.source_connector.all_vector_classes: "
                 f"{classes_not_in_source_dataset}"
             )
         if not len(classes_to_keep) == len(set(classes_to_keep)):
@@ -284,19 +280,19 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         ):
             raise ValueError(f"new_background_class not in {self.new_class_names}")
 
-    def _combine_or_remove_classes_from_vector_features(
+    def _combine_or_remove_classes_from_vectors(
         self,
         label_type: str,
-        vector_features: GeoDataFrame,
+        vectors: GeoDataFrame,
         classes: list[Union[str, list[str]]],
         new_class_names: list[str],
-        all_source_vector_feature_classes: list[str],
+        all_source_vector_classes: list[str],
     ) -> GeoDataFrame:
-        """Combine and/or remove classes from vector_features geodataframe.
+        """Combine and/or remove classes from vectors geodataframe.
 
         Args:
             label_type: [description]
-            vector_features: [description]
+            vectors: [description]
             classes:
             new_class_names:
 
@@ -306,7 +302,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         if label_type not in {"categorical", "soft-categorical"}:
             raise ValueError(f"Unknown label_type: {label_type}")
 
-        vector_features = deepcopy_gdf(vector_features)
+        vectors = deepcopy_gdf(vectors)
 
         classes_to_keep = [
             class_ for list_of_classes in classes for class_ in list_of_classes
@@ -320,13 +316,11 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                         return new_class_names[count]
 
             # keep only vector features belonging to vector feature we want to keep
-            vector_features = vector_features.loc[
-                vector_features["type"].apply(lambda class_: class_ in classes_to_keep)
+            vectors = vectors.loc[
+                vectors["type"].apply(lambda class_: class_ in classes_to_keep)
             ]
             # rename to new classes
-            vector_features.loc[:, "type"] = vector_features["type"].apply(
-                get_new_class
-            )
+            vectors.loc[:, "type"] = vectors["type"].apply(get_new_class)
 
         elif label_type == "soft-categorical":
 
@@ -337,63 +331,55 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             # drop cols of classes we don't want to keep
             classes_to_drop = [
                 class_
-                for class_ in all_source_vector_feature_classes
+                for class_ in all_source_vector_classes
                 if class_ not in classes_to_keep
             ]
             cols_to_drop = prob_of_class_names(classes_to_drop)
-            vector_features = vector_features.drop(columns=cols_to_drop)
+            vectors = vectors.drop(columns=cols_to_drop)
 
             # create temporary dataframe to avoid column name conflicts
             # when renaming/deleting etc
-            temp_vector_features = pd.DataFrame()
-            temp_vector_features.index.name = vector_features.index.name
+            temp_vectors = pd.DataFrame()
+            temp_vectors.index.name = vectors.index.name
 
             # for each row/(vector) geometry find sum of probabilities
             # for the remaining vector feature classes
             cols_with_probs_of_remaining_classes = prob_of_class_names(classes_to_keep)
             sum_of_probs_of_remaining_classes = pd.DataFrame(
-                vector_features[cols_with_probs_of_remaining_classes].sum(axis=1),
+                vectors[cols_with_probs_of_remaining_classes].sum(axis=1),
                 columns=["sum"],
-                index=vector_features.index,
+                index=vectors.index,
             )
             rows_where_sum_is_zero = sum_of_probs_of_remaining_classes["sum"] == 0
 
             # remove rows/vector features which do not belong to remaining classes
-            vector_features = vector_features.loc[~rows_where_sum_is_zero]
+            vectors = vectors.loc[~rows_where_sum_is_zero]
             sum_of_probs_of_remaining_classes = sum_of_probs_of_remaining_classes.loc[
                 ~rows_where_sum_is_zero
             ]
 
             # renormalize probabilities to sum to 1
-            vector_features.loc[
-                :, cols_with_probs_of_remaining_classes
-            ] = vector_features[cols_with_probs_of_remaining_classes].div(
-                sum_of_probs_of_remaining_classes["sum"], axis=0
-            )
+            vectors.loc[:, cols_with_probs_of_remaining_classes] = vectors[
+                cols_with_probs_of_remaining_classes
+            ].div(sum_of_probs_of_remaining_classes["sum"], axis=0)
 
             # combine probabilities of new_classes and drop old classes
             for classes_of_new_class, new_class_name in zip(classes, new_class_names):
                 cols_of_probs_to_be_added = prob_of_class_names(classes_of_new_class)
-                temp_vector_features[
-                    f"prob_of_class_{new_class_name}"
-                ] = vector_features[cols_of_probs_to_be_added].sum(axis=1)
-                vector_features = vector_features.drop(
-                    columns=cols_of_probs_to_be_added
-                )
+                temp_vectors[f"prob_of_class_{new_class_name}"] = vectors[
+                    cols_of_probs_to_be_added
+                ].sum(axis=1)
+                vectors = vectors.drop(columns=cols_of_probs_to_be_added)
 
             # add new columns
-            vector_features = GeoDataFrame(
-                pd.concat(
-                    [vector_features, temp_vector_features], axis=1  # column axis
-                ),
-                crs=vector_features.crs,
+            vectors = GeoDataFrame(
+                pd.concat([vectors, temp_vectors], axis=1),  # column axis
+                crs=vectors.crs,
             )
-            vector_features.index.name = VECTOR_FEATURES_INDEX_NAME
+            vectors.index.name = VECTOR_FEATURES_INDEX_NAME
 
             # Recompute most likely type column.
-            vector_features["most_likely_class"] = vector_features[
-                temp_vector_features.columns
-            ].apply(
+            vectors["most_likely_class"] = vectors[temp_vectors.columns].apply(
                 lambda s: ",".join(
                     map(
                         lambda col_name: col_name[15:],
@@ -403,4 +389,4 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
                 axis=1,
             )
 
-        return vector_features
+        return vectors
