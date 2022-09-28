@@ -8,6 +8,7 @@ from __future__ import annotations
 import collections
 import random
 from abc import abstractmethod
+from pathlib import Path
 from typing import Any, Union
 
 from pydantic import BaseModel
@@ -99,10 +100,29 @@ class RandomRasterSelector(RasterSelector):
         in target_connector} rasters (or if not possible less) from
         raster_names_list.
         """
+        containing_rasters_in_target = set(
+            target_connector.rasters_containing_vector(vector_name)
+        )
+        # if the raster_size is smaller than the vector_feature polygon,
+        # the result of `rasters_containing_vector` will always be zero.
+        # So in this case we consider the cut_rasters.
+        cut_rasters_in_source = {
+            raster
+            for raster in cut_rasters[vector_name]
+            # if none of the containing_rasters_in_target were generated from raster
+            if not any(
+                {
+                    raster_.startswith(Path(raster).stem)
+                    for raster_ in containing_rasters_in_target
+                }
+            )
+        }
+
+        num_rasters_already_there = len(containing_rasters_in_target) + len(
+            cut_rasters_in_source
+        )
         target_num_rasters_to_sample = (
-            self.target_raster_count
-            - len(target_connector.rasters_containing_vector(vector_name))
-            - len(cut_rasters[vector_name])
+            self.target_raster_count - num_rasters_already_there
         )
 
         # can only sample a non-negative number of rasters
