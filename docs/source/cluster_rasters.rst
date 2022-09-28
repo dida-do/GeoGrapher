@@ -17,7 +17,7 @@ train/validation split to avoid data leakage use the
 
 ::
 
-    from geographer.utils.cluster_rasters.= import get_raster_clusters
+    from geographer.utils.cluster_rasters import import get_raster_clusters
     clusters : List[Set[str]] = get_raster_clusters(
         connector=connector,
         clusters_defined_by='rasters_that_share_vectors',
