@@ -140,7 +140,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
             # ... log a warning
             log.warning(
-                "There rasters in connector.rasters that "
+                "There are rasters in connector.rasters that "
                 "are not in the rasters_dir %s.",
                 connector.rasters_dir,
             )
