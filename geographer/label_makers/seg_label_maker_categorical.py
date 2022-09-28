@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import rasterio as rio
 from geopandas import GeoDataFrame
+from rasterio.features import rasterize
 
 from geographer.connector import Connector
 from geographer.label_makers.seg_label_maker_base import SegLabelMaker
@@ -128,7 +129,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
                     # Burn the geomes into the label.
                     if len(shapes) != 0:
-                        rio.features.rasterize(
+                        rasterize(
                             shapes=shapes,
                             out_shape=(
                                 src.height,
@@ -160,7 +161,7 @@ class SegLabelMakerCategorical(SegLabelMaker):
         vector_classes_in_vectors = set(connector.vectors["type"].unique())
         if not vector_classes_in_vectors <= set(connector.all_vector_classes):
             unrecognized_classes = vector_classes_in_vectors - set(
-                self.all_vector_classes
+                connector.all_vector_classes
             )
             raise ValueError(
                 f"Unrecognized classes in connector.vectors: "
