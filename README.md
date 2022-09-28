@@ -25,36 +25,31 @@ The package itself (and its Python dependencies) can be installed with
 pip install GeoGrapher
 ```
 
-To install the package for development work, clone this repo and run
-
-```
-make venv
-source geographer-env/bin/activate # activate the environment
-make install-dev
-```
-
-# Documentation
-To create html html documentation in docs/build/html, run
-```
-make docs
-```
-
 # Getting started
 Anything here?
 
 # Contributing to GeoGrapher
 
-You can contribute by giving feedback, opening an issue, submitting feature
-requests or bug reports, or submitting code. To contribute code to GeoGrapher,
-follow these steps:
+You can contribute by giving feedback, opening an issue, submitting
+feature requests or bug reports, or submitting pull requests.
 
-- Fork this repository.
-- Create a branch: git checkout -b <branch_name>.
-- Make your changes and commit them: git commit -m '<commit_message>'
-- Push to the original branch: git push origin <project_name>/<location>
-- Create the pull request.
+To install the package for development work, clone this repository,
+change to its directory and run
 
-Alternatively see the GitHub documentation on creating a pull request.
+```
+python3 -m venv geographer-env
+source geographer-env/bin/activate # activate the environment
+make -B venv
+```
+
+You can also use `make` to run the test suite locally, among other
+common tasks. Run `make` for an overview of the options.
+
+## Building the documentation
+To create html html documentation in docs/build/html, run
+```
+make docs
+```
 
 # Show your support
 Give this project a star if you like it!
