@@ -7,6 +7,7 @@ import logging
 
 import numpy as np
 import rasterio as rio
+from rasterio.features import rasterize
 
 from geographer.connector import Connector
 from geographer.label_makers.seg_label_maker_base import SegLabelMaker
@@ -134,7 +135,7 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                             mask = np.zeros((src.height, src.width), dtype=np.uint8)
                         # Else, burn the values for those geoms into the band.
                         else:
-                            mask = rio.features.rasterize(
+                            mask = rasterize(
                                 shapes=geom_value_pairs,
                                 # or the other way around?
                                 out_shape=(src.height, src.width),
