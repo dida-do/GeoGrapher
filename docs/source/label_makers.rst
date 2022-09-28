@@ -1,3 +1,5 @@
+.. _making_labels:
+
 Making labels
 #############
 
