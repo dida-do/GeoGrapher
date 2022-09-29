@@ -92,7 +92,7 @@ The ``rasters_dir`` attribute points to the directory containing the rasters::
     connector.rasters_dir
     # (returns ``pathlib.Path`` to rasters, usually data_dir / 'rasters')
 
-Creating and loading Connectors
+Creating and loading connectors
 +++++++++++++++++++++++++++++++
 
 .. _from_scratch:

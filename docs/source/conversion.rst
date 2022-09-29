@@ -5,7 +5,7 @@ Conversion
 
     All converters operate on two datasets: a source and a target dataset. At the moment in place operations are not supported.
 
-Combining And/Or Removing Vector Vector Classes
+Combining/removing task vector classes
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
 Assume your dataset has ``task_vector_classes`` given by
@@ -35,10 +35,10 @@ Updating the target dataset after the source dataset has grown::
     converter = DSConverterCombineRemoveClasses.from_json_file(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
     converter.update()
 
-Converting Vector Vector Class Types
+Converting task vector class types
 +++++++++++++++++++++++++++++++++++++
 
-Soft-Categorical To Categorical
+Soft-categorical to categorical
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Converting a dataset from soft-categorical to categorical vector features

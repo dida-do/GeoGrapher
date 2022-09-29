@@ -6,7 +6,7 @@ for computer vision tasks. Currently, label creation for multiclass segmentation
 tasks for both 'categorical' and 'soft-categorical' (i.e. there is a probability
 distribution over the classes for each vector feature) label-types are supported.
 
-Vector Vector Classes And Class Types
+Task vector classes and class types
 ++++++++++++++++++++++++++++++++++++++
 
 GeoGrapher is designed for *multiclass* vision tasks.
@@ -16,7 +16,7 @@ GeoGrapher is designed for *multiclass* vision tasks.
     GeoGrapher should be easily extendable to multi-label vision tasks. Submit an
     issue, feature request, or pull request to extend GeoGrapher if you want!
 
-Vector Vector Classes
+Task vector classes
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The classes the ``vectors`` may belong to for a machine learning task
@@ -37,8 +37,8 @@ To add other non-``task_vector_classes``, subclass the ``Connector`` and modify 
 
 .. _vector_class_types
 
-Vector Vector Class Types
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vector class types
+~~~~~~~~~~~~~~~~~~
 
 Currently, GeoGrapher's LabelMakers support two formats (*vector feature class types*)
 in which classes can be assigned to vector features:
@@ -49,10 +49,10 @@ in which classes can be assigned to vector features:
   ``prob_of_class_<class_name>`` columns (one for each class) containing the
   probabilities that the vector features belong to a given class.
 
-Making Segmentation Labels
+Making segmentation labels
 ++++++++++++++++++++++++++
 
-Categorical Segmentation Labels
+Categorical segmentation labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating categorical segmentation labels encoded for each pixel as an integer
@@ -71,7 +71,7 @@ corresponding to the class::
     ``vectors`` GeoDataFrame needs to have a ``'type'`` column containing
     the classes the features belong to.
 
-Soft-Categorical Segmentation Labels
+Soft-categorical segmentation labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *Soft-categorical* labels are labels in which for each vector feature
@@ -98,7 +98,7 @@ Creating soft-categorical segmentation labels::
     ``connector.ml_task_classes`` containing the probability that the features
     belong to the class.
 
-Other Vision Tasks or Label Types
+Other vision tasks or label types
 +++++++++++++++++++++++++++++++++
 
 Feel free to submit a feature request or submit a pull request with ``LabelMaker``

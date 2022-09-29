@@ -1,4 +1,4 @@
-Downloading Rasters
+Downloading rasters
 ###################
 
 To download rasters for vector features use ``RasterDownloaderForVectors``. 
