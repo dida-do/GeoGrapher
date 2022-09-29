@@ -2,13 +2,14 @@ Cutting Datasets: Basic
 #######################
 
 The ``DSCutter`` classes are used for :term:`cutting` datasets.
- GeoGrapher has two general customizable
-``DSCutter`` classes: :class:`geographer.cutter`. There are two helper
-functions that return ``DSCutter`` s customized for the following two common
-use cases:
+GeoGrapher has two general customizable ``DSCutter`` classes:
+:class:`geographer.cutters`. There are two helper functions that return
+``DSCutter`` s customized for the following two common use cases:
 
-- :ref:`cutting_every_raster_to_a_grid`
-- :ref:`cutting_rasters_around_vectors`
+- ``get_cutter_every_raster_to_grid``, described in
+  :ref:`cutting_every_raster_to_a_grid`, and
+- ``get_cutter_every_raster_to_grid``, described in
+  :ref:`cutting_rasters_around_vectors`
 
 .. _cutting_every_raster_to_a_grid:
 
@@ -28,12 +29,11 @@ function::
         name=<OPTIONAL_NAME_FOR_SAVING>)
     cutter.cut()
 
-The :func:`geographer.cutters.get_cutter_every_raster_to_grid`
-function returns a :class:`geographer.cutters.DSCutterIterOverRasters` instance.
-The :meth:`cut` method will save the cutter to a json file in
-``connector.connector_dir / <NAME>.json``.
-To update the target dataset after the source dataset has grown, first read the json file
-and then run :meth:`update`::
+The :func:`geographer.cutters.get_cutter_every_raster_to_grid` function returns
+a :class:`geographer.cutters.DSCutterIterOverRasters` instance. The :meth:`cut`
+method will save the cutter to a JSON file in ``connector.connector_dir``. To
+update the target dataset after the source dataset has grown, first read the
+JSON file and then run :meth:`update`::
 
     from geographer.cutters import DSCutterIterOverRasters
     dataset_cutter = DSCutterIterOverRasters.from_json_file(<path/to/saved.json>)
@@ -50,8 +50,8 @@ and then run :meth:`update`::
 Cutting Rasters Around Vector Vectors
 ====================================================
 
-Cutting rasters around vector features (e.g. create 512 x 512 pixel
-cutouts around vector features from 10980 x 10980 Sentinel-2 tiles)::
+Cutting rasters around vector features (e.g. create 512 × 512 pixel
+cutouts around vector features from 10980 × 10980 Sentinel-2 tiles)::
 
     from geographer.cutters import get_cutter_rasters_around_every_vector
     cutter = get_cutter_rasters_around_every_vector(
@@ -64,12 +64,11 @@ cutouts around vector features from 10980 x 10980 Sentinel-2 tiles)::
         mode: "random")
     cutter.cut()
 
-The :func:`geographer.cutters.get_cutter_rasters_around_every_vector`
-function returns a :class:`geographer.cutters.DSCutterIterOverVectors` instance.
-The :meth:`cut` method will save the cutter to a json file in
-``connector.connector_dir / <NAME>.json``.
-To update the target dataset after the source dataset has grown, first read the json file
-and then run :meth:`update`::
+The :func:`geographer.cutters.get_cutter_rasters_around_every_vector` function
+returns a :class:`geographer.cutters.DSCutterIterOverVectors` instance. The
+:meth:`cut` method will save the cutter to a JSON file in
+``connector.connector_dir``. To update the target dataset after the source
+dataset has grown, first read the JSON file and then run :meth:`update`::
 
     from geographer.cutters import DSCutterIterOverVectors
     dataset_cutter = DSCutterIterOverVectors.from_json_file(<path/to/saved.json>)
@@ -77,5 +76,6 @@ and then run :meth:`update`::
 
 .. warning::
 
-    The ``update`` method assumes that that no vectors or rasters that remain in the target dataset have been removed from the source dataset.
+    The ``update`` method assumes that that no vectors or rasters that remain in
+    the target dataset have been removed from the source dataset.
 
