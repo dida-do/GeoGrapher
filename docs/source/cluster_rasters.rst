@@ -3,7 +3,7 @@ Cluster rasters
 
 To get a list of the raster clusters that need to be respected in the
 train/validation split to avoid data leakage use the
-:func:`geographer.utils.cluster_rasters.get_raster_clusters` function::
+:func:`geographer.utils.cluster_rasters.get_raster_clusters` function.
 
 .. note::
 
@@ -15,15 +15,16 @@ train/validation split to avoid data leakage use the
     are the minimal clusters of rasters that need to be consistently assigned
     to the train or validation splits to avoid data leakage.
 
-::
+.. code-block::
 
-    from geographer.utils.cluster_rasters import import get_raster_clusters
+    from geographer.utils.cluster_rasters import get_raster_clusters
     clusters : List[Set[str]] = get_raster_clusters(
         connector=connector,
         clusters_defined_by='rasters_that_share_vectors',
-        preclustering_method='y then x-axis')
+        preclustering_method='y then x-axis'
+    )
 
 The ``clusters_defined_by`` argument defines how clusters are defined.
 It must be one of ``"rasters_that_share_vectors"`` or 
-``"rasters_that_share_vectors_or_overlap"``. Setting optional
+``"rasters_that_share_vectors_or_overlap"``. Setting the optional
 ``preclustering_method`` argument speeds up clustering and is recommended.

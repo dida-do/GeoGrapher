@@ -14,7 +14,7 @@ Choosing different components allows for customization.
 .. note::
 
     All ``DSCutters`` operate on two datasets: a source and a target dataset.
-    At the moment in place operations are not supported.
+    At the moment in-place operations are not supported.
 
 Iterating Over Vector Vectors
 ++++++++++++++++++++++++++++++
@@ -23,20 +23,20 @@ Desription
 ~~~~~~~~~~
 
 Cutting of datasets by iterating over vector features is accomplished by the
-``DSCutterIterOverVectors`` class (:class:`geographer.cutters.DSCutterIterOverVectors`).
-A ``DSCutterIterOverVectors`` is initialized with:
+:class:`geographer.cutters.DSCutterIterOverVectors` class. An instance of this
+class is initialized with the following arguments:
 
-    - ``name``: a name used for saving the ``DSCutter``.
-    - ``source_data_dir``: the source data directory
-    - ``target_data_dir``: the target data directory
-    - ``bands``: an optional dict containing the bands to be selected.
+    - ``name``: A name used for saving the ``DSCutter``.
+    - ``source_data_dir``: The source data directory.
+    - ``target_data_dir``: The target data directory.
+    - ``bands``: An optional dict containing the bands to be selected.
       See :ref:`bands_dict1`.
-    - ``vector_filter_predicate``: a ``VectorFilterPredicate`` used
-      for filtering the vector features
-    - ``raster_selector``: a ``RasterSelector`` for selecting the rasters
-      in the source dataset to create cutouts from
-    - ``raster_cutter``: a ``SingleRasterCutter`` for cutting the selected rasters
-    - ``label_maker``: an optional ``LabelMaker`` (see :doc:`label_makers`)
+    - ``vector_filter_predicate``: A ``VectorFilterPredicate`` used
+      for filtering the vector features.
+    - ``raster_selector``: A ``RasterSelector`` for selecting the rasters
+      in the source dataset to create cutouts from.
+    - ``raster_cutter``: A ``SingleRasterCutter`` for cutting the selected rasters.
+    - ``label_maker``: An optional ``LabelMaker`` (see :doc:`label_makers`)
       for generating labels for the cutouts.
 
 The ``cut`` method of ``DSCutterIterOverVectors`` creates a new dataset
@@ -44,16 +44,16 @@ The ``cut`` method of ``DSCutterIterOverVectors`` creates a new dataset
 method does the following:
 
 - Add all vector features from the source dataset to the target dataset.
-- Iterate over the vector features. In each iteration:
+- Iterate over the vector features. In each iteration,
     - use the ``vector_filter_predicate`` to decide whether to create one
-      or more new cutouts in the target dataset for the vector feature
-    - select one or several rasters for the vector feature using the ``raster_selector``
-    - create cutouts from the selected rasters using the ``raster_cutter``
+      or more new cutouts in the target dataset for the vector feature,
+    - select one or several rasters for the vector feature using the ``raster_selector``,
+    - create cutouts from the selected rasters using the ``raster_cutter``,
     - update the ``cut_rasters`` dict, which contains vector features as keys
       and for each vector feature a list of rasters in the source dataset
-      from which cutouts were created for the vector feature
-- save the ``DSCutterIterOverVectors`` to a ``<name>.json`` file
-  in the target connector's ``connector_dir``
+      from which cutouts were created for the vector feature.
+- Save the ``DSCutterIterOverVectors`` to a ``<name>.json`` file
+  in the target connector's ``connector_dir``.
 
 Example
 ~~~~~~~
@@ -70,9 +70,13 @@ our ``vector_filter``::
 
     from geographer.vector_filter_predicate import GeomFilterRowCondition
 
-    aoi: shapely.geometry.Polygon = ... # polygon describing area of interest
+    # Polygon describing area of interest
+    aoi: shapely.geometry.Polygon = ...
+
     def row_series_predicate(series: GeoSeries):
-        return series.loc['geometry'].within(aoi) and series['climate_zone'] == 'tropical'
+        return series.loc['geometry'].within(aoi) \
+               and series['climate_zone'] == 'tropical'
+
     my_vector_filter = FilterVectorByRowCondition(
         row_series_predicate=row_series_predicate,
         mode='source_connector'
@@ -81,12 +85,13 @@ our ``vector_filter``::
 Defining an raster_cutter
 ----------------------
 
-To create cutouts around for each vector features with the bounding boxes of the
+To create cutouts around for each vector features, with the bounding boxes of the
 cutout chosen at random subject to the constraint that it contains the vector
-feature use the
+feature, use the
 ``SingleRasterCutterAroundVector``::
 
     from geographer.cutters import SingleRasterCutterAroundVector
+
     my_raster_cutter = SingleRasterCutterAroundVector(
         mode="random",
         new_raster_size=512,
@@ -98,8 +103,8 @@ of several cutouts jointly containing the vector feature will be cut.
 Defining an ``raster_selector``
 -----------------------------
 
-Suppose for a vector feature you want to randomly select any two rasters
-in the source dataset containing the vector features::
+Suppose that for a vector feature you want to randomly select any two rasters in
+the source dataset containing the vector features. This can be achieved with::
 
     from geographer.cutters.raster_selector import RandomRasterSelector
     my_raster_selector = RandomRasterSelector(target_raster_count=2)
@@ -149,6 +154,7 @@ Putting It All Together: Cutting
 ::
 
     from geographer.cutters import DSCutterIterOverVectors
+
     dataset_cutter = DSCutterIterOverVectors(
         name="my_cutter",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -159,15 +165,17 @@ Putting It All Together: Cutting
         raster_cutter=my_raster_cutter,
         label_maker=my_label_maker
     )
+
     dataset_cutter.cut()
 
-After cutting, the ``DSCutterIterOverVectors`` will automatically be saved to
+After cutting, the ``DSCutterIterOverVectors`` will automatically be saved as
 ``target_connector.connector_dir / <name>.json``.
 
 Updating The Target Dataset:
 ----------------------------
 
-Updating the target dataset after the source dataset has grown::
+To update the target dataset after the source dataset has grown, use the
+following::
 
     from geographer.cutters import DSCutterIterOverVectors
     dataset_cutter = DSCutterIterOverVectors.from_json_file(<path/to/saved.json>)
@@ -175,7 +183,7 @@ Updating the target dataset after the source dataset has grown::
 
 .. note::
 
-    To unpack the json representation, the :meth:`from_json_file` method needs
+    To unpack the JSON representation, the :meth:`from_json_file` method needs
     a symbol table mapping the class names to the class constructors. To convert
     a json representation of custom classes you wrote yourself, you'll need to
     extend the symbol table using the optional `constructor_symbol_table` argument.
@@ -187,19 +195,19 @@ Description
 ~~~~~~~~~~~
 
 Cutting of datasets by iterating over rasters is accomplished by the
-``DSCutterIterOverRasters`` class (:class:`geographer.cutters.DSCutterIterOverRasters`).
-A ``DSCutterIterOverRasters`` is initialized with:
+:class:`geographer.cutters.DSCutterIterOverRasters` class.
+An instance is initialized with the following arguments:
 
-    - ``name``: a name used for saving the ``DSCutter``.
-    - ``source_data_dir``: the source data directory
-    - ``target_data_dir``: the target data directory
-    - ``bands``: an optional dict containing the bands to be selected.
-      See :ref:`bands_dict2`.
-    - ``raster_filter_predicate``: a ``RasterFilterPredicate`` used for selecting
-      rasters from which cutouts are to be cut
-    - ``raster_cutter``: a ``SingleRasterCutter`` for cutting the rasters
-    - an optional ``LabelMaker`` (see :ref:`here <label_makers>`) for
-      generating labels for the cutouts.
+    - ``name``: A name used for saving the ``DSCutter``.
+    - ``source_data_dir``: The source data directory.
+    - ``target_data_dir``: The target data directory.
+    - ``bands``: An optional dict containing the bands to be selected.
+       See :ref:`bands_dict2`.
+    - ``raster_filter_predicate``: A ``RasterFilterPredicate`` used for selecting
+      rasters from which cutouts are to be cut.
+    - ``raster_cutter``: A ``SingleRasterCutter`` for cutting the rasters.
+    - An optional ``LabelMaker`` (see :ref:`here <label_makers>`) for generating
+      labels for the cutouts.
 
 The ``cut`` method of ``DSCutterIterOverVectors`` creates a new dataset
 (the *target_dataset*) and then calls the ``update`` method.
@@ -208,12 +216,12 @@ The ``update`` method does the following:
 - Add all vector features from the source dataset to the target dataset.
 - Iterate over the rasters. In each iteration:
     - use the ``raster_filter_predicate`` to decide whether to create one
-      or more new cutouts in the target dataset for the vector feature
-    - create cutouts from the the selected rasters using the ``raster_cutter``
+      or more new cutouts in the target dataset for the vector feature,
+    - create cutouts from the the selected rasters using the ``raster_cutter``,
     - record from which rasters in the source dataset cutouts were created
-      in the ``cut_rasters`` list
-- save the ``DSCutterIterOverRasters`` as a ``<name>.json`` file in the
-target connector's ``connector_dir``
+      in the ``cut_rasters`` list,
+- Save the ``DSCutterIterOverRasters`` as a ``<name>.json`` file in the
+target connector's ``connector_dir``.
 
 Example
 ~~~~~~~
@@ -222,8 +230,10 @@ Defining a ``raster_filter_predicate``
 -----------------------------------
 
 Suppose you want to select rasters that
-- were taken between 10am and 4pm
-- and contain at least 3 vector features.
+
+- were taken between 10am and 4pm, and
+- contain at least 3 vector features.
+
 You can write a custom ``RasterFilterPredicate`` to do this::
 
     from geographer.cutters import RasterFilterPredicate
@@ -288,6 +298,7 @@ Putting It All Together: Cutting
 ::
 
     from geographer.cutters import DSCutterIterOverRasters
+
     dataset_cutter = DSCutterIterOverRasters(
         name="my_cutter",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -297,6 +308,7 @@ Putting It All Together: Cutting
         raster_cutter=my_raster_cutter,
         label_maker=my_label_maker
     )
+
     dataset_cutter.cut()
 
 After cutting, the ``DSCutterIterOverRasters`` will automatically be
@@ -308,12 +320,16 @@ Updating The Target Dataset:
 Updating the target dataset after the source dataset has grown::
 
     from geographer.cutters import DSCutterIterOverRasters
-    dataset_cutter = DSCutterIterOverRasters.from_json_file(<path/to/saved.json>)
+
+    dataset_cutter = DSCutterIterOverRasters.from_json_file(
+        <path/to/saved.json>
+    )
+
     dataset_cutter.update()
 
 .. note::
 
     To unpack the json representation, the :meth:`from_json_file` method needs
     a symbol table mapping the class names to the class constructors. To convert
-    a json representation of custom classes you wrote yourself, you'll need to
+    a JSON representation of custom classes you wrote yourself, you'll need to
     extend the symbol table using the optional `constructor_symbol_table` argument.
