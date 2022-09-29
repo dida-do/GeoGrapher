@@ -2,18 +2,21 @@
 Installation
 ############
 
-The GeoGrapher package has two external dependencies:
+This package has two external dependencies:
+- Python 3.8 or newer.
+- The geopandas and rasterio libraries might depend on GDAL base C libraries.
+See [https://geopandas.org/en/stable/getting_started/install.html#dependencies](https://geopandas.org/en/stable/getting_started/install.html#dependencies)
+and [https://pypi.org/project/rasterio/](https://pypi.org/project/rasterio/)
+for instructions on installing these. On many Linux distros, you can use the
+the `gdal-devel` or `libgdal-dev` packages.
 
-- Python 3.X or newer [where X is to be determined, possibly X=7]
-- GDAL development files.  On most Linux distros, these are provided by
-  the `gdal-devel` or `libgdal-dev` packages.
+The package itself (and its Python dependencies) can be installed with
 
-The package itself (and its Python dependencies) can be installed with::
+```
+pip install GeoGrapher
+```
 
-  pip install GeoGrapher
-
-
-To install the package for development work, clone this repo and run::
-
-  make [TODO]
-
+To create the documentation locally in a development installation,
+the pandoc external dependency is needed as well. See
+[https://pandoc.org/installing.html](https://pandoc.org/installing.html)
+for installation instructions.

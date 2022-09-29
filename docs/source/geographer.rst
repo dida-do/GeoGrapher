@@ -19,7 +19,7 @@ Submodules
 ----------
 
 rs\_tools.add\_drop\_raster\_rasters\_mixin module
-----------------------------------------
+--------------------------------------------------
 
 .. automodule:: geographer.add_drop_rasters_mixin
    :members:
@@ -67,7 +67,7 @@ rs\_tools.global\_constants module
    :show-inheritance:
 
 rs\_tools.raster\_bands\_getter\_mixin module
-------------------------------------------
+---------------------------------------------
 
 .. automodule:: geographer.raster_bands_getter_mixin
    :members:

@@ -12,10 +12,10 @@ rs\_tools.testing.graph\_df\_compatibility module
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.testing.mock\_testing\_raster\_polygon\_associator\_rstools\_s2 module
+rs\_tools.testing.mock\_download module
 ----------------------------------------------------------------------------
 
-.. automodule:: geographer.testing.mock_testing_raster_polygon_associator_rstools_s2
+.. automodule:: geographer.testing.mock_download
    :members:
    :undoc-members:
    :show-inheritance:
