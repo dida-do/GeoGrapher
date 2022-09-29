@@ -25,6 +25,24 @@ The package itself (and its Python dependencies) can be installed with
 pip install GeoGrapher
 ```
 
+# Development installation
+To create a local dev installation, clone the repo, `cd` into the repo folder,
+and use the command
+
+`python -m venv geographer-env`
+
+to create a virtual environment. Then activate the environment using
+
+`source geographer-env/bin/activate`
+
+and install locally the package and its dependencies using
+
+`make venv`
+
+To create the documentation locally, you will need to install
+the pandoc external dependency following the instructions here
+[https://pandoc.org/installing.html](https://pandoc.org/installing.html).
+
 # Getting started
 Anything here?
 
