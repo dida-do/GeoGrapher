@@ -1,5 +1,5 @@
 ###################
-The Connector Class
+The connector class
 ###################
 
 GeoGrapher is built around the :class:`Connector` class.
