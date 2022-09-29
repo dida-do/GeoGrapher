@@ -18,6 +18,7 @@ using the ``DSConverterCombineRemoveClasses`` as follows (see :doc:`here <label_
 for creating a label maker). ::
 
     from geographer.converters import DSConverterCombineRemoveClasses
+
     converter = DSConverterCombineRemoveClasses(
         name="combine_remove_classes",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -32,7 +33,9 @@ for creating a label maker). ::
 
 Updating the target dataset after the source dataset has grown::
 
-    converter = DSConverterCombineRemoveClasses.from_json_file(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
+    converter = DSConverterCombineRemoveClasses.from_json_file(
+        <PATH/TO/SOURCE/DATA_DIR/<name>.JSON>
+    )
     converter.update()
 
 Converting task vector class types
@@ -46,6 +49,7 @@ and labels using ``DSConverterCombineRemoveClasses`` (see :doc:`here <label_make
 for how to create a label maker to pass as a ``label_maker`` argument)::
 
     from geographer.converters import DSConverterCombineRemoveClasses
+
     converter = DSConverterSoftCatToCat(
         name="convert_soft_to_cat",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -57,7 +61,9 @@ for how to create a label maker to pass as a ``label_maker`` argument)::
 
 Updating the target dataset after the source dataset has grown::
 
-    converter = DSConverterCombineRemoveClasses.from_json_file(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
+    converter = DSConverterCombineRemoveClasses.from_json_file(
+        <PATH/TO/SOURCE/DATA_DIR/<name>.JSON>
+    )
     converter.update()
 
 GeoTiff To .npy
@@ -66,6 +72,7 @@ GeoTiff To .npy
 Converting a dataset from GeoTiff to .npy::
 
     from geographer.converters import DSConverterGeoTiffToNpy
+
     converter = DSConverterGeoTiffToNpy(
         name="convert_soft_to_cat",
         source_data_dir=<PATH/TO/SOURCE/DATA_DIR>,
@@ -76,7 +83,9 @@ Converting a dataset from GeoTiff to .npy::
 
 Updating the target dataset after the source dataset has grown::
 
-    converter = DSConverterCombineRemoveClasses.from_json_file(<PATH/TO/SOURCE/DATA_DIR/<name>.JSON>)
+    converter = DSConverterCombineRemoveClasses.from_json_file(
+        <PATH/TO/SOURCE/DATA_DIR/<name>.JSON>
+    )
     converter.update()
 
 
