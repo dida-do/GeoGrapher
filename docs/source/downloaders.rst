@@ -1,19 +1,21 @@
-Downloading Rasters
+Downloading rasters
 ###################
 
 To download rasters for vector features use ``RasterDownloaderForVectors``. 
 
 By plugging in different ``DownloaderForSingleVector`` and ``Processor``
-components it can interface with different sources of remote sensing rasterry.
+components it can interface with different sources of remote sensing rasters.
 Currently, it can interface with the Copernicus Open Access Hub for Sentinel-2
-rasterry, and JAXA for ALOS DEM (digital elevation model) data, and can easily
+rasters, and JAXA for ALOS DEM (digital elevation model) data, and can easily
 be extended to other data sources by writing custom
 ``DownloaderForSingleSingleVector`` and ``Processor`` classes.
 
 Example usage
 +++++++++++++
 
-Example usage::
+Example usage:
+
+.. code-block:: python
 
     from geographer.downloaders import (
         RasterDownloaderForVectors,
@@ -33,7 +35,7 @@ Example usage::
         producttype='L2A',
         max_percent_cloud_coverage=10,
         resolution=10,
-        date=(“NOW-10DAYS”, “NOW”),
+        date=('NOW-10DAYS', 'NOW'),
         area_relation='Contains'
     )
 
@@ -46,7 +48,9 @@ arguments (e.g. ``producttype``, ``max_percent_cloud_coverage`` for the
 ``SentinelDownloaderForSingleVector``) in the
 ``RasterDownloaderForVectors``'s ``kwarg_defaults`` arguments dict,
 so that one doesn't have to pass them by hand to the ``download`` method,
-for example::
+for example:
+
+.. code-block:: python
     
         downloader = RasterDownloaderForVectors(
             download_dir=<DOWNLOAD_DIR>,
@@ -56,7 +60,7 @@ for example::
                 'max_percent_cloud_coverage' = 10,
                 'producttype': L2A,
                 'resolution': 10,
-                'date': (“NOW-10DAYS”, “NOW”),
+                'date': ('NOW-10DAYS', 'NOW'),
                 'area_relation': 'Contains'})
         downloader.download(
             connector=my_connector,
@@ -89,7 +93,7 @@ JAXA DEM data
 For *JAXA* DEM (digital elevation model) data use ``JAXADownloaderForSingleVector``
 and ``JAXADownloadProcessor``.
 
-Other sources for remote sensing rasterry:
+Other sources for remote sensing rasters:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Subclass ``DownloaderForSingleSingleVector`` and ``Processor`` to interface with

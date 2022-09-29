@@ -4,27 +4,29 @@ Implements graphs adjacency list-style as (dict-of)-dict-of-dicts.
 
 Example:
 A graph with
-    * vertex colors 'red' and 'black'
-    * red vertices 'r1', 'r2' and black vertices 'b1', 'b2', 'b3'
-    * an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data
-        'bar' between 'r1' and 'b3'
-is encoded as the dict of dicts of dicts
 
-{
-    'red':
-        {
-            'r1': {'b1': 'foo', 'b3': 'bar'},
-            'r2': {},
-            'r3': {}
-        }
+* vertex colors 'red' and 'black'
+* red vertices 'r1', 'r2' and black vertices 'b1', 'b2', 'b3'
+* an edge with edge data 'foo' between 'r1' and 'b1' and  an edge with edge data
+  'bar' between 'r1' and 'b3'
 
-    'black':
-        {
-            'b1': {'r1': 'foo'},
-            'b2': {},
-            'b3': {'r1': 'bar'}
-        }
-}
+is encoded as the dict of dicts of dicts::
+
+    {
+        'red':
+            {
+                'r1': {'b1': 'foo', 'b3': 'bar'},
+                'r2': {},
+                'r3': {}
+            }
+
+        'black':
+            {
+                'b1': {'r1': 'foo'},
+                'b2': {},
+                'b3': {'r1': 'bar'}
+            }
+    }
 
 
 Only tested for the undirected case.

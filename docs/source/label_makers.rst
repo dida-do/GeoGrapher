@@ -4,9 +4,10 @@ Making labels
 Use the ``LabelMaker`` classes to create labels from the vector features
 for computer vision tasks. Currently, label creation for multiclass segmentation
 tasks for both 'categorical' and 'soft-categorical' (i.e. there is a probability
-distribution over the classes for each vector feature) label-types are supported.
+distribution over the classes for each vector feature) label types are supported.
 
-Vector Vector Classes And Class Types
+
+Task vector classes and class types
 ++++++++++++++++++++++++++++++++++++++
 
 GeoGrapher is designed for *multiclass* vision tasks.
@@ -16,29 +17,34 @@ GeoGrapher is designed for *multiclass* vision tasks.
     GeoGrapher should be easily extendable to multi-label vision tasks. Submit an
     issue, feature request, or pull request to extend GeoGrapher if you want!
 
-Vector Vector Classes
+Task vector classes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The classes the ``vectors`` may belong to for a machine learning task
-are set in
+The classes to which members of a connector's ``vectors`` may belong
+to, for the purposes of a given machine learning task, are set in
 
-- the ``task_vector_classes`` argument of the ``Connector`` class's ``from_scratch``
-  class constructor method
-- a ``Connector``'s ``task_vector_classes`` attribute.
+- the ``task_vector_classes`` argument of the ``Connector.from_scratch`` class
+  constructor method, or
+- the ``task_vector_classes`` attribute of a ``Connector`` instance.
 
 In some applications it is useful to have vector features that belong to a background
-class different from any of the machine learning task classes. A optional background
+class different from any of the machine learning task classes. An optional background
 class can be set in
 
-- the ``background_class`` argument of the ``Connector`` class's ``from_scratch`` class constructor method
-- the ``background_class`` attribute of a ``Connector``.
+- the ``background_class`` argument of the ``Connector.from_scratch`` class
+  constructor method, or
+- the ``background_class`` attribute of a ``Connector`` instance.
 
-To add other non-``task_vector_classes``, subclass the ``Connector`` and modify the ``_non_task_vector_classes`` class variable appropriately. A ``Connector``'s ``all_vector_classes`` attribute returns a list of all classes the vector features may belong to.
+To add other non-``task_vector_classes``, subclass the ``Connector`` and modify
+the ``_non_task_vector_classes`` class variable appropriately. The
+``Connector.all_vector_classes`` attribute contains a list of all classes the
+vector features may belong to.
 
 .. _vector_class_types
 
-Vector Vector Class Types
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vector class types
+~~~~~~~~~~~~~~~~~~
+
 
 Currently, GeoGrapher's LabelMakers support two formats (*vector feature class types*)
 in which classes can be assigned to vector features:
@@ -49,10 +55,10 @@ in which classes can be assigned to vector features:
   ``prob_of_class_<class_name>`` columns (one for each class) containing the
   probabilities that the vector features belong to a given class.
 
-Making Segmentation Labels
+Making segmentation labels
 ++++++++++++++++++++++++++
 
-Categorical Segmentation Labels
+Categorical segmentation labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating categorical segmentation labels encoded for each pixel as an integer
@@ -71,15 +77,16 @@ corresponding to the class::
     ``vectors`` GeoDataFrame needs to have a ``'type'`` column containing
     the classes the features belong to.
 
-Soft-Categorical Segmentation Labels
+Soft-categorical segmentation labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Soft-categorical* labels are labels in which for each vector feature
-(i.e. polygon in the segmentation case) there is a probability distribution
-for which of the segmentation classes the vector feature belongs to. In the
-segmentation labels, the probability will be encoded in a class dimension/axis,
-i.e. a label have dimensions HxWxC where H, W are the height and width of
-the corresponding raster and C is the number of segmentation classes.
+*Soft-categorical* labels are labels in which for each vector feature (i.e.
+polygon in the segmentation case) there is a probability distribution for which
+of the segmentation classes the vector feature belongs to. In the segmentation
+labels, the probability will be encoded in a class dimension/axis, i.e. a label
+have dimensions :math:`H×W×C` where :math:`H`, :math:`W` are the height and
+width of the corresponding raster and :math:`C` is the number of segmentation
+classes.
 
 Creating soft-categorical segmentation labels::
 
@@ -98,10 +105,10 @@ Creating soft-categorical segmentation labels::
     ``connector.ml_task_classes`` containing the probability that the features
     belong to the class.
 
-Other Vision Tasks or Label Types
+Other vision tasks or label types
 +++++++++++++++++++++++++++++++++
 
 Feel free to submit a feature request or submit a pull request with ``LabelMaker``
-s for other computer vision tasks or labels types.
+implementations for other computer vision tasks or labels types.
 
 
