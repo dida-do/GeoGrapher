@@ -1,4 +1,4 @@
-Cutting Datasets: Advanced
+Cutting datasets: advanced
 ##########################
 
 GeoGrapher provides two general templates for cutting datasets:
@@ -16,7 +16,7 @@ Choosing different components allows for customization.
     All ``DSCutters`` operate on two datasets: a source and a target dataset.
     At the moment in-place operations are not supported.
 
-Iterating Over Vector Vectors
+Iterating over vector vectors
 ++++++++++++++++++++++++++++++
 
 Desription
@@ -82,8 +82,8 @@ our ``vector_filter``::
         mode='source_connector'
     )
 
-Defining an raster_cutter
-----------------------
+Defining a raster_cutter
+-------------------------
 
 To create cutouts around for each vector features, with the bounding boxes of the
 cutout chosen at random subject to the constraint that it contains the vector
@@ -100,8 +100,8 @@ feature, use the
 If a vector feature is too large to be contained in a cutout of size 512, a grid
 of several cutouts jointly containing the vector feature will be cut.
 
-Defining an ``raster_selector``
------------------------------
+Defining a ``raster_selector``
+------------------------------
 
 Suppose that for a vector feature you want to randomly select any two rasters in
 the source dataset containing the vector features. This can be achieved with::
@@ -148,7 +148,7 @@ problems, 'labels_dir') and a list of bands to extract::
 
 If ``bands`` is not given or a key is missing, all bands will be extracted.
 
-Putting It All Together: Cutting
+Putting it all together: cutting
 ---------------------------------
 
 ::
@@ -171,7 +171,7 @@ Putting It All Together: Cutting
 After cutting, the ``DSCutterIterOverVectors`` will automatically be saved as
 ``target_connector.connector_dir / <name>.json``.
 
-Updating The Target Dataset:
+Updating the target dataset:
 ----------------------------
 
 To update the target dataset after the source dataset has grown, use the
@@ -188,7 +188,7 @@ following::
     a json representation of custom classes you wrote yourself, you'll need to
     extend the symbol table using the optional `constructor_symbol_table` argument.
 
-Iterating Over Rasters
+Iterating over rasters
 ++++++++++++++++++++++
 
 Description
@@ -227,7 +227,7 @@ Example
 ~~~~~~~
 
 Defining a ``raster_filter_predicate``
------------------------------------
+--------------------------------------
 
 Suppose you want to select rasters that
 
@@ -264,8 +264,8 @@ You can write a custom ``RasterFilterPredicate`` to do this::
 
     my_raster_filter_predicate = MyRasterFilterPredicate()
 
-Defining an raster_cutter
-----------------------
+Defining a raster_cutter
+-------------------------
 
 Suppose you want to cut every selected raster to a grid of rasters.
 You can use the ``SingleRasterCutterToGrid``
@@ -292,7 +292,7 @@ Defining a ``bands`` dict (optional)
 
 This is done as in the case of iterating over rasters, see :ref:`bands_dict1`.
 
-Putting It All Together: Cutting
+Putting it all together: cutting
 ---------------------------------
 
 ::
@@ -314,7 +314,7 @@ Putting It All Together: Cutting
 After cutting, the ``DSCutterIterOverRasters`` will automatically be
 saved to ``target_connector.connector_dir / <name>.json``.
 
-Updating The Target Dataset:
+Updating the target dataset:
 ----------------------------
 
 Updating the target dataset after the source dataset has grown::

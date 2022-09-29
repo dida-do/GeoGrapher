@@ -1,4 +1,4 @@
-Cutting Datasets: Basic
+Cutting datasets: basic
 #######################
 
 The ``DSCutter`` classes are used for :term:`cutting` datasets.
@@ -13,7 +13,7 @@ GeoGrapher has two general customizable ``DSCutter`` classes:
 
 .. _cutting_every_raster_to_a_grid:
 
-Cutting Every Raster To A Grid of Rasters
+Cutting every raster to a grid of rasters
 =========================================
 
 To create a new dataset in ``target_data_dir`` from a source dataset in
@@ -47,7 +47,7 @@ JSON file and then run :meth:`update`::
 
 .. _cutting_rasters_around_vectors:
 
-Cutting Rasters Around Vector Vectors
+Cutting rasters around vectors
 ====================================================
 
 Cutting rasters around vector features (e.g. create 512 × 512 pixel
