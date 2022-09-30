@@ -1,5 +1,5 @@
 ﻿geographer.cutters.DSCutterIterOverRasters
-=======================================
+==========================================
 
 .. currentmodule:: geographer.cutters
 
@@ -14,11 +14,24 @@
    .. autosummary::
    
       ~DSCutterIterOverRasters.__init__
+      ~DSCutterIterOverRasters.construct
+      ~DSCutterIterOverRasters.copy
       ~DSCutterIterOverRasters.create
       ~DSCutterIterOverRasters.create_or_update
       ~DSCutterIterOverRasters.cut
+      ~DSCutterIterOverRasters.dict
+      ~DSCutterIterOverRasters.from_json_file
+      ~DSCutterIterOverRasters.from_orm
+      ~DSCutterIterOverRasters.json
+      ~DSCutterIterOverRasters.parse_file
+      ~DSCutterIterOverRasters.parse_obj
+      ~DSCutterIterOverRasters.parse_raw
       ~DSCutterIterOverRasters.save
+      ~DSCutterIterOverRasters.schema
+      ~DSCutterIterOverRasters.schema_json
       ~DSCutterIterOverRasters.update
+      ~DSCutterIterOverRasters.update_forward_refs
+      ~DSCutterIterOverRasters.validate
    
    
 

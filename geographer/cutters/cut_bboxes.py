@@ -26,7 +26,7 @@ from geographer.cutters.type_aliases import RasterSize
 if TYPE_CHECKING:
     from geographer.raster_geom_associator import RasterPolygonAssociator
 
-from geographer.cutteres.cut_iter_over_rasters import (
+from geographer.cutters.cut_iter_over_rasters import (
     create_or_update_dataset_iter_over_rasters,
 )
 from geographer.cutters.raster_filter_predicates import AlwaysTrue

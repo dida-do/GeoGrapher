@@ -1,5 +1,5 @@
 ﻿geographer.cutters.DSCutterIterOverVectors
-===========================================
+==========================================
 
 .. currentmodule:: geographer.cutters
 
@@ -14,12 +14,25 @@
    .. autosummary::
    
       ~DSCutterIterOverVectors.__init__
+      ~DSCutterIterOverVectors.construct
+      ~DSCutterIterOverVectors.copy
       ~DSCutterIterOverVectors.create
       ~DSCutterIterOverVectors.create_or_update
       ~DSCutterIterOverVectors.cut
+      ~DSCutterIterOverVectors.dict
+      ~DSCutterIterOverVectors.from_json_file
+      ~DSCutterIterOverVectors.from_orm
+      ~DSCutterIterOverVectors.json
+      ~DSCutterIterOverVectors.parse_file
+      ~DSCutterIterOverVectors.parse_obj
+      ~DSCutterIterOverVectors.parse_raw
       ~DSCutterIterOverVectors.save
+      ~DSCutterIterOverVectors.schema
+      ~DSCutterIterOverVectors.schema_json
       ~DSCutterIterOverVectors.update
-
+      ~DSCutterIterOverVectors.update_forward_refs
+      ~DSCutterIterOverVectors.validate
+   
    
 
    

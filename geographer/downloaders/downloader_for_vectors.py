@@ -83,10 +83,10 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 previously used downloader.
             target_raster_count: target for number of rasters per vector feature in
                 the dataset after downloading. The actual number of rasters for each
-                    vector feature P that fully contain it could be lower if there
-                    are not enough rasters available or higher if after downloading
-                    num_target_rasters_per_vector rasters for P P is also contained
-                    in rasters downloaded for other vector features.
+                vector feature P that fully contain it could be lower if there
+                are not enough rasters available or higher if after downloading
+                num_target_rasters_per_vector rasters for P P is also contained
+                in rasters downloaded for other vector features.
             filter_out_vector vectors_contained_in_union_of_intersecting_rasters:
                 Useful when dealing with 'large' vector features. Defaults to False.
             shuffle: Whether to shuffle order of vector features for which rasters

@@ -40,7 +40,7 @@ the ``_non_task_vector_classes`` class variable appropriately. The
 ``Connector.all_vector_classes`` attribute contains a list of all classes the
 vector features may belong to.
 
-.. _vector_class_types
+.. _vector_class_types:
 
 Vector class types
 ~~~~~~~~~~~~~~~~~~

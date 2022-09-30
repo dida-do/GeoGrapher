@@ -1,5 +1,5 @@
-Cutting datasets: basic
-#######################
+Cutting datasets: basics
+########################
 
 The ``DSCutter`` classes are used for :term:`cutting` datasets.
 GeoGrapher has two general customizable ``DSCutter`` classes:

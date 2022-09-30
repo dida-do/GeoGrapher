@@ -1,35 +1,35 @@
-rs\_tools.utils package
-=======================
+geographer.utils package
+==========================
 
 Submodules
-----------
+--------------
 
-rs\_tools.utils.connector\_utils module
----------------------------------------
+geographer.utils.connector\_utils module
+------------------------------------------------
 
 .. automodule:: geographer.utils.connector_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.utils.merge\_datasets module
---------------------------------------
+geographer.utils.merge\_datasets module
+-----------------------------------------------
 
 .. automodule:: geographer.utils.merge_datasets
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.utils.raster\_rasters\_from\_tif\_dir module
----------------------------------------------------
+geographer.utils.raster\_rasters\_from\_tif\_dir module
+------------------------------------------------------------
 
 .. automodule:: geographer.utils.rasters_from_tif_dir
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.utils.utils module
-----------------------------
+geographer.utils.utils module
+-------------------------------------
 
 .. automodule:: geographer.utils.utils
    :members:
@@ -37,7 +37,7 @@ rs\_tools.utils.utils module
    :show-inheritance:
 
 Module contents
----------------
+------------------------
 
 .. automodule:: geographer.utils
    :members:
