@@ -25,9 +25,9 @@ pip install GeoGrapher
 ```
 
 # Getting started
-Read our our blogpost [TODO: INSERT LINK] for an introduction to GeoGrapher, try out the tutorial
+Read our our blogpost for an introduction to GeoGrapher, try out the tutorial
 notebooks in the [notebooks directory](https://github.com/dida-do/GeoGrapher/tree/main/notebooks),
-or read the documentation [TODO: INSERT LINK].
+or read the documentation.
 
 # Development
 To create a local dev installation, clone the repo, `cd` into the repo folder,
@@ -42,8 +42,8 @@ make -B venv
 to create a virtual environment, activate it, and create an editable local installation
 of the package and its dependencies.
 
-Use `make format/lint/test/docs` to format, lint, or test the code or
-to create the documentation locally.
+Use the `make format`, `make lint`, `make test`, and `make docs` commands to format,
+lint, or test the code or to create the documentation locally.
 
 To create the documentation locally, you will need to install
 the pandoc external dependency following the instructions here
