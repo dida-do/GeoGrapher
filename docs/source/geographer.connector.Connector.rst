@@ -25,9 +25,9 @@
       ~Connector.from_data_dir
       ~Connector.from_scratch
       ~Connector.have_raster_for_vector
+      ~Connector.is_vector_contained_in_raster
       ~Connector.rasters_containing_vector
       ~Connector.rasters_intersecting_vector
-      ~Connector.is_vector_contained_in_raster
       ~Connector.rectangle_bounding_raster
       ~Connector.save
       ~Connector.vectors_contained_in_raster
@@ -46,11 +46,11 @@
       ~Connector.crs_epsg_code
       ~Connector.data_dir
       ~Connector.graph_str
-      ~Connector.raster_data_dirs
-      ~Connector.rasters_dir
-      ~Connector.raster_count_col_name
       ~Connector.labels_dir
+      ~Connector.raster_count_col_name
+      ~Connector.raster_data_dirs
       ~Connector.rasters
+      ~Connector.rasters_dir
       ~Connector.set_raster_count_col_name
       ~Connector.task_vector_classes
       ~Connector.vectors

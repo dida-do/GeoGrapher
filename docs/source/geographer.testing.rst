@@ -1,18 +1,18 @@
-rs\_tools.testing package
-=========================
+geographer.testing package
+============================
 
 Submodules
 ----------
 
-rs\_tools.testing.graph\_df\_compatibility module
--------------------------------------------------
+geographer.testing.graph\_df\_compatibility module
+-------------------------------------------------------
 
 .. automodule:: geographer.testing.graph_df_compatibility
    :members:
    :undoc-members:
    :show-inheritance:
 
-rs\_tools.testing.mock\_download module
+geographer.testing.mock\_download module
 ----------------------------------------------------------------------------
 
 .. automodule:: geographer.testing.mock_download

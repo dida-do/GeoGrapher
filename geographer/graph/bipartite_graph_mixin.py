@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
@@ -82,7 +82,9 @@ class BipartiteGraphMixIn:
         return vector_names
 
     def rasters_intersecting_vector(
-        self, vector_name: Union[str, list[str]], mode: str = "names"
+        self,
+        vector_name: Union[str, list[str]],
+        mode: Literal["names", "paths"] = "names",
     ) -> list[str]:
         """Return rasters intersecting several vector feature(s).
 
@@ -159,7 +161,7 @@ class BipartiteGraphMixIn:
     def rasters_containing_vector(
         self,
         vector_name: Union[str, list[str]],
-        mode: str = "names",
+        mode: Literal["names", "paths"] = "names",
     ) -> list[str]:
         """Return rasters in which a given vector feature is fully contained.
 

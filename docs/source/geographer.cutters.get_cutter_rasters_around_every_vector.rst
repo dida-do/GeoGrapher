@@ -1,5 +1,5 @@
-﻿geographer.cutters.get\_cutter\rasters\_around\_every\_vector
-============================================================
+﻿geographer.cutters.get\_cutter\_rasters\_around\_every\_vector
+==============================================================
 
 .. currentmodule:: geographer.cutters
 
