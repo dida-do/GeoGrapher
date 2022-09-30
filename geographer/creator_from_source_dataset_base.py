@@ -119,7 +119,7 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
         if all(connector_file_paths_exist):
             target_connector = Connector.from_data_dir(self.target_data_dir)
-        elif all([not exists for exists in connector_file_paths_exist]):
+        elif not any(connector_file_paths_exist):
             target_connector = self.source_connector.empty_connector_same_format(
                 self.target_data_dir
             )
