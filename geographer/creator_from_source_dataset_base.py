@@ -11,7 +11,11 @@ from pydantic import BaseModel, Extra, Field
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
     SaveAndLoadBaseModelMixIn,
 )
-from geographer.connector import Connector
+from geographer.connector import (
+    DEFAULT_CONNECTOR_DIR_NAME,
+    INFERRED_PATH_ATTR_FILENAMES,
+    Connector,
+)
 
 
 class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
@@ -108,14 +112,23 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
     def _set_target_connector(self):
         """Set target connector."""
-        try:
+        connector_file_paths_exist = [
+            (self.target_data_dir / DEFAULT_CONNECTOR_DIR_NAME / filename).is_file()
+            for filename in INFERRED_PATH_ATTR_FILENAMES.values()
+        ]
+
+        if all(connector_file_paths_exist):
             target_connector = Connector.from_data_dir(self.target_data_dir)
-        except FileNotFoundError:
+        elif not any(connector_file_paths_exist):
             target_connector = self.source_connector.empty_connector_same_format(
                 self.target_data_dir
             )
-        finally:
-            self._target_connector = target_connector
+        else:
+            raise ValueError(
+                "Corrupted target dataset: only some of the connector files exist."
+            )
+
+        self._target_connector = target_connector
 
     def _add_missing_vectors_to_target(self):
         """Add missing vector features from source dataset to target dataset.
