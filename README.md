@@ -1,16 +1,15 @@
 # GeoGrapher
 
 *GeoGrapher* is a Python library for building remote sensing
-computer vision datasets starting from vector features (e.g. georeferenced coordinates,
-bounding boxes, or segmentation maks). It connects the features and images
-by a bipartite graph that keeps track of
-the containment and intersection relations between them making it
-suited for *object-centric* vision tasks. GeoGrapher also provides highly
-general and customizable dataset cutting functionality as well as other utility
-functions.
+computer vision datasets starting from vector features
+(e.g. locations or georeferenced bounding boxes or segmentation maks).
+It connects the features and images by a bipartite graph that keeps
+track of the containment and intersection relations between them making
+it suited for *object-centric* tasks. GeoGrapher also provides highly
+general and customizable dataset cutting functionality as well as other
+utility functions.
 
 # Installation
-
 This package has two external dependencies:
 - Python 3.8 or newer.
 - The geopandas and rasterio libraries might depend on GDAL base C libraries.
@@ -25,49 +24,34 @@ The package itself (and its Python dependencies) can be installed with
 pip install GeoGrapher
 ```
 
-# Development installation
+# Getting started
+Read our our blogpost for an introduction to GeoGrapher, try out the tutorial
+notebooks in the [notebooks directory](https://github.com/dida-do/GeoGrapher/tree/main/notebooks),
+or read the documentation.
+
+# Development
 To create a local dev installation, clone the repo, `cd` into the repo folder,
-and use the command
+and use the commands
 
-`python -m venv geographer-env`
+```
+python -m venv geographer-env
+source geographer-env/bin/activate
+make -B venv
+```
 
-to create a virtual environment. Then activate the environment using
+to create a virtual environment, activate it, and create an editable local installation
+of the package and its dependencies.
 
-`source geographer-env/bin/activate`
-
-and install locally the package and its dependencies using
-
-`make venv`
+Use the `make format`, `make lint`, `make test`, and `make docs` commands to format,
+lint, or test the code or to create the documentation locally.
 
 To create the documentation locally, you will need to install
 the pandoc external dependency following the instructions here
 [https://pandoc.org/installing.html](https://pandoc.org/installing.html).
 
-# Getting started
-Anything here?
-
 # Contributing to GeoGrapher
-
 You can contribute by giving feedback, opening an issue, submitting
 feature requests or bug reports, or submitting pull requests.
-
-To install the package for development work, clone this repository,
-change to its directory and run
-
-```
-python3 -m venv geographer-env
-source geographer-env/bin/activate # activate the environment
-make -B venv
-```
-
-You can also use `make` to run the test suite locally, among other
-common tasks. Run `make` for an overview of the options.
-
-## Building the documentation
-To create html html documentation in docs/build/html, run
-```
-make docs
-```
 
 # Show your support
 Give this project a star if you like it!
