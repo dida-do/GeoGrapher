@@ -16,6 +16,7 @@ as well as other utility functions.
    :caption: Contents:
 
    installation
+   tutorials
    connector
    downloaders
    label_makers
@@ -24,9 +25,6 @@ as well as other utility functions.
    conversion
    cluster_rasters
    glossary
-   tutorial_nb_basics
-   tutorial_nb_cut_label_cluster
-
 
 
 Indices and tables
