@@ -3,8 +3,10 @@ Installation
 ############
 
 This package has two external dependencies:
+
 - Python 3.8 or newer.
 - The geopandas and rasterio libraries might depend on GDAL base C libraries.
+
 See `here for the geopandas instructions <https://geopandas.org/en/stable/getting_started/install.html#dependencies>`_
 and `here for the rasterio instructions <https://pypi.org/project/rasterio/>`_
 for instructions on installing these. On many Linux distros, you can use the
