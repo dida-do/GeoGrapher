@@ -159,6 +159,6 @@ class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
     bands: Optional[Dict[str, Optional[List[int]]]] = Field(
         default=None,
         title="Dict of band indices",
-        description="keys: raster directory names, values: list of band indices"
-        "starting at 1 to keep",
+        description="keys: raster directory names, values: list of band indices "
+        "to keep, starting with 1",
     )
