@@ -32,14 +32,15 @@ release = '0.1.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx_autodoc_typehints',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.todo',
     'nbsphinx',
-    'nbsphinx_link'
+    'nbsphinx_link',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx_autodoc_typehints',
+    'sphinxcontrib.autodoc_pydantic',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -49,7 +50,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -63,17 +63,31 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# autodoc settings
-autodoc_default_options = {
-    'inherited-members': 'pydantic.BaseModel,BaseModel',
-}
-
-
 # HTML settings
 html_theme_options = {
     # Doesn't seem to work???
     # 'sidebar_width': 10, # 1(min) - 12(max)
 }
+
+# -- Configuration of extensions ---------------------------------------------
+
+# autodoc settings
+autodoc_default_options = {
+    'inherited-members': 'pydantic.BaseModel,BaseModel',
+}
+
+# autodoc_pydantic settings
+autodoc_pydantic_config_members = False
+autodoc_pydantic_model_show_config_member = False
+autodoc_pydantic_model_show_config_summary = False
+autodoc_pydantic_model_show_validator_summary = False
+autodoc_pydantic_model_show_validator_members = False
+autodoc_pydantic_model_show_field_summary = False
+autodoc_pydantic_model_hide_paramlist = False # change?
+autodoc_pydantic_model_signature_prefix = "class"
+autodoc_pydantic_model_show_json = False
+autodoc_pydantic_settings_show_json = False
+
 
 # todo settings
 todo_include_todos = True

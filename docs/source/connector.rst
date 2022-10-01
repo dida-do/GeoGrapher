@@ -85,7 +85,7 @@ contain e.g. metadata about the dataset::
     # (returns dictionary)
 
 Location of rasters on disk
-++++++++++++++++++++++++++
+++++++++++++++++++++++++++++
 
 The ``rasters_dir`` attribute points to the directory containing the rasters::
 

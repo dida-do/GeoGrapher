@@ -25,6 +25,7 @@ as well as other utility functions.
    conversion
    cluster_rasters
    glossary
+   modindex
 
 
 Indices and tables
