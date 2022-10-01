@@ -1,6 +1,6 @@
-"""label maker arg.
+"""Dataset cutter that iterates over rasters.
 
-Dataset cutter that iterates over rasters. Implements a general-purpose
+Implements a general-purpose
 higher order function to create or update datasets of GeoTiffs from
 existing ones by iterating over rasters.
 """
