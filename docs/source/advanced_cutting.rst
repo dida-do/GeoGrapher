@@ -221,7 +221,7 @@ The ``update`` method does the following:
     - record from which rasters in the source dataset cutouts were created
       in the ``cut_rasters`` list,
 - Save the ``DSCutterIterOverRasters`` as a ``<name>.json`` file in the
-target connector's ``connector_dir``.
+  target connector's ``connector_dir``.
 
 Example
 ~~~~~~~
