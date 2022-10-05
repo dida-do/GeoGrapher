@@ -10,10 +10,11 @@ particularly suited for *object-centric* vision tasks. GeoGrapher also
 provides highly general and customizable dataset cutting functionality
 as well as other utility functions.
 
+User guide
+==================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
    installation
    tutorials
@@ -25,7 +26,6 @@ as well as other utility functions.
    conversion
    cluster_rasters
    glossary
-   modindex
 
 
 Indices and tables
