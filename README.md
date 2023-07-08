@@ -60,4 +60,5 @@ Give this project a star if you like it!
 Contact the maintainer at [@rustamdantia](https://github.com/rustamdantia).
 
 # License
-This project is Apache licensed, see [here](LICENSE).
+This project is licensed under a version of the Hippocratic License that in particular prohibits use for military activites. You can find a copy of the license [here](LICENSE).
+[![Hippocratic License HL3-CL-ECO-MIL](https://img.shields.io/static/v1?label=Hippocratic%20License&message=HL3-CL-ECO-MIL&labelColor=5e2751&color=bc8c3d)](https://firstdonoharm.dev/version/3/0/cl-eco-mil.html)
