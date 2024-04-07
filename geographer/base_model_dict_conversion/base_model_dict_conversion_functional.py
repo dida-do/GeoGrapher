@@ -43,9 +43,11 @@ def get_nested_base_model_dict(
     }
     tuple_fields_dict = {
         add_escape_str(key): {
-            "constructor_tuple": get_nested_base_model_dict(val)
-            if isinstance(val, (BaseModel, dict))
-            else val
+            "constructor_tuple": (
+                get_nested_base_model_dict(val)
+                if isinstance(val, (BaseModel, dict))
+                else val
+            )
         }
         for key, val in dict_items
         if isinstance(val, tuple)

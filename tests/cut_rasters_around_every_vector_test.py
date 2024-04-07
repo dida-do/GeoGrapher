@@ -121,9 +121,9 @@ def test_rasters_around_every_vector(dummy_cut_source_data_dir):
     tempelhofer_feld: Polygon = target_connector.vectors.loc[
         "berlin_tempelhofer_feld"
     ].geometry
-    rasters_intersecting_tempelhofer_feld: List[
-        str
-    ] = target_connector.rasters_intersecting_vector("berlin_tempelhofer_feld")
+    rasters_intersecting_tempelhofer_feld: List[str] = (
+        target_connector.rasters_intersecting_vector("berlin_tempelhofer_feld")
+    )
     bboxes = target_connector.rasters.geometry.loc[
         rasters_intersecting_tempelhofer_feld
     ].tolist()

@@ -29,11 +29,12 @@ class SentinelDownloaderForSingleVector(RasterDownloaderForSingleVector):
     """Downloader for Sentinel-2 rasters.
 
     Requires environment variables sentinelAPIusername and
-    sentinelAPIpassword to set up the sentinel API. Assumes rasters
-    has columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
+    sentinelAPIpassword to set up the sentinel API. Assumes rasters has
+    columns 'geometry', 'timestamp', 'orig_crs_epsg_code', and
     'raster_processed?'. Subclass/modify if you need other columns.
 
-    See https://sentinelsat.readthedocs.io/en/latest/api_reference.html
+    See
+    https://sentinelsat.readthedocs.io/en/latest/api_reference.html
     for details on args passed to the API (e.g. date).
     """
 

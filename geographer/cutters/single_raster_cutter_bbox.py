@@ -9,7 +9,7 @@ from typing import Any, Optional, Union
 import geopandas as gpd
 import rasterio as rio
 from geopandas import GeoDataFrame
-from pydantic import PrivateAttr, validator
+from pydantic import PrivateAttr, field_validator
 from rasterio.windows import Window, from_bounds
 from shapely.geometry import box
 
@@ -49,7 +49,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
         super().__init__(**data)
         self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
 
-    @validator("bbox_geojson_path")
+    @field_validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):
         """Validate path exists and points to geojson."""
         if value.suffix != ".geojson":
@@ -58,7 +58,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
             raise FileNotFoundError(f".geojson file does not exist: {value}")
         return value
 
-    @validator("new_raster_size")
+    @field_validator("new_raster_size")
     def new_raster_size_type_correctness(cls, value: RasterSize) -> RasterSize:
         """Validate new_raster_size has correct type."""
         is_int: bool = isinstance(value, int)
@@ -73,7 +73,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
             )
         return value
 
-    @validator("new_raster_size")
+    @field_validator("new_raster_size")
     def new_raster_size_side_lengths_must_be_positive(
         cls, value: RasterSize
     ) -> RasterSize:

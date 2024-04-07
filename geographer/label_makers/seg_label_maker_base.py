@@ -122,8 +122,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def _compare_existing_rasters_to_rasters(connector: Connector):
         """Safety check.
 
-        Compare sets of rasters in rasters_dir and in
-        connector.rasters.
+        Compare sets of rasters in rasters_dir and in connector.rasters.
 
         Raises warnings if there is a discrepancy.
         """

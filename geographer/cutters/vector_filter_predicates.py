@@ -130,8 +130,8 @@ class OnlyThisVector(VectorFilterPredicate):
     Simple vector feature filter initialized with a vector feature
     this_vector_name.
 
-    Returns True if and only if the vector feature under consideration is equal
-    to this_vector_name.
+    Returns True if and only if the vector feature under consideration
+    is equal to this_vector_name.
     """
 
     def __init__(self, this_vector_name: Union[str, int]) -> None:
