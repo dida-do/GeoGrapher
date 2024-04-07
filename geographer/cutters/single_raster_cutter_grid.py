@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import rasterio as rio
 from affine import Affine
-from pydantic import validator
+from pydantic import field_validator
 from rasterio.windows import Window
 
 from geographer.connector import Connector
@@ -23,7 +23,7 @@ class SingleRasterCutterToGrid(SingleRasterCutter):
 
     new_raster_size: RasterSize
 
-    @validator("new_raster_size")
+    @field_validator("new_raster_size")
     def new_raster_size_type_correctness(cls, value: RasterSize) -> RasterSize:
         """Validate new_raster_size has correct type."""
         is_int: bool = isinstance(value, int)
@@ -38,7 +38,7 @@ class SingleRasterCutterToGrid(SingleRasterCutter):
             )
         return value
 
-    @validator("new_raster_size")
+    @field_validator("new_raster_size")
     def new_raster_size_side_lengths_must_be_positive(
         cls, value: RasterSize
     ) -> RasterSize:

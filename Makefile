@@ -36,7 +36,7 @@ format: venv
 	black $(PROJECTNAME)
 
 lint: venv
-	flake8 $(PROJECTNAME) tests
+	flake8 --show-source $(PROJECTNAME) tests
 
 test: venv
 	pytest -v

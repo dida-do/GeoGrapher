@@ -142,14 +142,16 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             len(self.target_connector.vectors) == 0
             and self.target_connector.label_type == "soft-categorical"
         ):
-            (
-                empty_vectors_with_corrected_columns
-            ) = self._combine_or_remove_classes_from_vectors(
-                label_type="soft-categorical",
-                vectors=self.target_connector.vectors,
-                all_source_vector_classes=(self.source_connector.all_vector_classes),
-                classes=classes,
-                new_class_names=new_class_names,
+            (empty_vectors_with_corrected_columns) = (
+                self._combine_or_remove_classes_from_vectors(
+                    label_type="soft-categorical",
+                    vectors=self.target_connector.vectors,
+                    all_source_vector_classes=(
+                        self.source_connector.all_vector_classes
+                    ),
+                    classes=classes,
+                    new_class_names=new_class_names,
+                )
             )
             self.target_connector.vectors = empty_vectors_with_corrected_columns
 

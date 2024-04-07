@@ -102,7 +102,7 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
         jaxa_file_and_folder_names = set()
         if download_mode == "bboxvertices":
 
-            for (x, y) in vector_geom.envelope.exterior.coords:
+            for x, y in vector_geom.envelope.exterior.coords:
 
                 jaxa_folder_name = "{}/".format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)

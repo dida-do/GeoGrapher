@@ -5,7 +5,6 @@ Run by hand to test downloading JAXA data. Intentionally not discoverable
 by pytest: Downloading JAXA rasters is slightly slow.
 """
 
-
 import shutil
 
 import geopandas as gpd

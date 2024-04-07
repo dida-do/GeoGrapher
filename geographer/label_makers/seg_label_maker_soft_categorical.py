@@ -21,9 +21,9 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
     Soft-categorical are probabilistic multi-class labels.
 
-    Assumes the connector's vectors contains for each
-    segmentation class a "prob_seg_class<seg_class>" column containing
-    the probabilities for that class.
+    Assumes the connector's vectors contains for each segmentation class
+    a "prob_seg_class<seg_class>" column containing the probabilities
+    for that class.
     """
 
     add_background_band: bool

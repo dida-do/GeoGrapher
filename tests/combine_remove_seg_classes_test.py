@@ -85,7 +85,8 @@ def test_combine_remove_seg_classes_categorical():
     for n in range(0, 1 + num_vectors // 100):
         range_lower = n * 100
         range_upper = min(num_vectors, (n + 1) * 100)
-        source_connector.vectors["type"].iloc[range_lower:range_upper] = str(n)
+        col_idx = source_connector.vectors.columns.get_loc("type")
+        source_connector.vectors.iloc[range_lower:range_upper, col_idx] = str(n)
     source_connector.task_vector_classes = (
         source_connector.vectors["type"].unique().tolist()
     )

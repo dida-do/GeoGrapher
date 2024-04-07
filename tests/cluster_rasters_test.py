@@ -16,9 +16,6 @@ from geographer.global_constants import (
 )
 from geographer.utils.cluster_rasters import get_raster_clusters
 
-# def test_delete_this():
-#     assert True == False
-
 
 def test_cluster_rasters():
     """Test get_raster_clusters.
@@ -27,9 +24,7 @@ def test_cluster_rasters():
     """
     # Create empty connector
     data_dir = Path("/whatever/")
-    connector = Connector.from_scratch(
-        data_dir=data_dir
-    )  # , task_vector_classes=['class1', 'class2'])
+    connector = Connector.from_scratch(data_dir=data_dir)
 
     """
     Create vectors

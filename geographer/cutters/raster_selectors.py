@@ -19,8 +19,7 @@ from geographer.connector import Connector
 class RasterSelector(collections.abc.Callable, BaseModel):
     """ABC for selecting from a list of rasters.
 
-    Subclasses are
-    used by DSCutterIterOverVectors.
+    Subclasses are used by DSCutterIterOverVectors.
 
     Subclasses should implement a __call__method that has the arguments
     and behavior given below.

@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
     SaveAndLoadBaseModelMixIn,
@@ -27,18 +27,14 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         title="Name",
         description="Name of dataset creator. Used as part of filename when saving.",
     )
-    _source_connector: Optional[Connector] = Field(
-        default=None, exclude=True, description="Do not set by hand"
-    )
-    _target_connector: Optional[Connector] = Field(
-        default=None, exclude=True, description="Do not set by hand"
-    )
+    _source_connector: Optional[Connector] = PrivateAttr(default=None)
+    _target_connector: Optional[Connector] = PrivateAttr(default=None)
 
     class Config:
         """BaseModel Config."""
 
         arbitrary_types_allowed = True
-        extra = Extra.allow
+        extra = "allow"
         underscore_attrs_are_private = True
 
     def __init__(self, **data):

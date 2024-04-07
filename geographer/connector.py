@@ -36,7 +36,7 @@ INFERRED_PATH_ATTR_FILENAMES = {
     "attrs_path": "attrs.json",
     "_graph_path": "graph.json",
 }
-"""attribute self.key will be self.connector_dir / val"""
+"""Attribute self.key will be self.connector_dir / val."""
 
 ConnectorType = TypeVar("ConnectorType", bound="Connector")
 

@@ -12,8 +12,8 @@ from geographer.graph.type_aliases import VertexColor, VertexName
 class BipartiteGraphClass(ABC):
     """ABC for bipartite graphs.
 
-    The decomposition of a vertex set
-    into two sets are thought of as vertex colors, e.g. red or black.
+    The decomposition of a vertex set into two sets are thought of as
+    vertex colors, e.g. red or black.
 
     The graph can be directed or not and the edges can have extra data.
     e.g. a name, a color, a weight, possibly even composite data in the
