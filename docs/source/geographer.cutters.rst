@@ -4,14 +4,6 @@ geographer.cutters package
 Submodules
 -----------------
 
-geographer.cutters.cut\_bboxes module
--------------------------------------------
-
-.. automodule:: geographer.cutters.cut_bboxes
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geographer.cutters.cut\_every\_raster\_to\_grid module
 ---------------------------------------------------------
 
