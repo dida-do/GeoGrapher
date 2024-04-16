@@ -27,6 +27,13 @@ User guide
    cluster_rasters
    glossary
 
+API Reference
+=============
+
+.. toctree::
+   :maxdepth: 1
+
+   geographer <modules>
 
 Indices and tables
 ==================

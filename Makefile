@@ -42,4 +42,4 @@ test: venv
 	pytest -v
 
 docs: venv
-	cd docs && make html
+	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make html
