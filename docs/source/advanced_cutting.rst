@@ -206,7 +206,7 @@ An instance is initialized with the following arguments:
     - ``raster_filter_predicate``: A ``RasterFilterPredicate`` used for selecting
       rasters from which cutouts are to be cut.
     - ``raster_cutter``: A ``SingleRasterCutter`` for cutting the rasters.
-    - An optional ``LabelMaker`` (see :ref:`here <label_makers>`) for generating
+    - An optional ``LabelMaker`` (see :doc:`label_makers`) for generating
       labels for the cutouts.
 
 The ``cut`` method of ``DSCutterIterOverVectors`` creates a new dataset
