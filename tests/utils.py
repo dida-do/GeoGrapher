@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
-from typing import Optional, Union
 
 import git
 import numpy as np
@@ -22,14 +21,14 @@ def get_test_dir():
 
 
 def create_dummy_rasters(
-    data_dir: Union[Path, str],
+    data_dir: Path | str,
     raster_size: int,
-    raster_names: Optional[list[str]] = None,
+    raster_names: list[str] | None = None,
 ) -> None:
     """Create dummy rasters.
 
-    Create dummy rasters for a dataset from the connector's
-    rasters geodataframe.
+    Create dummy rasters for a dataset from the connector's rasters
+    geodataframe.
     """
     connector = Connector.from_data_dir(data_dir)
     connector.rasters_dir.mkdir(parents=True, exist_ok=True)
@@ -45,7 +44,6 @@ def create_dummy_rasters(
         ),
         desc="Creating dummy rasters",
     ):
-
         raster_array = np.stack(
             [np.ones((raster_size, raster_size), dtype=np.uint8) * n for n in range(3)]
         )
@@ -71,7 +69,7 @@ def create_dummy_rasters(
                 dst.write(raster_array[idx, :, :], idx + 1)
 
 
-def delete_dummy_rasters(data_dir: Union[Path, str]) -> None:
-    """Delete dummy raster data (rasters and segmentation labels) from dataset."""
+def delete_dummy_rasters(data_dir: Path | str) -> None:
+    """Delete dummy raster data from dataset."""
     shutil.rmtree(data_dir / "rasters", ignore_errors=True)
     shutil.rmtree(data_dir / "labels", ignore_errors=True)

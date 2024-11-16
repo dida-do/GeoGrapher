@@ -6,7 +6,7 @@ import json
 import logging
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import Any, Literal, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Literal, Sequence, Type, TypeVar
 
 import geopandas as gpd
 from geopandas import GeoDataFrame
@@ -70,15 +70,15 @@ class Connector(
         load_from_disk: bool,
 
         # data dir
-        data_dir: Union[Path, str],
+        data_dir: Path | str,
 
         # args w/o default values
-        vectors: Optional[GeoDataFrame] = None,
-        rasters: Optional[GeoDataFrame] = None,
+        vectors: GeoDataFrame | None = None,
+        rasters: GeoDataFrame | None = None,
 
         # remaining non-path args w/ default values
-        task_vector_classes: Optional[Sequence[str]] = None,
-        background_class: Optional[str] = None,
+        task_vector_classes: Sequence[str] | None = None,
+        background_class: str | None = None,
         crs_epsg_code: int = STANDARD_CRS_EPSG_CODE,
         raster_count_col_name: str = "raster_count",
 
@@ -196,7 +196,7 @@ class Connector(
     @classmethod
     def from_data_dir(
         cls: Type[ConnectorType],
-        data_dir: Union[Path, str],
+        data_dir: Path | str,
     ) -> ConnectorType:
         """Initialize a connector from a data directory.
 
@@ -217,19 +217,20 @@ class Connector(
         try:
             attrs_path = Path(connector_dir) / \
                 INFERRED_PATH_ATTR_FILENAMES["attrs_path"]
-            with open(attrs_path, "r") as read_file:
-                kwargs = json.load(read_file)
-        except FileNotFoundError as exc:
+            with open(attrs_path, "r") as file:
+                kwargs = json.load(file)
+        except FileNotFoundError:
             log.exception(
                 "Missing connector file %s found in %s",
                 INFERRED_PATH_ATTR_FILENAMES['attrs_path'],
                 connector_dir)
-            raise exc
+            raise
         except JSONDecodeError:
             log.exception(
                 "The %s file in %s is corrupted!",
                 INFERRED_PATH_ATTR_FILENAMES['attrs_path'],
                 connector_dir)
+            raise
 
         new_connector = cls(
             load_from_disk=True,
@@ -399,7 +400,7 @@ class Connector(
 
     def empty_connector_same_format(
         self,
-        data_dir: Union[Path, str]
+        data_dir: Path | str
     ) -> Connector:
         """Return an empty connector of the same format.
 
@@ -528,7 +529,7 @@ class Connector(
 
     def _init_set_paths(
         self,
-        data_dir: Union[Path, str],
+        data_dir: Path | str,
     ):
         """Set paths to raster/label data and connector component files.
 
@@ -552,7 +553,7 @@ class Connector(
     @classmethod
     def _get_default_dirs_from_data_dir(
             cls,
-            data_dir: Union[Path, str]
+            data_dir: Path | str
             ) -> tuple[Path, Path, Path]:
 
         data_dir = Path(data_dir)
@@ -587,7 +588,7 @@ class Connector(
         task_vector_classes: list[str],
         background_class: str, **kwargs
     ):
-        """TODO.
+        """Check non-task vector class and task classes are disjoint.
 
         Args:
             task_vector_classes: [description]

@@ -1,9 +1,10 @@
 """Utility functions for merging datasets."""
 
+from __future__ import annotations
+
 import os
 import shutil
 from pathlib import Path
-from typing import Union
 
 from tqdm.auto import tqdm
 
@@ -11,8 +12,8 @@ from geographer.connector import Connector
 
 
 def merge_datasets(
-    source_data_dir: Union[Path, str],
-    target_data_dir: Union[Path, str],
+    source_data_dir: Path | str,
+    target_data_dir: Path | str,
     delete_source: bool = True,
 ) -> None:
     """Merge datasets.
@@ -46,7 +47,7 @@ def merge_datasets(
 
 
 # TODO rewrite using pathlib
-def merge_dirs(root_src_dir: Union[Path, str], root_dst_dir: Union[Path, str]) -> None:
+def merge_dirs(root_src_dir: Path | str, root_dst_dir: Path | str) -> None:
     """Recursively merge two folders including subfolders.
 
     (Shamelessly copied from stackoverflow)

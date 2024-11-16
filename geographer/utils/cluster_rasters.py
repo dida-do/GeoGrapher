@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple, Union
+from typing import Any, Literal, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -21,15 +21,13 @@ from geographer.utils.utils import deepcopy_gdf
 
 
 def get_raster_clusters(
-    connector: Union[Connector, Path, str],
+    connector: Connector | Path | str,
     clusters_defined_by: Literal[
         "rasters_that_share_vectors",
         "rasters_that_share_vectors_or_overlap",
     ],
-    raster_names: Optional[list[str]] = None,
-    preclustering_method: Optional[
-        Literal["x then y-axis", "y then x-axis", "x-axis", "y-axis"]
-    ] = "y then x-axis",  # TODO!!!!!!!!!!
+    raster_names: list[str] | None = None,
+    preclustering_method: Literal["x then y-axis", "y then x-axis", "x-axis", "y-axis"] | None = "y then x-axis",  # TODO!!!!!!!!!!
 ) -> list[set[str]]:
     """Return clusters of raster.
 
@@ -37,7 +35,7 @@ def get_raster_clusters(
         connector: connector or path or str to data dir containing connector
         clusters_defined_by: relation between rasters defining clusters
         raster_names: optional list of raster names
-        preclustering_method (Optional[ str]): optional preclustering method to speed
+        preclustering_method: optional preclustering method to speed
             up clustering
 
     Returns:
@@ -56,12 +54,10 @@ def get_raster_clusters(
         raster_names = connector.rasters.index.tolist()
 
     if preclustering_method is None:
-
         preclusters = [set(raster_names)]
         singletons, non_singletons = [], preclusters
 
     elif preclustering_method in {"x-axis", "y-axis"}:
-
         axis = preclustering_method[0]  # 'x' or 'y'
         geoms = _get_preclustering_geoms(connector=connector, raster_names=raster_names)
 
@@ -69,7 +65,6 @@ def get_raster_clusters(
         singletons, non_singletons = _separate_non_singletons(preclusters)
 
     elif preclustering_method in {"x then y-axis", "y then x-axis"}:
-
         first_axis = preclustering_method[0]
         second_axis = "y" if first_axis == "x" else "x"
 
@@ -115,13 +110,10 @@ def _refine_preclustering_along_second_axis(
     singletons, preclusters_along_2nd_axis = [], []
 
     for precluster in preclusters:
-
         if len(precluster) == 1:
-
             singletons.append(precluster)
 
         else:
-
             precluster_geoms = _get_preclustering_geoms(
                 connector=connector, raster_names=list(precluster)
             )
@@ -140,7 +132,6 @@ def _refine_preclustering_along_second_axis(
 def _get_preclustering_geoms(
     connector: Connector, raster_names: list[str]
 ) -> GeoDataFrame:
-
     # raster geoms
     rasters = deepcopy_gdf(connector.rasters[["geometry"]].loc[raster_names])
     rasters["name"] = rasters.index
@@ -172,7 +163,9 @@ def _get_preclustering_geoms(
     assert set(vectors["name"]) & set(rasters["name"]) == set()
 
     # combine geoms
-    geoms = GeoDataFrame(pd.concat([rasters, vectors]), crs=rasters.crs)
+    geoms = GeoDataFrame(
+        pd.concat([rasters, vectors]), crs=rasters.crs, geometry="geometry"
+    )
 
     # don't need ?
     geoms = deepcopy_gdf(geoms)
@@ -185,6 +178,7 @@ def _get_preclustering_geoms(
         geoms = GeoDataFrame(
             pd.concat([geoms, geoms.geometry.bounds], axis=1),  # column axis
             crs=geoms.crs,
+            geometry="geometry",
         )
 
     return geoms
@@ -193,7 +187,6 @@ def _get_preclustering_geoms(
 def _separate_non_singletons(
     preclusters: list[set[Any]],
 ) -> tuple[list[set[Any]], list[set[Any]]]:
-
     singletons, non_singletions = [], []
     for precluster in preclusters:
         if len(precluster) == 1:
@@ -208,7 +201,6 @@ def _separate_non_singletons(
 def _pre_cluster_along_axis(
     geoms: GeoDataFrame, axis: Literal["x", "y"]
 ) -> list[set[str]]:
-
     if axis not in {"x", "y"}:
         raise ValueError("axis arg should be one of 'x', 'y'.")
 
@@ -231,7 +223,6 @@ def _pre_cluster_along_axis(
     raster_clusters_along_axis = []
 
     while interval_endpoints != []:
-
         rightmost_endpoint = interval_endpoints.pop()
         assert rightmost_endpoint["type"] == "max"
 
@@ -295,11 +286,9 @@ def _are_connected_by_an_edge(
     other_raster_bbox = connector.rasters.loc[another_raster].geometry
 
     if clusters_defined_by == "rasters_that_overlap":
-
         connected = raster_bbox.intersects(other_raster_bbox)
 
     elif clusters_defined_by == "rasters_that_share_vectors":
-
         vectors_in_raster = set(connector.vectors_intersecting_raster(raster))
         vectors_in_other_raster = set(
             connector.vectors_intersecting_raster(another_raster)
@@ -308,7 +297,6 @@ def _are_connected_by_an_edge(
         connected = vectors_in_raster & vectors_in_other_raster != set()
 
     elif clusters_defined_by == "rasters_that_share_vectors_or_overlap":
-
         connected_bc_rasters_overlap = _are_connected_by_an_edge(
             raster, another_raster, "rasters_that_overlap", connector
         )
@@ -319,7 +307,6 @@ def _are_connected_by_an_edge(
         connected = connected_bc_rasters_overlap or connected_bc_of_shared_polygons
 
     else:
-
         raise ValueError(f"Unknown clusters_defined_by arg: {clusters_defined_by}")
 
     return connected

@@ -1,12 +1,17 @@
 """ABC for creating or updating a dataset from an existing source dataset."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
     SaveAndLoadBaseModelMixIn,
@@ -21,6 +26,8 @@ from geographer.connector import (
 class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     """ABC for creating or updating a dataset from an existing one."""
 
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
     source_data_dir: Path
     target_data_dir: Path
     name: str = Field(
@@ -29,13 +36,6 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     )
     _source_connector: Optional[Connector] = PrivateAttr(default=None)
     _target_connector: Optional[Connector] = PrivateAttr(default=None)
-
-    class Config:
-        """BaseModel Config."""
-
-        arbitrary_types_allowed = True
-        extra = "allow"
-        underscore_attrs_are_private = True
 
     @field_validator("source_data_dir", mode="before")
     def validate_source_data_dir(cls, value: Path) -> Path:
@@ -140,7 +140,7 @@ class DSCreatorFromSourceWithBands(DSCreatorFromSource, ABC):
     Includes a bands field.
     """
 
-    bands: Optional[Dict[str, Optional[List[int]]]] = Field(
+    bands: Optional[dict[str, Optional[list[int]]]] = Field(
         default=None,
         title="Dict of band indices",
         description="keys: raster directory names, values: list of band indices "

@@ -7,7 +7,7 @@ serializing BaseModels.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ from geographer.utils.utils import removeprefix
 
 
 def get_nested_base_model_dict(
-    base_model_obj_or_dict: Union[BaseModel, dict, Any]
+    base_model_obj_or_dict: BaseModel | dict | Any,
 ) -> dict:
     """Return nested dict for BaseModel or dict.
 
@@ -26,7 +26,7 @@ def get_nested_base_model_dict(
         dict_ = base_model_obj_or_dict
         dict_items = base_model_obj_or_dict.items()
     elif isinstance(base_model_obj_or_dict, BaseModel):
-        dict_ = base_model_obj_or_dict.dict()
+        dict_ = base_model_obj_or_dict.model_dump()
         dict_items = base_model_obj_or_dict
 
     dict_or_base_model_fields_dict = {
@@ -80,14 +80,14 @@ def get_nested_base_model_dict(
     return result
 
 
-def get_nested_dict(obj: Union[BaseModel, dict, Any]) -> Union[dict, Any]:
+def get_nested_dict(obj: BaseModel | dict | Any) -> dict | Any:
     """Return nested dict if obj is a BaseModel or dict else return obj."""
 
 
 def eval_nested_base_model_dict(
-    dict_or_field_value: Union[dict, Any],
-    constructor_symbol_table: Optional[dict[str, Any]] = None,
-) -> Union[BaseModel, Any]:
+    dict_or_field_value: dict | Any,
+    constructor_symbol_table: dict[str, Any] | None = None,
+) -> BaseModel | Any:
     """Evaluate nested BaseModel dict (or field contents).
 
     Args:
@@ -172,13 +172,13 @@ def is_base_model_constructor_dict(dict_: dict) -> bool:
 
 
 def get_base_model_constructor(
-    dict_: dict, constructor_symbol_table: Optional[dict[str, Any]] = None
+    dict_: dict, constructor_symbol_table: dict[str, Any] | None = None
 ) -> BaseModel:
     """Return constructor corresponding to encoded BaseModel.
 
     Args:
         dict_ (dict): nested base model dict
-        constructor_symbol_table (Optional[dict[str, Any]], optional): optional symbol
+        constructor_symbol_table (dict[str, Any] | None, optional): optional symbol
             table of constructors. Defaults to None.
 
     Returns:

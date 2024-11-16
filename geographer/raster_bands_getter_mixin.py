@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import rasterio as rio
 
@@ -13,7 +12,7 @@ class RasterBandsGetterMixIn:
 
     def _get_bands_for_raster(
         self,
-        bands: Optional[dict[str, Optional[list[int]]]],
+        bands: dict[str, list[int] | None] | None,
         source_raster_path: Path,
     ) -> list[int]:
         """Return bands indices to  be used in the target raster.

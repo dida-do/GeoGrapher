@@ -1,8 +1,10 @@
 """Dataset cutter that cuts out rasters around vector features."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from geographer.cutters.cut_iter_over_vectors import DSCutterIterOverVectors
 from geographer.cutters.raster_selectors import RandomRasterSelector, RasterSelector
@@ -19,15 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_cutter_rasters_around_every_vector(
-    source_data_dir: Union[Path, str],
-    target_data_dir: Union[Path, str],
+    source_data_dir: Path | str,
+    target_data_dir: Path | str,
     name: str,
     mode: Literal["random", "centered", "variable"] = "random",
-    new_raster_size: Optional[RasterSize] = 512,
-    min_new_raster_size: Optional[RasterSize] = None,
-    scaling_factor: Optional[float] = None,
+    new_raster_size: RasterSize | None = 512,
+    min_new_raster_size: RasterSize | None = None,
+    scaling_factor: float | None = None,
     target_raster_count: int = 1,
-    bands: Optional[dict] = None,
+    bands: dict | None = None,
     random_seed: int = 10,
 ) -> DSCutterIterOverVectors:
     """Return dataset cutter that creates cutouts around vector features.

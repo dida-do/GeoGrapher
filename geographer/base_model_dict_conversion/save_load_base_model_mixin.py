@@ -8,7 +8,7 @@ from abc import abstractmethod
 from importlib import import_module
 from inspect import getmro, isabstract, isclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ class SaveAndLoadBaseModelMixIn:
         """Save instance to file."""
         pass
 
-    def _save(self, json_file_path: Union[str, Path]) -> None:
+    def _save(self, json_file_path: Path | str) -> None:
         """Save to json_file."""
         # Use to implement save method with file_path determined by use case
         json_file_path = Path(json_file_path)
@@ -42,8 +42,8 @@ class SaveAndLoadBaseModelMixIn:
     @classmethod
     def from_json_file(
         cls,
-        json_file_path: Union[Path, str],
-        constructor_symbol_table: Optional[dict[str, Any]] = None,
+        json_file_path: Path | str,
+        constructor_symbol_table: dict[str, Any] | None = None,
     ) -> Any:
         """Load and return saved BaseModel."""
         if constructor_symbol_table is None:

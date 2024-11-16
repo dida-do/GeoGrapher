@@ -1,7 +1,5 @@
 """RasterDownloadProcessor for JAXA downloads."""
 
-from __future__ import annotations
-
 import logging
 import shutil
 from pathlib import Path
@@ -25,7 +23,6 @@ class JAXADownloadProcessor(RasterDownloadProcessor):
         download_dir: Path,
         rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
-        **kwargs,
     ) -> dict:
         """Process a downloaded JAXA file.
 

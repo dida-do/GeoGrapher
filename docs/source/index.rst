@@ -1,6 +1,11 @@
-######################################
-Welcome to GeoGrapher's documentation!
-######################################
+|
+
+.. image:: _static/GeoGrapher.png
+   :width: 80px
+   :align: center
+
+GeoGrapher Documentation
+========================
 
 **GeoGrapher** is a Python library for building and handling remote sensing
 computer vision datasets assembled from vector features and rasters.
@@ -11,7 +16,7 @@ provides highly general and customizable dataset cutting functionality
 as well as other utility functions.
 
 User guide
-==================
+-----------
 
 .. toctree::
    :maxdepth: 1
@@ -28,7 +33,7 @@ User guide
    glossary
 
 API Reference
-=============
+-------------
 
 .. toctree::
    :maxdepth: 1
@@ -36,7 +41,7 @@ API Reference
    geographer <modules>
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

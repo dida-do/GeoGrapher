@@ -1,7 +1,5 @@
 """Label maker for categorical segmentation labels."""
 
-from __future__ import annotations
-
 import logging
 
 import numpy as np
@@ -48,7 +46,6 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
         # If the raster does not exist ...
         if not raster_path.is_file():
-
             # ... log error to file.
             log.error(
                 "SegLabelMakerCategorical: input raster %s does not exist!", raster_path
@@ -56,16 +53,13 @@ class SegLabelMakerCategorical(SegLabelMaker):
 
         # Else, if the label already exists ...
         elif label_path.is_file():
-
             # ... log error to file.
             log.error("SegLabelMakerCategorical: label %s already exists!", label_path)
 
         # Else, ...
         else:
-
             # ...open the raster, ...
             with rio.open(raster_path) as src:
-
                 profile = src.profile
                 profile.update({"count": 1, "dtype": rio.uint8})
 
@@ -78,7 +72,6 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     # nbits=1,
                     **profile,
                 ) as dst:
-
                     # ... create an empty band of zeros (background class) ...
                     label = np.zeros((src.height, src.width), dtype=np.uint8)
 
@@ -86,7 +79,6 @@ class SegLabelMakerCategorical(SegLabelMaker):
                     shapes = []  # pairs of geometries and values to burn in
 
                     for count, seg_class in enumerate(segmentation_classes, start=1):
-
                         # To do that, first find (the df of) the geometries
                         # intersecting the raster ...
                         vectors_intersecting_raster: GeoDataFrame = (

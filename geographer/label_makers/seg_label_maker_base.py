@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from typing import Optional
 
 from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
@@ -56,7 +55,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def make_labels(
         self,
         connector: Connector,
-        raster_names: Optional[list[str]] = None,
+        raster_names: list[str] | None = None,
     ):
         """Create segmentation labels.
 
@@ -101,7 +100,7 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        raster_names: Optional[list[str]] = None,
+        raster_names: list[str] | None = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 
@@ -136,7 +135,6 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         # ... then if the set of rasters is a strict subset
         # of the rasters in rasters ...
         if existing_rasters < set(connector.rasters.index):
-
             # ... log a warning
             log.warning(
                 "There are rasters in connector.rasters that "
@@ -146,7 +144,6 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         # ... and if it is not a subset, ...
         if not existing_rasters <= set(connector.rasters.index):
-
             # ... log an warning
             message = (
                 "Warning! There are rasters in the dataset's rasters "

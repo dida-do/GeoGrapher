@@ -54,11 +54,9 @@ def check_graph_vertices_counts(connector: Connector):
     answer = True
 
     for set_description, set_difference in set_descriptions_and_differences:
-
         num_elements_in_difference = len(set_difference)
 
         if num_elements_in_difference != 0:
-
             answer = False
 
             are_or_is = "are" if num_elements_in_difference > 1 else "is"
@@ -83,7 +81,6 @@ def check_graph_vertices_counts(connector: Connector):
     )
 
     if not counts_correct.all():
-
         return_df = pd.concat(
             [connector.vectors[connector.raster_count_col_name], raster_count_edges],
             axis=1,

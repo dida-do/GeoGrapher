@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 from geopandas import GeoDataFrame
 from shapely.geometry.base import BaseGeometry
@@ -53,7 +53,7 @@ class BipartiteGraphMixIn:
         return self.rasters.loc[raster_name, "geometry"]
 
     def vectors_intersecting_raster(
-        self, raster_name: Union[str, list[str]]
+        self, raster_name: str | list[str]
     ) -> list[str]:
         """Return vector features intersecting one or (any of) several rasters.
 
@@ -83,7 +83,7 @@ class BipartiteGraphMixIn:
 
     def rasters_intersecting_vector(
         self,
-        vector_name: Union[str, list[str]],
+        vector_name: str | list[str],
         mode: Literal["names", "paths"] = "names",
     ) -> list[str]:
         """Return rasters intersecting several vector feature(s).
@@ -125,7 +125,7 @@ class BipartiteGraphMixIn:
         return answer
 
     def vectors_contained_in_raster(
-        self, raster_name: Union[str, list[str]]
+        self, raster_name: str | list[str]
     ) -> list[str]:
         """Return vector features fully containing a given raster.
 
@@ -160,7 +160,7 @@ class BipartiteGraphMixIn:
 
     def rasters_containing_vector(
         self,
-        vector_name: Union[str, list[str]],
+        vector_name: str | list[str],
         mode: Literal["names", "paths"] = "names",
     ) -> list[str]:
         """Return rasters in which a given vector feature is fully contained.
@@ -259,10 +259,10 @@ class BipartiteGraphMixIn:
         self,
         raster_name: str,
         vector_name: str,
-        contains_or_intersects: Optional[str] = None,
-        vectors: Optional[GeoDataFrame] = None,
-        raster_bounding_rectangle: Optional[BaseGeometry] = None,
-        graph: Optional[BipartiteGraphClass] = None,
+        contains_or_intersects: str | None = None,
+        vectors: GeoDataFrame | None = None,
+        raster_bounding_rectangle: BaseGeometry | None = None,
+        graph: BipartiteGraphClass | None = None,
         do_safety_check: bool = True,
     ):
         """Connect a raster to a vector feature in the graph.
@@ -301,7 +301,6 @@ class BipartiteGraphMixIn:
 
         # get containment relation if not given
         if contains_or_intersects is None:
-
             vector_geom = vectors.loc[vector_name, "geometry"]
 
             non_empty_intersection = vector_geom.intersects(raster_bounding_rectangle)
@@ -338,7 +337,7 @@ class BipartiteGraphMixIn:
             vectors.loc[vector_name, self.raster_count_col_name] += 1
 
     def _add_vector_to_graph(
-        self, vector_name: str, vectors: Optional[GeoDataFrame] = None
+        self, vector_name: str, vectors: GeoDataFrame | None = None
     ):
         """Connect a vector feature all intersecting rasters.
 
@@ -397,9 +396,9 @@ class BipartiteGraphMixIn:
     def _add_raster_to_graph_modify_vectors(
         self,
         raster_name: str,
-        raster_bounding_rectangle: Optional[BaseGeometry] = None,
-        vectors: Optional[GeoDataFrame] = None,
-        graph: Optional[BipartiteGraphClass] = None,
+        raster_bounding_rectangle: BaseGeometry | None = None,
+        vectors: GeoDataFrame | None = None,
+        graph: BipartiteGraphClass | None = None,
     ):
         """Add raster to graph and modify vector features.
 

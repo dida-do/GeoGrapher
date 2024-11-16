@@ -1,22 +1,81 @@
-[tool.black]
-target-version = ['py37', 'py38', 'py39']
+[project]
+name = "geographer"
+version = "1.0.0"
+description = "Build object-centric remote sensing computer vision datasets"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Rustam Antia", email = "rustam.antia@gmail.com"}
+]
+keywords = ["remote sensing", "computer vision", "satellite imagery", "GIS", "machine learning"]
+classifiers = [
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3"
+]
+requires-python = ">=3.9"
+dependencies = [
+    "eodag",
+    "eval_type_backport",
+    "fiona",
+    "geojson",
+    "geopandas",
+    "GitPython",
+    "ipywidgets",
+    "networkx",
+    "numpy",
+    "packaging",
+    "pandas",
+    "pydantic >= 2.0",
+    "pyproj",
+    "rasterio",
+    "requests",
+    "rioxarray",
+    "rtree",
+    "scipy",
+    "sentinelsat",
+    "Shapely",
+    "tqdm",
+    "urllib3"
+]
 
-[tool.isort]
-atomic = true
-profile = "black"
-skip_gitignore = true
-
-[tool.mypy]
-plugins = ["pydantic.mypy"]
-show_error_codes = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-ignore_missing_imports = true
-warn_unused_ignores = false
-warn_return_any = false
-warn_unreachable = false
-strict_optional=true
+[project.optional-dependencies]
+dev = [
+    "ruff==0.7.4",
+    "build",
+    "docformatter",
+    "ipykernel",
+    "pytest"
+]
+docs = [
+    "furo",
+    "autodoc_pydantic",
+    "docutils",
+    "pandoc",
+    "Sphinx",
+    "sphinx-autodoc-typehints",
+    "nbsphinx",
+    "nbsphinx-link"
+]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel", "build"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = {find = {include = ["geographer*"], exclude = ["docs*", "tests*", "notebooks*"]}}
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+extend-ignore = ["E266"]  # allow multiple leading '#' for block comments
+per-file-ignores = { "__init__.py" = ["F401", "D104"] }
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true

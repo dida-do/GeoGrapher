@@ -54,7 +54,6 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # If the raster does not exist ...
         if not raster_path.is_file():
-
             # ... log error to file.
             log.error(
                 "_make_geotif_label_soft_categorical: input raster %s does not exist!",
@@ -63,7 +62,6 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # Else, if the label already exists ...
         elif label_path.is_file():
-
             # ... log error to file.
             log.error(
                 "_make_geotif_label_soft_categorical: label %s already exists!",
@@ -72,19 +70,16 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
         # Else, ...
         else:
-
             label_bands_count = self._get_label_bands_count(connector)
 
             # ...open the raster, ...
             with rio.open(raster_path) as src:
-
                 # Create profile for the label.
                 profile = src.profile
                 profile.update({"count": label_bands_count, "dtype": rio.float32})
 
                 # Open the label ...
                 with rio.open(label_path, "w+", **profile) as dst:
-
                     # ... and create one band in the label for each segmentation class.
 
                     # (if an implicit background band is to be included,
@@ -94,7 +89,6 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                     for count, seg_class in enumerate(
                         connector.task_vector_classes, start=start_band
                     ):
-
                         # To do that, first find (the df of)
                         # the geoms intersecting the raster ...
                         vectors_intersecting_raster_df = connector.vectors.loc[
@@ -149,7 +143,6 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
 
                     # If the background is not included in the segmentation classes ...
                     if self.add_background_band:
-
                         # ... add background band.
 
                         non_background_band_indices = list(
@@ -172,16 +165,13 @@ class SegLabelMakerSoftCategorical(SegLabelMaker):
                         dst.write(background_band, 1)
 
     def _get_label_bands_count(self, connector: Connector) -> bool:
-
         # If the background is not included in the segmentation classes (default) ...
         if self.add_background_band:
-
             # ... add a band for the implicit background segmentation class, ...
             label_bands_count = 1 + len(connector.task_vector_classes)
 
         # ... if the background *is* included, ...
         elif not self.add_background_band:
-
             # ... don't.
             label_bands_count = len(connector.task_vector_classes)
 

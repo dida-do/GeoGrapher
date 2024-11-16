@@ -1,25 +1,25 @@
 """Custom Error classes."""
 
 
-class Error(Exception):
-    """Base class for exceptions in the connector class."""
+class GeoGrapherError(Exception):
+    """Base class for exceptions."""
 
     pass
 
 
-class RasterAlreadyExistsError(Error):
+class RasterAlreadyExistsError(GeoGrapherError):
     """Raster already exists in dataset."""
 
     pass
 
 
-class NoRastersForVectorFoundError(Error):
+class NoRastersForVectorFoundError(GeoGrapherError):
     """No rasters found or none could be downloaded."""
 
     pass
 
 
-class RasterDownloadError(Error):
+class RasterDownloadError(GeoGrapherError):
     """Error occurs while downloading raster."""
 
     pass
