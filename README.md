@@ -1,3 +1,12 @@
+<p align="center">
+  <img src="docs/source/_static/GeoGrapher.png" alt="GeoGrapher Logo" width="70"><br>
+</p>
+<p align="center">
+  <a href="https://firstdonoharm.dev/version/3/0/cl-eco-mil.html">
+    <img src="https://img.shields.io/static/v1?label=Hippocratic%20License&message=HL3-CL-ECO-MIL&labelColor=5e2751&color=bc8c3d" alt="Hippocratic License">
+  </a>
+</p>
+
 # GeoGrapher
 
 *GeoGrapher* is a Python library for building remote sensing
@@ -11,7 +20,7 @@ utility functions.
 
 # Installation
 This package has two external dependencies:
-- Python 3.8 or newer.
+- Python 3.9 or newer.
 - The geopandas and rasterio libraries might depend on GDAL base C libraries.
 See [https://geopandas.org/en/stable/getting_started/install.html#dependencies](https://geopandas.org/en/stable/getting_started/install.html#dependencies)
 and [https://pypi.org/project/rasterio/](https://pypi.org/project/rasterio/)

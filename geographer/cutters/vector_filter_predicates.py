@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import collections
 from abc import abstractmethod
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from geopandas import GeoSeries
 from pandas import Series
@@ -25,7 +25,7 @@ class VectorFilterPredicate(BaseModel, collections.abc.Callable):
     @abstractmethod
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         target_connector: Connector,
         new_rasters_dict: dict,
         source_connector: Connector,
@@ -77,7 +77,7 @@ class IsVectorMissingRasters(VectorFilterPredicate):
 
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         target_connector: Connector,
         new_rasters_dict: dict,
         source_connector: Connector,
@@ -114,7 +114,7 @@ class AlwaysTrue(VectorFilterPredicate):
 
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         target_connector: Connector,
         new_rasters_dict: dict,
         source_connector: Connector,
@@ -134,7 +134,7 @@ class OnlyThisVector(VectorFilterPredicate):
     is equal to this_vector_name.
     """
 
-    def __init__(self, this_vector_name: Union[str, int]) -> None:
+    def __init__(self, this_vector_name: str | int) -> None:
         """Initialize OnlyThisVector.
 
         Args:
@@ -145,7 +145,7 @@ class OnlyThisVector(VectorFilterPredicate):
 
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         target_connector: Connector,
         new_rasters_dict: dict,
         source_connector: Connector,
@@ -165,17 +165,18 @@ class FilterVectorByRowCondition(VectorFilterPredicate):
     def __init__(
         self,
         row_series_predicate: collections.abc.Callable[
-            [Union[GeoSeries, Series]], bool
+            [GeoSeries | Series], bool
         ],
         mode: Literal["source", "target"],
     ) -> None:
         """Initialize FilterVectorByRowCondition.
 
         Args:
-            row_series_predicate (Callable[Union[[GeoSeries, Series]], bool]):
+            row_series_predicate:
                 predicate to apply to the row corresponding to a vector feature in
                 vectors in source_connector or target_connector.
-            mode (str) : Which GeoDataFrame the predicate should be applied to.
+            mode:
+                Which GeoDataFrame the predicate should be applied to.
                 One of 'source' or 'target'
         """
         super().__init__()
@@ -189,7 +190,7 @@ class FilterVectorByRowCondition(VectorFilterPredicate):
 
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         target_connector: Connector,
         new_rasters_dict: dict,
         source_connector: Connector,
@@ -202,7 +203,7 @@ class FilterVectorByRowCondition(VectorFilterPredicate):
             connector = source_connector
 
         vectors = connector.vectors
-        row_series: Union[GeoSeries, Series] = vectors.loc[vector_name]
+        row_series: GeoSeries | Series = vectors.loc[vector_name]
         answer = self.row_series_predicate(row_series)
 
         return answer

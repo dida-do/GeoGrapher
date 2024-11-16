@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import geopandas as gpd
 import rasterio as rio
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _correct_window_offset(
-    offset: Union[int, float], size: Union[int, float], new_size: int
+    offset: int | float, size: int | float, new_size: int
 ) -> int:
     center = offset + size / 2
     return int(center - new_size / 2)
@@ -47,7 +47,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
             bbox_geojson_path: path to geojson file containing the bboxes
         """
         super().__init__(**data)
-        self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
+        self._bboxes_df = gpd.read_file(self.bbox_geojson_path)
 
     @field_validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):
@@ -106,11 +106,10 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
         self,
         source_raster_name: str,
         source_connector: Connector,
-        target_connector: Optional[Connector] = None,
-        new_rasters_dict: Optional[dict] = None,
+        target_connector: Connector | None = None,
+        new_rasters_dict: dict | None = None,
         **kwargs: Any,
     ) -> list[str]:
-
         source_raster_path = source_connector.rasters_dir / source_raster_name
 
         with rio.open(source_raster_path) as src:

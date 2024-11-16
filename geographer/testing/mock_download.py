@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import random
 from pathlib import Path
-from typing import Any, Dict, Literal, Union
+from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from shapely.geometry import Polygon
 
 from geographer.connector import Connector
@@ -31,12 +31,9 @@ class MockDownloadProcessor(RasterDownloadProcessor):
     downloaded.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     source_connector: Connector = Field(exclude=True)
-
-    class Config:
-        """BaseModel Config."""
-
-        arbitrary_types_allowed = True
 
     def process(
         self,
@@ -45,8 +42,8 @@ class MockDownloadProcessor(RasterDownloadProcessor):
         rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
-    ) -> Dict[
-        Union[Literal["raster_name", "geometry", "orig_crs_epsg_code"], str], Any
+    ) -> dict[
+        Literal["raster_name", "geometry", "orig_crs_epsg_code"] | str, Any
     ]:
         """Process "downloaded" file, i.e. does nothing.
 
@@ -70,23 +67,20 @@ class MockDownloaderForSingleVector(RasterDownloaderForSingleVector):
     source directory. No actual raster data is copied.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     source_connector: Connector = Field(exclude=True)
     probability_of_download_error: float = 0.1
     probability_raster_already_downloaded: float = 0.1
 
-    class Config:
-        """BaseModel Config."""
-
-        arbitrary_types_allowed = True
-
     def download(
         self,
-        vector_name: Union[int, str],
+        vector_name: int | str,
         vector_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_rasters_set: set[Union[str, int]],
+        previously_downloaded_rasters_set: set[str | int],
         **kwargs,
-    ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
+    ) -> dict[Literal["raster_name", "raster_processed?"] | str, Any]:
         """Mock download an raster.
 
         Mock download an raster fully containing a vector feature or
@@ -131,7 +125,6 @@ class MockDownloaderForSingleVector(RasterDownloaderForSingleVector):
 
         # If there isn't such an raster ...
         if rasters_containing_vector == []:
-
             # ... inform the calling download_missing_rasters_for_vectors
             # by raising an error.
             raise NoRastersForVectorFoundError(
@@ -142,14 +135,12 @@ class MockDownloaderForSingleVector(RasterDownloaderForSingleVector):
         # Else, there is an raster in the source dataset
         # containing the vector feature.
         else:
-
             # With some probability the API answers our query with
             # an raster that has already been downloaded...
             if (
                 rasters_containing_vector
                 and random.random() < self.probability_raster_already_downloaded
             ):
-
                 # ... in which case we raise an error.
                 raise RasterAlreadyExistsError(
                     "random.random() was less than "
@@ -165,13 +156,11 @@ class MockDownloaderForSingleVector(RasterDownloaderForSingleVector):
             ]
 
             if remaining_rasters:
-
                 # ... choose one to 'download'.
                 raster_name = random.choice(remaining_rasters)
 
                 # With some probabibility  ...
                 if random.random() < self.probability_of_download_error:
-
                     # ... an error occurs when downloading,
                     # so we raise an RasterDownloadError.
                     raise RasterDownloadError(
@@ -191,7 +180,6 @@ class MockDownloaderForSingleVector(RasterDownloaderForSingleVector):
                 }
 
             else:
-
                 raise NoRastersForVectorFoundError(
                     "No new rasters containing vector feature "
                     f"{vector_name} found in source dataset"

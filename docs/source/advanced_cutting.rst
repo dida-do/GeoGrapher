@@ -245,7 +245,7 @@ You can write a custom ``RasterFilterPredicate`` to do this::
             target_assoc: Connector,
             new_raster_dict: dict,
             source_assoc: Connector,
-            cut_rasters: List[str],
+            cut_rasters: list[str],
         ) -> bool:
 
         local_timestamp: str = rasters.loc[raster_name, 'local_timestamp']

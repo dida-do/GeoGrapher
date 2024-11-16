@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel
+
+log = logging.getLogger(__name__)
 
 
 class RasterDownloadProcessor(ABC, BaseModel):
@@ -19,20 +22,27 @@ class RasterDownloadProcessor(ABC, BaseModel):
         download_dir: Path,
         rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
-        **kwargs: Any,
+        **params: Any,
     ) -> dict[
-        Union[Literal["raster_name", "geometry", "orig_crs_epsg_code"], str], Any
+        Literal["raster_name", "geometry", "orig_crs_epsg_code"] | str, Any
     ]:
         """Process a single download.
 
         Args:
-            raster_name: name of raster
-            download_dir: directory containing download
-            rasters_dir: directory to place processed raster in
-            crs_epsg_code: EPSG code of crs raster bounds should be returned in
-            kwargs: other keyword arguments
+            raster_name:
+                Name of raster
+            download_dir:
+                Directory containing download
+            rasters_dir:
+                Directory to place processed raster in
+            crs_epsg_code:
+                EPSG code of crs raster bounds should be returned in
+            params:
+                Additional keyword arguments. Corresponds to the processor_params
+                argument of the RasterDownloaderForVectors.download method.
 
         Returns:
-            return_dict: Contains information about the downloaded product.
+            return_dict:
+                Contains information about the downloaded product.
                 Keys should include: 'raster_name', 'geometry', 'orig_crs_epsg_code'.
         """

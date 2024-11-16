@@ -58,7 +58,7 @@ cutouts around vector features from 10980 × 10980 Sentinel-2 tiles)::
         source_data_dir=<SOURCE_DATA_DIR>,
         target_data_dir=<TARGET_DATA_DIR>,
         name=<OPTIONAL_NAME_FOR_SAVING>
-        new_raster_size: Optional[RasterSize]
+        new_raster_size: RasterSize | None
         new_raster_size=512,
         target_raster_count=2,
         mode: "random")

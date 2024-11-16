@@ -38,7 +38,7 @@ import json
 import logging
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from geographer.graph.bipartite_graph_class import BipartiteGraphClass
 from geographer.graph.type_aliases import VertexColor, VertexName
@@ -87,8 +87,8 @@ class BipartiteGraph(BipartiteGraphClass):
 
     def __init__(
         self,
-        graph_dict: Optional[dict] = None,
-        file_path: Optional[Path] = None,
+        graph_dict: dict | None = None,
+        file_path: Path | None = None,
         red: VertexColor = None,
         black: VertexColor = None,
         directed: bool = False,
@@ -112,11 +112,11 @@ class BipartiteGraph(BipartiteGraphClass):
             directed: If True the graph is directed, defaults to False.
         """
         if file_path is not None:
-            self.file_path: Optional[Path] = file_path
+            self.file_path: Path | None = file_path
             self.directed = directed
             try:
-                with open(file_path, "r") as read_file:
-                    self._graph_dict = json.load(read_file)
+                with open(file_path, "r") as file:
+                    self._graph_dict = json.load(file)
             except FileNotFoundError:
                 log.exception("Graph dict file %s not found", file_path)
             except JSONDecodeError:
@@ -178,7 +178,7 @@ class BipartiteGraph(BipartiteGraphClass):
         self,
         vertex_name: VertexName,
         vertex_color: VertexColor,
-        edge_data: Optional[Any] = None,
+        edge_data: Any | None = None,
     ) -> list[VertexColor]:
         """Return list of adjacent vertices.
 
@@ -223,7 +223,7 @@ class BipartiteGraph(BipartiteGraphClass):
         from_vertex: VertexName,
         from_vertex_color: VertexColor,
         to_vertex: VertexName,
-        edge_data: Optional[Any] = None,
+        edge_data: Any | None = None,
     ) -> bool:
         """Return True if the edge is in the graph, False otherwise."""
         if edge_data is None:
@@ -332,14 +332,12 @@ class BipartiteGraph(BipartiteGraphClass):
             force_delete_with_edges:
         """
         if not self.exists_vertex(vertex_name, vertex_color):
-
             log.info(
                 "delete_vertex: nothing to do, vertex %s does not exist.", vertex_name
             )
 
         # if force_delete_with_edges=False check if vertex has outgoing adjacent edges
         elif self.directed:
-
             log.error(
                 "Sorry, delete_vertex is not implemented for directed graphs. "
                 "I was too lazy to code up the complication of checking "
@@ -357,7 +355,6 @@ class BipartiteGraph(BipartiteGraphClass):
             not force_delete_with_edges
             and list(self.vertices_opposite(vertex_name, vertex_color)) != []
         ):
-
             raise Exception(
                 f"delete_vertex: vertex {vertex_name} of color {vertex_color} has "
                 "edges. Set force_delete_with_edges=True to delete anyway "
@@ -365,7 +362,6 @@ class BipartiteGraph(BipartiteGraphClass):
             )
 
         else:
-
             # thinking of an undirected graph as a directed graph where for each edge
             # there is an opposite edge, we first take out the edges _ending_ in
             # vertex, i.e. the opposite edges to the outgoing ones at vertex.
@@ -404,7 +400,7 @@ class BipartiteGraph(BipartiteGraphClass):
                 opposite_color = self._opposite_color(from_vertex_color)
                 self._graph_dict[opposite_color][to_vertex].pop(from_vertex)
 
-    def save_to_file(self, file_path: Optional[Path] = None):
+    def save_to_file(self, file_path: Path | None = None):
         """Save graph (i.e. graph_dict) to disk as json file.
 
         Args:

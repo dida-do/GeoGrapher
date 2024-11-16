@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Sequence
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -28,7 +28,7 @@ class AddDropVectorsMixIn(object):
     def add_to_vectors(
         self,
         new_vectors: GeoDataFrame,
-        label_maker: Optional[LabelMaker] = None,
+        label_maker: LabelMaker | None = None,
     ):
         """Add vector features to connector's ``vectors`` attribute.
 
@@ -91,7 +91,6 @@ class AddDropVectorsMixIn(object):
 
         # For each new vector feature...
         for vector_name in new_vectors.index:
-
             # ... add a vertex for the new vector feature to the graph and add all
             # connections to existing rasters.
             self._add_vector_to_graph(vector_name, vectors=new_vectors)
@@ -114,8 +113,8 @@ class AddDropVectorsMixIn(object):
 
     def drop_vectors(
         self,
-        vector_names: Sequence[Union[str, int]],
-        label_maker: Optional[LabelMaker] = None,
+        vector_names: Sequence[str | int],
+        label_maker: LabelMaker | None = None,
     ):
         """Drop vector features from connector's ``vectors`` attribute.
 

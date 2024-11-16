@@ -1,7 +1,5 @@
 """Convert a dataset of GeoTiffs to NPYs."""
 
-from __future__ import annotations
-
 import logging
 from typing import Literal
 
@@ -36,7 +34,6 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands, RasterBandsGetterMix
         self._create_or_update()
 
     def _create_or_update(self) -> None:
-
         # need this later
         geoms_that_will_be_added_to_target_dataset = set(
             self.source_assoc.geoms_df.index
@@ -84,7 +81,6 @@ class DSConverterGeoTiffToNpy(DSCreatorFromSourceWithBands, RasterBandsGetterMix
                 ).is_file():
                     # ... convert the tif: Open the tif file ...
                     with rio.open(tif_dir / tif_raster_name) as src:
-
                         raster_bands = self._get_bands_for_raster(
                             self.bands,
                             tif_dir / tif_raster_name,

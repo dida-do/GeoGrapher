@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from geographer.graph.type_aliases import VertexColor, VertexName
 
@@ -36,7 +36,7 @@ class BipartiteGraphClass(ABC):
         self,
         vertex_name: VertexName,
         vertex_color: VertexColor,
-        edge_data: Optional[Any] = None,
+        edge_data: Any | None = None,
     ) -> list[VertexColor]:
         """Return list of adjacent vertices."""
         raise NotImplementedError
@@ -54,7 +54,7 @@ class BipartiteGraphClass(ABC):
         from_vertex: VertexName,
         from_vertex_color: VertexColor,
         to_vertex: VertexName,
-        edge_data: Optional[Any],
+        edge_data: Any | None,
     ) -> bool:
         """Return True if the edge is in the graph, False otherwise."""
         raise NotImplementedError
@@ -101,7 +101,7 @@ class BipartiteGraphClass(ABC):
         """Delete edge from graph."""
         raise NotImplementedError
 
-    def save_to_file(self, file_path: Optional[Path] = None):
+    def save_to_file(self, file_path: Path | None = None):
         """Save graph to file."""
         raise NotImplementedError
 

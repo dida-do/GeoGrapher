@@ -9,7 +9,7 @@ import collections
 import random
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -85,7 +85,7 @@ class RandomRasterSelector(RasterSelector):
 
     def __call__(
         self,
-        vector_name: Union[str, int],
+        vector_name: str | int,
         raster_names_list: list[str],
         target_connector: Connector,
         new_rasters_dict: dict,

@@ -25,7 +25,7 @@ import urllib.request as request
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import numpy as np
 from shapely.geometry.base import BaseGeometry
@@ -50,14 +50,14 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
     def download(
         self,
-        vector_name: Union[int, str],
+        vector_name: str | int,
         vector_geom: BaseGeometry,
         download_dir: Path,
-        previously_downloaded_rasters_set: set[Union[str, int]],
+        previously_downloaded_rasters_set: set[str | int],
+        *,  # downloader_params of RasterDownloaderForVectors.download start below
         data_version: str = None,
         download_mode: str = None,
-        **kwargs,
-    ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
+    ) -> dict[Literal["raster_name", "raster_processed?"] | str, Any]:
         """Download JAXA DEM data for a vector feature.
 
         Download DEM data from jaxa.jp's ftp-server for a given vector
@@ -83,7 +83,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
                 Defaults if possible to whichever choice you made last time.
             download_mode: One of 'bboxvertices', 'bboxgrid'.
                 Defaults if possible to whichever choice you made last time.
-            **kwargs: other kwargs, ignored.
 
         Returns:
             dict of dicts according to the connector convention
@@ -101,9 +100,7 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
         jaxa_file_and_folder_names = set()
         if download_mode == "bboxvertices":
-
             for x, y in vector_geom.envelope.exterior.coords:
-
                 jaxa_folder_name = "{}/".format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)
                 )
@@ -112,7 +109,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
                 jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
 
         elif download_mode == "bboxgrid":
-
             minx, miny, maxx, maxy = vector_geom.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
@@ -120,7 +116,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
             for countx in range(deltax + 1):
                 for county in range(deltay + 1):
-
                     x = minx + countx
                     y = miny + county
 
@@ -139,7 +134,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
         )  # to collect information per downloaded file for connector
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
-
             # Skip download if file has already been downloaded ...
             if jaxa_file_name[:-7] + "_DSM.tif" in previously_downloaded_rasters_set:
                 # in this case skip download, don't store in list_raster_info_dicts
@@ -215,8 +209,8 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
     def _obtain_jaxa_index(
         self,
-        x: Optional[float] = None,
-        y: Optional[float] = None,
+        x: float | None = None,
+        y: float | None = None,
         nx: int = 3,
         ny: int = 3,
     ):

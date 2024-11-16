@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -21,7 +21,7 @@ class AddDropRastersMixIn:
     """Mix-in that implements methods to add and drop rasters."""
 
     def add_to_rasters(
-        self, new_rasters: GeoDataFrame, label_maker: Optional[LabelMaker] = None
+        self, new_rasters: GeoDataFrame, label_maker: LabelMaker | None = None
     ):
         """Add rasters to connector's ``rasters`` attribute.
 
@@ -76,7 +76,6 @@ class AddDropRastersMixIn:
 
         # go through all new rasters...
         for raster_name in new_rasters.index:
-
             # add new raster vertex to the graph, add all connections
             # to existing rasters, and modify self.vectors 'raster_count' value
             raster_bounding_rectangle = new_rasters.loc[raster_name, "geometry"]
@@ -97,7 +96,7 @@ class AddDropRastersMixIn:
         self,
         raster_names: Sequence[str],
         remove_rasters_from_disk: bool = True,
-        label_maker: Optional[LabelMaker] = None,
+        label_maker: LabelMaker | None = None,
     ):
         """Drop rasters from ``rasters`` and from dataset.
 

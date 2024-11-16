@@ -1,7 +1,5 @@
 """Utilites used in the Connector class."""
 
-from __future__ import annotations
-
 import logging
 
 import pandas as pd
@@ -46,7 +44,9 @@ def empty_gdf(
         },
     }
 
-    new_empty_gdf = GeoDataFrame(new_empty_gdf_dict, crs=f"EPSG:{crs_epsg_code}")
+    new_empty_gdf = GeoDataFrame(
+        new_empty_gdf_dict, crs=f"EPSG:{crs_epsg_code}", geometry="geometry"
+    )
     new_empty_gdf.set_index(index_name, inplace=True)
     return new_empty_gdf
 
@@ -123,7 +123,6 @@ def _check_df_cols_agree(
 ):
     """Log if column names don't agree."""
     if set(df.columns) != set(self_df.columns) and len(self_df) > 0:
-
         df1_cols_not_in_df2 = set(df.columns) - set(self_df.columns)
         df2_cols_not_in_df1 = set(self_df.columns) - set(df.columns)
 

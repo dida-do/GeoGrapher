@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import rasterio as rio
 from affine import Affine
@@ -71,15 +71,13 @@ class SingleRasterCutterToGrid(SingleRasterCutter):
         self,
         source_raster_name: str,
         source_connector: Connector,
-        target_connector: Optional[Connector] = None,
-        new_rasters_dict: Optional[dict] = None,
+        target_connector: Connector | None = None,
+        new_rasters_dict: dict | None = None,
         **kwargs: Any,
     ) -> list[tuple[Window, Affine, str]]:
-
         source_raster_path = source_connector.rasters_dir / source_raster_name
 
         with rio.open(source_raster_path) as src:
-
             if not src.height % self.new_raster_size_rows == 0:
                 logger.warning(
                     "number of rows in source raster not divisible by "
@@ -96,7 +94,6 @@ class SingleRasterCutterToGrid(SingleRasterCutter):
         # Iterate through grid ...
         for i in range(src.width // self.new_raster_size_cols):
             for j in range(src.height // self.new_raster_size_rows):
-
                 # ... remember windows, ...
                 window = Window(
                     i * self.new_raster_size_cols,

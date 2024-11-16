@@ -8,7 +8,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import Union
 
 from geopandas import GeoSeries
 from pandas import Series
@@ -116,12 +115,12 @@ class RasterFilterRowCondition(RasterFilterPredicate):
     row_series_predicate: RowSeriesPredicate
 
     def __init__(
-        self, row_series_predicate: Callable[[Union[GeoSeries, Series]], bool]
+        self, row_series_predicate: Callable[[GeoSeries | Series], bool]
     ) -> None:
         """Initialize an instance of RasterFilterRowCondition.
 
         Args:
-            row_series_predicate (Callable[[Union[GeoSeries, Series]], bool]):
+            row_series_predicate:
                 predicate to apply to the row corresponding to a raster
                 (i.e. source_connector.rasters.loc[raster_name])
         """
@@ -154,19 +153,20 @@ class RasterFilterRowCondition(RasterFilterPredicate):
             result of aplying self.row_series_predicate to
             source_connector.rasters[raster_name]
         """
-        row_series: Union[GeoSeries, Series] = source_connector.rasters.loc[raster_name]
+        row_series: GeoSeries | Series = source_connector.rasters.loc[raster_name]
         answer = self.row_series_predicate(row_series)
 
         return answer
 
 
 def wrap_function_as_RowSeriesPredicate(
-    fun: Callable[[Union[GeoSeries, Series]], bool]
+    fun: Callable[[GeoSeries | Series], bool],
 ) -> RowSeriesPredicate:
     """Wrap a function as a RowSeriesPredicate.
 
     Args:
-        fun (Callable[[Union[GeoSeries, Series]], bool]):
+        fun:
+            Function to wrap.
 
     Returns:
         RowSeriesPredicate.

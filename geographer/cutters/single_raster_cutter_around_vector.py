@@ -6,7 +6,7 @@ import logging
 import math
 import random
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 import rasterio as rio
 from affine import Affine
@@ -45,9 +45,9 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
     def __init__(
         self,
         mode: str,
-        new_raster_size: Optional[RasterSize] = None,
-        scaling_factor: Optional[float] = 1.2,
-        min_new_raster_size: Optional[RasterSize] = None,
+        new_raster_size: RasterSize | None = None,
+        scaling_factor: float | None = 1.2,
+        min_new_raster_size: RasterSize | None = None,
         random_seed: int = 42,
         **kwargs,
     ) -> None:
@@ -131,7 +131,7 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
 
     @staticmethod
     def _get_size_rows_cols(
-        raster_size: Union[int, tuple[int, int]]
+        raster_size: int | tuple[int, int],
     ) -> tuple[int, int]:
         if isinstance(raster_size, tuple):
             new_raster_size_rows = raster_size[0]
@@ -147,7 +147,7 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
         source_raster_name: str,
         source_connector: Connector,
         target_connector: Connector,
-        new_rasters_dict: Optional[dict] = None,
+        new_rasters_dict: dict | None = None,
         **kwargs: Any,
     ) -> list[tuple[Window, Affine, str]]:
         """Return windwos, transforms, and names of new rasters.
@@ -179,7 +179,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
         vector_geom = target_connector.vectors.loc[vector_name, "geometry"]
 
         with rio.open(source_raster_path) as src:
-
             # transform vector feature from connector's crs to raster source crs
             transformed_vector_geom = transform_shapely_geometry(
                 vector_geom,
@@ -248,7 +247,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
 
             for raster_row in range(num_small_rasters_in_row_direction):
                 for raster_col in range(num_small_rasters_in_col_direction):
-
                     # Define the square window with the calculated offsets.
                     window = rio.windows.Window(
                         col_off=col_off + new_raster_size_cols * raster_col,
@@ -283,7 +281,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
 
                     # append window if it intersects the vector feature
                     if window_bounding_rectangle.intersects(transformed_vector_geom):
-
                         windows_transforms_raster_names_single_geom.append(
                             (window, window_transform, new_raster_name)
                         )
@@ -346,7 +343,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
 
         # Choose row and col offset
         if self.mode == "random":
-
             # ... choose row and col offsets randomly subject to constraint that the
             # grid of raster windows contains rectangular envelope of vector feature.
             row_off = random.randint(
@@ -374,7 +370,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
             )
 
         elif self.mode in {"centered", "variable"}:
-
             # ... to find the row, col offsets to center the vector feature ...
 
             # ...we first find the centroid of the vector feature in the raster crs ...
@@ -392,7 +387,6 @@ class SingleRasterCutterAroundVector(SingleRasterCutter):
             )
 
         else:
-
             raise ValueError(f"Unknown mode: {self.mode}")
 
         return (

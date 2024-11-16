@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel
 from shapely.geometry import Polygon
+
+log = logging.getLogger(__name__)
 
 
 class RasterDownloaderForSingleVector(ABC, BaseModel):
@@ -16,21 +19,26 @@ class RasterDownloaderForSingleVector(ABC, BaseModel):
     @abstractmethod
     def download(
         self,
-        vector_name: Union[int, str],
+        vector_name: str | int,
         vector_geom: Polygon,
         download_dir: Path,
-        previously_downloaded_rasters_set: set[Union[str, int]],
-        **kwargs,
-    ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
+        previously_downloaded_rasters_set: set[str | int],
+        **params: Any,
+    ) -> dict[Literal["raster_name", "raster_processed?"] | str, Any]:
         """Download (a series of) raster(s) for a single vector feature.
 
         Args:
-            vector_name: name of vector feature
-            vector_geom: geometry of vector feature
-            download_dir: directory to download to
-            previously_downloaded_rasters_set: set of (names of)
-            previously downloaded rasters
-            kwargs: other keyword arguments
+            vector_name:
+                Name of vector feature
+            vector_geom:
+                Geometry of vector feature
+            download_dir:
+                Directory in which raw downloads are placed
+            previously_downloaded_rasters_set:
+                Set of (names of) previously downloaded rasters
+            params:
+                Additional keyword arguments. Corresponds to the downloader_params
+                argument of the RasterDownloaderForVectors.download method.
 
         Returns:
             Dict with a key 'list_raster_info_dicts': The corresponding value is a

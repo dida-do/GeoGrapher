@@ -1,5 +1,4 @@
-"""
-Test RasterDownloadProcessor using mock downloader.
+"""Test RasterDownloadProcessor using mock downloader.
 
 Virtually 'downloads' (no files operations are actually done) from a
 dataset of rasters in a source directory.
@@ -36,9 +35,7 @@ def test_mock_download():
         data_dir=data_dir, task_vector_classes=["object"]
     )
 
-    vectors = gpd.read_file(
-        test_dir / "geographer_download_test.geojson", driver="GeoJSON"
-    )
+    vectors = gpd.read_file(test_dir / "geographer_download_test.geojson")
     vectors.set_index("name", inplace=True)
 
     connector.add_to_vectors(vectors)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -61,7 +61,7 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_rasters: Dict[str, List[str]] = Field(
+    cut_rasters: dict[str, list[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut rasters dictionary",
         description="Normally, should not be set by hand! Dict with vector features\
@@ -153,7 +153,6 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
 
         # For each vector feature ...
         for vector_name in tqdm(vectors_to_iterate_over, desc="Cutting dataset: "):
-
             # ... if we want to create new rasters for it ...
             if self.vector_filter_predicate(
                 vector_name=vector_name,
@@ -161,7 +160,6 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
                 new_rasters_dict=new_rasters_dict,
                 source_connector=self.source_connector,
             ):
-
                 # ... remember it ...
                 added_vectors += [vector_name]
 
@@ -186,7 +184,6 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
                     source_connector=self.source_connector,
                     cut_rasters=self.cut_rasters,
                 ):
-
                     # Cut each raster (and label) and remember the information to be
                     # appended to self.target_connector rasters in return dict
                     rasters_from_single_cut_dict = self.raster_cutter(
@@ -222,7 +219,6 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
                     for new_raster_name, raster_bounding_rectangle in zip(
                         new_raster_names, raster_bounding_rectangles
                     ):
-
                         # Update graph and modify vectors
                         # in self.target_connector
                         self.target_connector._add_raster_to_graph_modify_vectors(
@@ -246,7 +242,9 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
         # Extract accumulated information about the rasters we've created in the target
         # dataset into a dataframe...
         new_rasters = GeoDataFrame(
-            new_rasters_dict, crs=self.target_connector.rasters.crs
+            new_rasters_dict,
+            crs=self.target_connector.rasters.crs,
+            geometry="geometry",
         )
         new_rasters.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
 
@@ -288,7 +286,7 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
         self.target_connector.save()
 
     def _filter_out_previously_cut_rasters(
-        self, vector_name: Union[str, int], src_rasters_containing_vector: set[str]
+        self, vector_name: str | int, src_rasters_containing_vector: set[str]
     ) -> list[str]:
         """Filter out previously cut rasters.
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -34,7 +34,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def make_labels(
         self,
         connector: Connector,
-        raster_names: Optional[list[str]] = None,
+        raster_names: list[str] | None = None,
     ):
         """Create segmentation labels.
 
@@ -47,7 +47,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def delete_labels(
         self,
         connector: Connector,
-        raster_names: Optional[list[str]] = None,
+        raster_names: list[str] | None = None,
     ):
         """Delete (pixel) labels from the connector's labels_dir.
 
@@ -59,7 +59,7 @@ class LabelMaker(ABC, BaseModel, SaveAndLoadBaseModelMixIn):
     def recompute_labels(
         self,
         connector: Connector,
-        raster_names: Optional[list[str]] = None,
+        raster_names: list[str] | None = None,
     ):
         """Recompute labels.
 

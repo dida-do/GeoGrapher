@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import shutil
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
@@ -31,10 +31,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     removing vector feature classes.
     """
 
-    classes: List[Union[str, List[str]]] = Field(
+    classes: list[Union[str, list[str]]] = Field(
         description="Classes to keep and combine. See docstring."
     )
-    new_class_names: Optional[List[str]] = Field(
+    new_class_names: Optional[list[str]] = Field(
         default=None, description="Names of new classes"
     )
     class_separator: str = Field(
@@ -208,7 +208,6 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         self.target_connector.add_to_rasters(df_of_rasters_to_add_to_target_dataset)
 
         if self.label_maker is not None:
-
             # Determine labels to delete:
             # For each raster that already existed in the target dataset ...
             for (
@@ -260,7 +259,6 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     def _run_safety_checks(
         self, classes_to_keep: list[str], new_class_names: list[str]
     ):
-
         if not set(classes_to_keep) <= set(self.source_connector.all_vector_classes):
             classes_not_in_source_dataset = set(classes_to_keep) - set(
                 self.source_connector.all_vector_classes
@@ -286,7 +284,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
         self,
         label_type: str,
         vectors: GeoDataFrame,
-        classes: list[Union[str, list[str]]],
+        classes: list[str | list[str]],
         new_class_names: list[str],
         all_source_vector_classes: list[str],
     ) -> GeoDataFrame:
@@ -377,6 +375,7 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
             vectors = GeoDataFrame(
                 pd.concat([vectors, temp_vectors], axis=1),  # column axis
                 crs=vectors.crs,
+                geometry="geometry",
             )
             vectors.index.name = VECTOR_FEATURES_INDEX_NAME
 
