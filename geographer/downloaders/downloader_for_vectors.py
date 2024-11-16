@@ -67,12 +67,12 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
         Warning:
             The targeted number of downloads is determined by target_raster_count
-            and a vector features raster_count. Since the raster_count is the number of
-            rasters in the dataset fully containing a vector feature for "large"
-            vector features (polygons) the raster_count will always remain zero and
-            every call of the download_rasters method that includes this vector feature
-            will download target_raster_count rasters (or raster series).
-            To avoid this, you can use the
+            and a vector features raster_count. The raster_count is the number of
+            rasters in the dataset fully containing a vector feature. For vector
+            features (polygons) large enough not be contained in a raster the
+            raster_count will always remain zero and every call of the download_rasters
+            method that includes this vector feature will download target_raster_count
+            rasters (or raster series). To avoid this, you can use the
             filter_out_vectors_contained_in_union_of_intersecting_rasters argument.
 
         Args:
@@ -87,7 +87,7 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 are not enough rasters available or higher if after downloading
                 num_target_rasters_per_vector rasters for P P is also contained
                 in rasters downloaded for other vector features.
-            filter_out_vector vectors_contained_in_union_of_intersecting_rasters:
+            filter_out_vectors_contained_in_union_of_intersecting_rasters:
                 Useful when dealing with 'large' vector features. Defaults to False.
             shuffle: Whether to shuffle order of vector features for which rasters
                 will be downloaded. Might in practice prevent an uneven distribution
