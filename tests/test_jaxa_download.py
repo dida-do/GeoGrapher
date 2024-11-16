@@ -1,5 +1,4 @@
-"""
-Manually triggered test of JAXA downloader.
+"""Manually triggered test of JAXA downloader.
 
 Run by hand to test downloading JAXA data. Intentionally not discoverable
 by pytest: Downloading JAXA rasters is slightly slow.
@@ -8,6 +7,7 @@ by pytest: Downloading JAXA rasters is slightly slow.
 import shutil
 
 import geopandas as gpd
+import pytest
 from utils import get_test_dir
 
 from geographer import Connector
@@ -18,6 +18,7 @@ from geographer.downloaders.jaxa_downloader_for_single_vector import (
 )
 
 
+@pytest.mark.slow
 def test_jaxa_download():
     """Test downloading JAXA data."""
     # noqa: D202
@@ -36,7 +37,6 @@ def test_jaxa_download():
         data_dir=data_dir, task_vector_classes=["object"]
     )
     connector.add_to_vectors(vectors)
-
     """
     Test RasterDownloaderForVectors for Sentinel-2 data
     """
@@ -45,16 +45,17 @@ def test_jaxa_download():
     jaxa_downloader = RasterDownloaderForVectors(
         downloader_for_single_vector=jaxa_downloader_for_single_vector,
         download_processor=jaxa_download_processor,
-        kwarg_defaults={
+    )
+    """
+    Download Sentinel-2 rasters
+    """
+    jaxa_downloader.download(
+        connector=connector,
+        downloader_kwargs={
             "data_version": "1804",
             "download_mode": "bboxvertices",
         },
     )
-
-    """
-    Download Sentinel-2 rasters
-    """
-    jaxa_downloader.download(connector=connector)
     # The vectors contain
     #     - 2 objects in Berlin (Reichstag and Brandenburg gate)
     #       that are very close to each other
@@ -76,7 +77,6 @@ def test_jaxa_download():
     assert connector.rasters_containing_vector("lisbon_castelo_de_sao_jorge") == (
         connector.rasters_containing_vector("lisbon_praca_do_comercio")
     )
-
     """
     Clean up: delete downloads
     """

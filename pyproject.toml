@@ -1,5 +1,5 @@
 [tool.black]
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py39', 'py310', 'py311', 'py312', 'py313']
 
 [tool.isort]
 atomic = true
@@ -20,3 +20,8 @@ strict_optional=true
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]

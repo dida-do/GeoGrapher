@@ -6,12 +6,17 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from shapely.geometry import Polygon
 
 
 class RasterDownloaderForSingleVector(ABC, BaseModel):
     """Base class for downloaders for a single vector feature."""
+
+    # TODO include in all derived classes
+    default_download_kwargs: dict[str, Any] = Field(
+        default_factory=dict, description="TODO"
+    )
 
     @abstractmethod
     def download(

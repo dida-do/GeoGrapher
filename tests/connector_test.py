@@ -37,12 +37,11 @@ def test_connector():
     connector = Connector.from_scratch(
         data_dir=data_dir, task_vector_classes=TASK_FEATURE_CLASSES
     )
-
     """
     Toy vectors
     """
     # create empty GeoDataFrame with the right index name
-    new_vectors = gpd.GeoDataFrame()
+    new_vectors = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_vectors.rename_axis(VECTOR_FEATURES_INDEX_NAME, inplace=True)
 
     # polygon names and geometries
@@ -62,9 +61,7 @@ def test_connector():
 
     # set crs
     new_vectors = new_vectors.set_crs(epsg=STANDARD_CRS_EPSG_CODE)
-    """
-    Test add_to_vectors
-    """
+    """Test add_to_vectors."""
     # add vectors
     connector.add_to_vectors(new_vectors)
 
@@ -76,12 +73,10 @@ def test_connector():
         new_vectors,
     )
     assert check_graph_vertices_counts(connector)
-    """
-    Toy rasters
-    """
+    """Toy rasters."""
 
     # empty GeoDataFrame with right index name
-    new_rasters = gpd.GeoDataFrame()
+    new_rasters = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_rasters.rename_axis(RASTER_IMGS_INDEX_NAME, inplace=True)
 
     # geometries (raster bounding rectangles)
@@ -102,9 +97,7 @@ def test_connector():
 
     # set crs
     new_rasters = new_rasters.set_crs(epsg=STANDARD_CRS_EPSG_CODE)
-    """
-    Test add_to_rasters
-    """
+    """Test add_to_rasters."""
     connector.add_to_rasters(new_rasters)
 
     assert connector._graph._graph_dict == {
@@ -119,12 +112,10 @@ def test_connector():
         },
     }
     assert check_graph_vertices_counts(connector)
-    """
-    Test have_raster_for_vector, rectangle_bounding_raster,
+    """Test have_raster_for_vector, rectangle_bounding_raster,
     polygons_intersecting_raster, polygons_contained_in_raster,
-    rasters_containing_vector, values of 'have_raster?'
-    column in connector.vectors.
-    """
+    rasters_containing_vector, values of 'have_raster?' column in
+    connector.vectors."""
     assert (connector.rectangle_bounding_raster("raster1")).equals(
         box(-0.5, -0.5, 6, 6)
     )
@@ -138,11 +129,9 @@ def test_connector():
         "polygon1",
         "polygon2",
     }
-    """
-    Add more rasters
-    """
+    """Add more rasters."""
     # empty GeoDataFrame with right index name
-    new_rasters2 = gpd.GeoDataFrame()
+    new_rasters2 = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_rasters2.rename_axis(RASTER_IMGS_INDEX_NAME, inplace=True)
 
     # the new_rasters2 geometries will be the raster bounding rectangles here:
@@ -195,9 +184,7 @@ def test_connector():
         },
     }
     assert check_graph_vertices_counts(connector)
-    """
-    Drop vector feature
-    """
+    """Drop vector feature."""
     connector.drop_vectors("polygon3")
 
     # test containment/intersection relations, i.e. graph structure
@@ -226,12 +213,10 @@ def test_connector():
         },
     }
     assert check_graph_vertices_counts(connector)
-    """
-    Add more vector features
-    """
+    """Add more vector features."""
 
     # create empty GeoDataFrame with the right index name
-    new_vectors2 = gpd.GeoDataFrame()
+    new_vectors2 = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_vectors2.rename_axis(VECTOR_FEATURES_INDEX_NAME, inplace=True)
 
     # polygon names and geometries
@@ -288,9 +273,7 @@ def test_connector():
     # assert we have no duplicate entries
     assert len(connector.rasters) == 4
     assert len(connector.vectors) == 4
-    """
-    Test drop_rasters
-    """
+    """Test drop_rasters."""
     connector.drop_rasters(["raster2", "raster3"])
 
     assert len(connector.rasters) == 2
@@ -313,9 +296,7 @@ def test_connector():
     }
 
     assert check_graph_vertices_counts(connector)
-    """
-    Test drop_vectors
-    """
+    """Test drop_vectors."""
     connector.drop_vectors(["polygon1", "polygon3"])
 
     assert len(connector.vectors) == 2

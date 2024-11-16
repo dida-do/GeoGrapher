@@ -41,7 +41,6 @@ class DSConverterSoftCatToCat(DSCreatorFromSource, RasterBandsGetterMixIn):
         self._create_or_update()
 
     def _create_or_update(self) -> Connector:
-
         if self.source_assoc.label_type != "soft-categorical":
             raise ValueError(
                 "Only works with label_type soft-categorical\n"

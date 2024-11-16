@@ -110,7 +110,6 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
         new_rasters_dict: Optional[dict] = None,
         **kwargs: Any,
     ) -> list[str]:
-
         source_raster_path = source_connector.rasters_dir / source_raster_name
 
         with rio.open(source_raster_path) as src:

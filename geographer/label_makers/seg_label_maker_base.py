@@ -136,7 +136,6 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
         # ... then if the set of rasters is a strict subset
         # of the rasters in rasters ...
         if existing_rasters < set(connector.rasters.index):
-
             # ... log a warning
             log.warning(
                 "There are rasters in connector.rasters that "
@@ -146,7 +145,6 @@ class SegLabelMaker(LabelMaker, BaseModel, SaveAndLoadBaseModelMixIn):
 
         # ... and if it is not a subset, ...
         if not existing_rasters <= set(connector.rasters.index):
-
             # ... log an warning
             message = (
                 "Warning! There are rasters in the dataset's rasters "

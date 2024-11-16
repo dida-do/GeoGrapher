@@ -1,5 +1,4 @@
-"""
-Test RasterDownloadProcessor using mock downloader.
+"""Test RasterDownloadProcessor using mock downloader.
 
 Virtually 'downloads' (no files operations are actually done) from a
 dataset of rasters in a source directory.

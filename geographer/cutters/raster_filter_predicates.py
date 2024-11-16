@@ -161,7 +161,7 @@ class RasterFilterRowCondition(RasterFilterPredicate):
 
 
 def wrap_function_as_RowSeriesPredicate(
-    fun: Callable[[Union[GeoSeries, Series]], bool]
+    fun: Callable[[Union[GeoSeries, Series]], bool],
 ) -> RowSeriesPredicate:
     """Wrap a function as a RowSeriesPredicate.
 

@@ -117,7 +117,6 @@ class SingleRasterCutter(ABC, BaseModel, RasterBandsGetterMixIn):
             window_transform,
             new_raster_name,
         ) in windows_transforms_raster_names:
-
             # Make new raster and label in target dataset ...
             raster_bounds_in_raster_crs, raster_crs = self._make_new_raster_and_label(
                 new_raster_name=new_raster_name,
@@ -222,7 +221,6 @@ class SingleRasterCutter(ABC, BaseModel, RasterBandsGetterMixIn):
         for count, (source_rasters_dir, target_rasters_dir) in enumerate(
             zip(source_connector.raster_data_dirs, target_connector.raster_data_dirs)
         ):
-
             source_raster_path = source_rasters_dir / source_raster_name
             dst_raster_path = target_rasters_dir / new_raster_name
 
@@ -277,7 +275,6 @@ class SingleRasterCutter(ABC, BaseModel, RasterBandsGetterMixIn):
         """
         # Open source ...
         with rio.open(src_raster_path) as src:
-
             # and destination ...
             Path(dst_raster_path).parent.mkdir(exist_ok=True, parents=True)
             with rio.open(
@@ -291,10 +288,8 @@ class SingleRasterCutter(ABC, BaseModel, RasterBandsGetterMixIn):
                 crs=src.crs,
                 transform=window_transform,
             ) as dst:
-
                 # ... and go through the bands.
                 for target_band, source_band in enumerate(raster_bands, start=1):
-
                     # Read window for that band from source ...
                     new_raster_band_raster = src.read(source_band, window=window)
 

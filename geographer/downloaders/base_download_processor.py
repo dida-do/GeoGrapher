@@ -6,11 +6,16 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RasterDownloadProcessor(ABC, BaseModel):
     """Base class for download processors."""
+
+    # TODO description
+    default_process_kwargs: dict[str, Any] = Field(
+        default_factory=dict, description="TODO"
+    )
 
     @abstractmethod
     def process(

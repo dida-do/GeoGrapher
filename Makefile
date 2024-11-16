@@ -39,7 +39,10 @@ lint: venv
 	flake8 --show-source $(PROJECTNAME) tests
 
 test: venv
-	pytest -v
+	pytest -v -m "not slow"
+
+test-slow: venv
+	pytest -v -m "slow"
 
 docs: venv
 	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make html

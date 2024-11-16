@@ -301,7 +301,6 @@ class BipartiteGraphMixIn:
 
         # get containment relation if not given
         if contains_or_intersects is None:
-
             vector_geom = vectors.loc[vector_name, "geometry"]
 
             non_empty_intersection = vector_geom.intersects(raster_bounding_rectangle)
