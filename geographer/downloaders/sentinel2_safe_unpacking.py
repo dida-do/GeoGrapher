@@ -1,7 +1,5 @@
 """Unpack/convert sentinel-2 SAFE files to GeoTiffs."""
 
-from __future__ import annotations
-
 import itertools
 import os
 from collections import OrderedDict

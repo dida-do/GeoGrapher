@@ -5,11 +5,9 @@ datasets of GeoTiffs from existing ones by iterating over vector
 features.
 """
 
-from __future__ import annotations
-
 import logging
 from collections import defaultdict
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -61,7 +59,7 @@ class DSCutterIterOverVectors(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_rasters: Dict[str, List[str]] = Field(
+    cut_rasters: dict[str, list[str]] = Field(
         default_factory=lambda: defaultdict(list),
         title="Cut rasters dictionary",
         description="Normally, should not be set by hand! Dict with vector features\

@@ -1,7 +1,5 @@
 """SingleRasterCutter that creates a cutout around a vector feature."""
 
-from __future__ import annotations
-
 import logging
 import math
 import random

@@ -4,8 +4,6 @@ Implements a general-purpose higher order function to create or update
 datasets of GeoTiffs from existing ones by iterating over rasters.
 """
 
-from __future__ import annotations
-
 import logging
 from typing import List, Optional
 

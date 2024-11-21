@@ -1,7 +1,5 @@
 """Abstract base class for single raster cutters."""
 
-from __future__ import annotations
-
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path

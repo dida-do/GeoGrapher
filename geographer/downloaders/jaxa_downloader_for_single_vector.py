@@ -14,8 +14,6 @@ There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 
 version has been tested.
 """
 
-from __future__ import annotations
-
 import logging
 import math
 import os

@@ -1,13 +1,11 @@
 """Download a targeted number of rasters per vector feature."""
 
-from __future__ import annotations
-
 import logging
 import random
 import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from geopandas import GeoDataFrame
 from pydantic import BaseModel, Field
@@ -40,7 +38,7 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
     downloader_for_single_vector: RasterDownloaderForSingleVector
     download_processor: RasterDownloadProcessor
-    kwarg_defaults: Dict = Field(default_factory=dict)
+    kwarg_defaults: dict[str, Any] = Field(default_factory=dict)
 
     def download(
         self,

@@ -1,7 +1,5 @@
 """SingleRasterCutter that extracts pre defined bboxes from a raster."""
 
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import Any, Optional, Union

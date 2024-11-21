@@ -5,8 +5,6 @@ into equivalence classes ('clusters') that need to be respected when
 generating the train-validation split.
 """
 
-from __future__ import annotations
-
 import itertools
 from pathlib import Path
 from typing import Any, Literal, Optional, Tuple, Union

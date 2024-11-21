@@ -1,7 +1,5 @@
 """Mixin that implements adding/dropping vector features."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, Optional, Sequence, Union
 

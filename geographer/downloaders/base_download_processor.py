@@ -1,7 +1,5 @@
 """Base class for processing a downloaded file."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal, Union

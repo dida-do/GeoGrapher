@@ -32,8 +32,6 @@ is encoded as the dict of dicts of dicts::
 Only tested for the undirected case.
 """
 
-from __future__ import annotations
-
 import json
 import logging
 from json import JSONDecodeError

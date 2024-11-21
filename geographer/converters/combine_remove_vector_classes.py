@@ -4,11 +4,9 @@ Create a new dataset from an existing one by combining and/or removing
 vector feature classes.
 """
 
-from __future__ import annotations
-
 import logging
 import shutil
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
 from geopandas.geodataframe import GeoDataFrame
@@ -31,10 +29,10 @@ class DSConverterCombineRemoveClasses(DSCreatorFromSource):
     removing vector feature classes.
     """
 
-    classes: List[Union[str, List[str]]] = Field(
+    classes: list[Union[str, list[str]]] = Field(
         description="Classes to keep and combine. See docstring."
     )
-    new_class_names: Optional[List[str]] = Field(
+    new_class_names: Optional[list[str]] = Field(
         default=None, description="Names of new classes"
     )
     class_separator: str = Field(

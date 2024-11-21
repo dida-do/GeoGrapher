@@ -1,7 +1,5 @@
 """Utilites used in the Connector class."""
 
-from __future__ import annotations
-
 import logging
 
 import pandas as pd

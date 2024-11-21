@@ -1,7 +1,5 @@
 """Create associator rasters from a directory containing GeoTiff rasters."""
 
-from __future__ import annotations
-
 import pathlib
 from pathlib import Path
 from typing import Callable, Optional, Union
