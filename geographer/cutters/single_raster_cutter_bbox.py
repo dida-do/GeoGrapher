@@ -1,7 +1,5 @@
 """SingleRasterCutter that extracts pre defined bboxes from a raster."""
 
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -47,7 +45,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
             bbox_geojson_path: path to geojson file containing the bboxes
         """
         super().__init__(**data)
-        self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
+        self._bboxes_df = gpd.read_file(self.bbox_geojson_path)
 
     @field_validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):
@@ -110,7 +108,6 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
         new_rasters_dict: Optional[dict] = None,
         **kwargs: Any,
     ) -> list[str]:
-
         source_raster_path = source_connector.rasters_dir / source_raster_name
 
         with rio.open(source_raster_path) as src:

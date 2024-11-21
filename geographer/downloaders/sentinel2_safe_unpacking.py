@@ -1,7 +1,5 @@
 """Unpack/convert sentinel-2 SAFE files to GeoTiffs."""
 
-from __future__ import annotations
-
 import itertools
 import os
 from collections import OrderedDict
@@ -15,6 +13,7 @@ import rasterio.mask
 from rasterio.errors import RasterioIOError
 from scipy.ndimage import zoom
 from shapely.geometry import box
+from tqdm.auto import tqdm
 
 from geographer.utils.utils import create_logger
 
@@ -31,6 +30,7 @@ def safe_to_geotif_L2A(
     TCI: bool = True,
     requested_jp2_masks: list[str] = ["CLDPRB", "SNWPRB"],
     requested_gml_mask: list[tuple[str, str]] = [("CLOUDS", "B00")],
+    nodata_val: int = NO_DATA_VAL,
 ) -> dict:
     """Convert a L2A-level .SAFE file to geotif.
 
@@ -61,6 +61,7 @@ def safe_to_geotif_L2A(
         requested_jp2_masks: jp2 mask to load
         requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for
             which to get the mask)
+        nodata_val: The nodata value to fill. Defaults to 0.
 
     Returns:
         dict containing tif crs and bounding rectangle
@@ -69,8 +70,9 @@ def safe_to_geotif_L2A(
     assert resolution in [10, 20, 60, "10", "20", "60"]
 
     # define output file
+    raster_name = safe_root.stem
     out_file_parent_dir = outdir if (outdir and outdir.is_dir()) else safe_root.parent
-    outfile = out_file_parent_dir / (safe_root.stem + "_TEMP.tif")
+    outfile = out_file_parent_dir / (raster_name + "_TEMP.tif")
 
     granule_dir = safe_root / "GRANULE"
     masks_dir = granule_dir / "{}/QI_DATA/".format(os.listdir(granule_dir)[0])
@@ -110,7 +112,6 @@ def safe_to_geotif_L2A(
 
     # include lower resolution bands
     if upsample_lower_resolution:
-
         for higher_res in filter(lambda res: res > int(resolution), [10, 20, 60]):
             jp2_higher_res_path = granule_dir / "{}/IMG_DATA/R{}m/".format(
                 os.listdir(granule_dir)[0], higher_res
@@ -180,69 +181,71 @@ def safe_to_geotif_L2A(
         transform=out_default_reader.transform,
         dtype=out_default_reader.dtypes[0],
     ) as dst:
+        dst.nodata = nodata_val
 
-        dst.nodata = NO_DATA_VAL
+        with tqdm(total=count, desc=f"Extracting tif from {raster_name}.SAFE.") as pbar:
 
-        # write gml masks
-        for idx, (gml_name, gml_path) in enumerate(gml_mask_paths_dict.items()):
+            # write gml masks
+            for idx, (gml_name, gml_path) in enumerate(gml_mask_paths_dict.items()):
+                try:
+                    assert gml_path.is_file()
+                    shapes = gpd.read_file(gml_path)["geometry"].values
+                    mask, _, _ = rasterio.mask.raster_geometry_mask(
+                        out_default_reader, shapes, crop=False, invert=True
+                    )
+                # in case mask is empty or does not exist:
+                except (ValueError, AssertionError, RasterioIOError):
+                    log.info(
+                        "Using all zero band for gml mask %s for %s",
+                        gml_name,
+                        safe_root.name,
+                    )
+                    mask = np.full(
+                        shape=out_default_reader.read(1).shape,
+                        fill_value=0.0,
+                        dtype=np.uint16,
+                    )
 
-            try:
-                assert gml_path.is_file()
-                shapes = gpd.read_file(gml_path)["geometry"].values
-                mask, _, _ = rasterio.mask.raster_geometry_mask(
-                    out_default_reader, shapes, crop=False, invert=True
-                )
-            # in case mask is empty or does not exist:
-            except (ValueError, AssertionError, RasterioIOError):
-                log.info(
-                    "Using all zero band for gml mask %s for %s",
-                    gml_name,
-                    safe_root.name,
-                )
-                mask = np.full(
-                    shape=out_default_reader.read(1).shape,
-                    fill_value=0.0,
-                    dtype=np.uint16,
-                )
+                band_idx = len(bands_dict) + 3 * TCI + idx + 1
+                tif_band_names[band_idx] = "_".join(gml_name)
 
-            band_idx = len(bands_dict) + 3 * TCI + idx + 1
-            tif_band_names[band_idx] = "_".join(gml_name)
+                dst.write(mask.astype(np.uint16), band_idx)
+                pbar.update(1)
 
-            dst.write(mask.astype(np.uint16), band_idx)
+            # write jp2 bands
+            for idx, (band_name, (dst_reader, res)) in enumerate(bands_dict.items()):
+                if res != int(resolution):
+                    assert res % int(resolution) == 0
+                    factor = res // int(resolution)
 
-        # write jp2 bands
-        for idx, (band_name, (dst_reader, res)) in enumerate(bands_dict.items()):
+                    raster = dst_reader.read(1)
+                    raster = zoom(raster, factor, order=3)
 
-            if res != int(resolution):
+                    assert raster.shape == (10980, 10980)
 
-                assert res % int(resolution) == 0
-                factor = res // int(resolution)
+                else:
+                    raster = dst_reader.read(1)
 
-                raster = dst_reader.read(1)
-                raster = zoom(raster, factor, order=3)
+                if not dst_reader.dtypes[0] == out_default_reader.dtypes[0]:
+                    raster = (raster * (65535.0 / 255.0)).astype(np.uint16)
 
-                assert raster.shape == (10980, 10980)
-
-            else:
-                raster = dst_reader.read(1)
-
-            if not dst_reader.dtypes[0] == out_default_reader.dtypes[0]:
-                raster = (raster * (65535.0 / 255.0)).astype(np.uint16)
-
-            band_idx = 3 * TCI + idx + 1
-            tif_band_names[band_idx] = band_name
-            dst.write(raster, band_idx)
-            dst_reader.close()
-
-        # write tci
-        if TCI:
-            for i in range(3):
-
-                band_idx = i + 1
-                raster = (tci_band.read(band_idx) * (65535.0 / 255.0)).astype(np.uint16)
-                tif_band_names[band_idx] = f"tci_{band_idx}"
-
+                band_idx = 3 * TCI + idx + 1
+                tif_band_names[band_idx] = band_name
                 dst.write(raster, band_idx)
+                dst_reader.close()
+                pbar.update(1)
+
+            # write tci
+            if TCI:
+                for i in range(3):
+                    band_idx = i + 1
+                    raster = (tci_band.read(band_idx) * (65535.0 / 255.0)).astype(
+                        np.uint16
+                    )
+                    tif_band_names[band_idx] = f"tci_{band_idx}"
+
+                    dst.write(raster, band_idx)
+                    pbar.update(1)
 
         # add tags and descriptions
         for band_idx, name in tif_band_names.items():
@@ -252,7 +255,7 @@ def safe_to_geotif_L2A(
         crs_epsg_code = dst.crs.to_epsg()
         raster_bounding_rectangle = box(*dst.bounds)
 
-    outfile.rename(out_file_parent_dir / (safe_root.stem + ".tif"))
+    outfile.rename(out_file_parent_dir / (raster_name + ".tif"))
 
     return {
         "crs_epsg_code": crs_epsg_code,

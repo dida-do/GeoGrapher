@@ -1,16 +1,14 @@
 """Download a targeted number of rasters per vector feature."""
 
-from __future__ import annotations
-
 import logging
 import random
 import shutil
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from geopandas import GeoDataFrame
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from shapely.ops import unary_union
 from tqdm.auto import tqdm
 
@@ -29,6 +27,8 @@ from geographer.errors import (
 )
 from geographer.utils.utils import concat_gdfs
 
+# TODO Make this an attribute of RasterDownloaderForVectors
+#      in such a way that if an absolute path is given
 DEFAULT_TEMP_DOWNLOAD_DIR_NAME = "temp_download_dir"
 
 log = logging.getLogger(__name__)
@@ -40,7 +40,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
     downloader_for_single_vector: RasterDownloaderForSingleVector
     download_processor: RasterDownloadProcessor
-    kwarg_defaults: Dict = Field(default_factory=dict)
 
     def download(
         self,
@@ -49,7 +48,8 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
         target_raster_count: int = 1,
         filter_out_vectors_contained_in_union_of_intersecting_rasters: bool = False,
         shuffle: bool = True,
-        **kwargs,
+        downloader_kwargs: Optional[dict[str, Any]] = None,
+        processor_kwargs: Optional[dict[str, Any]] = None,
     ):
         """Download a targeted number of rasters per vector feature.
 
@@ -67,12 +67,12 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
         Warning:
             The targeted number of downloads is determined by target_raster_count
-            and a vector features raster_count. Since the raster_count is the number of
-            rasters in the dataset fully containing a vector feature for "large"
-            vector features (polygons) the raster_count will always remain zero and
-            every call of the download_rasters method that includes this vector feature
-            will download target_raster_count rasters (or raster series).
-            To avoid this, you can use the
+            and a vector features raster_count. The raster_count is the number of
+            rasters in the dataset fully containing a vector feature. For vector
+            features (polygons) large enough not be contained in a raster the
+            raster_count will always remain zero and every call of the download_rasters
+            method that includes this vector feature will download target_raster_count
+            rasters (or raster series). To avoid this, you can use the
             filter_out_vectors_contained_in_union_of_intersecting_rasters argument.
 
         Args:
@@ -87,18 +87,23 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 are not enough rasters available or higher if after downloading
                 num_target_rasters_per_vector rasters for P P is also contained
                 in rasters downloaded for other vector features.
-            filter_out_vector vectors_contained_in_union_of_intersecting_rasters:
+            filter_out_vectors_contained_in_union_of_intersecting_rasters:
                 Useful when dealing with 'large' vector features. Defaults to False.
             shuffle: Whether to shuffle order of vector features for which rasters
                 will be downloaded. Might in practice prevent an uneven distribution
                 of the raster count for repeated downloads. Defaults to True.
-            kwargs: optional additional keyword arguments passed to
-                downloader_for_single_vector and download_processor.
-                Defaults to self.kwarg_defaults.
+            downloader_kwargs: optional additional keyword arguments passed to
+                downloader_for_single_vector. Defaults to the last
+                downloader_kwargs used or the empty list as a fallback.
+            processor_kwargs: optional additional keyword arguments passed to
+                download_processor. Defaults to the last
+                processor_kwargs used or the empty list as a fallback.
 
         Note:
-            Any kwargs given will be saved to self.default_kwargs and become default
-            values.
+            The downloader_kwargs and processor_kwargs passed will be stored in
+            the self.downloader_for_single_vector.default_download_kwargs and
+            self.download_processor.default_process_kwargs variables and become
+            the default values for the next call.
 
         Returns:
             None
@@ -115,7 +120,13 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             jointly cover the polygon then these 20 disjoint sets will all be
             downloaded.
         """
-        self.kwarg_defaults.update(kwargs)
+        downloader_kwargs = (
+            downloader_kwargs
+            or self.downloader_for_single_vector.default_download_kwargs
+        )
+        processor_kwargs = (
+            processor_kwargs or self.download_processor.default_process_kwargs
+        )
 
         if not isinstance(connector, Connector):
             connector = Connector.from_data_dir(connector)
@@ -139,7 +150,7 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
         # Dict to keep track of rasters we've downloaded. We'll append this to
         # connector.rasters as a (geo)dataframe later
-        new_rasters_dict = defaultdict(list)
+        new_raster_dicts_list = []
 
         pbar = tqdm(
             enumerate(
@@ -150,7 +161,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             )
         )
         for count, (vector_name, vector_geom) in pbar:
-
             # vector_geom = connector.vectors.loc[vector_name, 'geometry']
 
             pbar.set_description(
@@ -181,11 +191,9 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 continue
 
             while num_raster_series_to_download > 0:
-
                 # Try downloading a raster series and save returned dict (of dicts)
                 # containing information for vectors, connector.rasters...
                 try:
-
                     # DEBUG INFO
                     log.debug(
                         "attempting to download raster for vector feature. %s",
@@ -195,12 +203,15 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                     # the previously_downloaded_rasters_set argument should be used by
                     # downloader_for_single_vector should use this to make sure no
                     # attempt at downloading an already downloaded raster is made.
+                    self.downloader_for_single_vector.default_download_kwargs = (
+                        downloader_kwargs
+                    )
                     return_dict = self.downloader_for_single_vector.download(
                         vector_name=vector_name,
                         vector_geom=vector_geom,
                         download_dir=temp_download_dir,
                         previously_downloaded_rasters_set=previously_downloaded_rasters_set,  # noqa: E501
-                        **self.kwarg_defaults,
+                        **downloader_kwargs,
                     )
 
                 # WHY DOES THIS NOT WORK?
@@ -211,7 +222,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
                 # ... unless either no rasters could be found ...
                 except NoRastersForVectorFoundError as exc:
-
                     # ... in which case we save it in connector.vectors, ...
                     connector.vectors.loc[vector_name, "download_exception"] = repr(exc)
 
@@ -223,14 +233,12 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
                 # ... or a download error occured, ...
                 except RasterDownloadError as exc:
-
                     connector.vectors.loc[vector_name, "download_exception"] = repr(exc)
                     log.warning(exc, exc_info=True)
 
                 # ... or downloader_for_single_vector tried downloading a previously
                 # downloaded raster.
                 except RasterAlreadyExistsError:
-
                     log.exception(
                         "downloader_for_single_vector tried "
                         "downloading a previously downloaded raster!"
@@ -238,7 +246,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
                 # If the download_method call was successful ...
                 else:
-
                     # ... we first extract the information to be appended to
                     # connector.rasters.
                     list_raster_info_dicts = return_dict["list_raster_info_dicts"]
@@ -256,7 +263,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                         break
                     # ... else ...
                     else:
-
                         self._run_safety_checks_on_downloaded_rasters(
                             previously_downloaded_rasters_set,
                             vector_name,
@@ -265,16 +271,18 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
                         # For each download ...
                         for raster_info_dict in list_raster_info_dicts:
-
                             # ... process it to a raster ...
                             raster_name = raster_info_dict["raster_name"]
+                            self.download_processor.default_process_kwargs = (
+                                processor_kwargs
+                            )
                             single_raster_processed_return_dict = (
                                 self.download_processor.process(
                                     raster_name,
                                     temp_download_dir,
                                     connector.rasters_dir,
                                     connector.crs_epsg_code,
-                                    **self.kwarg_defaults,
+                                    **processor_kwargs,
                                 )
                             )
 
@@ -295,16 +303,14 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                             # Finally, remember we downloaded the raster.
                             previously_downloaded_rasters_set.add(raster_name)
 
-                        # update new_rasters_dict
-                        for raster_info_dict in list_raster_info_dicts:
-                            for key in raster_info_dict:
-                                new_rasters_dict[key].append(raster_info_dict[key])
+                        # update new_raster_dicts_list
+                        new_raster_dicts_list += list_raster_info_dicts
 
                         num_raster_series_to_download -= 1
 
-        if len(new_rasters_dict) > 0:
+        if len(new_raster_dicts_list) > 0:
             new_rasters = self._get_new_rasters(
-                new_rasters_dict, connector.crs_epsg_code
+                new_raster_dicts_list, connector.crs_epsg_code
             )
             connector.rasters = concat_gdfs([connector.rasters, new_rasters])
             connector.save()
@@ -391,7 +397,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
         connector: Connector,
         filter_out_vectors_contained_in_union_of_intersecting_rasters: bool,
     ) -> list[Union[int, str]]:
-
         if vector_names is None:
             vectors_for_which_to_download = list(
                 connector.vectors.loc[
@@ -469,11 +474,12 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
 
     def _get_new_rasters(
         self,
-        new_rasters_dict: dict,
+        new_raster_dicts_list: list[dict[str, Any]],
         rasters_crs_epsg_code: int,
     ) -> GeoDataFrame:
-        """Build and return rasters of new rasters from new_rasters_dict."""
-        new_rasters = GeoDataFrame(new_rasters_dict)
+        """Build and return new rasters gdf from new_raster_dicts_list."""
+        new_rasters = GeoDataFrame.from_records(new_raster_dicts_list)
+        new_rasters.set_geometry("geometry", inplace=True)
         new_rasters.set_crs(epsg=rasters_crs_epsg_code, inplace=True)
         new_rasters.set_index("raster_name", inplace=True)
         new_rasters = new_rasters.convert_dtypes(

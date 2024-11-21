@@ -14,8 +14,6 @@ There are different versions of the ALOS data: 1804, 1903, 2003, 2012. Only the 
 version has been tested.
 """
 
-from __future__ import annotations
-
 import logging
 import math
 import os
@@ -101,9 +99,7 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
         jaxa_file_and_folder_names = set()
         if download_mode == "bboxvertices":
-
             for x, y in vector_geom.envelope.exterior.coords:
-
                 jaxa_folder_name = "{}/".format(
                     self._obtain_jaxa_index(x // 5 * 5, y // 5 * 5)
                 )
@@ -112,7 +108,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
                 jaxa_file_and_folder_names |= {(jaxa_file_name, jaxa_folder_name)}
 
         elif download_mode == "bboxgrid":
-
             minx, miny, maxx, maxy = vector_geom.envelope.exterior.bounds
 
             deltax = math.ceil(maxx - minx)
@@ -120,7 +115,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
 
             for countx in range(deltax + 1):
                 for county in range(deltay + 1):
-
                     x = minx + countx
                     y = miny + county
 
@@ -139,7 +133,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
         )  # to collect information per downloaded file for connector
 
         for jaxa_file_name, jaxa_folder_name in jaxa_file_and_folder_names:
-
             # Skip download if file has already been downloaded ...
             if jaxa_file_name[:-7] + "_DSM.tif" in previously_downloaded_rasters_set:
                 # in this case skip download, don't store in list_raster_info_dicts

@@ -91,7 +91,6 @@ class AddDropVectorsMixIn(object):
 
         # For each new vector feature...
         for vector_name in new_vectors.index:
-
             # ... add a vertex for the new vector feature to the graph and add all
             # connections to existing rasters.
             self._add_vector_to_graph(vector_name, vectors=new_vectors)

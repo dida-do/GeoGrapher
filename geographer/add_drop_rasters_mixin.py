@@ -76,7 +76,6 @@ class AddDropRastersMixIn:
 
         # go through all new rasters...
         for raster_name in new_rasters.index:
-
             # add new raster vertex to the graph, add all connections
             # to existing rasters, and modify self.vectors 'raster_count' value
             raster_bounding_rectangle = new_rasters.loc[raster_name, "geometry"]
