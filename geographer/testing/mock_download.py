@@ -3,11 +3,9 @@
 Virtually 'download' from a dataset of rasters in a source directory.
 """
 
-from __future__ import annotations
-
 import random
 from pathlib import Path
-from typing import Any, Dict, Literal, Union
+from typing import Any, Literal, Union
 
 from pydantic import Field
 from shapely.geometry import Polygon
@@ -45,7 +43,7 @@ class MockDownloadProcessor(RasterDownloadProcessor):
         rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
         **kwargs: Any,
-    ) -> Dict[
+    ) -> dict[
         Union[Literal["raster_name", "geometry", "orig_crs_epsg_code"], str], Any
     ]:
         """Process "downloaded" file, i.e. does nothing.

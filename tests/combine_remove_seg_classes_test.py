@@ -5,7 +5,6 @@ TODO: rename MOCK_DOWNLOAD_SOURCE_DATA_DIR?
 
 import os
 import shutil
-from typing import List
 
 import pandas as pd
 from geopandas import GeoDataFrame
@@ -153,7 +152,7 @@ def test_combine_remove_seg_classes_soft_categorical():
             if not source_connector.rasters_intersecting_vector(feature)
         ]
     )
-    vectors_to_keep: List[str] = (
+    vectors_to_keep: list[str] = (
         vectors_contained_in_rasters[:3] + vectors_not_intersecting_rasters[:1]
     )
     vectors_to_keep: GeoDataFrame = deepcopy_gdf(

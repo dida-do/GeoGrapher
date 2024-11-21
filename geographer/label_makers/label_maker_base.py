@@ -4,8 +4,6 @@ Base class for label makers that generate labels (for any kind of
 computer vision task) from a connector's vectors.
 """
 
-from __future__ import annotations
-
 import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional

@@ -1,7 +1,5 @@
 """The Connector class organizes and handles remote sensing datasets."""
 
-from __future__ import annotations
-
 import json
 import logging
 from json.decoder import JSONDecodeError
@@ -240,7 +238,7 @@ class Connector(
         return new_connector
 
     @classmethod
-    def from_scratch(cls, **kwargs: Any) -> Connector:
+    def from_scratch(cls, **kwargs: Any) -> "Connector":
         r"""Initialize a new connector.
 
         Ars:
@@ -400,7 +398,7 @@ class Connector(
     def empty_connector_same_format(
         self,
         data_dir: Union[Path, str]
-    ) -> Connector:
+    ) -> "Connector":
         """Return an empty connector of the same format.
 
         Return an empty connector of the same format

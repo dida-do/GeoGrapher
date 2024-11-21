@@ -1,7 +1,5 @@
 """Mix-in for manipulating a connector's internal graph."""
 
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional, Union

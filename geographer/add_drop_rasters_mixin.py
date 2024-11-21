@@ -1,7 +1,5 @@
 """Mixin that implements adding/dropping rasters."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, Optional, Sequence
 
@@ -21,7 +19,7 @@ class AddDropRastersMixIn:
     """Mix-in that implements methods to add and drop rasters."""
 
     def add_to_rasters(
-        self, new_rasters: GeoDataFrame, label_maker: Optional[LabelMaker] = None
+        self, new_rasters: GeoDataFrame, label_maker: Optional["LabelMaker"] = None
     ):
         """Add rasters to connector's ``rasters`` attribute.
 
@@ -97,7 +95,7 @@ class AddDropRastersMixIn:
         self,
         raster_names: Sequence[str],
         remove_rasters_from_disk: bool = True,
-        label_maker: Optional[LabelMaker] = None,
+        label_maker: Optional["LabelMaker"] = None,
     ):
         """Drop rasters from ``rasters`` and from dataset.
 

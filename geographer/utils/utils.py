@@ -8,8 +8,6 @@ shapely vector geometry. Useful in some cases for testing the coordinate
 conversion of raster bounding rectangles.
 """
 
-from __future__ import annotations
-
 import copy
 import logging
 from pathlib import Path
