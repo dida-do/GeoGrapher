@@ -45,7 +45,7 @@ class SingleRasterCutterFromBBoxes(SingleRasterCutter):
             bbox_geojson_path: path to geojson file containing the bboxes
         """
         super().__init__(**data)
-        self._bboxes_df = gpd.read_file(self.bbox_geojson_path, driver="GeoJSON")
+        self._bboxes_df = gpd.read_file(self.bbox_geojson_path)
 
     @field_validator("bbox_geojson_path")
     def path_points_to_geojson(cls, value: Path):

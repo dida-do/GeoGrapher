@@ -1,7 +1,4 @@
-"""Test saving/loading nested BaseModels.
-
-TODO: split up into smaller units (more simple nestings etc)
-"""
+"""Test saving/loading nested BaseModels."""
 
 from pathlib import Path
 
@@ -39,6 +36,10 @@ def test_save_load_nested_base_model():
             "additional_nested_dictionary": {
                 "1": 2,
                 "3": 4,
+                "4": {
+                    # One more layer of nesting
+                    "5": None,
+                },
             },
             "some_list": [1, 2, 3, 4],
         },

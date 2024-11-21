@@ -208,12 +208,8 @@ def create_kml_all_geodataframes(
     rasters_path = data_dir / "connector/rasters.geojson"
     vectors_path = data_dir / "connector/vectors.geojson"
 
-    rasters = gpd.read_file(rasters_path, driver="GeoJSON")[
-        ["geometry", RASTER_IMGS_INDEX_NAME]
-    ]
-    vectors = gpd.read_file(vectors_path, driver="GeoJSON")[
-        ["geometry", VECTOR_FEATURES_INDEX_NAME]
-    ]
+    rasters = gpd.read_file(rasters_path)[["geometry", RASTER_IMGS_INDEX_NAME]]
+    vectors = gpd.read_file(vectors_path)[["geometry", VECTOR_FEATURES_INDEX_NAME]]
 
     rasters["Description"] = "raster"
     rasters["Name"] = rasters[RASTER_IMGS_INDEX_NAME]

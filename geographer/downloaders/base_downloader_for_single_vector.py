@@ -1,19 +1,22 @@
 """Base class for downloaders for a single vector feature."""
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from shapely.geometry import Polygon
+
+log = logging.getLogger(__name__)
 
 
 class RasterDownloaderForSingleVector(ABC, BaseModel):
     """Base class for downloaders for a single vector feature."""
 
-    # TODO include in all derived classes
     default_download_kwargs: dict[str, Any] = Field(
-        default_factory=dict, description="TODO"
+        default_factory=dict,
+        description="Default kwargs for the `download` method.",
     )
 
     @abstractmethod
@@ -41,3 +44,24 @@ class RasterDownloaderForSingleVector(ABC, BaseModel):
             'raster_processed?', each corresponding to the entries of rasters for the
             row defined by the raster.
         """
+
+    @field_validator("default_download_kwargs")
+    def validate_no_forbidden_keys(cls, value: dict[str, Any]) -> dict[str, Any]:
+        """Validate default_download_kwargs contains no forbidden kwargs."""
+        forbidden_keys = {
+            "vector_name",
+            "vector_geom",
+            "download_dir",
+            "previously_downloaded_rasters_set",
+        }
+        invalid_keys = forbidden_keys & set(value)
+
+        if invalid_keys:
+            msg = (
+                "The following kwargs are set by RasterDownloaderForVectors "
+                "and are not allowed: %s"
+            )
+            log.error(msg, {", ".join(invalid_keys)})
+            raise ValueError(msg % {", ".join(invalid_keys)})
+
+        return value

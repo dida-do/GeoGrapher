@@ -18,6 +18,8 @@ from geographer.downloaders.jaxa_downloader_for_single_vector import (
 )
 
 
+# To run just this test, execute
+# pytest -v -s tests/test_jaxa_download.py::test_jaxa_download
 @pytest.mark.slow
 def test_jaxa_download():
     """Test downloading JAXA data."""
@@ -28,9 +30,7 @@ def test_jaxa_download():
     test_dir = get_test_dir()
     data_dir = test_dir / "temp/download_jaxa_test"
 
-    vectors = gpd.read_file(
-        test_dir / "geographer_download_test.geojson", driver="GeoJSON"
-    )
+    vectors = gpd.read_file(test_dir / "geographer_download_test.geojson")
     vectors.set_index("name", inplace=True)
 
     connector = Connector.from_scratch(

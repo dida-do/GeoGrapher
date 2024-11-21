@@ -217,8 +217,8 @@ class Connector(
         try:
             attrs_path = Path(connector_dir) / \
                 INFERRED_PATH_ATTR_FILENAMES["attrs_path"]
-            with open(attrs_path, "r") as read_file:
-                kwargs = json.load(read_file)
+            with open(attrs_path, "r") as file:
+                kwargs = json.load(file)
         except FileNotFoundError as exc:
             log.exception(
                 "Missing connector file %s found in %s",
@@ -587,7 +587,7 @@ class Connector(
         task_vector_classes: list[str],
         background_class: str, **kwargs
     ):
-        """TODO.
+        """Check non-task vector class and task classes are disjoint.
 
         Args:
             task_vector_classes: [description]

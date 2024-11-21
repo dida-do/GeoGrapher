@@ -113,8 +113,8 @@ class BipartiteGraph(BipartiteGraphClass):
             self.file_path: Optional[Path] = file_path
             self.directed = directed
             try:
-                with open(file_path, "r") as read_file:
-                    self._graph_dict = json.load(read_file)
+                with open(file_path, "r") as file:
+                    self._graph_dict = json.load(file)
             except FileNotFoundError:
                 log.exception("Graph dict file %s not found", file_path)
             except JSONDecodeError:

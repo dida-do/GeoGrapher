@@ -14,6 +14,7 @@ import pandas as pd
 import shapely
 from eodag import EODataAccessGateway
 from eodag.api.search_result import SearchResult
+from eodag.utils import sanitize
 from pydantic import Field, PrivateAttr
 from shapely.geometry import Polygon
 
@@ -72,10 +73,6 @@ class DownloadKwargs(dict):
     https://eodag.readthedocs.io/en/stable/api_reference/eoproduct.html#
     TODO render as link...
 
-    Warning:
-        - `output_extension`: No guarantee that `geographer` will work if
-            you set this value.
-
     Some kwargs of the EOProduct.download method should not be used:
         - `product`: Omitted because the value is determined by `geographer`.
         - `progress_callback`: Omitted because its values cannot easily
@@ -85,6 +82,7 @@ class DownloadKwargs(dict):
         - `output_dir`: Omitted because the value is determined by `geographer`.
         - `asset`: Omitted because it does not make sense for a downloader
             for a single vector.
+        - `output_extension`: Omitted for simplicity's sake.
 
     This dictionary may include any of the following keys:
     - `wait` (int): The wait time in minutes between two download attempts.
@@ -93,8 +91,6 @@ class DownloadKwargs(dict):
         the download URL.
     - `delete_archive` (bool): Whether to delete the downloaded archives
         after extraction.
-    - `output_extension`: (str) If you don't want to use the default you should
-        know what you are doing.
     """
 
     pass
@@ -164,24 +160,19 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
         vector_geom: Polygon,
         download_dir: Path,
         previously_downloaded_rasters_set: set[str],
-        id_field: str,
         search_kwargs: Optional[SearchKwargs] = None,
         download_kwargs: Optional[DownloadKwargs] = None,
         properties_to_save: Optional[list[str]] = None,
         filter_property: Optional[Union[dict[str, Any], list[dict[str, Any]]]] = None,
         filter_online: bool = True,
         sort_by: Optional[list[tuple[str, ASC_OR_DESC]]] = None,
+        suffix_to_remove: Optional[str] = None,
         **kwargs,
     ) -> dict:
         """Download a raster for a vector featureusing eodag.
 
         Download a raster fully containing the vector feature,
         returns a dict in the format needed by the associator.
-
-        Warning:
-            It is _very important_ that the correct value for the id_field argument
-            is passed (see below for a description of the argument). The download method
-            and the connector will not work properly if this is not the case!
 
         Note:
             The start, end, provider, items_per_page, and locations arguments correspond
@@ -199,12 +190,6 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
                 Directory Sentinel-2 products will be downloaded to.
             previously_downloaded_rasters_set:
                 Set of already downloaded products.
-            id_field:
-                Key for which the corresponding value in the properties dict
-                of an eodag.api.product._product.EOProduct defines (the stem of, i.e.
-                without the ".tif" suffix) the raster file name. For S2_MSI_L2A
-                products this should be 'id' and this probably works for most other
-                products as well.
             search_kwargs:
                 Keyword arguments for the `search_all` method of an EODataAccessGateway,
                 excluding "geom". Refer to the docstring of SearchKwargs for more details.
@@ -224,7 +209,11 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
             filter_online:
                 Whether to filter the results for products that are online.
             sort_by:
-                (optional) Tuple like ("key", "ASC"|"DESC") by which to sort the results.
+                (Optional) A tuple like ("key", "ASC"|"DESC") by which to sort the results.
+            suffix_to_remove:
+                (Optional) A suffix to strip from the downloaded EOProduct's file name.
+                The resulting .tif raster will use the modified file name (if applicable)
+                with ".tif" appended.
             **kwargs: Other criteria that will be used in the search, using
                 parameters compatible with the provider.
 
@@ -255,7 +244,6 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
 
         result: SearchResult = self.eodag.search_all(**search_criteria)
 
-        # TODO will this work when no raster contains the geometry?
         # Only keep results that contain the geometry
         result.filter_overlap(geometry=vector_geom, contains=True)
 
@@ -289,7 +277,24 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
         raster_info_dict = {}
 
         for eo_product in result:
-            raster_name = eo_product.properties[id_field] + ".tif"
+
+            # For the next couple of lines we are essentially following
+            # the _prepare_download method of the
+            # eodag.plugins.download.base.Download class to extract
+            # the name of the extracted product.
+            sanitized_title = sanitize(eo_product.properties["title"])
+            if sanitized_title == eo_product.properties["title"]:
+                collision_avoidance_suffix = ""
+            else:
+                collision_avoidance_suffix = "-" + sanitize(eo_product.properties["id"])
+            extracted_product_file_name = sanitized_title + collision_avoidance_suffix
+
+            if suffix_to_remove is not None:
+                raster_name = (
+                    extracted_product_file_name.removesuffix(suffix_to_remove) + ".tif"
+                )
+            else:
+                raster_name = extracted_product_file_name + ".tif"
 
             if raster_name not in previously_downloaded_rasters_set:
 
@@ -302,15 +307,22 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
                 try:
                     location = self.eodag.download(**download_params)
 
-                    location_stem = Path(location).stem
-                    if location_stem != raster_name:
-                        log.warning(
-                            "The raster_name (%s) does not agree with the stem "
-                            "of the downloaded file (%s). The downloder will "
-                            "not recognize which files have already been downloaded, "
-                            "and the connector will not work properly!",
-                            raster_name,
-                            location_stem,
+                    location_name = Path(location).name
+                    if location_name != extracted_product_file_name:
+                        msg = (
+                            "The name of the downloaded file (%s) does not "
+                            "match the expected name (%s). eodag must have "
+                            "changed the way they determine the file name. "
+                            "Unfortunately, `geographer` relies on being able "
+                            "to determine the name of the extracted file "
+                            "without downloading the product. The "
+                            "`EodagDownloaderForSingleVector` will have to be "
+                            "updated to work with the new naming convention of"
+                            "eodag. Sorry!"
+                        )
+                        log.error(msg, location_name, extracted_product_file_name)
+                        raise RuntimeError(
+                            msg % (msg, location_name, extracted_product_file_name)
                         )
 
                     # And assemble the information to be updated
@@ -392,7 +404,6 @@ if __name__ == "__main__":
         ),  # small_geom from EODAG 6_crunch notebook
         download_dir=Path("/home/rustam/dida/geographer/GeoGrapher/TEMP"),
         previously_downloaded_rasters_set=set(),
-        id_field="id",
         search_kwargs=SearchKwargs(
             start="2021-03-01",
             end="2021-03-31",

@@ -21,6 +21,7 @@ from geographer.downloaders.eodag_downloader_for_single_vector import (
 from geographer.downloaders.sentinel2_download_processor import Sentinel2SAFEProcessor
 
 
+# To run just this test, execute
 # pytest -v -s tests/test_eodag_s2_download.py::test_s2_download
 @pytest.mark.slow
 def test_s2_download():
@@ -32,11 +33,8 @@ def test_s2_download():
     test_dir = get_test_dir()
 
     data_dir = test_dir / "temp/download_s2_test"
-    # TODO assert username and password are set assert dag.available_providers() sth sth
 
-    vectors = gpd.read_file(
-        test_dir / "geographer_download_test.geojson", driver="GeoJSON"
-    )
+    vectors = gpd.read_file(test_dir / "geographer_download_test.geojson")
     vectors.set_index("name", inplace=True)
 
     connector = Connector.from_scratch(
@@ -46,26 +44,34 @@ def test_s2_download():
     """
     Test RasterDownloaderForVectors for Sentinel-2 data
     """
+    product_type = "S2_MSI_L2A"
     download_processor = Sentinel2SAFEProcessor()
     downloader_for_single_vector = EodagDownloaderForSingleVector()
     downloader = RasterDownloaderForVectors(
         downloader_for_single_vector=downloader_for_single_vector,
         download_processor=download_processor,
     )
+
+    if "cop_dataspace" not in downloader_for_single_vector.eodag.available_providers(
+        product_type=product_type
+    ):
+        raise RuntimeError(
+            "'cop_dataspace' needs to be available as a provider. "
+            "Probably the username and/or password are missing."
+        )
     """
     Download Sentinel-2 rasters
     """
-    # TODO Adapt
     downloader_kwargs = {
-        "id_field": "id",
         "search_kwargs": {
             "provider": "cop_dataspace",
-            "productType": "S2_MSI_L2A",
+            "productType": product_type,
             "start": (date.today() - timedelta(days=364)).strftime("%Y-%m-%d"),
             "end": date.today().strftime("%Y-%m-%d"),
         },
         "filter_online": True,
         "sort_by": ("cloudCover", "ASC"),
+        "suffix_to_remove": ".SAFE",
     }
     processor_kwargs = {
         "resolution": 10,

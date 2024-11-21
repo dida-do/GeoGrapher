@@ -22,7 +22,6 @@ NO_DATA_VAL = 0  # No data value for sentinel 2 L1C
 log = create_logger(__name__)
 
 
-# TODO Add logging info, tqdm progress bars
 def safe_to_geotif_L2A(
     safe_root: Path,
     resolution: Union[str, int],
@@ -184,13 +183,7 @@ def safe_to_geotif_L2A(
     ) as dst:
         dst.nodata = nodata_val
 
-        total_iterations = len(gml_mask_paths_dict) + len(bands_dict)
-        if TCI:
-            total_iterations += 3
-
-        with tqdm(
-            total=total_iterations, desc=f"Extracting tif from {raster_name}.SAFE."
-        ) as pbar:
+        with tqdm(total=count, desc=f"Extracting tif from {raster_name}.SAFE.") as pbar:
 
             # write gml masks
             for idx, (gml_name, gml_path) in enumerate(gml_mask_paths_dict.items()):
