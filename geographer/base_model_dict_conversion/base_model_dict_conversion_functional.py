@@ -4,8 +4,6 @@ The nested dicts keep track of class constructors and are used for
 serializing BaseModels.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any, Optional, Union
 

@@ -4,8 +4,6 @@ Create a new dataset from an existing one by combining and/or removing
 vector feature classes.
 """
 
-from __future__ import annotations
-
 import logging
 import shutil
 from typing import Optional, Union

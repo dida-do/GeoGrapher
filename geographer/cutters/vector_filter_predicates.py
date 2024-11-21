@@ -1,7 +1,5 @@
 """Predicates for filtering vector features."""
 
-from __future__ import annotations
-
 import collections
 from abc import abstractmethod
 from typing import Any, Literal, Union

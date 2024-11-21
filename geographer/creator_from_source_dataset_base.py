@@ -1,7 +1,5 @@
 """ABC for creating or updating a dataset from an existing source dataset."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional

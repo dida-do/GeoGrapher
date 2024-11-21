@@ -5,8 +5,6 @@ datasets of GeoTiffs from existing ones by iterating over vector
 features.
 """
 
-from __future__ import annotations
-
 import logging
 from collections import defaultdict
 from typing import Optional, Union

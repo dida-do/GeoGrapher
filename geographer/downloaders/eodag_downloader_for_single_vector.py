@@ -4,8 +4,6 @@ In particular, this downloader can be used to obtain Sentinel-2 L2A
 data.
 """
 
-from __future__ import annotations
-
 import logging
 from datetime import date, datetime
 from pathlib import Path

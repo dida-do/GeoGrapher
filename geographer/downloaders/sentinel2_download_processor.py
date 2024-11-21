@@ -3,8 +3,6 @@
 Should be easily extendable to Sentinel-1.
 """
 
-from __future__ import annotations
-
 import logging
 import shutil
 from pathlib import Path

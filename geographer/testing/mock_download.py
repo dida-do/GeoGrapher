@@ -3,8 +3,6 @@
 Virtually 'download' from a dataset of rasters in a source directory.
 """
 
-from __future__ import annotations
-
 import random
 from pathlib import Path
 from typing import Any, Literal, Union

@@ -1,7 +1,5 @@
 """Contains mix-in class to save and load BaseModels."""
 
-from __future__ import annotations
-
 import json
 import logging
 from abc import abstractmethod

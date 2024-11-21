@@ -11,8 +11,6 @@ TODO: write more assert statements!
 - bands: unit test
 """
 
-from __future__ import annotations
-
 import shutil
 
 from shapely.geometry import Polygon

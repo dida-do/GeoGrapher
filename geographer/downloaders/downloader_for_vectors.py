@@ -1,7 +1,5 @@
 """Download a targeted number of rasters per vector feature."""
 
-from __future__ import annotations
-
 import logging
 import random
 import shutil
