@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 
 from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
     SaveAndLoadBaseModelMixIn,
@@ -37,17 +37,39 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
         extra = "allow"
         underscore_attrs_are_private = True
 
-    def __init__(self, **data):
-        """Initialize from data.
+    @field_validator("source_data_dir", mode="before")
+    def validate_source_data_dir(cls, value: Path) -> Path:
+        """Ensure source_data_dir is a valid path."""
+        if not value.is_dir():
+            raise ValueError(f"Invalid source_data_dir: {value}")
+        return value
 
-        Args:
-            data: data
-        """
-        super().__init__(**data)
-        self._source_connector = None
-        self._target_connector = None
-        self._set_source_connector()
-        self._set_target_connector()
+    @model_validator(mode="after")
+    def validate_connectors(self) -> "DSCreatorFromSource":
+        """Initialize and validate connectors."""
+        if self.source_data_dir:
+            self._source_connector = Connector.from_data_dir(self.source_data_dir)
+
+        if self.target_data_dir:
+            connector_file_paths_exist = [
+                (self.target_data_dir / DEFAULT_CONNECTOR_DIR_NAME / filename).is_file()
+                for filename in INFERRED_PATH_ATTR_FILENAMES.values()
+            ]
+
+            if all(connector_file_paths_exist):
+                self._target_connector = Connector.from_data_dir(self.target_data_dir)
+            elif not any(connector_file_paths_exist):
+                self._target_connector = (
+                    self._source_connector.empty_connector_same_format(
+                        self.target_data_dir
+                    )
+                )
+            else:
+                raise ValueError(
+                    "Corrupted target dataset: only some of the connector files exist."
+                )
+
+        return self
 
     @abstractmethod
     def _create(self, *args, **kwargs) -> Connector:
@@ -79,21 +101,11 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
     @property
     def source_connector(self):
         """Connector in source_data_dir."""
-        if (
-            self._source_connector is None
-            or self._source_connector.rasters_dir.parent != self.source_data_dir
-        ):
-            self._set_source_connector()
         return self._source_connector
 
     @property
     def target_connector(self):
         """Connector in target_data_dir."""
-        if (
-            self._target_connector is None
-            or self._target_connector.rasters_dir.parent != self.target_data_dir
-        ):
-            self._set_target_connector()
         return self._target_connector
 
     def _after_creating_or_updating(self):
@@ -101,30 +113,6 @@ class DSCreatorFromSource(ABC, SaveAndLoadBaseModelMixIn, BaseModel):
 
         Can be used to e.g. save parameters to the target_connector.
         """
-
-    def _set_source_connector(self):
-        """Set source connector."""
-        self._source_connector = Connector.from_data_dir(self.source_data_dir)
-
-    def _set_target_connector(self):
-        """Set target connector."""
-        connector_file_paths_exist = [
-            (self.target_data_dir / DEFAULT_CONNECTOR_DIR_NAME / filename).is_file()
-            for filename in INFERRED_PATH_ATTR_FILENAMES.values()
-        ]
-
-        if all(connector_file_paths_exist):
-            target_connector = Connector.from_data_dir(self.target_data_dir)
-        elif not any(connector_file_paths_exist):
-            target_connector = self.source_connector.empty_connector_same_format(
-                self.target_data_dir
-            )
-        else:
-            raise ValueError(
-                "Corrupted target dataset: only some of the connector files exist."
-            )
-
-        self._target_connector = target_connector
 
     def _add_missing_vectors_to_target(self):
         """Add missing vector features from source dataset to target dataset.
