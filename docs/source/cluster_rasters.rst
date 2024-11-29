@@ -18,7 +18,7 @@ train/validation split to avoid data leakage use the
 .. code-block::
 
     from geographer.utils.cluster_rasters import get_raster_clusters
-    clusters : List[Set[str]] = get_raster_clusters(
+    clusters : list[Set[str]] = get_raster_clusters(
         connector=connector,
         clusters_defined_by='rasters_that_share_vectors',
         preclustering_method='y then x-axis'

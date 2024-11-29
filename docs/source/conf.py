@@ -13,17 +13,17 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('./geographer'))
+sys.path.insert(0, os.path.abspath("./geographer"))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'GeoGrapher'
-copyright = 'Open Source TBD'
-author = 'Rustam Antia'
+project = "GeoGrapher"
+copyright = "Open Source TBD"
+author = "Rustam Antia"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = "0.1.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,19 +32,19 @@ release = '0.1.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'nbsphinx',
-    'nbsphinx_link',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx_autodoc_typehints',
-    'sphinxcontrib.autodoc_pydantic',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
+    "nbsphinx",
+    "nbsphinx_link",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx_autodoc_typehints",
+    "sphinxcontrib.autodoc_pydantic",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -56,7 +56,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -73,7 +73,7 @@ html_theme_options = {
 
 # autodoc settings
 autodoc_default_options = {
-    'inherited-members': 'pydantic.BaseModel,BaseModel',
+    "inherited-members": "pydantic.BaseModel,BaseModel",
 }
 
 # autodoc_pydantic settings
@@ -83,7 +83,7 @@ autodoc_pydantic_model_show_config_summary = False
 autodoc_pydantic_model_show_validator_summary = False
 autodoc_pydantic_model_show_validator_members = False
 autodoc_pydantic_model_show_field_summary = False
-autodoc_pydantic_model_hide_paramlist = False # change?
+autodoc_pydantic_model_hide_paramlist = False  # change?
 autodoc_pydantic_model_signature_prefix = "class"
 autodoc_pydantic_model_show_json = False
 autodoc_pydantic_settings_show_json = False

@@ -4,10 +4,8 @@ Implements a general-purpose higher order function to create or update
 datasets of GeoTiffs from existing ones by iterating over rasters.
 """
 
-from __future__ import annotations
-
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from geopandas import GeoDataFrame
 from pydantic import Field
@@ -41,7 +39,7 @@ class DSCutterIterOverRasters(DSCreatorFromSourceWithBands):
         description="Optional label maker. If given, will be used to recompute labels\
             when necessary. Defaults to None",
     )
-    cut_rasters: List[str] = Field(
+    cut_rasters: list[str] = Field(
         default_factory=list,
         description=(
             "Names of cut rasters in source_data_dir. Usually not to be set by hand!"
@@ -129,7 +127,6 @@ class DSCutterIterOverRasters(DSCreatorFromSourceWithBands):
         for raster_name in tqdm(
             self.source_connector.rasters.index, desc="Cutting dataset: "
         ):
-
             # If filter condition is satisfied, (if not, don't do anything) ...
             if self.raster_filter_predicate(
                 raster_name,
@@ -138,7 +135,6 @@ class DSCutterIterOverRasters(DSCreatorFromSourceWithBands):
                 source_connector=self.source_connector,
                 cut_rasters=self.cut_rasters,
             ):
-
                 # ... cut the rasters (and their labels) and remember information
                 # to be appended to self.target_connector rasters in return dict
                 rasters_from_single_cut_dict = self.raster_cutter(
@@ -169,7 +165,6 @@ class DSCutterIterOverRasters(DSCreatorFromSourceWithBands):
                 for new_raster_name, raster_bounding_rectangle in zip(
                     new_raster_names, raster_bounding_rectangles
                 ):
-
                     self.cut_rasters.append(raster_name)
 
                     # Update graph and modify vectors in self.target_connector
@@ -181,7 +176,9 @@ class DSCutterIterOverRasters(DSCreatorFromSourceWithBands):
         # Extract accumulated information about the rasters we've
         # created in the target dataset into a dataframe...
         new_rasters = GeoDataFrame(
-            new_rasters_dict, crs=self.target_connector.rasters.crs
+            new_rasters_dict,
+            crs=self.target_connector.rasters.crs,
+            geometry="geometry",
         )
         new_rasters.set_index(RASTER_IMGS_INDEX_NAME, inplace=True)
 

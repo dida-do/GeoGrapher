@@ -3,12 +3,35 @@ Downloading rasters
 
 To download rasters for vector features use ``RasterDownloaderForVectors``. 
 
-By plugging in different ``DownloaderForSingleVector`` and ``Processor``
-components it can interface with different sources of remote sensing rasters.
-Currently, it can interface with the Copernicus Open Access Hub for Sentinel-2
-rasters, and JAXA for ALOS DEM (digital elevation model) data, and can easily
-be extended to other data sources by writing custom
-``DownloaderForSingleSingleVector`` and ``Processor`` classes.
+A ``RasterDownloaderForVectors`` requires components that implement the
+abstract base classes ``DownloaderForSingleVector`` and ``Processor``.
+
+    - ``DownloaderForSingleVector`` defines how to search for and download
+        a raster for a single vector from a provider.
+    - ``Processor`` how to process the downloaded file into a GeoTiff raster.
+
+Available Implementations
++++++++++++++++++++++++++
+
+Currently, there are two concrete implementations of ``DownloaderForSingleVector``:
+
+    - ``EodagDownloaderForSingleVector``: Based on
+        the excellent `"eodag" <EODAG_>`_ package, this implementation supports downloading
+        over 50 product types from than 10 providers.
+    - ``JAXADownloaderForSingleVector``: Designed for downloading DEM (digital elevation model)
+        data from the `"JAXA ALOS" <JAXA_ALOS_>`_ mission.
+
+Additionally, there are two concrete implementations of the ``Processor`` class:
+
+    - ``Sentinel2SAFEProcessor``: Processes Level-2A Sentinel-2 SAFE files.
+    - ``JAXADownloadProcessor``: Processes JAXA DEM data.
+
+To use the ``RasterDownloaderForVectors`` for a new provider or product type
+you only need to write custom implementations of ``DownloaderForSingleVector``
+or ``Processor``.
+
+.. _EODAG: http://supertech.csail.mit.edu/papers/steal.pdf
+.. _JAXA_ALOS: https://www.eorc.jaxa.jp/ALOS/en/index_e.htm
 
 Example usage
 +++++++++++++
@@ -19,24 +42,40 @@ Example usage:
 
     from geographer.downloaders import (
         RasterDownloaderForVectors,
-        SentinelDownloaderForSingleVector,
-        Sentinel2Processor
+        EodagDownloaderForSingleVector,
+        Sentinel2SAFEProcessor,
     )
-    downloader_for_single_vector=SentinelDownloaderForSingleVector()
-    download_processor=Sentinel2Processor()
+    download_processor = Sentinel2SAFEProcessor()
+    downloader_for_single_vector = EodagDownloaderForSingleVector()
     downloader = RasterDownloaderForVectors(
         downloader_for_single_vector=downloader_for_single_vector,
         download_processor=download_processor,
     )
+
+    # Parameters needed by the EodagDownloaderForSingleVector.download method
+    downloader_kwargs = {
+        "search_kwargs": {  # Keyword arguments for the eodag search_all method
+            "provider": "cop_dataspace",  # Download from copernicus dataspace
+            "productType": "S2_MSI_L2A",  # Search for Sentinel-2 L2A products
+            "start": "2024-11-01",
+            "end": "2024-12-01",
+        },
+        "filter_online": True,  # Filter out products that are not online
+        "sort_by": ("cloudCover", "ASC"),  # Prioritize search results with less cloud cover
+        "suffix_to_remove": ".SAFE",  # Will strip .SAFE from the stem of the tif file names
+    }
+    # Parameters needed by the Sentinel2SAFEProcessor
+    processor_kwargs = {
+        "resolution": 10,  # Extract all 10m resolution bands
+        "delete_safe": True,  # Delete the SAFE file after extracting a .tif file
+    }
+
     downloader.download(
         connector=my_connector,
         vector_names=optional_list_of_vector_names,
         target_raster_count=2,
-        producttype='L2A',
-        max_percent_cloud_coverage=10,
-        resolution=10,
-        date=('NOW-10DAYS', 'NOW'),
-        area_relation='Contains'
+        downloader_kwargs=downloader_kwargs,  # Only needed the first time downloader.download is called
+        processor_kwargs=processor_kwargs,    # Only needed the first time downoader.download is called
     )
 
 The raster counts for all vector features are updated after every download,
