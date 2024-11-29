@@ -92,12 +92,16 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             shuffle: Whether to shuffle order of vector features for which rasters
                 will be downloaded. Might in practice prevent an uneven distribution
                 of the raster count for repeated downloads. Defaults to True.
-            downloader_kwargs: optional additional keyword arguments passed to
-                downloader_for_single_vector. Defaults to the last
-                downloader_kwargs used or the empty list as a fallback.
+            downloader_kwargs: (optional) keyword arguments to pass to
+                the downloader_for_single_vector.download method as **kwargs.
+                In particular, the keywords vector_name, vector_geom, download_dir,
+                and previously_downloaded_rasters_set are not allowed. Defaults to
+                the last downloader_kwargs used or the empty dict as a fallback.
             processor_kwargs: optional additional keyword arguments passed to
-                download_processor. Defaults to the last
-                processor_kwargs used or the empty list as a fallback.
+                download_processor.process as **kwargs. In particular, the keywords
+                raster_name, download_dir, rasters_dir, and
+                return_bounds_in_crs_epsg_code are not allowed. Defaults to the last
+                processor_kwargs used or as a fallback the empty dict.
 
         Note:
             The downloader_kwargs and processor_kwargs passed will be stored in

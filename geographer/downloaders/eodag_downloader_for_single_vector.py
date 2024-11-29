@@ -39,28 +39,28 @@ class SearchKwargs(dict):
 
     This dictionary may include the following keys:
     - `start` (Optional[str]):
-        Start sensing time in ISO 8601 format (e.g. “1990-11-26”,
-        “1990-11-26T14:30:10.153Z”, “1990-11-26T14:30:10+02:00”, …).
-        If no time offset is given, the time is assumed to be given in UTC.
+    Start sensing time in ISO 8601 format (e.g. “1990-11-26”,
+    “1990-11-26T14:30:10.153Z”, “1990-11-26T14:30:10+02:00”, …).
+    If no time offset is given, the time is assumed to be given in UTC.
     - `end` (Optional[str]):
-        End sensing time in ISO 8601 format (e.g. “1990-11-26”,
-        “1990-11-26T14:30:10.153Z”, “1990-11-26T14:30:10+02:00”, …).
-        If no time offset is given, the time is assumed to be given in UTC.
+    End sensing time in ISO 8601 format (e.g. “1990-11-26”,
+    “1990-11-26T14:30:10.153Z”, “1990-11-26T14:30:10+02:00”, …).
+    If no time offset is given, the time is assumed to be given in UTC.
     - `provider` (Optional[str]):
-        The provider to be used. If set, search fallback will be disabled.
-        If not set, the configured preferred provider will be used at first
-        before trying others until finding results. See
-        https://eodag.readthedocs.io/en/stable/_modules/eodag/api/core.html#EODataAccessGateway.search. # noqa
+    The provider to be used. If set, search fallback will be disabled.
+    If not set, the configured preferred provider will be used at first
+    before trying others until finding results. See
+    https://eodag.readthedocs.io/en/stable/_modules/eodag/api/core.html#EODataAccessGateway.search. # noqa
     - `items_per_page` (Optional[int]):
-        Number of items to retrieve per page.
+    Number of items to retrieve per page.
     - `locations` (Optional[dict[str, str]]):
-        Location filtering by name using locations configuration
-        {"<location_name>"="<attr_regex>"}. For example, {"country"="PA."}
-        will use the geometry of the features having the property ISO3 starting
-        with 'PA' such as Panama and Pakistan in the shapefile configured with
-        name=country and attr=ISO3.
+    Location filtering by name using locations configuration
+    {"<location_name>"="<attr_regex>"}. For example, {"country"="PA."}
+    will use the geometry of the features having the property ISO3 starting
+    with 'PA' such as Panama and Pakistan in the shapefile configured with
+    name=country and attr=ISO3.
     - `**kwargs` (dict[str, Any]):
-        Any other search parameters compatible with the provider.
+    Any other search parameters compatible with the provider.
     """
 
     pass
@@ -88,9 +88,9 @@ class DownloadKwargs(dict):
     - `wait` (int): The wait time in minutes between two download attempts.
     - `timeout` (int): The max time in minutes to retry downloading before stopping.
     - `dl_url_params` (dict[str, str]): Additional URL parameters to pass to
-        the download URL.
+    the download URL.
     - `delete_archive` (bool): Whether to delete the downloaded archives
-        after extraction.
+    after extraction.
     """
 
     pass
