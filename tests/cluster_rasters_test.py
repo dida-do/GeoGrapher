@@ -25,11 +25,10 @@ def test_cluster_rasters():
     # Create empty connector
     data_dir = Path("/whatever/")
     connector = Connector.from_scratch(data_dir=data_dir)
-
     """
     Create vectors
     """
-    new_vectors = gpd.GeoDataFrame()
+    new_vectors = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_vectors.rename_axis(VECTOR_FEATURES_INDEX_NAME, inplace=True)
 
     # polygon names and geometries
@@ -45,11 +44,10 @@ def test_cluster_rasters():
 
     new_vectors = new_vectors.set_crs(epsg=STANDARD_CRS_EPSG_CODE)
     connector.add_to_vectors(new_vectors)
-
     """
     Create rasters
     """
-    new_rasters = gpd.GeoDataFrame()
+    new_rasters = gpd.GeoDataFrame(geometry=gpd.GeoSeries([]))
     new_rasters.rename_axis(RASTER_IMGS_INDEX_NAME, inplace=True)
 
     # geometries (raster bounding rectangles)
@@ -85,7 +83,6 @@ def test_cluster_rasters():
 
     new_rasters = new_rasters.set_crs(epsg=STANDARD_CRS_EPSG_CODE)
     connector.add_to_rasters(new_rasters)
-
     """
     Test clusters defined by 'rasters_that_share_vectors_or_overlap'
     """
@@ -98,7 +95,6 @@ def test_cluster_rasters():
         frozenset({"raster3", "raster1", "raster2"}),
         frozenset({"raster4", "raster6", "raster5"}),
     }
-
     """
     Test clusters defined by 'rasters_that_share_vectors'
     """

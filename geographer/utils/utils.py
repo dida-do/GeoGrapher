@@ -8,8 +8,6 @@ shapely vector geometry. Useful in some cases for testing the coordinate
 conversion of raster bounding rectangles.
 """
 
-from __future__ import annotations
-
 import copy
 import logging
 from pathlib import Path
@@ -66,7 +64,9 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
     WARNING. One needs to additionally set the console handler level to the
     desired level, which is done by this function.
 
-    ..note:: Function might be adapted for more specialized usage in the future
+    .. note::
+
+        Function might be adapted for more specialized usage in the future
 
     Args:
         app_name: Name of the logger. Will appear in the console output
@@ -153,7 +153,10 @@ def round_shapely_geometry(geometry: GEOMS_UNION, ndigits=1) -> Union[Polygon, P
 def deepcopy_gdf(gdf: GeoDataFrame) -> GeoDataFrame:
     """Return deepcopy of GeoDataFrame."""
     gdf_copy = GeoDataFrame(
-        columns=gdf.columns, data=copy.deepcopy(gdf.values), crs=gdf.crs
+        columns=gdf.columns,
+        data=copy.deepcopy(gdf.values),
+        crs=gdf.crs,
+        geometry=gdf.geometry.name,
     )
     gdf_copy = gdf_copy.astype(gdf.dtypes)
     gdf_copy.set_index(gdf.index, inplace=True)
@@ -169,12 +172,19 @@ def concat_gdfs(objs: list[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
     list.
     """
     for obj in objs:
-        if isinstance(obj, GeoDataFrame) and obj.crs != objs[0].crs:
-            raise ValueError("all geodataframes should have the same crs")
+        if isinstance(obj, GeoDataFrame):
+            if obj.crs != objs[0].crs:
+                raise ValueError("All geodataframes should have the same crs!")
+            if obj.geometry.name != objs[0].geometry.name:
+                raise ValueError(
+                    "All geodataframes should have the same geometry column!"
+                )
         elif not isinstance(obj, GeoDataFrame):
             raise ValueError("all objs should be GeoDataFrames")
 
-    concatenated_gdf = GeoDataFrame(pd.concat(objs, **kwargs), crs=objs[0].crs)
+    concatenated_gdf = GeoDataFrame(
+        pd.concat(objs, **kwargs), crs=objs[0].crs, geometry=objs[0].geometry.name
+    )
     concatenated_gdf.index.name = objs[0].index.name
 
     return concatenated_gdf
@@ -200,12 +210,8 @@ def create_kml_all_geodataframes(
     rasters_path = data_dir / "connector/rasters.geojson"
     vectors_path = data_dir / "connector/vectors.geojson"
 
-    rasters = gpd.read_file(rasters_path, driver="GeoJSON")[
-        ["geometry", RASTER_IMGS_INDEX_NAME]
-    ]
-    vectors = gpd.read_file(vectors_path, driver="GeoJSON")[
-        ["geometry", VECTOR_FEATURES_INDEX_NAME]
-    ]
+    rasters = gpd.read_file(rasters_path)[["geometry", RASTER_IMGS_INDEX_NAME]]
+    vectors = gpd.read_file(vectors_path)[["geometry", VECTOR_FEATURES_INDEX_NAME]]
 
     rasters["Description"] = "raster"
     rasters["Name"] = rasters[RASTER_IMGS_INDEX_NAME]

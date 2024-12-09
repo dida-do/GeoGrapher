@@ -12,7 +12,6 @@ TODO: write more assert statements!
 """
 
 import shutil
-from typing import List
 
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
@@ -121,7 +120,7 @@ def test_rasters_around_every_vector(dummy_cut_source_data_dir):
     tempelhofer_feld: Polygon = target_connector.vectors.loc[
         "berlin_tempelhofer_feld"
     ].geometry
-    rasters_intersecting_tempelhofer_feld: List[str] = (
+    rasters_intersecting_tempelhofer_feld: list[str] = (
         target_connector.rasters_intersecting_vector("berlin_tempelhofer_feld")
     )
     bboxes = target_connector.rasters.geometry.loc[

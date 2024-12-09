@@ -3,8 +3,6 @@
 Used in cutting functions.
 """
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from pathlib import Path
@@ -161,7 +159,7 @@ class RasterFilterRowCondition(RasterFilterPredicate):
 
 
 def wrap_function_as_RowSeriesPredicate(
-    fun: Callable[[Union[GeoSeries, Series]], bool]
+    fun: Callable[[Union[GeoSeries, Series]], bool],
 ) -> RowSeriesPredicate:
     """Wrap a function as a RowSeriesPredicate.
 
