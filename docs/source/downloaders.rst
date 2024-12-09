@@ -30,7 +30,7 @@ To use the ``RasterDownloaderForVectors`` for a new provider or product type
 you only need to write custom implementations of ``DownloaderForSingleVector``
 or ``Processor``.
 
-.. _EODAG: http://supertech.csail.mit.edu/papers/steal.pdf
+.. _EODAG: https://eodag.readthedocs.io/en/stable/
 .. _JAXA_ALOS: https://www.eorc.jaxa.jp/ALOS/en/index_e.htm
 
 Example usage
@@ -82,30 +82,6 @@ The raster counts for all vector features are updated after every download,
 so that unnecessary downloads and an imbalance in the dataset due to clustering
 of nearby vector features are avoided.
 
-You can supply default values for dataset/data source specific ``download``
-arguments (e.g. ``producttype``, ``max_percent_cloud_coverage`` for the
-``SentinelDownloaderForSingleVector``) in the
-``RasterDownloaderForVectors``'s ``kwarg_defaults`` arguments dict,
-so that one doesn't have to pass them by hand to the ``download`` method,
-for example:
-
-.. code-block:: python
-    
-        downloader = RasterDownloaderForVectors(
-            download_dir=<DOWNLOAD_DIR>,
-            downloader_for_single_vector=SentinelDownloaderForSingleVector(),
-            download_processor=Sentinel2Processor(),
-            kwarg_defaults={
-                'max_percent_cloud_coverage' = 10,
-                'producttype': L2A,
-                'resolution': 10,
-                'date': ('NOW-10DAYS', 'NOW'),
-                'area_relation': 'Contains'})
-        downloader.download(
-            connector=my_connector,
-            vector_names=optional_list_of_vector_names,
-            target_raster_count=2)
-
 Data sources
 ++++++++++++
 
@@ -116,15 +92,22 @@ to GeoTiffs.
 Sentinel-2
 ~~~~~~~~~~
 
-For *Sentinel-2* data, use the ``SentinelDownloaderForSingleVector``
-to download rasters from the Copernicus Open Access Hub and the ``Sentinel2Processor``.
+For *Sentinel-2* data, use the ``EodagDownloaderForSingleVector`` with
+``"productType": "S2_MSI_L2A"`` together with the ``Sentinel2SAFEProcessor`` as above.
+Tested with cop_dataspace. Expected to work with other archive_depth=2 providers
+(creodias, onda, sara). If archive_depth differs, you'll need to adapt the processor.
+Please submit the adapted ``RasterDownloadProcessor`` as a merge request :)
 
-Sentinel-1
-~~~~~~~~~~
+Sources/providers supported by `eodag`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``SentinelDownloaderForSingleVector`` should work with slight modifications
-for downloading Sentinel-1 data from Copernicus Open Access Hub as well. Feel free to
-submit a pull request for this feature.
+The ``EodagDownloaderForSingleVector`` will work with any sources/providers
+`supported by eodag <EODAG_PROVIDERS_>`_. For ``"productType"``s other than
+``"S2_MSI_L2A"`` with ``archive_depth`` 2, you will need to write a custom
+``RasterDownloadProcessor``. Please submit your custom ``RasterDownloadProcessor``
+as a merge request :)
+
+.. _EODAG_PROVIDERS: https://eodag.readthedocs.io/en/stable/getting_started_guide/providers.html
 
 JAXA DEM data
 ~~~~~~~~~~~~~

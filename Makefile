@@ -45,4 +45,4 @@ test-slow: venv
 	pytest -v -m "slow"
 
 docs: venv
-	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make html
+	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make clean html

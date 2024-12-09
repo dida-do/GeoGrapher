@@ -76,12 +76,15 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             filter_out_vectors_contained_in_union_of_intersecting_rasters argument.
 
         Args:
-            vector_names: Optional vector_name or list of vector_names to download
+            vector_names:
+                Optional vector_name or list of vector_names to download
                 rasters for. Defaults to None, i.e. consider all vector features in
                 connector.vectors.
-            downloader: One of 'sentinel2' or 'jaxa'. Defaults, if possible, to
+            downloader:
+                One of 'sentinel2' or 'jaxa'. Defaults, if possible, to
                 previously used downloader.
-            target_raster_count: target for number of rasters per vector feature in
+            target_raster_count:
+                Target for number of rasters per vector feature in
                 the dataset after downloading. The actual number of rasters for each
                 vector feature P that fully contain it could be lower if there
                 are not enough rasters available or higher if after downloading
@@ -89,19 +92,22 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 in rasters downloaded for other vector features.
             filter_out_vectors_contained_in_union_of_intersecting_rasters:
                 Useful when dealing with 'large' vector features. Defaults to False.
-            shuffle: Whether to shuffle order of vector features for which rasters
+            shuffle:
+                Whether to shuffle order of vector features for which rasters
                 will be downloaded. Might in practice prevent an uneven distribution
                 of the raster count for repeated downloads. Defaults to True.
-            downloader_params: (optional) keyword arguments to pass to the
-                downloader_for_single_vector.download. Corresponds to **kwargs of
+            downloader_params:
+                (Optional) keyword arguments to pass to the
+                downloader_for_single_vector.download. Corresponds to ``**params`` of
                 download method of the the abstract base class
                 RasterDownloaderForSingleVector. In particular, the keywords
                 vector_name, vector_geom, download_dir, and
                 previously_downloaded_rasters_set corresponding to the other
                 arguments are not allowed. Defaults to the last downloader_params
                 used or the empty dict as a fallback.
-            processor_params: optional additional keyword arguments passed to
-                download_processor.process as **kwargs. In particular, the keywords
+            processor_params:
+                Optional additional keyword arguments passed to
+                download_processor.process as ``**params``. In particular, the keywords
                 raster_name, download_dir, rasters_dir, and
                 return_bounds_in_crs_epsg_code are not allowed. Defaults to the last
                 processor_params used or as a fallback the empty dict.

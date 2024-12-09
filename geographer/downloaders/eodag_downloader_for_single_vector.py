@@ -70,8 +70,7 @@ class DownloadKwargs(dict):
     """Kwyword arguments for the `download` method of an EOProduct.
 
     Refer to the EOProduct documentation for more details:
-    https://eodag.readthedocs.io/en/stable/api_reference/eoproduct.html#
-    TODO render as link...
+    https://eodag.readthedocs.io/en/stable/api_reference/eoproduct.html
 
     Some kwargs of the EOProduct.download method should not be used:
         - `product`: Omitted because the value is determined by `geographer`.
