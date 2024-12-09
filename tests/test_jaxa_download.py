@@ -51,7 +51,7 @@ def test_jaxa_download():
     """
     jaxa_downloader.download(
         connector=connector,
-        downloader_kwargs={
+        downloader_params={
             "data_version": "1804",
             "download_mode": "bboxvertices",
         },

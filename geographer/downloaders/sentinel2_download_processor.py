@@ -70,7 +70,7 @@ class Sentinel2SAFEProcessor(RasterDownloadProcessor):
                 downloaded SAFE file to be processed differ. If used together
                 with the `EodagDownloaderForSingleVector` for the 'cop_dataspace'
                 provider and the `RasterDownloaderForVectors` and the
-                `downloader_kwargs` parameter dict of the
+                `downloader_params` parameter dict of the
                 `RasterDownloaderForVectors.download` method contains
                 a `"suffix_to_remove: ".SAFE"` pair then the default value of
                 ".SAFE" for the file_suffix will result in nicer tif names,

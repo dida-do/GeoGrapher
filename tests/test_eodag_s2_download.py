@@ -62,7 +62,7 @@ def test_s2_download():
     """
     Download Sentinel-2 rasters
     """
-    downloader_kwargs = {
+    downloader_params = {
         "search_kwargs": {
             "provider": "cop_dataspace",
             "productType": product_type,
@@ -73,14 +73,14 @@ def test_s2_download():
         "sort_by": ("cloudCover", "ASC"),
         "suffix_to_remove": ".SAFE",
     }
-    processor_kwargs = {
+    processor_params = {
         "resolution": 10,
         "delete_safe": True,
     }
     downloader.download(
         connector=connector,
-        downloader_kwargs=downloader_kwargs,
-        processor_kwargs=processor_kwargs,
+        downloader_params=downloader_params,
+        processor_params=processor_params,
     )
     # The vectors contain
     #     - 2 objects in Berlin (Reichstag and Brandenburg gate)

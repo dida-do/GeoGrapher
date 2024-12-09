@@ -48,8 +48,8 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
         target_raster_count: int = 1,
         filter_out_vectors_contained_in_union_of_intersecting_rasters: bool = False,
         shuffle: bool = True,
-        downloader_kwargs: Optional[dict[str, Any]] = None,
-        processor_kwargs: Optional[dict[str, Any]] = None,
+        downloader_params: Optional[dict[str, Any]] = None,
+        processor_params: Optional[dict[str, Any]] = None,
     ):
         """Download a targeted number of rasters per vector feature.
 
@@ -92,19 +92,22 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             shuffle: Whether to shuffle order of vector features for which rasters
                 will be downloaded. Might in practice prevent an uneven distribution
                 of the raster count for repeated downloads. Defaults to True.
-            downloader_kwargs: (optional) keyword arguments to pass to
-                the downloader_for_single_vector.download method as **kwargs.
-                In particular, the keywords vector_name, vector_geom, download_dir,
-                and previously_downloaded_rasters_set are not allowed. Defaults to
-                the last downloader_kwargs used or the empty dict as a fallback.
-            processor_kwargs: optional additional keyword arguments passed to
+            downloader_params: (optional) keyword arguments to pass to the
+                downloader_for_single_vector.download. Corresponds to **kwargs of
+                download method of the the abstract base class
+                RasterDownloaderForSingleVector. In particular, the keywords
+                vector_name, vector_geom, download_dir, and
+                previously_downloaded_rasters_set corresponding to the other
+                arguments are not allowed. Defaults to the last downloader_params
+                used or the empty dict as a fallback.
+            processor_params: optional additional keyword arguments passed to
                 download_processor.process as **kwargs. In particular, the keywords
                 raster_name, download_dir, rasters_dir, and
                 return_bounds_in_crs_epsg_code are not allowed. Defaults to the last
-                processor_kwargs used or as a fallback the empty dict.
+                processor_params used or as a fallback the empty dict.
 
         Note:
-            The downloader_kwargs and processor_kwargs passed will be stored in
+            The downloader_params and processor_params passed will be stored in
             the self.downloader_for_single_vector.default_download_kwargs and
             self.download_processor.default_process_kwargs variables and become
             the default values for the next call.
@@ -124,12 +127,11 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             jointly cover the polygon then these 20 disjoint sets will all be
             downloaded.
         """
-        downloader_kwargs = (
-            downloader_kwargs
-            or self.downloader_for_single_vector.default_download_kwargs
+        downloader_params = (
+            downloader_params or self.downloader_for_single_vector.default_params
         )
-        processor_kwargs = (
-            processor_kwargs or self.download_processor.default_process_kwargs
+        processor_params = (
+            processor_params or self.download_processor.default_process_kwargs
         )
 
         if not isinstance(connector, Connector):
@@ -207,15 +209,13 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                     # the previously_downloaded_rasters_set argument should be used by
                     # downloader_for_single_vector should use this to make sure no
                     # attempt at downloading an already downloaded raster is made.
-                    self.downloader_for_single_vector.default_download_kwargs = (
-                        downloader_kwargs
-                    )
+                    self.downloader_for_single_vector.default_params = downloader_params
                     return_dict = self.downloader_for_single_vector.download(
                         vector_name=vector_name,
                         vector_geom=vector_geom,
                         download_dir=temp_download_dir,
                         previously_downloaded_rasters_set=previously_downloaded_rasters_set,  # noqa: E501
-                        **downloader_kwargs,
+                        **downloader_params,
                     )
 
                 # WHY DOES THIS NOT WORK?
@@ -278,7 +278,7 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                             # ... process it to a raster ...
                             raster_name = raster_info_dict["raster_name"]
                             self.download_processor.default_process_kwargs = (
-                                processor_kwargs
+                                processor_params
                             )
                             single_raster_processed_return_dict = (
                                 self.download_processor.process(
@@ -286,7 +286,7 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                                     temp_download_dir,
                                     connector.rasters_dir,
                                     connector.crs_epsg_code,
-                                    **processor_kwargs,
+                                    **processor_params,
                                 )
                             )
 

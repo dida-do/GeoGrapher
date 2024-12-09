@@ -14,9 +14,9 @@ log = logging.getLogger(__name__)
 class RasterDownloaderForSingleVector(ABC, BaseModel):
     """Base class for downloaders for a single vector feature."""
 
-    default_download_kwargs: dict[str, Any] = Field(
+    default_params: dict[str, Any] = Field(
         default_factory=dict,
-        description="Default kwargs for the `download` method.",
+        description="Default params for the `download` method.",
     )
 
     @abstractmethod
@@ -26,7 +26,7 @@ class RasterDownloaderForSingleVector(ABC, BaseModel):
         vector_geom: Polygon,
         download_dir: Path,
         previously_downloaded_rasters_set: set[Union[str, int]],
-        **kwargs,
+        **params: Any,
     ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
         """Download (a series of) raster(s) for a single vector feature.
 
@@ -39,8 +39,8 @@ class RasterDownloaderForSingleVector(ABC, BaseModel):
                 Directory in which raw downloads are placed
             previously_downloaded_rasters_set:
                 Set of (names of) previously downloaded rasters
-            kwargs:
-                Keyword arguments. Corresponds to the downloader_kwargs
+            params:
+                Parameters. Corresponds to the downloader_params
                 argument of the RasterDownloaderForVectors.download method.
 
         Returns:
@@ -50,9 +50,9 @@ class RasterDownloaderForSingleVector(ABC, BaseModel):
             row defined by the raster.
         """
 
-    @field_validator("default_download_kwargs")
-    def validate_no_forbidden_keys(cls, value: dict[str, Any]) -> dict[str, Any]:
-        """Validate default_download_kwargs contains no forbidden kwargs."""
+    @field_validator("default_params")
+    def validate_no_forbidden_params(cls, value: dict[str, Any]) -> dict[str, Any]:
+        """Validate default_params contains no forbidden params."""
         forbidden_keys = {
             "vector_name",
             "vector_geom",

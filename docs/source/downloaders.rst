@@ -53,7 +53,7 @@ Example usage:
     )
 
     # Parameters needed by the EodagDownloaderForSingleVector.download method
-    downloader_kwargs = {
+    downloader_params = {
         "search_kwargs": {  # Keyword arguments for the eodag search_all method
             "provider": "cop_dataspace",  # Download from copernicus dataspace
             "productType": "S2_MSI_L2A",  # Search for Sentinel-2 L2A products
@@ -65,7 +65,7 @@ Example usage:
         "suffix_to_remove": ".SAFE",  # Will strip .SAFE from the stem of the tif file names
     }
     # Parameters needed by the Sentinel2SAFEProcessor
-    processor_kwargs = {
+    processor_params = {
         "resolution": 10,  # Extract all 10m resolution bands
         "delete_safe": True,  # Delete the SAFE file after extracting a .tif file
     }
@@ -74,8 +74,8 @@ Example usage:
         connector=my_connector,
         vector_names=optional_list_of_vector_names,
         target_raster_count=2,
-        downloader_kwargs=downloader_kwargs,  # Only needed the first time downloader.download is called
-        processor_kwargs=processor_kwargs,    # Only needed the first time downoader.download is called
+        downloader_params=downloader_params,  # Only needed the first time downloader.download is called
+        processor_params=processor_params,    # Only needed the first time downoader.download is called
     )
 
 The raster counts for all vector features are updated after every download,

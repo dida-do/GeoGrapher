@@ -25,7 +25,7 @@ def test_save_load_nested_base_model():
         },
     )
     downloader_for_single_vector = EodagDownloaderForSingleVector(
-        default_download_kwargs={
+        default_params={
             # further nesting: dictionary
             "provider": "cop_dataspace",
             "productType": "S2_MSI_L2A",
