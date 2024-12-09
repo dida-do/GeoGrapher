@@ -64,7 +64,9 @@ def create_logger(app_name: str, level: int = logging.INFO) -> logging.Logger:
     WARNING. One needs to additionally set the console handler level to the
     desired level, which is done by this function.
 
-    ..note:: Function might be adapted for more specialized usage in the future
+    .. note::
+
+        Function might be adapted for more specialized usage in the future
 
     Args:
         app_name: Name of the logger. Will appear in the console output

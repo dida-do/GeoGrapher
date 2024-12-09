@@ -17,8 +17,6 @@ def default_read_in_raster_for_raster_df_function(
 ) -> tuple[int, Polygon]:
     """Read in crs and bbox defining a GeoTIFF raster.
 
-    ..note::
-
     Args:
         raster_path: location of the raster
 

@@ -32,39 +32,72 @@ def safe_to_geotif_L2A(
     requested_gml_mask: list[tuple[str, str]] = [("CLOUDS", "B00")],
     nodata_val: int = NO_DATA_VAL,
 ) -> dict:
-    """Convert a L2A-level .SAFE file to geotif.
+    """Convert a L2A-level Sentinel-2 .SAFE file to a GeoTIFF.
 
-    Convert a .SAFE file with L2A sentinel-2 data to geotif and return a
-    dict with the crs epsg code and a shapely polygon defined by the raster
-    bounds.
+    The GeoTIFF contains raster bands derived from the .SAFE file, including:
+    - True color composite (TCI) bands if requested.
+    - JP2 masks (e.g., cloud or snow masks) at the desired resolution.
+    - Additional GML masks if available.
 
     Warning:
-        The L2A band structure changed in October 2021, new products do not contain gml
-        masks anymore. In this
+        Sentinel-2 L2A products dated later than October 2021
+        no longer include GML masks.
 
-    ..note::
+    Note:
 
-        - band structure of final geotif:
-            if TCI: 1-3 TCI RGB
-            else sorted(jps2_masks and bands (either only desired resolution or
-            additionally upsampled)), gml_mask_order
+        - The GeoTIFF bands are ordered as follows:
+
+            1. **True Color Composite (TCI)** (optional):
+                Red, Green, Blue (if ``TCI=True``).
+            2. **Spectral Bands**: JP2 data bands at the target resolution,
+                optionally including upsampled lower-resolution bands
+                if ``upsample_lower_resolution=True``.
+            3. **JP2 Masks**: Added in the order specified by ``requested_jp2_masks``
+                (e.g., ``"CLDPRB"``, ``"SNWPRB"``). Masks are limited to a maximum
+                resolution of 20m.
+            4. **GML Masks**: Rasterized from ``requested_gml_mask``, with
+                empty bands added for missing masks.
+
         - jp2_masks are only available up to a resolution of 20 m, so for 10m the 20m
             mask ist taken
-        - SNWPRB for snow masks
+        - ``"SNWPRB"`` for snow masks
+
 
     Args:
-        safe_root: is the safe folder root
-        resolution: the desired resolution
-        upsample_lower_resolution: Whether to include lower resolution bands and
-            upsample them
-        TCI: whether to load the true color raster
-        requested_jp2_masks: jp2 mask to load
-        requested_gml_mask: gml masks to load ([0] mask name as string, [1] band for
-            which to get the mask)
-        nodata_val: The nodata value to fill. Defaults to 0.
+        safe_root:
+            Path to the root directory of the .SAFE file.
+        resolution:
+            Desired resolution for the GeoTIFF (10, 20, or 60 meters).
+        upsample_lower_resolution:
+            If True, includes lower-resolution bands
+            and upsamples them to match the target resolution. Defaults to True.
+        outdir:
+            Directory where the GeoTIFF will be saved. If None, saves the
+            file in the parent directory of `safe_root`. Defaults to None.
+        TCI:
+            Whether to include true color raster bands (TCI).
+            Defaults to True.
+        requested_jp2_masks:
+            List of JP2 masks to include in the output.
+            Defaults to ["CLDPRB", "SNWPRB"].
+        requested_gml_mask: List of GML masks to include. Each tuple contains
+            the mask name (e.g., "CLOUDS") and the associated band (e.g., "B00").
+            Defaults to [("CLOUDS", "B00")].
+        nodata_val:
+            Value to use for no-data areas in the GeoTIFF. Defaults to 0.
 
     Returns:
-        dict containing tif crs and bounding rectangle
+        dict: A dictionary containing:
+            - `crs_epsg_code` (int):
+                The EPSG code of the CRS.
+            - `raster_bounding_rectangle` (shapely.geometry.Polygon):
+                The bounding rectangle of the output GeoTIFF.
+
+    Raises:
+        AssertionError:
+            If `resolution` is not one of the supported values (10, 20, 60).
+        RasterioIOError:
+            If there are issues reading or processing the JP2/GML files.
     """
     # assert resolution is within available
     assert resolution in [10, 20, 60, "10", "20", "60"]
