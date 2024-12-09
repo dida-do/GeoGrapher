@@ -76,6 +76,8 @@ autodoc_default_options = {
     "inherited-members": "pydantic.BaseModel,BaseModel",
 }
 
+autodoc_typehints = "description"  # or "signature"
+
 # autodoc_pydantic settings
 autodoc_pydantic_config_members = False
 autodoc_pydantic_model_show_config_member = False
