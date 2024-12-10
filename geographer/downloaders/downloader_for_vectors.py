@@ -103,20 +103,12 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                 RasterDownloaderForSingleVector. In particular, the keywords
                 vector_name, vector_geom, download_dir, and
                 previously_downloaded_rasters_set corresponding to the other
-                arguments are not allowed. Defaults to the last downloader_params
-                used or the empty dict as a fallback.
+                arguments are not allowed.
             processor_params:
                 Optional additional keyword arguments passed to
                 download_processor.process as ``**params``. In particular, the keywords
                 raster_name, download_dir, rasters_dir, and
-                return_bounds_in_crs_epsg_code are not allowed. Defaults to the last
-                processor_params used or as a fallback the empty dict.
-
-        Note:
-            The downloader_params and processor_params passed will be stored in
-            the self.downloader_for_single_vector.default_download_kwargs and
-            self.download_processor.default_process_kwargs variables and become
-            the default values for the next call.
+                return_bounds_in_crs_epsg_code are not allowed.
 
         Returns:
             None
@@ -133,13 +125,8 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
             jointly cover the polygon then these 20 disjoint sets will all be
             downloaded.
         """
-        downloader_params = (
-            downloader_params or self.downloader_for_single_vector.default_params
-        )
-        processor_params = (
-            processor_params or self.download_processor.default_process_kwargs
-        )
-
+        downloader_params = downloader_params or {}
+        processor_params = processor_params or {}
         if not isinstance(connector, Connector):
             connector = Connector.from_data_dir(connector)
         connector.rasters_dir.mkdir(parents=True, exist_ok=True)
@@ -215,7 +202,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                     # the previously_downloaded_rasters_set argument should be used by
                     # downloader_for_single_vector should use this to make sure no
                     # attempt at downloading an already downloaded raster is made.
-                    self.downloader_for_single_vector.default_params = downloader_params
                     return_dict = self.downloader_for_single_vector.download(
                         vector_name=vector_name,
                         vector_geom=vector_geom,
@@ -283,9 +269,6 @@ class RasterDownloaderForVectors(BaseModel, SaveAndLoadBaseModelMixIn):
                         for raster_info_dict in list_raster_info_dicts:
                             # ... process it to a raster ...
                             raster_name = raster_info_dict["raster_name"]
-                            self.download_processor.default_process_kwargs = (
-                                processor_params
-                            )
                             single_raster_processed_return_dict = (
                                 self.download_processor.process(
                                     raster_name,

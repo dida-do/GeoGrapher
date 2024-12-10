@@ -17,7 +17,6 @@ from geographer.utils.utils import transform_shapely_geometry
 log = logging.getLogger(__name__)
 
 
-# TODO Used to be called Sentinel2Processor. Adapt documentation!
 # TODO Test with the 'creodias', 'onda', and 'sara' providers
 # TODO (archive_depth 2).
 # TODO Use provider's archive_depth to extend to archive_depth not
@@ -31,11 +30,11 @@ class Sentinel2SAFEProcessor(RasterDownloadProcessor):
         download_dir: Path,
         rasters_dir: Path,
         return_bounds_in_crs_epsg_code: int,
+        *,  # processor_params of RasterDownloaderForVectors.download start below
         resolution: int,
         delete_safe: bool,  # TODO better name, uniformly usable for all processors?
         file_suffix: str = ".SAFE",
         nodata_val: int = NO_DATA_VAL,
-        **kwargs,
     ) -> dict:
         """Process Sentinel-2 download.
 

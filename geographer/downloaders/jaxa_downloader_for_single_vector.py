@@ -52,9 +52,9 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
         vector_geom: BaseGeometry,
         download_dir: Path,
         previously_downloaded_rasters_set: set[Union[str, int]],
+        *,  # downloader_params of RasterDownloaderForVectors.download start below
         data_version: str = None,
         download_mode: str = None,
-        **kwargs,
     ) -> dict[Union[Literal["raster_name", "raster_processed?"], str], Any]:
         """Download JAXA DEM data for a vector feature.
 
@@ -81,7 +81,6 @@ class JAXADownloaderForSingleVector(RasterDownloaderForSingleVector):
                 Defaults if possible to whichever choice you made last time.
             download_mode: One of 'bboxvertices', 'bboxgrid'.
                 Defaults if possible to whichever choice you made last time.
-            **kwargs: other kwargs, ignored.
 
         Returns:
             dict of dicts according to the connector convention

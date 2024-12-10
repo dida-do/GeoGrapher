@@ -3,65 +3,82 @@
 from pathlib import Path
 
 import git
+from pydantic import BaseModel
 
-from geographer.downloaders.downloader_for_vectors import RasterDownloaderForVectors
-from geographer.downloaders.eodag_downloader_for_single_vector import (
-    EodagDownloaderForSingleVector,
+from geographer.base_model_dict_conversion.save_load_base_model_mixin import (
+    SaveAndLoadBaseModelMixIn,
 )
-from geographer.downloaders.sentinel2_download_processor import Sentinel2SAFEProcessor
+
+
+class InnermostBaseModel(BaseModel):
+    """Innermost BaseModel."""
+
+    int_value: int
+    str_value: str
+
+
+class NestedBaseModel(BaseModel):
+    """Nested BaseModel."""
+
+    dict_value: dict
+    innermost_base_model: InnermostBaseModel
+
+
+class OutermostBaseModel(BaseModel, SaveAndLoadBaseModelMixIn):
+    """Outermost BaseModel."""
+
+    nested_base_model: NestedBaseModel
+
+    json_path: Path
+
+    def save(self):
+        """Save the model."""
+        self._save(self.json_path)
 
 
 def test_save_load_nested_base_model():
     """Test saving and loading nested BaseModel."""
-    # get repo working tree directory
     repo = git.Repo(".", search_parent_directories=True)
     repo_root = Path(repo.working_tree_dir)
-    download_test_data_dir = repo_root / "tests/data/temp/download_s2_test"
+    temp_dir = repo_root / "tests/data/temp/"
+    outermost_base_model_json_path = temp_dir / "outermost_base_model.json"
 
-    # define nested BaseModel
-    download_processor = Sentinel2SAFEProcessor(
-        default_process_kwargs={
-            "resolution": 10,
-        },
-    )
-    downloader_for_single_vector = EodagDownloaderForSingleVector(
-        default_params={
-            # further nesting: dictionary
-            "provider": "cop_dataspace",
-            "productType": "S2_MSI_L2A",
-            "start": "2021-03-01",
-            "end": "2021-03-31",
-            # keys must be strings in the following dict, see
-            # https://stackoverflow.com/questions/1450957/pythons-json-module-converts-int-dictionary-keys-to-strings  # noqa: E501
-            "additional_nested_dictionary": {
-                "1": 2,
-                "3": 4,
-                "4": {
-                    # One more layer of nesting
-                    "5": None,
+    # Define a nested model
+    outermost_base_model = OutermostBaseModel(
+        nested_base_model=NestedBaseModel(
+            dict_value={
+                "a": 1,
+                "b": {
+                    "c": None,
                 },
             },
-            "some_list": [1, 2, 3, 4],
-        },
+            innermost_base_model=InnermostBaseModel(
+                int_value=2,
+                str_value="str_value",
+            ),
+        ),
+        json_path=outermost_base_model_json_path,
     )
-    downloader = RasterDownloaderForVectors(
-        download_dir=download_test_data_dir / "download",
-        downloader_for_single_vector=downloader_for_single_vector,
-        download_processor=download_processor,
-    )
+
     """
-    Test save and load Sentinel-2 Downloader
+    Test saving and loading a nested BaseModel
     """
     # save
-    downloader_json_path = download_test_data_dir / "connector/s2_downloader.json"
-    downloader.save(downloader_json_path)
+    outermost_base_model.save()
 
     # load
-    downloader_from_json = RasterDownloaderForVectors.from_json_file(
-        downloader_json_path,
+    outermost_base_model_from_json = OutermostBaseModel.from_json_file(
+        outermost_base_model_json_path,
+        constructor_symbol_table={
+            "InnermostBaseModel": InnermostBaseModel,
+            "NestedBaseModel": NestedBaseModel,
+            "OutermostBaseModel": OutermostBaseModel,
+        },
     )
     # make sure saving and loading again doesn't change anything
-    assert downloader_from_json.model_dump() == downloader.model_dump()
+    assert (
+        outermost_base_model_from_json.model_dump() == outermost_base_model.model_dump()
+    )
 
 
 if __name__ == "__main__":
