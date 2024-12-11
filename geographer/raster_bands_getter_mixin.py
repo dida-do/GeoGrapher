@@ -1,7 +1,5 @@
 """Mix-in that provides methods to get raster bands."""
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Optional
 

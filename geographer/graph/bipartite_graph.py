@@ -32,8 +32,6 @@ is encoded as the dict of dicts of dicts::
 Only tested for the undirected case.
 """
 
-from __future__ import annotations
-
 import json
 import logging
 from json import JSONDecodeError
@@ -115,8 +113,8 @@ class BipartiteGraph(BipartiteGraphClass):
             self.file_path: Optional[Path] = file_path
             self.directed = directed
             try:
-                with open(file_path, "r") as read_file:
-                    self._graph_dict = json.load(read_file)
+                with open(file_path, "r") as file:
+                    self._graph_dict = json.load(file)
             except FileNotFoundError:
                 log.exception("Graph dict file %s not found", file_path)
             except JSONDecodeError:
@@ -332,14 +330,12 @@ class BipartiteGraph(BipartiteGraphClass):
             force_delete_with_edges:
         """
         if not self.exists_vertex(vertex_name, vertex_color):
-
             log.info(
                 "delete_vertex: nothing to do, vertex %s does not exist.", vertex_name
             )
 
         # if force_delete_with_edges=False check if vertex has outgoing adjacent edges
         elif self.directed:
-
             log.error(
                 "Sorry, delete_vertex is not implemented for directed graphs. "
                 "I was too lazy to code up the complication of checking "
@@ -357,7 +353,6 @@ class BipartiteGraph(BipartiteGraphClass):
             not force_delete_with_edges
             and list(self.vertices_opposite(vertex_name, vertex_color)) != []
         ):
-
             raise Exception(
                 f"delete_vertex: vertex {vertex_name} of color {vertex_color} has "
                 "edges. Set force_delete_with_edges=True to delete anyway "
@@ -365,7 +360,6 @@ class BipartiteGraph(BipartiteGraphClass):
             )
 
         else:
-
             # thinking of an undirected graph as a directed graph where for each edge
             # there is an opposite edge, we first take out the edges _ending_ in
             # vertex, i.e. the opposite edges to the outgoing ones at vertex.

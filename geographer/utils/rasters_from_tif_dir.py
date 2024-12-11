@@ -1,7 +1,5 @@
 """Create associator rasters from a directory containing GeoTiff rasters."""
 
-from __future__ import annotations
-
 import pathlib
 from pathlib import Path
 from typing import Callable, Optional, Union
@@ -19,8 +17,6 @@ def default_read_in_raster_for_raster_df_function(
 ) -> tuple[int, Polygon]:
     """Read in crs and bbox defining a GeoTIFF raster.
 
-    ..note::
-
     Args:
         raster_path: location of the raster
 
@@ -28,10 +24,8 @@ def default_read_in_raster_for_raster_df_function(
         tuple: crs code of the raster, bounding rectangle of the raster
     """
     if raster_path.suffix in [".tif", ".tiff"]:
-
         # ... open them in rasterio ...
         with rio.open(raster_path, "r") as src:
-
             # ... extract information ...
 
             orig_crs_epsg_code = src.crs.to_epsg()
@@ -98,7 +92,6 @@ def rasters_from_rasters_dir(
 
     # for all rasters in dir ...
     for raster_path in tqdm(raster_paths, desc="building rasters"):
-
         (
             orig_crs_epsg_code,
             raster_bounding_rectangle_orig_crs,
@@ -125,7 +118,7 @@ def rasters_from_rasters_dir(
             new_rasters_dict[key].append(raster_info_dict[key])
 
     # ... and create a rasters GeoDatFrame from new_rasters_dict:
-    new_rasters = GeoDataFrame(new_rasters_dict)
+    new_rasters = GeoDataFrame(new_rasters_dict, geometry="geometry")
     new_rasters.set_crs(epsg=rasters_crs_epsg_code, inplace=True)
     new_rasters.set_index("raster_name", inplace=True)
 

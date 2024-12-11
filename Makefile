@@ -22,7 +22,7 @@ help:
 
 venv: $(VIRTUAL_ENV)/timestamp
 
-$(VIRTUAL_ENV)/timestamp: pyproject.toml setup.cfg
+$(VIRTUAL_ENV)/timestamp: pyproject.toml
 	pip install --upgrade pip
 	pip install -e ".[dev,docs]"
 ifneq ($(wildcard requirements/extra.txt),)
@@ -39,7 +39,10 @@ lint: venv
 	flake8 --show-source $(PROJECTNAME) tests
 
 test: venv
-	pytest -v
+	pytest -v -m "not slow"
+
+test-slow: venv
+	pytest -v -m "slow"
 
 docs: venv
-	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make html
+	cd docs && sphinx-apidoc -o source/ ../$(PROJECTNAME) && make clean html

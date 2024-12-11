@@ -4,8 +4,6 @@ The nested dicts keep track of class constructors and are used for
 serializing BaseModels.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -15,7 +13,7 @@ from geographer.utils.utils import removeprefix
 
 
 def get_nested_base_model_dict(
-    base_model_obj_or_dict: Union[BaseModel, dict, Any]
+    base_model_obj_or_dict: Union[BaseModel, dict, Any],
 ) -> dict:
     """Return nested dict for BaseModel or dict.
 
@@ -26,7 +24,7 @@ def get_nested_base_model_dict(
         dict_ = base_model_obj_or_dict
         dict_items = base_model_obj_or_dict.items()
     elif isinstance(base_model_obj_or_dict, BaseModel):
-        dict_ = base_model_obj_or_dict.dict()
+        dict_ = base_model_obj_or_dict.model_dump()
         dict_items = base_model_obj_or_dict
 
     dict_or_base_model_fields_dict = {
