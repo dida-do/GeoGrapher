@@ -44,11 +44,10 @@ class Sentinel2SAFEProcessor(RasterDownloadProcessor):
         raster in a dict.
 
         Warning:
-            This has been tested with the for the `cop_dataspace` eodag provider, and
-            should also work for 'creodias', 'onda', 'sara', which also have
-            an `archive_depth` of 2. The processor might have to be adapted
-            slightly to use the correct location of the SAFE file based on
-            the raster name if the provider's `archive_depth` is different.
+            Tested with the `cop_dataspace` eodag provider. It should also work with
+            'creodias', 'onda', and 'sara', which have an `archive_depth` of 2.
+            For providers with a different `archive_depth`, the processor may need
+            adjustments to locate the SAFE file correctly based on the raster name.
 
         Args:
             raster_name:

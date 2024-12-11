@@ -174,7 +174,7 @@ def concat_gdfs(objs: list[GeoDataFrame], **kwargs: Any) -> GeoDataFrame:
     for obj in objs:
         if isinstance(obj, GeoDataFrame):
             if obj.crs != objs[0].crs:
-                raise ValueError("All geodataframes should have the same crs!")
+                raise ValueError("All geodataframes should have the same CRS")
             if obj.geometry.name != objs[0].geometry.name:
                 raise ValueError(
                     "All geodataframes should have the same geometry column!"

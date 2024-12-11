@@ -221,13 +221,17 @@ def safe_to_geotif_L2A(
             # write gml masks
             for idx, (gml_name, gml_path) in enumerate(gml_mask_paths_dict.items()):
                 try:
-                    assert gml_path.is_file()
+                    if not gml_path.is_file():
+                        raise FileNotFoundError(
+                            f"Can't find GML mask {gml_name} in expected location "
+                            f"{gml_path.relative_to(safe_root)}"
+                        )
                     shapes = gpd.read_file(gml_path)["geometry"].values
                     mask, _, _ = rasterio.mask.raster_geometry_mask(
                         out_default_reader, shapes, crop=False, invert=True
                     )
                 # in case mask is empty or does not exist:
-                except (ValueError, AssertionError, RasterioIOError):
+                except (ValueError, AssertionError, RasterioIOError, FileNotFoundError):
                     log.info(
                         "Using all zero band for gml mask %s for %s",
                         gml_name,

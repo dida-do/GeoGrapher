@@ -59,8 +59,8 @@ class SearchParams(dict):
     will use the geometry of the features having the property ISO3 starting
     with 'PA' such as Panama and Pakistan in the shapefile configured with
     name=country and attr=ISO3.
-    - `**kwargs` (dict[str, Any]):
-    Any other search parameters compatible with the provider.
+    - In addition, the dictionary may contain any other keys (except ``geom``)
+    compatible with the provider.
     """
 
     pass
@@ -164,10 +164,15 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
         properties_to_save: Optional[list[str]] = None,
         filter_property: Optional[Union[dict[str, Any], list[dict[str, Any]]]] = None,
         filter_online: bool = True,
-        sort_by: Optional[list[tuple[str, ASC_OR_DESC]]] = None,
+        sort_by: Optional[
+            Union[
+                str,
+                tuple[str, ASC_OR_DESC],
+            ]
+        ] = None,
         suffix_to_remove: Optional[str] = None,
     ) -> dict:
-        """Download a raster for a vector featureusing eodag.
+        """Download a raster for a vector feature using eodag.
 
         Download a raster fully containing the vector feature,
         returns a dict in the format needed by the associator.
@@ -205,9 +210,10 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
                 https://eodag.readthedocs.io/en/stable/plugins_reference/generated/eodag.plugins.crunch.filter_property.FilterProperty.html#eodag.plugins.crunch.filter_property.FilterProperty  # noqa
                 for more details.
             filter_online:
-                Whether to filter the results for products that are online.
+                Whether to filter the results to include only products that are online.
             sort_by:
-                (Optional) A tuple like ("key", "ASC"|"DESC") by which to sort the results.
+                (Optional) A string or tuple like ("key", "ASC"|"DESC") by which to sort the results.
+                If a string is provided, it will be interpreted as ("key", "ASC").
             suffix_to_remove:
                 (Optional) A suffix to strip from the downloaded EOProduct's file name.
                 The resulting .tif raster will use the modified file name (if applicable)
@@ -229,8 +235,12 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
         if isinstance(filter_property, dict):
             filter_property = [filter_property]
         sort_by = sort_by or []
-        if isinstance(sort_by, tuple):
+        if isinstance(sort_by, (str, tuple)):
             sort_by = [sort_by]
+        sort_by = [
+            (entry, "ASC") if isinstance(entry, str) else entry
+            for entry in sort_by
+        ]
 
         self._validate_download_args(download_kwargs=download_kwargs, sort_by=sort_by)
 
@@ -260,7 +270,15 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
             # In the future, we may implement hierarchical
             # sorting by multiple keys.
             key, asc_or_desc = sort_by[0]
-            reverse = {"ASC": False, "DESC": True}.get(asc_or_desc)
+            if asc_or_desc == "ASC":
+                reverse = False
+            elif asc_or_desc == "DESC":
+                reverse = True
+            else:
+                raise ValueError(
+                    f"sort_by is {sort_by[0]}, second tuple entry must be "
+                    f"one of 'ASC' or 'DESC'"
+                )
             result = SearchResult(
                 products=sorted(
                     result, key=lambda product: product.properties[key], reverse=reverse
@@ -383,28 +401,3 @@ class EodagDownloaderForSingleVector(RasterDownloaderForSingleVector):
             )
             log.error(msg)
             raise ValueError(msg)
-
-
-# TODO remove before merging - for testing purposes
-if __name__ == "__main__":
-    import pydantic
-
-    print(f"pydantic version: {pydantic.__version__}")
-
-    downloader = EodagDownloaderForSingleVector()
-
-    downloader.download(
-        "vector_name",
-        vector_geom=Polygon(
-            [[3.2, 44.4], [3.7, 44.4], [3.7, 44.9], [3.2, 44.9], [3.2, 44.4]]
-        ),  # small_geom from EODAG 6_crunch notebook
-        download_dir=Path("/home/rustam/dida/geographer/GeoGrapher/TEMP"),
-        previously_downloaded_rasters_set=set(),
-        search_kwargs=SearchParams(
-            start="2021-03-01",
-            end="2021-03-31",
-            provider="cop_dataspace",
-            productType="S2_MSI_L2A",
-        ),
-        sort_by=[("cloudCover", "ASC")],
-    )
