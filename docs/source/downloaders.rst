@@ -17,7 +17,7 @@ Currently, there are two concrete implementations of ``DownloaderForSingleVector
 
     - ``EodagDownloaderForSingleVector``: Based on
         the excellent `"eodag" <EODAG_>`_ package, this implementation supports downloading
-        over 50 product types from than 10 providers.
+        over 50 product types from more than 10 providers.
     - ``JAXADownloaderForSingleVector``: Designed for downloading DEM (digital elevation model)
         data from the `"JAXA ALOS" <JAXA_ALOS_>`_ mission.
 
