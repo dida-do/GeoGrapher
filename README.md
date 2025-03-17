@@ -9,14 +9,18 @@
 
 # GeoGrapher
 
-*GeoGrapher* is a Python library for building remote sensing
-computer vision datasets starting from vector features
-(e.g. locations or georeferenced bounding boxes or segmentation maks).
-It connects the features and images by a bipartite graph that keeps
-track of the containment and intersection relations between them making
-it suited for *object-centric* tasks. GeoGrapher also provides highly
-general and customizable dataset cutting functionality as well as other
-utility functions.
+*GeoGrapher* is a Python library for building _object-centric_
+machine learning datasets from remote sensing data—starting with a
+list of objects (vector features such as locations or polygonal
+segmentation masks) rather than a specific area. At its core,
+GeoGrapher leverages a bipartite graph structure to efficiently
+associate objects with relevant geospatial data, solving common
+challenges in object-centric dataset construction. It provides
+flexible, customizable cutting of large remote sensing rasters,
+ensuring precise data extraction.
+
+For a deeper dive, check out the [blog post](https://dida.do/blog/geographer-an-open-source-python-library-for-building-object-centric-machine-learning-datasets-from-remote-sensing-data)
+ or explore the [documentation](https://geographer.readthedocs.io/en/latest/).
 
 # Installation
 This package has two external dependencies:
@@ -34,9 +38,9 @@ pip install GeoGrapher
 ```
 
 # Getting started
-Read our our blogpost for an introduction to GeoGrapher, try out the tutorial
-notebooks in the [notebooks directory](https://github.com/dida-do/GeoGrapher/tree/main/notebooks),
-or read the documentation.
+Here are several options for getting started:
+- Try out the tutorial notebooks in the [notebooks directory](https://github.com/dida-do/GeoGrapher/tree/main/notebooks),
+- Read the [documentation](https://geographer.readthedocs.io/en/latest/).
 
 # Development
 To create a local dev installation, clone the repo, `cd` into the repo folder,
